@@ -34,7 +34,7 @@
     "@vitest/coverage-v8": "^4.0.18",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.8.1",
-    "happy-dom": "^20.6.1",
+    "happy-dom": "^20.7.0",
     "knip": "^5.64.1",
     "typescript": "~5.9.3",
     "vite": "^7.2.4",
