@@ -208,6 +208,15 @@ func main() {
 	mux.HandleFunc("GET /api/datasources/{id}/vmalert/rules", auth.RequireAuth(jwtManager, vmAlertHandler.Rules))
 	mux.HandleFunc("GET /api/datasources/{id}/vmalert/health", auth.RequireAuth(jwtManager, vmAlertHandler.Health))
 
+	// AlertManager proxy routes
+	alertManagerHandler := handlers.NewAlertManagerHandler(pool)
+	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/alerts", auth.RequireAuth(jwtManager, alertManagerHandler.ListAlerts))
+	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/silences", auth.RequireAuth(jwtManager, alertManagerHandler.ListSilences))
+	mux.HandleFunc("POST /api/datasources/{id}/alertmanager/silences", auth.RequireAuth(jwtManager, alertManagerHandler.CreateSilence))
+	mux.HandleFunc("DELETE /api/datasources/{id}/alertmanager/silences/{silenceId}", auth.RequireAuth(jwtManager, alertManagerHandler.ExpireSilence))
+	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/receivers", auth.RequireAuth(jwtManager, alertManagerHandler.ListReceivers))
+	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/health", auth.RequireAuth(jwtManager, alertManagerHandler.Health))
+
 	// Grafana conversion route
 	grafanaConverterHandler := handlers.NewGrafanaConverterHandler()
 	mux.HandleFunc("POST /api/convert/grafana", auth.RequireAuth(jwtManager, grafanaConverterHandler.Convert))

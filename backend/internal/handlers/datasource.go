@@ -60,7 +60,7 @@ func (h *DataSourceHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !req.Type.Valid() {
-		http.Error(w, `{"error":"invalid datasource type, must be one of: prometheus, loki, victorialogs, victoriametrics, tempo, victoriatraces, clickhouse, cloudwatch, elasticsearch, vmalert"}`, http.StatusBadRequest)
+		http.Error(w, `{"error":"invalid datasource type, must be one of: prometheus, loki, victorialogs, victoriametrics, tempo, victoriatraces, clickhouse, cloudwatch, elasticsearch, vmalert, alertmanager"}`, http.StatusBadRequest)
 		return
 	}
 	if req.URL == "" {
@@ -579,7 +579,7 @@ func (h *DataSourceHandler) TestConnectionDraft(w http.ResponseWriter, r *http.R
 	}
 
 	if !req.Type.Valid() {
-		http.Error(w, `{"error":"invalid datasource type, must be one of: prometheus, loki, victorialogs, victoriametrics, tempo, victoriatraces, clickhouse, cloudwatch, elasticsearch, vmalert"}`, http.StatusBadRequest)
+		http.Error(w, `{"error":"invalid datasource type, must be one of: prometheus, loki, victorialogs, victoriametrics, tempo, victoriatraces, clickhouse, cloudwatch, elasticsearch, vmalert, alertmanager"}`, http.StatusBadRequest)
 		return
 	}
 

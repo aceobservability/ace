@@ -83,6 +83,8 @@ function getTypeColor(type_: DataSourceType): string {
       return '#00bfb3'
     case 'vmalert':
       return '#ef4444'
+    case 'alertmanager':
+      return '#e45858'
   }
 }
 

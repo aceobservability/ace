@@ -93,6 +93,10 @@ export function useDatasource() {
     datasources.value.filter((d) => d.type === 'vmalert'),
   )
 
+  const alertingDatasources = computed(() =>
+    datasources.value.filter((d) => d.type === 'vmalert' || d.type === 'alertmanager'),
+  )
+
   return {
     datasources,
     loading,
@@ -101,6 +105,7 @@ export function useDatasource() {
     logsDatasources,
     tracingDatasources,
     vmalertDatasources,
+    alertingDatasources,
     fetchDatasources,
     addDatasource,
     editDatasource,

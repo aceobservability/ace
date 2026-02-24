@@ -566,6 +566,7 @@ watch(
               <option value="cloudwatch">CloudWatch (Metrics + Logs)</option>
               <option value="elasticsearch">Elasticsearch (ELK)</option>
               <option value="vmalert">VMAlert (Alerting)</option>
+              <option value="alertmanager">AlertManager (Alerting)</option>
             </select>
           </div>
         </div>

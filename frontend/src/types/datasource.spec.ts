@@ -98,6 +98,10 @@ describe('datasource types', () => {
       expect(isAlertingType('vmalert')).toBe(true)
     })
 
+    it('returns true for alertmanager', () => {
+      expect(isAlertingType('alertmanager')).toBe(true)
+    })
+
     it('returns false for prometheus', () => {
       expect(isAlertingType('prometheus')).toBe(false)
     })
@@ -116,6 +120,7 @@ describe('datasource types', () => {
         'cloudwatch',
         'elasticsearch',
         'vmalert',
+        'alertmanager',
       ]
       for (const type_ of types) {
         expect(dataSourceTypeLabels[type_]).toBeDefined()
@@ -161,6 +166,10 @@ describe('datasource types', () => {
 
     it('returns correct label for vmalert', () => {
       expect(dataSourceTypeLabels.vmalert).toBe('VMAlert')
+    })
+
+    it('returns correct label for alertmanager', () => {
+      expect(dataSourceTypeLabels.alertmanager).toBe('AlertManager')
     })
   })
 })

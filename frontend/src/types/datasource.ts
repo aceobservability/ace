@@ -9,6 +9,7 @@ export type DataSourceType =
   | 'cloudwatch'
   | 'elasticsearch'
   | 'vmalert'
+  | 'alertmanager'
 
 export interface DataSource {
   id: string
@@ -209,7 +210,7 @@ export interface VMAlertGroupsResponse {
 }
 
 export function isAlertingType(type_: DataSourceType): boolean {
-  return type_ === 'vmalert'
+  return type_ === 'vmalert' || type_ === 'alertmanager'
 }
 
 export const dataSourceTypeLabels: Record<DataSourceType, string> = {
@@ -223,4 +224,52 @@ export const dataSourceTypeLabels: Record<DataSourceType, string> = {
   cloudwatch: 'CloudWatch',
   elasticsearch: 'Elasticsearch',
   vmalert: 'VMAlert',
+  alertmanager: 'AlertManager',
+}
+
+export interface AMAlert {
+  labels: Record<string, string>
+  annotations: Record<string, string>
+  startsAt: string
+  endsAt: string
+  generatorURL: string
+  fingerprint: string
+  status: {
+    state: string
+    silencedBy: string[]
+    inhibitedBy: string[]
+  }
+  receivers: { name: string }[]
+}
+
+export interface AMMatcher {
+  name: string
+  value: string
+  isRegex: boolean
+  isEqual: boolean
+}
+
+export interface AMSilence {
+  id: string
+  matchers: AMMatcher[]
+  startsAt: string
+  endsAt: string
+  createdBy: string
+  comment: string
+  status: {
+    state: string
+  }
+  updatedAt: string
+}
+
+export interface AMSilenceCreate {
+  matchers: AMMatcher[]
+  startsAt: string
+  endsAt: string
+  createdBy: string
+  comment: string
+}
+
+export interface AMReceiver {
+  name: string
 }
