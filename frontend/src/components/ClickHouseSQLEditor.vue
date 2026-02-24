@@ -188,8 +188,8 @@ function handleQueryInput(event: Event) {
   align-items: center;
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
   color: var(--text-primary);
   font-size: 0.72rem;
 }

@@ -432,8 +432,8 @@ function getLabelValues(labelName: string): string[] {
 }
 
 .mode-btn.active {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(52, 211, 153, 0.14));
-  border: 1px solid rgba(56, 189, 248, 0.24);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(99, 102, 241, 0.14));
+  border: 1px solid rgba(245, 158, 11, 0.24);
   color: var(--text-primary);
   box-shadow: 0 2px 10px rgba(2, 8, 23, 0.28);
 }

@@ -192,15 +192,15 @@ function toggleSessionRecording(event: Event) {
 }
 
 .btn-primary {
-  color: white;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  border-color: rgba(125, 211, 252, 0.4);
+  color: #1a0f00;
+  background: #F59E0B;
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 .btn-secondary {
-  color: var(--text-primary);
-  background: var(--bg-tertiary);
-  border-color: var(--border-primary);
+  color: #FCD34D;
+  background: transparent;
+  border-color: #F59E0B;
 }
 
 .btn:disabled {

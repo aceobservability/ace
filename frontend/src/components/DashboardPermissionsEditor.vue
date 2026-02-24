@@ -322,7 +322,7 @@ select:focus {
   width: fit-content;
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
-  background: rgba(56, 189, 248, 0.18);
+  background: rgba(245, 158, 11, 0.18);
   color: var(--accent-primary);
   font-size: 0.7rem;
   text-transform: uppercase;
@@ -388,14 +388,14 @@ select:focus {
 }
 
 .btn-secondary {
-  background: var(--surface-2);
-  border-color: var(--border-primary);
-  color: var(--text-primary);
+  background: transparent;
+  border-color: #F59E0B;
+  color: #FCD34D;
 }
 
 .btn-primary {
   background: var(--accent-primary);
-  color: white;
+  color: #1a0f00;
 }
 
 .btn-danger {

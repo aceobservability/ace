@@ -846,14 +846,14 @@ onMounted(async () => {
 
 .settings-sidebar-link:hover {
   color: var(--text-primary);
-  border-color: rgba(125, 211, 252, 0.22);
+  border-color: rgba(252, 211, 77, 0.22);
   background: rgba(31, 49, 73, 0.64);
 }
 
 .settings-sidebar-link.active {
-  color: #bde9ff;
-  border-color: rgba(56, 189, 248, 0.34);
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.18), rgba(52, 211, 153, 0.1));
+  color: #FCD34D;
+  border-color: rgba(245, 158, 11, 0.34);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.18), rgba(99, 102, 241, 0.1));
 }
 
 .settings-content {
@@ -886,9 +886,9 @@ onMounted(async () => {
 .viewer-note {
   margin: 0;
   padding: 0.75rem 1rem;
-  border: 1px solid rgba(125, 211, 252, 0.3);
+  border: 1px solid rgba(252, 211, 77, 0.3);
   border-radius: 10px;
-  background: rgba(125, 211, 252, 0.08);
+  background: rgba(252, 211, 77, 0.08);
   color: var(--text-secondary);
   font-size: 0.84rem;
 }
@@ -1038,14 +1038,14 @@ select:disabled {
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
-  border-color: var(--border-primary);
-  color: var(--text-primary);
+  background: transparent;
+  border-color: #F59E0B;
+  color: #FCD34D;
 }
 
 .btn-primary {
   background: var(--accent-primary);
-  color: white;
+  color: #1a0f00;
 }
 
 .btn-export {

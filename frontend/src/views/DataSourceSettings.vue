@@ -78,7 +78,7 @@ function getTypeColor(type_: DataSourceType): string {
     case 'clickhouse':
       return '#ffd400'
     case 'cloudwatch':
-      return '#38bdf8'
+      return '#F59E0B'
     case 'elasticsearch':
       return '#00bfb3'
     case 'vmalert':
@@ -378,7 +378,7 @@ watch(
 }
 
 .datasource-card:hover {
-  border-color: rgba(56, 189, 248, 0.35);
+  border-color: rgba(245, 158, 11, 0.35);
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
@@ -445,7 +445,7 @@ watch(
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 500;
-  background: rgba(56, 189, 248, 0.16);
+  background: rgba(245, 158, 11, 0.16);
   color: var(--accent-primary);
 }
 
@@ -610,9 +610,9 @@ watch(
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
-  border-color: var(--border-primary);
-  color: var(--text-primary);
+  background: transparent;
+  border-color: #F59E0B;
+  color: #FCD34D;
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -621,7 +621,7 @@ watch(
 
 .btn-primary {
   background: var(--accent-primary);
-  color: white;
+  color: #1a0f00;
 }
 
 .btn-primary:hover:not(:disabled) {

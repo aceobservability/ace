@@ -1051,9 +1051,9 @@ watch(
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
-  border-color: var(--border-primary);
-  color: var(--text-primary);
+  background: transparent;
+  border-color: #F59E0B;
+  color: #FCD34D;
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -1062,7 +1062,7 @@ watch(
 
 .btn-primary {
   background: var(--accent-primary);
-  color: white;
+  color: #1a0f00;
 }
 
 .btn-primary:hover:not(:disabled) {

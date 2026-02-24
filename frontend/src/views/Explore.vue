@@ -744,8 +744,8 @@ watch(selectedDatasourceId, () => {
 .mode-badge {
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid rgba(52, 211, 153, 0.38);
-  background: rgba(52, 211, 153, 0.14);
+  border: 1px solid rgba(99, 102, 241, 0.38);
+  background: rgba(99, 102, 241, 0.14);
   color: #b7f3dd;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
@@ -899,7 +899,7 @@ watch(selectedDatasourceId, () => {
 }
 
 .datasource-option.selected {
-  background: rgba(56, 189, 248, 0.14);
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .datasource-option-logo {
