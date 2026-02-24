@@ -283,6 +283,35 @@ export async function testDataSourceConnection(id: string): Promise<void> {
   })
 }
 
+export async function testDataSourceDraftConnection(
+  orgId: string,
+  data: CreateDataSourceRequest,
+): Promise<void> {
+  const response = await fetch(`${API_BASE}/api/orgs/${orgId}/datasources/test`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    trackEvent('datasource_draft_test_failed', {
+      org_id: orgId,
+      datasource_type: data.type,
+      status_code: response.status,
+    })
+    if (response.status === 403) {
+      throw new Error('Only admins can test datasource connections')
+    }
+    throw new Error(err.error || 'Connection test failed')
+  }
+
+  trackEvent('datasource_draft_test_succeeded', {
+    org_id: orgId,
+    datasource_type: data.type,
+  })
+}
+
 interface ParsedSSEEvent {
   event: string
   data: string

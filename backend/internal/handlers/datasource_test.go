@@ -204,6 +204,21 @@ func TestDataSourceHandler_TestConnection_InvalidUUID(t *testing.T) {
 	}
 }
 
+func TestDataSourceHandler_TestConnectionDraft_InvalidOrgID(t *testing.T) {
+	handler := &DataSourceHandler{pool: nil}
+
+	body := bytes.NewBufferString(`{"type":"prometheus","url":"http://localhost:9090"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/orgs/invalid/datasources/test", body)
+	req.SetPathValue("orgId", "not-a-uuid")
+	rr := httptest.NewRecorder()
+
+	handler.TestConnectionDraft(rr, req)
+
+	if rr.Code != http.StatusUnauthorized {
+		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, rr.Code)
+	}
+}
+
 func TestDataSourceHandler_List_InvalidOrgID(t *testing.T) {
 	handler := &DataSourceHandler{pool: nil}
 

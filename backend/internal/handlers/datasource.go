@@ -558,6 +558,102 @@ func (h *DataSourceHandler) Query(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
+// TestConnectionDraft tests datasource connectivity against unsaved configuration.
+func (h *DataSourceHandler) TestConnectionDraft(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	orgID, err := uuid.Parse(r.PathValue("orgId"))
+	if err != nil {
+		http.Error(w, `{"error":"invalid organization id"}`, http.StatusBadRequest)
+		return
+	}
+
+	var req models.CreateDataSourceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	if !req.Type.Valid() {
+		http.Error(w, `{"error":"invalid datasource type, must be one of: prometheus, loki, victorialogs, victoriametrics, tempo, victoriatraces, clickhouse, cloudwatch, elasticsearch"}`, http.StatusBadRequest)
+		return
+	}
+
+	datasourceURL := strings.TrimSpace(req.URL)
+	if datasourceURL == "" {
+		http.Error(w, `{"error":"url is required"}`, http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	defer cancel()
+
+	role, err := h.checkOrgMembership(ctx, userID, orgID)
+	if err != nil {
+		http.Error(w, `{"error":"not a member of this organization"}`, http.StatusForbidden)
+		return
+	}
+	if role != "admin" {
+		http.Error(w, `{"error":"only admins can test datasource connections"}`, http.StatusForbidden)
+		return
+	}
+
+	authType := "none"
+	if req.AuthType != nil {
+		authType = *req.AuthType
+	}
+
+	requestDatasource := models.DataSource{
+		OrganizationID: orgID,
+		Name:           strings.TrimSpace(req.Name),
+		Type:           req.Type,
+		URL:            datasourceURL,
+		AuthType:       authType,
+		AuthConfig:     req.AuthConfig,
+	}
+
+	if err := datasource.TestConnection(ctx, requestDatasource); err != nil {
+		analytics.Track(r.Context(), analytics.Event{
+			DistinctID: userID.String(),
+			Name:       "datasource_connection_draft_test_failed",
+			OptOut:     analytics.RequestOptedOut(r),
+			Properties: map[string]any{
+				"user_id":         userID.String(),
+				"organization_id": orgID.String(),
+				"datasource_type": req.Type,
+				"error":           err.Error(),
+			},
+		})
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadGateway)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "connection test failed: " + err.Error()})
+		return
+	}
+
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "datasource_connection_draft_test_succeeded",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id":         userID.String(),
+			"organization_id": orgID.String(),
+			"datasource_type": req.Type,
+		},
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(struct {
+		Status string `json:"status"`
+	}{
+		Status: "success",
+	})
+}
+
 // TestConnection tests datasource connectivity and auth configuration.
 func (h *DataSourceHandler) TestConnection(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())

@@ -156,6 +156,28 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/app/datasources/new',
+    name: 'datasource-create',
+    component: () => import('../views/DataSourceCreateView.vue'),
+    alias: '/datasources/new',
+    meta: {
+      appLayout: 'app',
+      title: 'Add Data Source | Dash',
+      description: 'Configure and test a datasource before saving it to your organization.',
+    },
+  },
+  {
+    path: '/app/datasources/:id/edit',
+    name: 'datasource-edit',
+    component: () => import('../views/DataSourceCreateView.vue'),
+    alias: '/datasources/:id/edit',
+    meta: {
+      appLayout: 'app',
+      title: 'Edit Data Source | Dash',
+      description: 'Update and validate datasource settings before saving changes.',
+    },
+  },
+  {
     path: '/app/settings/privacy',
     name: 'privacy-settings',
     component: () => import('../views/PrivacySettingsView.vue'),

@@ -185,6 +185,7 @@ func main() {
 
 	// Multi-source datasource routes
 	dsHandler := handlers.NewDataSourceHandler(pool)
+	mux.HandleFunc("POST /api/orgs/{orgId}/datasources/test", auth.RequireAuth(jwtManager, dsHandler.TestConnectionDraft))
 	mux.HandleFunc("POST /api/orgs/{orgId}/datasources", auth.RequireAuth(jwtManager, dsHandler.Create))
 	mux.HandleFunc("GET /api/orgs/{orgId}/datasources", auth.RequireAuth(jwtManager, dsHandler.List))
 	mux.HandleFunc("GET /api/datasources/{id}", auth.RequireAuth(jwtManager, dsHandler.Get))

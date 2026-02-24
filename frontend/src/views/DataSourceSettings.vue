@@ -1,11 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
-import { Plus, Trash2, Pencil, Database, X, Check, ExternalLink, HeartPulse, CircleAlert, Loader2 } from 'lucide-vue-next'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import {
+  Check,
+  CircleAlert,
+  Database,
+  ExternalLink,
+  HeartPulse,
+  Loader2,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-vue-next'
 import { useOrganization } from '../composables/useOrganization'
 import { useDatasource } from '../composables/useDatasource'
 import { testDataSourceConnection } from '../api/datasources'
-import type { DataSource, DataSourceType, CreateDataSourceRequest } from '../types/datasource'
-import { dataSourceTypeLabels, isTracingType } from '../types/datasource'
+import type { DataSource, DataSourceType } from '../types/datasource'
+import { dataSourceTypeLabels } from '../types/datasource'
 import prometheusLogo from '../assets/datasources/prometheus-logo.svg'
 import lokiLogo from '../assets/datasources/loki-logo.svg'
 import victoriaMetricsLogo from '../assets/datasources/victoriametrics-logo.svg'
@@ -16,49 +27,13 @@ import clickhouseLogo from '../assets/datasources/clickhouse-logo.svg'
 import cloudwatchLogo from '../assets/datasources/cloudwatch-logo.svg'
 import elasticsearchLogo from '../assets/datasources/elasticsearch-logo.svg'
 
+const router = useRouter()
 const { currentOrg } = useOrganization()
-const {
-  datasources,
-  loading,
-  error,
-  fetchDatasources,
-  addDatasource,
-  editDatasource,
-  removeDatasource,
-} = useDatasource()
+const { datasources, loading, error, fetchDatasources, removeDatasource } = useDatasource()
 
-const showModal = ref(false)
-const editingDs = ref<DataSource | null>(null)
-
-// Form state
-const formName = ref('')
-const formType = ref<DataSourceType>('prometheus')
-const formUrl = ref('')
-const formIsDefault = ref(false)
-const formAuthType = ref<'none' | 'basic' | 'bearer' | 'api_key'>('none')
-const formBasicUsername = ref('')
-const formBasicPassword = ref('')
-const formBearerToken = ref('')
-const formApiKeyHeader = ref('X-API-Key')
-const formApiKeyValue = ref('')
-const formDatabase = ref('')
-const formCloudWatchRegion = ref('')
-const formCloudWatchMetricNamespace = ref('')
-const formCloudWatchLogGroup = ref('')
-const formCloudWatchAccessKeyId = ref('')
-const formCloudWatchSecretAccessKey = ref('')
-const formCloudWatchSessionToken = ref('')
-const formElasticsearchIndex = ref('')
-const formElasticsearchTimestampField = ref('')
-const formElasticsearchMessageField = ref('')
-const formElasticsearchLevelField = ref('')
-const formError = ref<string | null>(null)
-const formLoading = ref(false)
 const testAllLoading = ref(false)
 const healthStatus = ref<Record<string, 'unknown' | 'checking' | 'healthy' | 'unhealthy'>>({})
 const healthErrors = ref<Record<string, string>>({})
-
-const isEditing = computed(() => !!editingDs.value)
 
 const dataSourceTypeLogos: Record<DataSourceType, string> = {
   prometheus: prometheusLogo,
@@ -72,348 +47,18 @@ const dataSourceTypeLogos: Record<DataSourceType, string> = {
   elasticsearch: elasticsearchLogo,
 }
 
-const isClickHouseType = computed(() => formType.value === 'clickhouse')
-const isCloudWatchType = computed(() => formType.value === 'cloudwatch')
-const isElasticsearchType = computed(() => formType.value === 'elasticsearch')
-const showAuthSettings = computed(() => (isTracingType(formType.value) || isClickHouseType.value || isElasticsearchType.value) && !isCloudWatchType.value)
+const canCreate = computed(() => !!currentOrg.value && currentOrg.value.role !== 'viewer')
 
-function openCreateModal() {
-  editingDs.value = null
-  formName.value = ''
-  formType.value = 'prometheus'
-  formUrl.value = ''
-  formIsDefault.value = false
-  resetAuthForm()
-  formError.value = null
-  showModal.value = true
+function openCreatePage() {
+  router.push('/app/datasources/new')
 }
 
-function openEditModal(ds: DataSource) {
-  editingDs.value = ds
-  formName.value = ds.name
-  formType.value = ds.type
-  formUrl.value = ds.url
-  formIsDefault.value = ds.is_default
-  hydrateAuthForm(ds)
-  formError.value = null
-  showModal.value = true
+function openEditPage(dsId: string) {
+  router.push(`/app/datasources/${dsId}/edit`)
 }
 
-function closeModal() {
-  showModal.value = false
-  editingDs.value = null
-}
-
-function resetAuthForm() {
-  formAuthType.value = 'none'
-  formBasicUsername.value = ''
-  formBasicPassword.value = ''
-  formBearerToken.value = ''
-  formApiKeyHeader.value = 'X-API-Key'
-  formApiKeyValue.value = ''
-  formDatabase.value = ''
-  formCloudWatchRegion.value = ''
-  formCloudWatchMetricNamespace.value = ''
-  formCloudWatchLogGroup.value = ''
-  formCloudWatchAccessKeyId.value = ''
-  formCloudWatchSecretAccessKey.value = ''
-  formCloudWatchSessionToken.value = ''
-  formElasticsearchIndex.value = ''
-  formElasticsearchTimestampField.value = ''
-  formElasticsearchMessageField.value = ''
-  formElasticsearchLevelField.value = ''
-}
-
-function hydrateAuthForm(ds: DataSource) {
-  resetAuthForm()
-
-  const authType = (ds.auth_type || 'none') as 'none' | 'basic' | 'bearer' | 'api_key'
-  formAuthType.value = authType
-
-  const authConfig = ds.auth_config || {}
-  const username = authConfig.username
-  const password = authConfig.password
-  const token = authConfig.token
-  const header = authConfig.header
-  const value = authConfig.value
-  const database = authConfig.database
-  const region = authConfig.region
-  const metricNamespace = authConfig.metric_namespace
-  const logGroup = authConfig.log_group
-  const accessKeyId = authConfig.access_key_id
-  const secretAccessKey = authConfig.secret_access_key
-  const sessionToken = authConfig.session_token
-  const index = authConfig.index
-  const timeField = authConfig.time_field
-  const messageField = authConfig.message_field
-  const levelField = authConfig.level_field
-
-  if (typeof username === 'string') {
-    formBasicUsername.value = username
-  }
-  if (typeof password === 'string') {
-    formBasicPassword.value = password
-  }
-  if (typeof token === 'string') {
-    formBearerToken.value = token
-  }
-  if (typeof header === 'string' && header.trim() !== '') {
-    formApiKeyHeader.value = header
-  }
-  if (typeof value === 'string') {
-    formApiKeyValue.value = value
-  }
-  if (typeof database === 'string') {
-    formDatabase.value = database
-  }
-  if (typeof region === 'string') {
-    formCloudWatchRegion.value = region
-  }
-  if (typeof metricNamespace === 'string') {
-    formCloudWatchMetricNamespace.value = metricNamespace
-  }
-  if (typeof logGroup === 'string') {
-    formCloudWatchLogGroup.value = logGroup
-  }
-  if (typeof accessKeyId === 'string') {
-    formCloudWatchAccessKeyId.value = accessKeyId
-  }
-  if (typeof secretAccessKey === 'string') {
-    formCloudWatchSecretAccessKey.value = secretAccessKey
-  }
-  if (typeof sessionToken === 'string') {
-    formCloudWatchSessionToken.value = sessionToken
-  }
-  if (typeof index === 'string') {
-    formElasticsearchIndex.value = index
-  }
-  if (typeof timeField === 'string') {
-    formElasticsearchTimestampField.value = timeField
-  }
-  if (typeof messageField === 'string') {
-    formElasticsearchMessageField.value = messageField
-  }
-  if (typeof levelField === 'string') {
-    formElasticsearchLevelField.value = levelField
-  }
-}
-
-function getHealthStatus(dsId: string) {
-  return healthStatus.value[dsId] || 'unknown'
-}
-
-function getHealthLabel(dsId: string) {
-  const status = getHealthStatus(dsId)
-  if (status === 'healthy') return 'Healthy'
-  if (status === 'unhealthy') return 'Unhealthy'
-  if (status === 'checking') return 'Checking...'
-  return 'Unknown'
-}
-
-async function testDatasource(ds: DataSource) {
-  healthStatus.value[ds.id] = 'checking'
-  delete healthErrors.value[ds.id]
-
-  try {
-    await testDataSourceConnection(ds.id)
-
-    healthStatus.value[ds.id] = 'healthy'
-  } catch (e) {
-    healthStatus.value[ds.id] = 'unhealthy'
-    healthErrors.value[ds.id] = e instanceof Error ? e.message : 'Connection test failed'
-  }
-}
-
-async function testAllDatasources() {
-  testAllLoading.value = true
-  try {
-    for (const ds of datasources.value) {
-      await testDatasource(ds)
-    }
-  } finally {
-    testAllLoading.value = false
-  }
-}
-
-function buildAuthPayload() {
-  if (isCloudWatchType.value) {
-    if (!formCloudWatchRegion.value.trim()) {
-      throw new Error('CloudWatch region is required')
-    }
-
-    const cloudWatchConfig: Record<string, unknown> = {
-      region: formCloudWatchRegion.value.trim(),
-    }
-
-    const metricNamespace = formCloudWatchMetricNamespace.value.trim()
-    if (metricNamespace) {
-      cloudWatchConfig.metric_namespace = metricNamespace
-    }
-
-    const logGroup = formCloudWatchLogGroup.value.trim()
-    if (logGroup) {
-      cloudWatchConfig.log_group = logGroup
-    }
-
-    const accessKeyId = formCloudWatchAccessKeyId.value.trim()
-    const secretAccessKey = formCloudWatchSecretAccessKey.value.trim()
-    if (accessKeyId || secretAccessKey) {
-      if (!accessKeyId || !secretAccessKey) {
-        throw new Error('CloudWatch access key ID and secret access key must both be provided')
-      }
-      cloudWatchConfig.access_key_id = accessKeyId
-      cloudWatchConfig.secret_access_key = secretAccessKey
-    }
-
-    const sessionToken = formCloudWatchSessionToken.value.trim()
-    if (sessionToken) {
-      cloudWatchConfig.session_token = sessionToken
-    }
-
-    return {
-      auth_type: 'none' as const,
-      auth_config: cloudWatchConfig,
-    }
-  }
-
-  if (!showAuthSettings.value || formAuthType.value === 'none') {
-    return {
-      auth_type: 'none' as const,
-      auth_config: undefined,
-    }
-  }
-
-  if (formAuthType.value === 'basic') {
-    if (!formBasicUsername.value.trim()) {
-      throw new Error('Basic auth username is required')
-    }
-
-    return {
-      auth_type: 'basic' as const,
-      auth_config: {
-        username: formBasicUsername.value.trim(),
-        password: formBasicPassword.value,
-      },
-    }
-  }
-
-  if (formAuthType.value === 'bearer') {
-    if (!formBearerToken.value.trim()) {
-      throw new Error('Bearer token is required')
-    }
-
-    return {
-      auth_type: 'bearer' as const,
-      auth_config: {
-        token: formBearerToken.value.trim(),
-      },
-    }
-  }
-
-  if (!formApiKeyValue.value.trim()) {
-    throw new Error('API key value is required')
-  }
-
-  return {
-    auth_type: 'api_key' as const,
-    auth_config: {
-      header: formApiKeyHeader.value.trim() || 'X-API-Key',
-      value: formApiKeyValue.value.trim(),
-    },
-  }
-}
-
-async function handleSubmit() {
-  if (!formName.value.trim()) {
-    formError.value = 'Name is required'
-    return
-  }
-
-  let submitURL = formUrl.value.trim()
-  if (isCloudWatchType.value && !submitURL && formCloudWatchRegion.value.trim()) {
-    submitURL = `https://monitoring.${formCloudWatchRegion.value.trim()}.amazonaws.com`
-    formUrl.value = submitURL
-  }
-
-  if (!submitURL) {
-    formError.value = 'URL is required'
-    return
-  }
-
-  formLoading.value = true
-  formError.value = null
-
-  try {
-    const authPayload = buildAuthPayload()
-    const authConfig: Record<string, unknown> = authPayload.auth_config
-      ? { ...authPayload.auth_config }
-      : {}
-
-    if (isClickHouseType.value) {
-      const database = formDatabase.value.trim()
-      if (database) {
-        authConfig.database = database
-      }
-    }
-
-    if (isElasticsearchType.value) {
-      const index = formElasticsearchIndex.value.trim()
-      if (index) {
-        authConfig.index = index
-      }
-
-      const timeField = formElasticsearchTimestampField.value.trim()
-      if (timeField) {
-        authConfig.time_field = timeField
-      }
-
-      const messageField = formElasticsearchMessageField.value.trim()
-      if (messageField) {
-        authConfig.message_field = messageField
-      }
-
-      const levelField = formElasticsearchLevelField.value.trim()
-      if (levelField) {
-        authConfig.level_field = levelField
-      }
-    }
-
-    const finalAuthConfig = Object.keys(authConfig).length > 0 ? authConfig : undefined
-
-    if (isEditing.value && editingDs.value) {
-      await editDatasource(editingDs.value.id, {
-        name: formName.value.trim(),
-        type: formType.value,
-        url: submitURL,
-        is_default: formIsDefault.value,
-        auth_type: authPayload.auth_type,
-        auth_config: finalAuthConfig,
-      })
-    } else if (currentOrg.value) {
-      await addDatasource(currentOrg.value.id, {
-        name: formName.value.trim(),
-        type: formType.value,
-        url: submitURL,
-        is_default: formIsDefault.value,
-        auth_type: authPayload.auth_type,
-        auth_config: finalAuthConfig,
-      } as CreateDataSourceRequest)
-    }
-    closeModal()
-  } catch (e) {
-    formError.value = e instanceof Error ? e.message : 'Operation failed'
-  } finally {
-    formLoading.value = false
-  }
-}
-
-async function handleDelete(ds: DataSource) {
-  if (!confirm(`Delete datasource "${ds.name}"? This cannot be undone.`)) return
-  try {
-    await removeDatasource(ds.id)
-  } catch {
-    // error is set by composable
-  }
+function getTypeLogo(type_: DataSourceType): string {
+  return dataSourceTypeLogos[type_]
 }
 
 function getTypeColor(type_: DataSourceType): string {
@@ -439,8 +84,49 @@ function getTypeColor(type_: DataSourceType): string {
   }
 }
 
-function getTypeLogo(type_: DataSourceType): string {
-  return dataSourceTypeLogos[type_]
+function getHealthStatus(dsId: string) {
+  return healthStatus.value[dsId] || 'unknown'
+}
+
+function getHealthLabel(dsId: string) {
+  const status = getHealthStatus(dsId)
+  if (status === 'healthy') return 'Healthy'
+  if (status === 'unhealthy') return 'Unhealthy'
+  if (status === 'checking') return 'Checking...'
+  return 'Unknown'
+}
+
+async function testDatasource(ds: DataSource) {
+  healthStatus.value[ds.id] = 'checking'
+  delete healthErrors.value[ds.id]
+
+  try {
+    await testDataSourceConnection(ds.id)
+    healthStatus.value[ds.id] = 'healthy'
+  } catch (e) {
+    healthStatus.value[ds.id] = 'unhealthy'
+    healthErrors.value[ds.id] = e instanceof Error ? e.message : 'Connection test failed'
+  }
+}
+
+async function testAllDatasources() {
+  testAllLoading.value = true
+  try {
+    for (const ds of datasources.value) {
+      await testDatasource(ds)
+    }
+  } finally {
+    testAllLoading.value = false
+  }
+}
+
+async function handleDelete(ds: DataSource) {
+  if (!confirm(`Delete datasource "${ds.name}"? This cannot be undone.`)) return
+  try {
+    await removeDatasource(ds.id)
+  } catch {
+    // error is set by composable
+  }
 }
 
 onMounted(() => {
@@ -457,37 +143,6 @@ watch(
     }
   },
 )
-
-watch(formType, (type_) => {
-  if (type_ !== 'clickhouse') {
-    formDatabase.value = ''
-  }
-
-  if (type_ !== 'elasticsearch') {
-    formElasticsearchIndex.value = ''
-    formElasticsearchTimestampField.value = ''
-    formElasticsearchMessageField.value = ''
-    formElasticsearchLevelField.value = ''
-  }
-
-  if (type_ === 'cloudwatch') {
-    formAuthType.value = 'none'
-    if (!formCloudWatchRegion.value.trim()) {
-      formCloudWatchRegion.value = 'us-east-1'
-    }
-    if (!formUrl.value.trim()) {
-      formUrl.value = `https://monitoring.${formCloudWatchRegion.value}.amazonaws.com`
-    }
-    return
-  }
-
-  formCloudWatchRegion.value = ''
-  formCloudWatchMetricNamespace.value = ''
-  formCloudWatchLogGroup.value = ''
-  formCloudWatchAccessKeyId.value = ''
-  formCloudWatchSecretAccessKey.value = ''
-  formCloudWatchSessionToken.value = ''
-})
 </script>
 
 <template>
@@ -507,7 +162,7 @@ watch(formType, (type_) => {
           <HeartPulse v-else :size="16" />
           {{ testAllLoading ? 'Testing...' : 'Test All' }}
         </button>
-        <button class="btn btn-primary btn-header" @click="openCreateModal">
+        <button class="btn btn-primary btn-header" :disabled="!canCreate" @click="openCreatePage">
           <Plus :size="16" />
           Add Data Source
         </button>
@@ -525,7 +180,7 @@ watch(formType, (type_) => {
       <Database :size="48" class="empty-icon" />
       <h3>No data sources configured</h3>
       <p>Add a data source to start querying your monitoring systems.</p>
-      <button class="btn btn-primary" @click="openCreateModal">
+      <button class="btn btn-primary" :disabled="!canCreate" @click="openCreatePage">
         <Plus :size="16" />
         Add Data Source
       </button>
@@ -555,7 +210,7 @@ watch(formType, (type_) => {
             </span>
           </div>
           <div class="card-actions">
-            <button class="btn-icon" @click="openEditModal(ds)" title="Edit">
+            <button class="btn-icon" @click="openEditPage(ds.id)" title="Edit">
               <Pencil :size="16" />
             </button>
             <button class="btn-icon btn-icon-danger" @click="handleDelete(ds)" title="Delete">
@@ -596,282 +251,6 @@ watch(formType, (type_) => {
           </div>
           <div v-if="healthErrors[ds.id]" class="health-error">{{ healthErrors[ds.id] }}</div>
         </div>
-      </div>
-    </div>
-
-    <!-- Create/Edit Modal -->
-    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal">
-        <header class="modal-header">
-          <h2>{{ isEditing ? 'Edit Data Source' : 'Add Data Source' }}</h2>
-          <button class="btn-close" @click="closeModal">
-            <X :size="20" />
-          </button>
-        </header>
-
-        <form @submit.prevent="handleSubmit">
-          <div class="form-group">
-            <label for="ds-name">Name <span class="required">*</span></label>
-            <input
-              id="ds-name"
-              v-model="formName"
-              type="text"
-              placeholder="My Prometheus"
-              :disabled="formLoading"
-              autocomplete="off"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="ds-type">Type</label>
-            <select id="ds-type" v-model="formType" :disabled="formLoading">
-              <option value="prometheus">Prometheus (PromQL)</option>
-              <option value="victoriametrics">VictoriaMetrics (PromQL)</option>
-              <option value="loki">Loki (LogQL)</option>
-              <option value="victorialogs">Victoria Logs (LogsQL)</option>
-              <option value="tempo">Tempo (Tracing)</option>
-              <option value="victoriatraces">VictoriaTraces (Tracing)</option>
-              <option value="clickhouse">ClickHouse (SQL)</option>
-              <option value="cloudwatch">CloudWatch (Metrics + Logs)</option>
-              <option value="elasticsearch">Elasticsearch (ELK)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="ds-url">URL <span class="required">*</span></label>
-            <input
-              id="ds-url"
-              v-model="formUrl"
-              type="text"
-              placeholder="http://localhost:9090"
-              :disabled="formLoading"
-              autocomplete="off"
-            />
-          </div>
-
-          <div v-if="isCloudWatchType" class="form-cloudwatch-section">
-            <div class="auth-grid">
-              <div class="form-group">
-                <label for="ds-cloudwatch-region">AWS Region <span class="required">*</span></label>
-                <input
-                  id="ds-cloudwatch-region"
-                  v-model="formCloudWatchRegion"
-                  type="text"
-                  placeholder="us-east-1"
-                  :disabled="formLoading"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="form-group">
-                <label for="ds-cloudwatch-namespace">Metric Namespace (optional)</label>
-                <input
-                  id="ds-cloudwatch-namespace"
-                  v-model="formCloudWatchMetricNamespace"
-                  type="text"
-                  placeholder="AWS/ECS"
-                  :disabled="formLoading"
-                  autocomplete="off"
-                />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="ds-cloudwatch-log-group">Default Log Group (optional)</label>
-              <input
-                id="ds-cloudwatch-log-group"
-                v-model="formCloudWatchLogGroup"
-                type="text"
-                placeholder="/aws/lambda/my-function"
-                :disabled="formLoading"
-                autocomplete="off"
-              />
-            </div>
-
-            <div class="auth-grid">
-              <div class="form-group">
-                <label for="ds-cloudwatch-access-key">Access Key ID (optional)</label>
-                <input
-                  id="ds-cloudwatch-access-key"
-                  v-model="formCloudWatchAccessKeyId"
-                  type="text"
-                  :disabled="formLoading"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="form-group">
-                <label for="ds-cloudwatch-secret-key">Secret Access Key (optional)</label>
-                <input
-                  id="ds-cloudwatch-secret-key"
-                  v-model="formCloudWatchSecretAccessKey"
-                  type="password"
-                  :disabled="formLoading"
-                  autocomplete="new-password"
-                />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="ds-cloudwatch-session-token">Session Token (optional)</label>
-              <input
-                id="ds-cloudwatch-session-token"
-                v-model="formCloudWatchSessionToken"
-                type="password"
-                :disabled="formLoading"
-                autocomplete="new-password"
-              />
-            </div>
-          </div>
-
-          <div v-if="isClickHouseType" class="form-group">
-            <label for="ds-database">Database (optional)</label>
-            <input
-              id="ds-database"
-              v-model="formDatabase"
-              type="text"
-              placeholder="default"
-              :disabled="formLoading"
-              autocomplete="off"
-            />
-          </div>
-
-          <div v-if="isElasticsearchType" class="form-elasticsearch-section">
-            <div class="form-group">
-              <label for="ds-elasticsearch-index">Default Index Pattern (optional)</label>
-              <input
-                id="ds-elasticsearch-index"
-                v-model="formElasticsearchIndex"
-                type="text"
-                placeholder="logs-*"
-                :disabled="formLoading"
-                autocomplete="off"
-              />
-            </div>
-
-            <div class="auth-grid">
-              <div class="form-group">
-                <label for="ds-elasticsearch-time-field">Timestamp Field (optional)</label>
-                <input
-                  id="ds-elasticsearch-time-field"
-                  v-model="formElasticsearchTimestampField"
-                  type="text"
-                  placeholder="@timestamp"
-                  :disabled="formLoading"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="form-group">
-                <label for="ds-elasticsearch-message-field">Message Field (optional)</label>
-                <input
-                  id="ds-elasticsearch-message-field"
-                  v-model="formElasticsearchMessageField"
-                  type="text"
-                  placeholder="message"
-                  :disabled="formLoading"
-                  autocomplete="off"
-                />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="ds-elasticsearch-level-field">Level Field (optional)</label>
-              <input
-                id="ds-elasticsearch-level-field"
-                v-model="formElasticsearchLevelField"
-                type="text"
-                placeholder="level"
-                :disabled="formLoading"
-                autocomplete="off"
-              />
-            </div>
-          </div>
-
-          <div v-if="showAuthSettings" class="form-auth-section">
-            <div class="form-group">
-              <label for="ds-auth-type">Authentication</label>
-              <select id="ds-auth-type" v-model="formAuthType" :disabled="formLoading">
-                <option value="none">None</option>
-                <option value="basic">Basic auth</option>
-                <option value="bearer">Bearer token</option>
-                <option value="api_key">API key</option>
-              </select>
-            </div>
-
-            <div v-if="formAuthType === 'basic'" class="auth-grid">
-              <div class="form-group">
-                <label for="ds-basic-username">Username <span class="required">*</span></label>
-                <input
-                  id="ds-basic-username"
-                  v-model="formBasicUsername"
-                  type="text"
-                  :disabled="formLoading"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="form-group">
-                <label for="ds-basic-password">Password</label>
-                <input
-                  id="ds-basic-password"
-                  v-model="formBasicPassword"
-                  type="password"
-                  :disabled="formLoading"
-                  autocomplete="new-password"
-                />
-              </div>
-            </div>
-
-            <div v-else-if="formAuthType === 'bearer'" class="form-group">
-              <label for="ds-bearer-token">Bearer token <span class="required">*</span></label>
-              <input
-                id="ds-bearer-token"
-                v-model="formBearerToken"
-                type="password"
-                :disabled="formLoading"
-                autocomplete="new-password"
-              />
-            </div>
-
-            <div v-else-if="formAuthType === 'api_key'" class="auth-grid">
-              <div class="form-group">
-                <label for="ds-api-header">Header name</label>
-                <input
-                  id="ds-api-header"
-                  v-model="formApiKeyHeader"
-                  type="text"
-                  :disabled="formLoading"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="form-group">
-                <label for="ds-api-value">API key <span class="required">*</span></label>
-                <input
-                  id="ds-api-value"
-                  v-model="formApiKeyValue"
-                  type="password"
-                  :disabled="formLoading"
-                  autocomplete="new-password"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="formIsDefault" :disabled="formLoading" />
-              Set as default data source
-            </label>
-          </div>
-
-          <div v-if="formError" class="error-message">{{ formError }}</div>
-
-          <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" @click="closeModal" :disabled="formLoading">
-              Cancel
-            </button>
-            <button type="submit" class="btn btn-primary" :disabled="formLoading">
-              {{ formLoading ? 'Saving...' : isEditing ? 'Save Changes' : 'Add Data Source' }}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   </div>
@@ -976,7 +355,9 @@ watch(formType, (type_) => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .datasource-grid {
@@ -1179,10 +560,6 @@ watch(formType, (type_) => {
     justify-content: flex-start;
     flex-wrap: wrap;
   }
-
-  .auth-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .btn-icon {
@@ -1208,163 +585,6 @@ watch(formType, (type_) => {
 .btn-icon-danger:hover {
   background: rgba(251, 113, 133, 0.15);
   color: var(--accent-danger);
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(3, 10, 18, 0.76);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal {
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
-  border-radius: 14px;
-  width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.btn-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-close:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-form {
-  padding: 1.5rem;
-}
-
-.form-group {
-  margin-bottom: 1.25rem;
-}
-
-.form-auth-section,
-.form-cloudwatch-section,
-.form-elasticsearch-section {
-  padding: 0.85rem 0.95rem 0.1rem;
-  margin-bottom: 1.1rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  background: rgba(24, 37, 54, 0.45);
-}
-
-.auth-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.required {
-  color: var(--accent-danger);
-}
-
-.form-group input[type="text"],
-.form-group input[type="password"],
-.form-group select {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-group input::placeholder {
-  color: var(--text-tertiary);
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: var(--focus-ring);
-}
-
-.form-group select {
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  padding-right: 2.5rem;
-}
-
-.checkbox-label {
-  display: flex !important;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-}
-
-.error-message {
-  padding: 0.75rem 1rem;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  border-radius: 6px;
-  color: var(--accent-danger);
-  font-size: 0.875rem;
-  margin-bottom: 1.25rem;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
 }
 
 .btn {
