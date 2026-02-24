@@ -369,7 +369,7 @@ function exportSpanJson() {
 
 .status-pill {
   border-radius: 999px;
-  border: 1px solid rgba(52, 211, 153, 0.45);
+  border: 1px solid rgba(99, 102, 241, 0.45);
   background: rgba(16, 185, 129, 0.15);
   color: #9bf5d2;
   font-size: 0.69rem;
@@ -401,14 +401,14 @@ function exportSpanJson() {
 }
 
 .action-button:hover {
-  border-color: rgba(56, 189, 248, 0.42);
+  border-color: rgba(245, 158, 11, 0.42);
   color: #d5efff;
 }
 
 .feedback-message {
   margin: -0.2rem 0 0;
   font-size: 0.74rem;
-  color: #7dd3fc;
+  color: #FCD34D;
 }
 
 .details-section {
@@ -472,7 +472,7 @@ code {
 }
 
 .relation-link {
-  border: 1px solid rgba(56, 189, 248, 0.35);
+  border: 1px solid rgba(245, 158, 11, 0.35);
   border-radius: 8px;
   background: rgba(8, 24, 38, 0.82);
   color: #d5efff;
@@ -483,7 +483,7 @@ code {
 }
 
 .relation-link:hover {
-  border-color: rgba(125, 211, 252, 0.6);
+  border-color: rgba(252, 211, 77, 0.6);
 }
 
 .relation-empty,
@@ -514,7 +514,7 @@ code {
 
 .token-key {
   color: #bae6fd;
-  background: rgba(14, 165, 233, 0.12);
+  background: rgba(217, 119, 6, 0.12);
   border-radius: 6px;
   padding: 0.12rem 0.3rem;
 }

@@ -169,7 +169,7 @@ function sortIndicator(field: TraceSortField): string {
 }
 
 .trace-row:hover {
-  background: rgba(56, 189, 248, 0.08);
+  background: rgba(245, 158, 11, 0.08);
 }
 
 .trace-id-cell {

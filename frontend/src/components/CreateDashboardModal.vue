@@ -505,7 +505,7 @@ form {
 
 .mode-option.active {
   border-color: var(--accent-primary);
-  background: rgba(56, 189, 248, 0.12);
+  background: rgba(245, 158, 11, 0.12);
   color: var(--text-primary);
 }
 
@@ -637,9 +637,9 @@ form {
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
-  border-color: var(--border-primary);
-  color: var(--text-primary);
+  background: transparent;
+  border-color: #F59E0B;
+  color: #FCD34D;
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -649,7 +649,7 @@ form {
 
 .btn-primary {
   background: var(--accent-primary);
-  color: white;
+  color: #1a0f00;
 }
 
 .btn-primary:hover:not(:disabled) {

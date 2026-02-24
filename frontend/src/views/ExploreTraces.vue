@@ -1006,9 +1006,9 @@ onUnmounted(() => {
 .mode-badge {
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid rgba(14, 165, 233, 0.38);
-  background: rgba(14, 165, 233, 0.14);
-  color: #bde9ff;
+  border: 1px solid rgba(217, 119, 6, 0.38);
+  background: rgba(217, 119, 6, 0.14);
+  color: #FCD34D;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1166,7 +1166,7 @@ onUnmounted(() => {
 }
 
 .datasource-option.selected {
-  background: rgba(56, 189, 248, 0.14);
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .datasource-option-logo {
@@ -1266,8 +1266,8 @@ onUnmounted(() => {
 }
 
 .btn-find-trace {
-  background: rgba(56, 189, 248, 0.16);
-  border-color: rgba(56, 189, 248, 0.28);
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.28);
   color: #ccefff;
 }
 
@@ -1368,13 +1368,13 @@ onUnmounted(() => {
 }
 
 .trace-result-row:hover {
-  border-color: rgba(56, 189, 248, 0.42);
+  border-color: rgba(245, 158, 11, 0.42);
   background: rgba(18, 29, 45, 0.9);
 }
 
 .trace-result-row.active {
-  border-color: rgba(56, 189, 248, 0.52);
-  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(245, 158, 11, 0.52);
+  background: rgba(245, 158, 11, 0.12);
 }
 
 .trace-id {

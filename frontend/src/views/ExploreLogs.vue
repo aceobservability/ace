@@ -1149,9 +1149,9 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 .mode-badge {
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid rgba(56, 189, 248, 0.38);
-  background: rgba(56, 189, 248, 0.14);
-  color: #bde9ff;
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  background: rgba(245, 158, 11, 0.14);
+  color: #FCD34D;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1304,7 +1304,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 }
 
 .datasource-option.selected {
-  background: rgba(56, 189, 248, 0.14);
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .datasource-option-logo {
@@ -1548,10 +1548,10 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1.1rem;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 10px;
-  color: #bde9ff;
+  color: #FCD34D;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -1560,8 +1560,8 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 }
 
 .btn-live:hover:not(:disabled) {
-  background: rgba(56, 189, 248, 0.2);
-  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
 }
 
 .btn-live.active {

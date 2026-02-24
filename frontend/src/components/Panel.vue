@@ -575,7 +575,7 @@ function handleOpenTrace(traceId: string) {
 }
 
 .panel:hover {
-  border-color: rgba(56, 189, 248, 0.34);
+  border-color: rgba(245, 158, 11, 0.34);
   box-shadow: var(--shadow-md);
 }
 
@@ -618,7 +618,7 @@ function handleOpenTrace(traceId: string) {
 
 .panel-action-btn:hover {
   background: rgba(31, 49, 73, 0.8);
-  border-color: rgba(125, 211, 252, 0.2);
+  border-color: rgba(252, 211, 77, 0.2);
   color: var(--text-primary);
 }
 
@@ -694,8 +694,8 @@ function handleOpenTrace(traceId: string) {
 
 .btn-primary {
   padding: 8px 16px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  color: white;
+  background: #F59E0B;
+  color: #1a0f00;
   border: none;
   border-radius: 10px;
   font-size: 14px;

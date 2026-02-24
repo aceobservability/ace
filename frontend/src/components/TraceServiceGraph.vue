@@ -408,7 +408,7 @@ function handleSelectEdge(edge: PositionedEdge) {
 }
 
 .node-circle.selected {
-  stroke: #38bdf8;
+  stroke: #F59E0B;
   stroke-width: 2.4;
 }
 

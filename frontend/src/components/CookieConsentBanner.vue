@@ -52,7 +52,7 @@ function openPrivacySettings() {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.9rem 1rem;
-  border: 1px solid rgba(125, 211, 252, 0.34);
+  border: 1px solid rgba(252, 211, 77, 0.34);
   border-radius: 12px;
   background: rgba(11, 20, 31, 0.96);
   box-shadow: var(--shadow-md);
@@ -99,15 +99,15 @@ function openPrivacySettings() {
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
-  border-color: var(--border-primary);
-  color: var(--text-primary);
+  background: transparent;
+  border-color: #F59E0B;
+  color: #FCD34D;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  border-color: rgba(125, 211, 252, 0.44);
-  color: white;
+  background: #F59E0B;
+  border-color: rgba(245, 158, 11, 0.44);
+  color: #1a0f00;
 }
 
 @media (max-width: 900px) {

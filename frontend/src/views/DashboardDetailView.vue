@@ -579,9 +579,9 @@ onUnmounted(() => {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  border-color: rgba(125, 211, 252, 0.4);
-  color: white;
+  background: #F59E0B;
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #1a0f00;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -589,9 +589,9 @@ onUnmounted(() => {
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
-  border-color: var(--border-primary);
-  color: var(--text-primary);
+  background: transparent;
+  border-color: #F59E0B;
+  color: #FCD34D;
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -656,7 +656,7 @@ onUnmounted(() => {
   justify-content: center;
   width: 120px;
   height: 120px;
-  background: linear-gradient(160deg, rgba(56, 189, 248, 0.14), rgba(52, 211, 153, 0.08));
+  background: linear-gradient(160deg, rgba(245, 158, 11, 0.14), rgba(99, 102, 241, 0.08));
   border: 1px solid var(--border-primary);
   border-radius: 16px;
   color: var(--text-tertiary);
@@ -763,7 +763,7 @@ onUnmounted(() => {
 }
 
 .vue-grid-item.vue-grid-placeholder {
-  background: rgba(56, 189, 248, 0.18);
+  background: rgba(245, 158, 11, 0.18);
   border: 2px dashed var(--accent-primary);
   border-radius: 8px;
 }

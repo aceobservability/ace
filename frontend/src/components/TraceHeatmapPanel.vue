@@ -241,8 +241,8 @@ function openTrace(traceId: string) {
 .heatmap-cell {
   min-height: 16px;
   border-radius: 4px;
-  border: 1px solid rgba(125, 211, 252, 0.12);
-  background: rgba(56, 189, 248, calc(0.08 + var(--cell-intensity) * 0.75));
+  border: 1px solid rgba(252, 211, 77, 0.12);
+  background: rgba(245, 158, 11, calc(0.08 + var(--cell-intensity) * 0.75));
 }
 
 .time-axis {
@@ -282,14 +282,14 @@ function openTrace(traceId: string) {
   justify-content: space-between;
   gap: 0.5rem;
   border: none;
-  background: rgba(56, 189, 248, 0.08);
+  background: rgba(245, 158, 11, 0.08);
   border-radius: 6px;
   padding: 0.35rem 0.5rem;
   cursor: pointer;
 }
 
 .trace-link:hover {
-  background: rgba(56, 189, 248, 0.16);
+  background: rgba(245, 158, 11, 0.16);
 }
 
 .trace-id {
