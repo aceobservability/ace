@@ -127,7 +127,7 @@ function sortIndicator(field: TraceSortField): string {
   </div>
 </template>
 
-<style scoped>
+<style>
 .trace-list-panel {
   height: 100%;
   overflow: auto;
@@ -157,7 +157,7 @@ function sortIndicator(field: TraceSortField): string {
 .sort-button {
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
@@ -165,7 +165,7 @@ function sortIndicator(field: TraceSortField): string {
 }
 
 .sort-button:hover {
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .trace-row:hover {
@@ -181,10 +181,10 @@ function sortIndicator(field: TraceSortField): string {
   width: 100%;
   border: none;
   background: transparent;
-  color: var(--accent-primary);
+  color: var(--color-accent);
   text-align: left;
   cursor: pointer;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   font-size: 0.75rem;
   white-space: nowrap;
   overflow: hidden;
@@ -197,7 +197,7 @@ function sortIndicator(field: TraceSortField): string {
 }
 
 .error-count.has-errors {
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-weight: 600;
 }
 </style>

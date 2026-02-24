@@ -114,7 +114,7 @@ const activeDatasource = computed(
 const isClickHouseDatasource = computed(() => activeDatasource.value?.type === 'clickhouse')
 
 function getTypeLogo(type_: DataSourceType): string {
-  return dataSourceTypeLogos[type_]
+  return dataSourceTypeLogos[type_] ?? ''
 }
 
 function toggleDatasourceMenu() {
@@ -242,7 +242,7 @@ function getTagValue(tags: Record<string, string> | undefined, keys: string[]): 
   for (const key of keys) {
     const normalizedKey = key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
     if (normalizedKey in byNormalizedName) {
-      const value = byNormalizedName[normalizedKey].trim()
+      const value = byNormalizedName[normalizedKey]!.trim()
       if (value) {
         return value
       }
@@ -602,7 +602,7 @@ watch(
       }
 
       const defaultDatasource = sources.find((ds) => ds.is_default)
-      selectedDatasourceId.value = defaultDatasource?.id || sources[0].id
+      selectedDatasourceId.value = defaultDatasource?.id || sources[0]!.id
     }
   },
   { immediate: true },
@@ -676,16 +676,16 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="explore-page">
-    <header class="explore-header">
-      <div class="header-title">
+  <div class="flex flex-col py-5 px-6 max-w-[1400px] mx-auto max-md:p-[0.9rem]">
+    <header class="flex justify-between items-center gap-4 mb-4 p-4 border border-border rounded-[14px] bg-surface-1 shadow-sm">
+      <div class="flex items-center gap-3">
         <h1>Explore</h1>
         <span class="mode-badge">Tracing</span>
       </div>
     </header>
 
-    <div class="explore-content">
-      <div class="query-section">
+    <div class="flex flex-col gap-4">
+      <div class="bg-surface-1 border border-border rounded-[14px] p-5 shadow-sm flex flex-col gap-4">
         <div class="query-context-row">
           <div class="datasource-row">
             <label>Data Source</label>
@@ -827,14 +827,14 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div class="results-section">
-        <div v-if="!hasTracingDatasources" class="empty-state">
+      <div class="bg-surface-1 border border-border rounded-[14px] p-5 shadow-sm min-h-[300px]">
+        <div v-if="!hasTracingDatasources" class="flex flex-col items-center justify-center p-12 text-center text-text-1">
           <p>No tracing datasource configured.</p>
           <p class="hint-text">Add a Tempo, VictoriaTraces, or ClickHouse datasource in Data Sources.</p>
         </div>
 
         <div v-else-if="isClickHouseDatasource" class="clickhouse-results-layout">
-          <div v-if="loadingSearch" class="loading-state">
+          <div v-if="loadingSearch" class="flex flex-col items-center justify-center p-12 gap-4 text-text-1">
             <Loader2 :size="18" class="icon-spin" />
             <span>Executing trace SQL...</span>
           </div>
@@ -843,7 +843,7 @@ onUnmounted(() => {
             <TraceListPanel :traces="traceSummaries" @open-trace="handleOpenTraceFromList" />
           </div>
 
-          <div v-else class="empty-state">
+          <div v-else class="flex flex-col items-center justify-center p-12 text-center text-text-1">
             <p>Run a ClickHouse SQL query to inspect traces.</p>
             <p class="hint-text">Expected columns include span_id, operation_name, service_name, start_time_unix_nano, and duration_nano.</p>
           </div>
@@ -891,7 +891,7 @@ onUnmounted(() => {
               <span v-if="activeTrace">{{ activeTrace.spans.length }} spans</span>
             </div>
 
-            <div v-if="loadingTrace" class="loading-state">
+            <div v-if="loadingTrace" class="flex flex-col items-center justify-center p-12 gap-4 text-text-1">
               <Loader2 :size="18" class="icon-spin" />
               <span>Loading trace...</span>
             </div>
@@ -956,7 +956,7 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <div v-else class="empty-state">
+            <div v-else class="flex flex-col items-center justify-center p-12 text-center text-text-1">
               <p>Select a trace result to view the waterfall timeline.</p>
               <p class="hint-text">You can search by service/time range or open a known trace ID.</p>
             </div>
@@ -967,7 +967,7 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .explore-page {
   display: flex;
   flex-direction: column;
@@ -980,9 +980,9 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 1rem;
   padding: 0.95rem 1.15rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: var(--surface-1);
+  background: var(--color-surface-1);
   box-shadow: var(--shadow-sm);
 }
 
@@ -998,8 +998,8 @@ onUnmounted(() => {
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  font-family: var(--font-mono);
-  color: var(--text-primary);
+  font-family: var(--font-family-mono);
+  color: var(--color-text-0);
   margin: 0;
 }
 
@@ -1026,8 +1026,8 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 1rem;
   padding: 1.2rem;
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   box-shadow: var(--shadow-sm);
 }
@@ -1055,7 +1055,7 @@ onUnmounted(() => {
 .filter-field span {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1066,8 +1066,8 @@ onUnmounted(() => {
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
   border-radius: 12px;
-  border: 1px solid var(--border-primary);
-  background: var(--bg-tertiary);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-2);
 }
 
 .datasource-selector {
@@ -1082,8 +1082,8 @@ onUnmounted(() => {
 }
 
 .datasource-trigger:hover:not(:disabled) {
-  border-color: var(--border-secondary);
-  background: var(--bg-hover);
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-hover);
 }
 
 .datasource-trigger:disabled {
@@ -1109,28 +1109,28 @@ onUnmounted(() => {
   font-size: 0.68rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .active-datasource-name {
   font-size: 0.86rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .active-datasource-type {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .active-datasource-empty {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.85rem;
 }
 
 .datasource-chevron {
   margin-left: auto;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   flex-shrink: 0;
 }
 
@@ -1140,7 +1140,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   z-index: 110;
@@ -1157,12 +1157,12 @@ onUnmounted(() => {
   background: transparent;
   border: none;
   text-align: left;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   cursor: pointer;
 }
 
 .datasource-option:hover {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 .datasource-option.selected {
@@ -1186,17 +1186,17 @@ onUnmounted(() => {
 .datasource-option-meta strong {
   font-size: 0.84rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .datasource-option-meta span {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .datasource-option-check {
   margin-left: auto;
-  color: var(--accent-primary);
+  color: var(--color-accent);
 }
 
 .search-filters-row {
@@ -1219,9 +1219,9 @@ onUnmounted(() => {
 .filter-field select,
 .query-input,
 .trace-id-input {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   background: rgba(12, 21, 34, 0.85);
-  color: var(--text-primary);
+  color: var(--color-text-0);
   border-radius: 10px;
   font-size: 0.86rem;
   padding: 0.62rem 0.72rem;
@@ -1260,8 +1260,8 @@ onUnmounted(() => {
 }
 
 .btn-search {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
   color: #051625;
 }
 
@@ -1279,7 +1279,7 @@ onUnmounted(() => {
   background: rgba(251, 113, 133, 0.1);
   border: 1px solid rgba(251, 113, 133, 0.3);
   border-radius: 8px;
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 0.875rem;
 }
 
@@ -1287,8 +1287,8 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   min-height: 440px;
   box-shadow: var(--shadow-sm);
@@ -1314,7 +1314,7 @@ onUnmounted(() => {
 }
 
 .trace-results-panel {
-  border-right: 1px solid var(--border-primary);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
 }
@@ -1329,7 +1329,7 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
   background: rgba(15, 24, 39, 0.85);
 }
 
@@ -1338,12 +1338,12 @@ onUnmounted(() => {
   font-size: 0.86rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .panel-header span {
   font-size: 0.74rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .trace-result-list {
@@ -1361,9 +1361,9 @@ onUnmounted(() => {
   text-align: left;
   padding: 0.7rem;
   border-radius: 10px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   background: rgba(14, 22, 36, 0.8);
-  color: var(--text-primary);
+  color: var(--color-text-0);
   cursor: pointer;
 }
 
@@ -1381,7 +1381,7 @@ onUnmounted(() => {
   font-size: 0.75rem;
   color: #bae6fd;
   word-break: break-all;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
 }
 
 .trace-meta-grid {
@@ -1389,7 +1389,7 @@ onUnmounted(() => {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.25rem 0.5rem;
   font-size: 0.74rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .trace-meta-grid .error {
@@ -1398,7 +1398,7 @@ onUnmounted(() => {
 
 .trace-start {
   font-size: 0.7rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .timeline-content {
@@ -1424,7 +1424,7 @@ onUnmounted(() => {
   border-radius: 12px;
   background: rgba(12, 21, 33, 0.75);
   padding: 0.85rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
@@ -1435,7 +1435,7 @@ onUnmounted(() => {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .span-selection-placeholder p {
@@ -1448,7 +1448,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 0.55rem 0.65rem;
   background: rgba(12, 20, 32, 0.82);
@@ -1457,16 +1457,16 @@ onUnmounted(() => {
 .trace-summary-bar code {
   font-size: 0.76rem;
   color: #bae6fd;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
 }
 
 .trace-summary-bar span {
   font-size: 0.74rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .service-graph-panel {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   background: rgba(10, 18, 30, 0.7);
   padding: 0.7rem;
@@ -1486,12 +1486,12 @@ onUnmounted(() => {
   font-size: 0.76rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .service-graph-header span {
   font-size: 0.72rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .service-graph-error,
@@ -1504,7 +1504,7 @@ onUnmounted(() => {
   background: rgba(12, 21, 33, 0.65);
   padding: 0.7rem;
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .service-graph-error {
@@ -1517,7 +1517,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   padding: 2rem;
   flex: 1;
 }
@@ -1535,13 +1535,13 @@ onUnmounted(() => {
   gap: 0.4rem;
   padding: 2rem;
   text-align: center;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   flex: 1;
 }
 
 .hint-text {
   font-size: 0.8rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .icon-spin {
@@ -1561,7 +1561,7 @@ onUnmounted(() => {
 
   .trace-results-panel {
     border-right: none;
-    border-bottom: 1px solid var(--border-primary);
+    border-bottom: 1px solid var(--color-border);
     max-height: 320px;
   }
 }

@@ -159,7 +159,7 @@ const serviceColorMap = computed(() => {
   const services = [...new Set(props.trace.spans.map((span) => span.serviceName || 'unknown'))].sort()
   const map = new Map<string, string>()
   services.forEach((service, index) => {
-    map.set(service, serviceColorPalette[index % serviceColorPalette.length])
+    map.set(service, serviceColorPalette[index % serviceColorPalette.length]!)
   })
   return map
 })
@@ -315,7 +315,7 @@ const criticalPathSpanIds = computed(() => {
 
     <div class="service-legend">
       <span v-for="(color, serviceName) in serviceColorMap" :key="serviceName" class="legend-item">
-        <i class="legend-color" :style="{ backgroundColor: color }"></i>
+        <i class="legend-color" :style="{ backgroundColor: color as unknown as string }"></i>
         {{ serviceName }}
       </span>
       <span class="legend-item critical">
@@ -396,14 +396,14 @@ const criticalPathSpanIds = computed(() => {
         </g>
       </svg>
 
-      <div v-else class="empty-state">
+      <div v-else class="flex flex-col items-center justify-center p-12 text-center text-text-1">
         No spans visible in the current zoom window.
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style>
 .trace-timeline {
   display: flex;
   flex-direction: column;
@@ -421,10 +421,10 @@ const criticalPathSpanIds = computed(() => {
   align-items: center;
   gap: 0.55rem;
   font-size: 0.76rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   padding: 0.45rem 0.6rem;
   border-radius: 10px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   background: rgba(20, 33, 51, 0.75);
 }
 
@@ -433,7 +433,7 @@ const criticalPathSpanIds = computed(() => {
 }
 
 .control-item strong {
-  color: var(--text-primary);
+  color: var(--color-text-0);
   font-size: 0.72rem;
   min-width: 3.1rem;
   text-align: right;
@@ -455,9 +455,9 @@ const criticalPathSpanIds = computed(() => {
   gap: 0.35rem;
   padding: 0.25rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   background: rgba(15, 24, 39, 0.78);
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.72rem;
 }
 
@@ -478,7 +478,7 @@ const criticalPathSpanIds = computed(() => {
 
 .timeline-scroll-wrap {
   overflow-x: auto;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   background: rgba(8, 14, 24, 0.9);
 }
@@ -494,8 +494,8 @@ const criticalPathSpanIds = computed(() => {
 
 .axis-label {
   font-size: 10px;
-  fill: var(--text-tertiary);
-  font-family: var(--font-mono);
+  fill: var(--color-text-2);
+  font-family: var(--font-family-mono);
 }
 
 .divider-line {
@@ -513,14 +513,14 @@ const criticalPathSpanIds = computed(() => {
 
 .span-label {
   font-size: 11px;
-  fill: var(--text-primary);
+  fill: var(--color-text-0);
   user-select: none;
 }
 
 .duration-label {
   font-size: 10px;
-  fill: var(--text-secondary);
-  font-family: var(--font-mono);
+  fill: var(--color-text-1);
+  font-family: var(--font-family-mono);
 }
 
 .span-bar {
@@ -553,7 +553,7 @@ const criticalPathSpanIds = computed(() => {
 
 .empty-state {
   padding: 1rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.86rem;
 }
 

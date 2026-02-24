@@ -77,7 +77,7 @@ function handleQueryInput(event: Event) {
   </div>
 </template>
 
-<style scoped>
+<style>
 .elasticsearch-query-editor {
   display: flex;
   flex-direction: column;
@@ -100,32 +100,32 @@ function handleQueryInput(event: Event) {
 .query-row label {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .signal-row select,
 .query-row textarea {
   width: 100%;
   padding: 0.75rem 0.9rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .signal-row select:focus,
 .query-row textarea:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
 .signal-row select:disabled,
 .query-row textarea:disabled {
-  background: var(--bg-primary);
-  color: var(--text-tertiary);
+  background: var(--color-bg-0);
+  color: var(--color-text-2);
   cursor: not-allowed;
 }
 
@@ -143,7 +143,7 @@ function handleQueryInput(event: Event) {
 .help-text {
   margin: 0;
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   line-height: 1.45;
 }
 </style>

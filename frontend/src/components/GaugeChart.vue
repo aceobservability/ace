@@ -240,19 +240,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="gauge-chart" :style="{ height: typeof height === 'number' ? `${height}px` : height }">
-    <VChart ref="chartRef" :option="chartOption" :autoresize="true" class="chart" />
+  <div class="w-full min-h-[200px]" :style="{ height: typeof height === 'number' ? `${height}px` : height }">
+    <VChart ref="chartRef" :option="chartOption" :autoresize="true" class="w-full h-full" />
   </div>
 </template>
 
-<style scoped>
-.gauge-chart {
-  width: 100%;
-  min-height: 200px;
-}
-
-.chart {
-  width: 100%;
-  height: 100%;
-}
-</style>

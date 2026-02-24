@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
 import monacoEditorPluginModule from 'vite-plugin-monaco-editor'
 
 // Handle both ESM and CommonJS default export
@@ -14,6 +15,7 @@ const monacoEditorPlugin =
 export default defineConfig({
   plugins: [
     vue(),
+    tailwindcss(),
     monacoEditorPlugin({
       languageWorkers: ['editorWorkerService'],
       customWorkers: []

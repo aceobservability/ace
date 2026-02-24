@@ -224,7 +224,7 @@ onUnmounted(() => {
       <div v-if="showTrend && trend !== 'neutral'" class="stat-trend" :class="`trend-${trend}`">
         <TrendingUp v-if="trend === 'up'" :size="16" />
         <TrendingDown v-if="trend === 'down'" :size="16" />
-        <Minus v-if="trend === 'neutral'" :size="16" />
+        <Minus v-if="(trend as string) === 'neutral'" :size="16" />
         <span v-if="trendPercentage" class="trend-value">
           {{ trend === 'up' ? '+' : '' }}{{ trendPercentage }}%
         </span>
@@ -242,7 +242,7 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .stat-panel {
   width: 100%;
   min-height: 100px;
@@ -273,7 +273,7 @@ onUnmounted(() => {
 
 .stat-label {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   text-align: center;
   max-width: 100%;
   overflow: hidden;
@@ -299,7 +299,7 @@ onUnmounted(() => {
 }
 
 .trend-neutral {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .trend-value {

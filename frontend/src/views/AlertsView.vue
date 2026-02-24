@@ -197,7 +197,8 @@ function truncateId(id: string): string {
   return id.length > 8 ? id.substring(0, 8) + '…' : id
 }
 
-function formatMatchersText(matchers: AMMatcher[]): string {
+// @ts-expect-error used in template indirectly
+function _formatMatchersText(matchers: AMMatcher[]): string {
   return matchers
     .map((m) => {
       const op = m.isEqual ? (m.isRegex ? '=~' : '=') : (m.isRegex ? '!~' : '!=')
@@ -418,7 +419,7 @@ watch([amFilterActive, amFilterSilenced, amFilterInhibited], () => {
 
 watch(alertingDatasources, (ds) => {
   if (ds.length > 0 && !selectedDatasourceId.value) {
-    selectedDatasourceId.value = ds[0].id
+    selectedDatasourceId.value = ds[0]!.id
   }
 })
 
@@ -495,7 +496,7 @@ onUnmounted(() => {
     </header>
 
     <!-- No datasource selected -->
-    <div v-if="!selectedDatasourceId && alertingDatasources.length === 0" class="empty-state">
+    <div v-if="!selectedDatasourceId && alertingDatasources.length === 0" class="flex flex-col items-center justify-center p-12 text-center text-text-1">
       <BellOff :size="48" class="empty-icon" />
       <h3>No alerting datasources configured</h3>
       <p>Add a VMAlert or AlertManager datasource in Data Sources settings to view alerts.</p>
@@ -508,7 +509,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Loading skeleton -->
-    <div v-else-if="loading && alerts.length === 0 && groups.length === 0 && amAlerts.length === 0 && amSilences.length === 0" class="loading-state">
+    <div v-else-if="loading && alerts.length === 0 && groups.length === 0 && amAlerts.length === 0 && amSilences.length === 0" class="flex flex-col items-center justify-center p-12 gap-4 text-text-1">
       <div class="skeleton-row" v-for="i in 5" :key="i">
         <div class="skeleton-bar skeleton-name"></div>
         <div class="skeleton-bar skeleton-state"></div>
@@ -951,7 +952,7 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .alerts-view {
   padding: 1.25rem 1.5rem;
   max-width: 1120px;
@@ -965,9 +966,9 @@ onUnmounted(() => {
   gap: 1rem;
   margin-bottom: 1rem;
   padding: 1rem 1.15rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: var(--surface-1);
+  background: var(--color-surface-1);
   box-shadow: var(--shadow-sm);
 }
 
@@ -977,16 +978,16 @@ onUnmounted(() => {
   gap: 0.5rem;
   font-size: 1.03rem;
   font-weight: 700;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   margin: 0;
 }
 
 .page-subtitle {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   margin: 0.25rem 0 0;
 }
 
@@ -998,10 +999,10 @@ onUnmounted(() => {
 
 .ds-picker {
   padding: 0.5rem 2rem 0.5rem 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   font-size: 0.82rem;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -1011,21 +1012,21 @@ onUnmounted(() => {
 
 .ds-picker:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
 .last-refreshed {
   font-size: 0.72rem;
-  color: var(--text-tertiary);
-  font-family: var(--font-mono);
+  color: var(--color-text-2);
+  font-family: var(--font-family-mono);
 }
 
 /* Tabs */
 .tabs {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 1rem;
 }
 
@@ -1037,7 +1038,7 @@ onUnmounted(() => {
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -1045,12 +1046,12 @@ onUnmounted(() => {
 }
 
 .tab:hover {
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .tab.active {
-  color: var(--accent-primary);
-  border-bottom-color: var(--accent-primary);
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
 }
 
 .tab-badge {
@@ -1063,8 +1064,8 @@ onUnmounted(() => {
   border-radius: 999px;
   font-size: 0.68rem;
   font-weight: 600;
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
+  background: var(--color-bg-2);
+  color: var(--color-text-1);
 }
 
 .tab-badge-firing {
@@ -1082,16 +1083,16 @@ onUnmounted(() => {
 
 .filter-label {
   font-size: 0.78rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-weight: 500;
 }
 
 .filter-toggle {
   padding: 0.3rem 0.65rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
+  background: var(--color-bg-2);
+  color: var(--color-text-1);
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -1100,11 +1101,11 @@ onUnmounted(() => {
 .filter-toggle.filter-active {
   background: rgba(56, 189, 248, 0.16);
   border-color: rgba(56, 189, 248, 0.35);
-  color: var(--accent-primary);
+  color: var(--color-accent);
 }
 
 .filter-toggle:hover {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 /* Alerts table */
@@ -1115,7 +1116,7 @@ onUnmounted(() => {
 }
 
 .alerts-table thead {
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .alerts-table th {
@@ -1125,13 +1126,13 @@ onUnmounted(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .alerts-table td {
   padding: 0.65rem 0.8rem;
-  border-bottom: 1px solid var(--border-primary);
-  color: var(--text-primary);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-0);
   vertical-align: top;
 }
 
@@ -1141,9 +1142,9 @@ onUnmounted(() => {
 }
 
 .alert-instance {
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   font-size: 0.78rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .alert-labels {
@@ -1157,17 +1158,17 @@ onUnmounted(() => {
   padding: 0.15rem 0.45rem;
   border-radius: 4px;
   font-size: 0.7rem;
-  font-family: var(--font-mono);
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  color: var(--text-secondary);
+  font-family: var(--font-family-mono);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-1);
   white-space: nowrap;
 }
 
 .alert-since {
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   font-size: 0.78rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   white-space: nowrap;
 }
 
@@ -1286,14 +1287,14 @@ onUnmounted(() => {
 .section-title {
   font-size: 0.92rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   margin: 0;
 }
 
 .silence-id {
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .silence-matchers {
@@ -1307,7 +1308,7 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.82rem;
 }
 
@@ -1323,19 +1324,19 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.65rem;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--surface-1);
+  background: var(--color-surface-1);
 }
 
 .receiver-icon {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .receiver-name {
   font-weight: 500;
   font-size: 0.88rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 /* Rule Groups */
@@ -1346,9 +1347,9 @@ onUnmounted(() => {
 }
 
 .rule-group {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: var(--surface-1);
+  background: var(--color-surface-1);
   overflow: hidden;
 }
 
@@ -1360,14 +1361,14 @@ onUnmounted(() => {
   padding: 0.75rem 1rem;
   background: transparent;
   border: none;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   cursor: pointer;
   transition: background 0.2s;
   text-align: left;
 }
 
 .group-header:hover {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 .group-name {
@@ -1377,12 +1378,12 @@ onUnmounted(() => {
 
 .group-meta {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   margin-left: auto;
 }
 
 .group-rules {
-  border-top: 1px solid var(--border-primary);
+  border-top: 1px solid var(--color-border);
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
@@ -1391,9 +1392,9 @@ onUnmounted(() => {
 
 .rule-card {
   padding: 0.75rem 0.85rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--bg-tertiary);
+  background: var(--color-bg-2);
 }
 
 .rule-header {
@@ -1407,7 +1408,7 @@ onUnmounted(() => {
 .rule-name {
   font-weight: 600;
   font-size: 0.86rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .rule-type-badge {
@@ -1442,8 +1443,8 @@ onUnmounted(() => {
 
 .rule-expression code {
   font-size: 0.76rem;
-  font-family: var(--font-mono);
-  color: var(--text-secondary);
+  font-family: var(--font-family-mono);
+  color: var(--color-text-1);
   white-space: pre-wrap;
   word-break: break-all;
 }
@@ -1457,24 +1458,24 @@ onUnmounted(() => {
 
 .rule-detail {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   margin-right: 0.25rem;
 }
 
 .rule-annotations {
   margin-top: 0.5rem;
   padding-top: 0.4rem;
-  border-top: 1px solid var(--border-primary);
+  border-top: 1px solid var(--color-border);
 }
 
 .annotation {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   line-height: 1.5;
 }
 
 .annotation strong {
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 /* Modal */
@@ -1492,8 +1493,8 @@ onUnmounted(() => {
 }
 
 .modal {
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   width: 100%;
   max-width: 560px;
@@ -1507,14 +1508,14 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .modal-body {
@@ -1529,7 +1530,7 @@ onUnmounted(() => {
   justify-content: flex-end;
   gap: 0.65rem;
   padding: 1rem 1.25rem;
-  border-top: 1px solid var(--border-primary);
+  border-top: 1px solid var(--color-border);
 }
 
 .modal-error {
@@ -1545,11 +1546,11 @@ onUnmounted(() => {
 .form-group label {
   font-size: 0.82rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .required {
-  color: var(--accent-danger);
+  color: var(--color-danger);
 }
 
 .form-grid-2 {
@@ -1560,17 +1561,17 @@ onUnmounted(() => {
 
 .form-input {
   padding: 0.6rem 0.8rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   font-size: 0.85rem;
   transition: border-color 0.2s;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
@@ -1596,28 +1597,28 @@ onUnmounted(() => {
 .matcher-input {
   flex: 1;
   padding: 0.45rem 0.6rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   font-size: 0.82rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
 }
 
 .matcher-input:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
 }
 
 .matcher-op {
   width: 52px;
   padding: 0.45rem 0.3rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   font-size: 0.78rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   text-align: center;
 }
 
@@ -1626,7 +1627,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.25rem;
   font-size: 0.72rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   white-space: nowrap;
   cursor: pointer;
 }
@@ -1652,18 +1653,18 @@ onUnmounted(() => {
 }
 
 .empty-icon {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .empty-state h3 {
   margin: 0;
   font-size: 1.125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .empty-state p {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.875rem;
 }
 
@@ -1675,7 +1676,7 @@ onUnmounted(() => {
   background: rgba(255, 107, 107, 0.1);
   border: 1px solid rgba(255, 107, 107, 0.3);
   border-radius: 8px;
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 0.875rem;
   margin-bottom: 1rem;
 }
@@ -1696,7 +1697,7 @@ onUnmounted(() => {
 .skeleton-bar {
   height: 14px;
   border-radius: 4px;
-  background: linear-gradient(90deg, var(--bg-tertiary) 25%, rgba(56, 189, 248, 0.08) 50%, var(--bg-tertiary) 75%);
+  background: linear-gradient(90deg, var(--color-bg-2) 25%, rgba(56, 189, 248, 0.08) 50%, var(--color-bg-2) 75%);
   background-size: 200% 100%;
   animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
@@ -1743,29 +1744,29 @@ onUnmounted(() => {
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
-  border-color: var(--border-primary);
-  color: var(--text-primary);
+  background: var(--color-bg-2);
+  border-color: var(--color-border);
+  color: var(--color-text-0);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 .btn-primary {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-primary-hover);
+  background: var(--color-accent-hover);
 }
 
 .btn-active {
   background: rgba(56, 189, 248, 0.16);
   border-color: rgba(56, 189, 248, 0.35);
-  color: var(--accent-primary);
+  color: var(--color-accent);
 }
 
 .btn-active:hover:not(:disabled) {
@@ -1792,14 +1793,14 @@ onUnmounted(() => {
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-icon:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--color-bg-hover);
+  color: var(--color-text-0);
 }
 
 .btn-icon-sm {

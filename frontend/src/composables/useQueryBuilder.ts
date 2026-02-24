@@ -38,7 +38,8 @@ export interface LabelFilter {
   value: string
 }
 
-interface QueryBuilderState {
+// @ts-expect-error kept for documentation
+interface _QueryBuilderState {
   metric: string
   labelFilters: LabelFilter[]
   aggregation: AggregationFunction

@@ -20,42 +20,11 @@ const showSidebar = computed(() => {
 </script>
 
 <template>
-  <div class="app-layout" :class="{ 'no-sidebar': !showSidebar }">
+  <div class="flex min-h-screen w-full relative" :class="{ '!block': !showSidebar }">
     <Sidebar v-if="showSidebar" ref="sidebarRef" />
-    <main class="main-content" :style="showSidebar ? { marginLeft: sidebarWidth } : {}">
+    <main class="flex-1 min-h-screen bg-transparent transition-[margin-left] duration-[0.24s] ease" :style="showSidebar ? { marginLeft: sidebarWidth } : { marginLeft: '0' }">
       <RouterView />
     </main>
     <CookieConsentBanner />
   </div>
 </template>
-
-<style scoped>
-.app-layout {
-  display: flex;
-  min-height: 100vh;
-  width: 100%;
-  position: relative;
-}
-
-.app-layout.no-sidebar {
-  display: block;
-}
-
-.main-content {
-  flex: 1;
-  margin-left: 232px;
-  min-height: 100vh;
-  background: transparent;
-  transition: margin-left 0.24s ease;
-}
-
-.no-sidebar .main-content {
-  margin-left: 0;
-}
-
-@media (max-width: 900px) {
-  .main-content {
-    margin-left: 64px;
-  }
-}
-</style>

@@ -41,7 +41,7 @@ function openPrivacySettings() {
   </div>
 </template>
 
-<style scoped>
+<style>
 .consent-banner {
   position: fixed;
   right: 1rem;
@@ -65,13 +65,13 @@ function openPrivacySettings() {
 
 .consent-copy strong {
   display: block;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   font-size: 0.9rem;
 }
 
 .consent-copy p {
   margin: 0.25rem 0 0;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.8rem;
 }
 
@@ -95,7 +95,7 @@ function openPrivacySettings() {
 
 .btn-link {
   background: transparent;
-  color: var(--accent-primary);
+  color: var(--color-accent);
 }
 
 .btn-secondary {

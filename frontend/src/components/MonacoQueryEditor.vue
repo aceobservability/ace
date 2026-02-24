@@ -194,17 +194,17 @@ defineExpose({ focus })
   </div>
 </template>
 
-<style scoped>
+<style>
 .monaco-query-editor {
   position: relative;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: var(--bg-secondary);
+  background: var(--color-bg-1);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .monaco-query-editor:focus-within {
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
@@ -222,7 +222,7 @@ defineExpose({ focus })
   position: absolute;
   top: 8px;
   left: 48px;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 13px;
   pointer-events: none;
@@ -234,11 +234,11 @@ defineExpose({ focus })
 }
 
 :deep(.monaco-editor .margin) {
-  background: var(--bg-secondary) !important;
+  background: var(--color-bg-1) !important;
 }
 
 :deep(.monaco-editor .monaco-scrollable-element > .scrollbar > .slider) {
-  background: var(--border-secondary) !important;
+  background: var(--color-border-strong) !important;
   border-radius: 4px;
 }
 
@@ -252,7 +252,7 @@ defineExpose({ focus })
 }
 
 :deep(.monaco-editor .suggest-widget .monaco-list-row.focused) {
-  background-color: var(--bg-hover) !important;
+  background-color: var(--color-bg-hover) !important;
 }
 
 /* Hover widget styling */

@@ -245,7 +245,7 @@ watch(
   </div>
 </template>
 
-<style scoped>
+<style>
 .permissions-editor {
   display: flex;
   flex-direction: column;
@@ -261,7 +261,7 @@ watch(
 .add-entry-panel {
   padding: 0.85rem;
   border-radius: 10px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   background: rgba(20, 33, 52, 0.8);
 }
 
@@ -275,15 +275,15 @@ watch(
 select {
   width: 100%;
   padding: 0.55rem 0.7rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--color-bg-1);
+  color: var(--color-text-0);
 }
 
 select:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
 }
 
 .entries-list {
@@ -293,7 +293,7 @@ select:focus {
 }
 
 .entry-row {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   background: rgba(11, 19, 30, 0.55);
   padding: 0.75rem;
@@ -311,7 +311,7 @@ select:focus {
 
 .entry-principal strong {
   font-size: 0.84rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -323,7 +323,7 @@ select:focus {
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
   background: rgba(245, 158, 11, 0.18);
-  color: var(--accent-primary);
+  color: var(--color-accent);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -337,9 +337,9 @@ select:focus {
 
 .inline-state {
   padding: 0.8rem;
-  border: 1px dashed var(--border-primary);
+  border: 1px dashed var(--color-border);
   border-radius: 8px;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.8rem;
 }
 
@@ -348,7 +348,7 @@ select:focus {
   border: 1px solid rgba(251, 113, 133, 0.35);
   border-radius: 8px;
   background: rgba(251, 113, 133, 0.12);
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 0.82rem;
 }
 
@@ -357,7 +357,7 @@ select:focus {
   border: 1px solid rgba(78, 205, 196, 0.35);
   border-radius: 8px;
   background: rgba(78, 205, 196, 0.12);
-  color: var(--accent-success);
+  color: var(--color-success);
   font-size: 0.82rem;
 }
 
@@ -394,12 +394,12 @@ select:focus {
 }
 
 .btn-primary {
-  background: var(--accent-primary);
+  background: var(--color-accent);
   color: #1a0f00;
 }
 
 .btn-danger {
-  background: var(--accent-danger);
+  background: var(--color-danger);
   color: white;
 }
 

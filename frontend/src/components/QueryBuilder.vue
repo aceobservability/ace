@@ -386,7 +386,7 @@ function getLabelValues(labelName: string): string[] {
   </div>
 </template>
 
-<style scoped>
+<style>
 .query-builder {
   display: flex;
   flex-direction: column;
@@ -402,7 +402,7 @@ function getLabelValues(labelName: string): string[] {
   display: flex;
   background: rgba(20, 33, 52, 0.8);
   border-radius: 10px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   padding: 2px;
   width: fit-content;
 }
@@ -417,7 +417,7 @@ function getLabelValues(labelName: string): string[] {
   border-radius: 8px;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -428,13 +428,13 @@ function getLabelValues(labelName: string): string[] {
 }
 
 .mode-btn:hover:not(:disabled) {
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .mode-btn.active {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(99, 102, 241, 0.14));
   border: 1px solid rgba(245, 158, 11, 0.24);
-  color: var(--text-primary);
+  color: var(--color-text-0);
   box-shadow: 0 2px 10px rgba(2, 8, 23, 0.28);
 }
 
@@ -460,7 +460,7 @@ function getLabelValues(labelName: string): string[] {
 .section-label {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .section-toggle {
@@ -471,12 +471,12 @@ function getLabelValues(labelName: string): string[] {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   width: 100%;
 }
 
 .section-toggle:hover {
-  color: var(--accent-primary);
+  color: var(--color-accent);
 }
 
 .group-count {
@@ -486,7 +486,7 @@ function getLabelValues(labelName: string): string[] {
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  background: var(--accent-primary);
+  background: var(--color-accent);
   border-radius: 10px;
   font-size: 0.75rem;
   font-weight: 500;
@@ -506,24 +506,24 @@ function getLabelValues(labelName: string): string[] {
 .search-icon {
   position: absolute;
   left: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   pointer-events: none;
 }
 
 .search-input {
   width: 100%;
   padding: 0.625rem 1rem 0.625rem 2.25rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
@@ -531,7 +531,7 @@ function getLabelValues(labelName: string): string[] {
   position: absolute;
   right: 0.75rem;
   padding: 0.25rem 0.5rem;
-  background: var(--accent-primary);
+  background: var(--color-accent);
   border-radius: 4px;
   font-size: 0.75rem;
   font-family: monospace;
@@ -546,7 +546,7 @@ function getLabelValues(labelName: string): string[] {
   max-height: 250px;
   overflow-y: auto;
   background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 100;
@@ -556,24 +556,24 @@ function getLabelValues(labelName: string): string[] {
   padding: 0.5rem 0.75rem;
   font-size: 0.8125rem;
   font-family: monospace;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   cursor: pointer;
   transition: background-color 0.15s;
 }
 
 .dropdown-item:hover {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 .dropdown-item.selected {
-  background: var(--accent-primary);
+  background: var(--color-accent);
   color: white;
 }
 
 .dropdown-loading {
   padding: 0.75rem;
   text-align: center;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.8125rem;
 }
 
@@ -582,28 +582,28 @@ function getLabelValues(labelName: string): string[] {
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-add:hover:not(:disabled) {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-  border-color: var(--border-secondary);
+  background: var(--color-bg-hover);
+  color: var(--color-text-0);
+  border-color: var(--color-border-strong);
 }
 
 .empty-filters {
   padding: 1rem;
   text-align: center;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.8125rem;
-  background: var(--bg-tertiary);
+  background: var(--color-bg-2);
   border-radius: 6px;
 }
 
@@ -622,18 +622,18 @@ function getLabelValues(labelName: string): string[] {
 .filter-select,
 .filter-input {
   padding: 0.5rem 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   transition: border-color 0.2s;
 }
 
 .filter-select:focus,
 .filter-input:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
 }
 
 .filter-select {
@@ -663,14 +663,14 @@ function getLabelValues(labelName: string): string[] {
   background: transparent;
   border: none;
   border-radius: 4px;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-remove:hover:not(:disabled) {
   background: rgba(255, 107, 107, 0.1);
-  color: var(--accent-danger);
+  color: var(--color-danger);
 }
 
 .aggregation-row {
@@ -683,17 +683,17 @@ function getLabelValues(labelName: string): string[] {
   flex: 1;
   max-width: 200px;
   padding: 0.5rem 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   cursor: pointer;
 }
 
 .aggregation-select:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
 }
 
 .range-input-group,
@@ -706,43 +706,43 @@ function getLabelValues(labelName: string): string[] {
 .range-input-group label,
 .k-input-group label {
   font-size: 0.8125rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .range-input {
   width: 80px;
   padding: 0.5rem 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.8125rem;
   font-family: monospace;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .range-input:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
 }
 
 .k-input {
   width: 60px;
   padding: 0.5rem 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .k-input:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
 }
 
 .group-by-section {
   padding: 0.75rem;
-  background: var(--bg-tertiary);
+  background: var(--color-bg-2);
   border-radius: 6px;
 }
 
@@ -757,33 +757,33 @@ function getLabelValues(labelName: string): string[] {
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.625rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-1);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.75rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .group-by-item:hover {
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
 }
 
 .group-by-item input {
-  accent-color: var(--accent-primary);
+  accent-color: var(--color-accent);
 }
 
 .preview-section {
   margin-top: 0.5rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border-primary);
+  border-top: 1px solid var(--color-border);
 }
 
 .preview-box {
   padding: 0.75rem 1rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   min-height: 48px;
 }
@@ -791,42 +791,42 @@ function getLabelValues(labelName: string): string[] {
 .preview-box code {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.8125rem;
-  color: var(--accent-primary);
+  color: var(--color-accent);
   word-break: break-all;
 }
 
 .preview-placeholder {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.8125rem;
 }
 
 .code-textarea {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   resize: vertical;
   min-height: 100px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .code-textarea::placeholder {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .code-textarea:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
 .code-textarea:disabled {
-  background: var(--bg-primary);
-  color: var(--text-tertiary);
+  background: var(--color-bg-0);
+  color: var(--color-text-2);
   cursor: not-allowed;
 }
 </style>

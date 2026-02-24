@@ -39,7 +39,7 @@ function formatTimestamp(ts: string): string {
       minute: '2-digit',
       second: '2-digit',
       fractionalSecondDigits: 3,
-    })
+    } as Intl.DateTimeFormatOptions)
   } catch {
     return ts
   }
@@ -259,7 +259,7 @@ watch(displayLogs, () => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .log-viewer {
   display: flex;
   flex-direction: column;
@@ -277,13 +277,13 @@ watch(displayLogs, () => {
 
 .log-count {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .log-table-wrapper {
   flex: 1;
   overflow: auto;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
 }
 
@@ -301,25 +301,25 @@ watch(displayLogs, () => {
 }
 
 .log-table th {
-  background: var(--bg-tertiary);
+  background: var(--color-bg-2);
   padding: 0.5rem 0.75rem;
   text-align: left;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .log-table td {
   padding: 0.375rem 0.75rem;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
   vertical-align: top;
 }
 
 .log-table tr:hover td {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 .log-row {
@@ -365,14 +365,14 @@ watch(displayLogs, () => {
 
 .expand-indicator {
   flex-shrink: 0;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.72rem;
   line-height: 1.35;
   margin-top: 0.1rem;
 }
 
 .timestamp {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .level-badge {
@@ -396,7 +396,7 @@ watch(displayLogs, () => {
 
 .level-info .level-badge {
   background: rgba(245, 158, 11, 0.15);
-  color: var(--accent-primary);
+  color: var(--color-accent);
 }
 
 .level-debug .level-badge {
@@ -418,7 +418,7 @@ tr.level-warning td {
 }
 
 .log-line {
-  color: var(--text-primary);
+  color: var(--color-text-0);
   white-space: pre-wrap;
 }
 
@@ -432,11 +432,11 @@ tr.level-warning td {
 .label-tag {
   display: inline-block;
   padding: 0.1rem 0.375rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 3px;
   font-size: 0.7rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .details-row td {
@@ -453,7 +453,7 @@ tr.level-warning td {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   margin-bottom: 0.45rem;
 }
 
@@ -469,20 +469,20 @@ tr.level-warning td {
 }
 
 .field-key {
-  color: var(--accent-primary);
+  color: var(--color-accent);
   font-size: 0.74rem;
   word-break: break-word;
 }
 
 .field-value {
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.74rem;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
 .no-fields {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.74rem;
 }
 
@@ -495,7 +495,7 @@ tr.level-warning td {
 
 .empty-row {
   text-align: center;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   padding: 2rem 1rem !important;
 }
 </style>

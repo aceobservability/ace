@@ -168,7 +168,7 @@ onMounted(loadData)
 </script>
 
 <template>
-  <div class="modal-overlay" @click.self="closeModal">
+  <div class="fixed inset-0 flex items-center justify-center z-[1000] animate-[fadeIn_0.2s_ease-out]" style="background: rgba(3, 10, 18, 0.76); backdrop-filter: blur(8px)" @click.self="closeModal">
     <div class="modal" data-testid="folder-permissions-modal">
       <header class="modal-header">
         <div>
@@ -261,7 +261,7 @@ onMounted(loadData)
   </div>
 </template>
 
-<style scoped>
+<style>
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -277,8 +277,8 @@ onMounted(loadData)
   width: min(760px, calc(100vw - 2rem));
   max-height: calc(100vh - 2rem);
   overflow: auto;
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   padding: 1rem;
 }
@@ -297,14 +297,14 @@ onMounted(loadData)
   gap: 0.45rem;
   margin: 0;
   font-size: 1rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
 .modal-header p {
   margin: 0.25rem 0 0;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.82rem;
 }
 
@@ -317,7 +317,7 @@ onMounted(loadData)
 .add-entry-panel {
   padding: 0.85rem;
   border-radius: 10px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   background: rgba(20, 33, 52, 0.8);
 }
 
@@ -331,15 +331,15 @@ onMounted(loadData)
 select {
   width: 100%;
   padding: 0.55rem 0.7rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--color-bg-1);
+  color: var(--color-text-0);
 }
 
 select:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
 }
 
 .entries-list {
@@ -349,7 +349,7 @@ select:focus {
 }
 
 .entry-row {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   background: rgba(11, 19, 30, 0.55);
   padding: 0.75rem;
@@ -367,7 +367,7 @@ select:focus {
 
 .entry-principal strong {
   font-size: 0.84rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -379,7 +379,7 @@ select:focus {
   padding: 0.1rem 0.4rem;
   border-radius: 999px;
   background: rgba(245, 158, 11, 0.18);
-  color: var(--accent-primary);
+  color: var(--color-accent);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -393,9 +393,9 @@ select:focus {
 
 .inline-state {
   padding: 0.8rem;
-  border: 1px dashed var(--border-primary);
+  border: 1px dashed var(--color-border);
   border-radius: 8px;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.8rem;
 }
 
@@ -404,7 +404,7 @@ select:focus {
   border: 1px solid rgba(251, 113, 133, 0.35);
   border-radius: 8px;
   background: rgba(251, 113, 133, 0.12);
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 0.82rem;
 }
 
@@ -413,7 +413,7 @@ select:focus {
   border: 1px solid rgba(78, 205, 196, 0.35);
   border-radius: 8px;
   background: rgba(78, 205, 196, 0.12);
-  color: var(--accent-success);
+  color: var(--color-success);
   font-size: 0.82rem;
 }
 
@@ -451,12 +451,12 @@ select:focus {
 }
 
 .btn-primary {
-  background: var(--accent-primary);
+  background: var(--color-accent);
   color: #1a0f00;
 }
 
 .btn-danger {
-  background: var(--accent-danger);
+  background: var(--color-danger);
   color: white;
 }
 
@@ -466,10 +466,10 @@ select:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--surface-2);
-  color: var(--text-secondary);
+  background: var(--color-surface-2);
+  color: var(--color-text-1);
   cursor: pointer;
 }
 

@@ -69,7 +69,8 @@ const saveButtonText = computed(() =>
 const isClickHouseType = computed(() => formType.value === 'clickhouse')
 const isCloudWatchType = computed(() => formType.value === 'cloudwatch')
 const isElasticsearchType = computed(() => formType.value === 'elasticsearch')
-const isVMAlertType = computed(() => formType.value === 'vmalert')
+// @ts-expect-error kept for future use
+const _isVMAlertType = computed(() => formType.value === 'vmalert')
 const showAuthSettings = computed(() =>
   (isTracingType(formType.value) || isClickHouseType.value || isElasticsearchType.value || isAlertingType(formType.value)) && !isCloudWatchType.value,
 )
@@ -515,47 +516,40 @@ watch(
 )
 </script>
 
+
 <template>
-  <div class="datasource-create">
-    <header class="page-header">
-      <button class="btn btn-secondary" @click="router.push('/app/datasources')">
+  <div class="max-w-[980px] mx-auto py-5 px-6 pb-8 max-md:p-[0.9rem]">
+    <header class="flex flex-col gap-[0.8rem] mb-4">
+      <button class="inline-flex items-center gap-[0.45rem] border border-accent rounded-[8px] py-[0.56rem] px-[0.9rem] bg-transparent text-text-accent text-[0.85rem] font-medium cursor-pointer hover:bg-bg-hover" @click="router.push('/app/datasources')">
         <ArrowLeft :size="16" />
         Back to Data Sources
       </button>
-      <div class="header-copy">
-        <h1>{{ pageTitle }}</h1>
-        <p>{{ pageDescription }}</p>
+      <div>
+        <h1 class="text-[1.12rem] font-mono tracking-[0.04em] uppercase">{{ pageTitle }}</h1>
+        <p class="mt-1 text-text-1 text-[0.87rem]">{{ pageDescription }}</p>
       </div>
     </header>
 
-    <div v-if="pageLoading" class="load-state">
-      <Loader2 :size="18" class="icon-spin" />
+    <div v-if="pageLoading" class="inline-flex items-center gap-2 py-3 px-[0.9rem] border border-border rounded-[8px] bg-surface-1 text-text-1 text-[0.86rem] mb-[0.9rem]">
+      <Loader2 :size="18" class="animate-[spin_0.8s_linear_infinite]" />
       <span>Loading datasource details...</span>
     </div>
 
-    <div v-else-if="loadError" class="error-message load-error">
+    <div v-else-if="loadError" class="py-3 px-[0.9rem] rounded-[8px] text-danger text-[0.86rem] mb-[0.9rem]" style="background: rgba(255, 107, 107, 0.12); border: 1px solid rgba(255, 107, 107, 0.35)">
       {{ loadError }}
     </div>
 
-    <form v-else class="form-shell" @submit.prevent="handleSave">
-      <section class="form-section">
-        <h2>Basics</h2>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="ds-name">Name <span class="required">*</span></label>
-            <input
-              id="ds-name"
-              v-model="formName"
-              type="text"
-              placeholder="My Prometheus"
-              :disabled="saveLoading"
-              autocomplete="off"
-            />
+    <form v-else class="flex flex-col gap-[0.95rem]" @submit.prevent="handleSave">
+      <section class="border border-border rounded-[12px] bg-surface-1 shadow-sm p-4">
+        <h2 class="mb-[0.85rem] text-[0.92rem] uppercase tracking-[0.06em] text-text-1">Basics</h2>
+        <div class="grid grid-cols-2 gap-[0.8rem] max-md:grid-cols-1">
+          <div class="mb-[0.95rem]">
+            <label for="ds-name" class="block mb-[0.45rem] text-[0.83rem] font-medium">Name <span class="text-danger">*</span></label>
+            <input id="ds-name" v-model="formName" type="text" placeholder="My Prometheus" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] transition-colors duration-200 focus:outline-none focus:border-accent placeholder:text-text-2" />
           </div>
-
-          <div class="form-group">
-            <label for="ds-type">Type</label>
-            <select id="ds-type" v-model="formType" :disabled="saveLoading">
+          <div class="mb-[0.95rem]">
+            <label for="ds-type" class="block mb-[0.45rem] text-[0.83rem] font-medium">Type</label>
+            <select id="ds-type" v-model="formType" :disabled="saveLoading" class="ds-select w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] transition-colors duration-200 focus:outline-none focus:border-accent">
               <option value="prometheus">Prometheus (PromQL)</option>
               <option value="victoriametrics">VictoriaMetrics (PromQL)</option>
               <option value="loki">Loki (LogQL)</option>
@@ -570,272 +564,145 @@ watch(
             </select>
           </div>
         </div>
-
-        <div class="form-group">
-          <label for="ds-url">URL <span class="required">*</span></label>
-          <input
-            id="ds-url"
-            v-model="formUrl"
-            type="text"
-            placeholder="http://localhost:9090"
-            :disabled="saveLoading"
-            autocomplete="off"
-          />
+        <div class="mb-[0.95rem]">
+          <label for="ds-url" class="block mb-[0.45rem] text-[0.83rem] font-medium">URL <span class="text-danger">*</span></label>
+          <input id="ds-url" v-model="formUrl" type="text" placeholder="http://localhost:9090" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] transition-colors duration-200 focus:outline-none focus:border-accent placeholder:text-text-2" />
         </div>
       </section>
 
-      <section v-if="isCloudWatchType" class="form-section">
-        <h2>CloudWatch Settings</h2>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="ds-cloudwatch-region">AWS Region <span class="required">*</span></label>
-            <input
-              id="ds-cloudwatch-region"
-              v-model="formCloudWatchRegion"
-              type="text"
-              placeholder="us-east-1"
-              :disabled="saveLoading"
-              autocomplete="off"
-            />
+      <section v-if="isCloudWatchType" class="border border-border rounded-[12px] bg-surface-1 shadow-sm p-4">
+        <h2 class="mb-[0.85rem] text-[0.92rem] uppercase tracking-[0.06em] text-text-1">CloudWatch Settings</h2>
+        <div class="grid grid-cols-2 gap-[0.8rem] max-md:grid-cols-1">
+          <div class="mb-[0.95rem]">
+            <label for="ds-cloudwatch-region" class="block mb-[0.45rem] text-[0.83rem] font-medium">AWS Region <span class="text-danger">*</span></label>
+            <input id="ds-cloudwatch-region" v-model="formCloudWatchRegion" type="text" placeholder="us-east-1" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent placeholder:text-text-2" />
           </div>
-          <div class="form-group">
-            <label for="ds-cloudwatch-namespace">Metric Namespace (optional)</label>
-            <input
-              id="ds-cloudwatch-namespace"
-              v-model="formCloudWatchMetricNamespace"
-              type="text"
-              placeholder="AWS/ECS"
-              :disabled="saveLoading"
-              autocomplete="off"
-            />
+          <div class="mb-[0.95rem]">
+            <label for="ds-cloudwatch-namespace" class="block mb-[0.45rem] text-[0.83rem] font-medium">Metric Namespace (optional)</label>
+            <input id="ds-cloudwatch-namespace" v-model="formCloudWatchMetricNamespace" type="text" placeholder="AWS/ECS" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent placeholder:text-text-2" />
           </div>
         </div>
-
-        <div class="form-group">
-          <label for="ds-cloudwatch-log-group">Default Log Group (optional)</label>
-          <input
-            id="ds-cloudwatch-log-group"
-            v-model="formCloudWatchLogGroup"
-            type="text"
-            placeholder="/aws/lambda/my-function"
-            :disabled="saveLoading"
-            autocomplete="off"
-          />
+        <div class="mb-[0.95rem]">
+          <label for="ds-cloudwatch-log-group" class="block mb-[0.45rem] text-[0.83rem] font-medium">Default Log Group (optional)</label>
+          <input id="ds-cloudwatch-log-group" v-model="formCloudWatchLogGroup" type="text" placeholder="/aws/lambda/my-function" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent placeholder:text-text-2" />
         </div>
-
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="ds-cloudwatch-access-key">Access Key ID (optional)</label>
-            <input
-              id="ds-cloudwatch-access-key"
-              v-model="formCloudWatchAccessKeyId"
-              type="text"
-              :disabled="saveLoading"
-              autocomplete="off"
-            />
+        <div class="grid grid-cols-2 gap-[0.8rem] max-md:grid-cols-1">
+          <div class="mb-[0.95rem]">
+            <label for="ds-cloudwatch-access-key" class="block mb-[0.45rem] text-[0.83rem] font-medium">Access Key ID (optional)</label>
+            <input id="ds-cloudwatch-access-key" v-model="formCloudWatchAccessKeyId" type="text" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent" />
           </div>
-          <div class="form-group">
-            <label for="ds-cloudwatch-secret-key">Secret Access Key (optional)</label>
-            <input
-              id="ds-cloudwatch-secret-key"
-              v-model="formCloudWatchSecretAccessKey"
-              type="password"
-              :disabled="saveLoading"
-              autocomplete="new-password"
-            />
+          <div class="mb-[0.95rem]">
+            <label for="ds-cloudwatch-secret-key" class="block mb-[0.45rem] text-[0.83rem] font-medium">Secret Access Key (optional)</label>
+            <input id="ds-cloudwatch-secret-key" v-model="formCloudWatchSecretAccessKey" type="password" :disabled="saveLoading" autocomplete="new-password" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent" />
           </div>
         </div>
-
-        <div class="form-group">
-          <label for="ds-cloudwatch-session-token">Session Token (optional)</label>
-          <input
-            id="ds-cloudwatch-session-token"
-            v-model="formCloudWatchSessionToken"
-            type="password"
-            :disabled="saveLoading"
-            autocomplete="new-password"
-          />
+        <div class="mb-[0.95rem]">
+          <label for="ds-cloudwatch-session-token" class="block mb-[0.45rem] text-[0.83rem] font-medium">Session Token (optional)</label>
+          <input id="ds-cloudwatch-session-token" v-model="formCloudWatchSessionToken" type="password" :disabled="saveLoading" autocomplete="new-password" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent" />
         </div>
       </section>
 
-      <section v-if="isClickHouseType" class="form-section">
-        <h2>ClickHouse Settings</h2>
-        <div class="form-group compact-group">
-          <label for="ds-database">Database (optional)</label>
-          <input
-            id="ds-database"
-            v-model="formDatabase"
-            type="text"
-            placeholder="default"
-            :disabled="saveLoading"
-            autocomplete="off"
-          />
+      <section v-if="isClickHouseType" class="border border-border rounded-[12px] bg-surface-1 shadow-sm p-4">
+        <h2 class="mb-[0.85rem] text-[0.92rem] uppercase tracking-[0.06em] text-text-1">ClickHouse Settings</h2>
+        <div>
+          <label for="ds-database" class="block mb-[0.45rem] text-[0.83rem] font-medium">Database (optional)</label>
+          <input id="ds-database" v-model="formDatabase" type="text" placeholder="default" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent placeholder:text-text-2" />
         </div>
       </section>
 
-      <section v-if="isElasticsearchType" class="form-section">
-        <h2>Elasticsearch Settings</h2>
-        <div class="form-group">
-          <label for="ds-elasticsearch-index">Default Index Pattern (optional)</label>
-          <input
-            id="ds-elasticsearch-index"
-            v-model="formElasticsearchIndex"
-            type="text"
-            placeholder="logs-*"
-            :disabled="saveLoading"
-            autocomplete="off"
-          />
+      <section v-if="isElasticsearchType" class="border border-border rounded-[12px] bg-surface-1 shadow-sm p-4">
+        <h2 class="mb-[0.85rem] text-[0.92rem] uppercase tracking-[0.06em] text-text-1">Elasticsearch Settings</h2>
+        <div class="mb-[0.95rem]">
+          <label for="ds-elasticsearch-index" class="block mb-[0.45rem] text-[0.83rem] font-medium">Default Index Pattern (optional)</label>
+          <input id="ds-elasticsearch-index" v-model="formElasticsearchIndex" type="text" placeholder="logs-*" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent placeholder:text-text-2" />
         </div>
-
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="ds-elasticsearch-time-field">Timestamp Field (optional)</label>
-            <input
-              id="ds-elasticsearch-time-field"
-              v-model="formElasticsearchTimestampField"
-              type="text"
-              placeholder="@timestamp"
-              :disabled="saveLoading"
-              autocomplete="off"
-            />
+        <div class="grid grid-cols-2 gap-[0.8rem] max-md:grid-cols-1">
+          <div class="mb-[0.95rem]">
+            <label for="ds-elasticsearch-time-field" class="block mb-[0.45rem] text-[0.83rem] font-medium">Timestamp Field (optional)</label>
+            <input id="ds-elasticsearch-time-field" v-model="formElasticsearchTimestampField" type="text" placeholder="@timestamp" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent placeholder:text-text-2" />
           </div>
-          <div class="form-group">
-            <label for="ds-elasticsearch-message-field">Message Field (optional)</label>
-            <input
-              id="ds-elasticsearch-message-field"
-              v-model="formElasticsearchMessageField"
-              type="text"
-              placeholder="message"
-              :disabled="saveLoading"
-              autocomplete="off"
-            />
+          <div class="mb-[0.95rem]">
+            <label for="ds-elasticsearch-message-field" class="block mb-[0.45rem] text-[0.83rem] font-medium">Message Field (optional)</label>
+            <input id="ds-elasticsearch-message-field" v-model="formElasticsearchMessageField" type="text" placeholder="message" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent placeholder:text-text-2" />
           </div>
         </div>
-
-        <div class="form-group compact-group">
-          <label for="ds-elasticsearch-level-field">Level Field (optional)</label>
-          <input
-            id="ds-elasticsearch-level-field"
-            v-model="formElasticsearchLevelField"
-            type="text"
-            placeholder="level"
-            :disabled="saveLoading"
-            autocomplete="off"
-          />
+        <div>
+          <label for="ds-elasticsearch-level-field" class="block mb-[0.45rem] text-[0.83rem] font-medium">Level Field (optional)</label>
+          <input id="ds-elasticsearch-level-field" v-model="formElasticsearchLevelField" type="text" placeholder="level" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent placeholder:text-text-2" />
         </div>
       </section>
 
-      <section v-if="showAuthSettings" class="form-section">
-        <h2>Authentication</h2>
-        <div class="form-group">
-          <label for="ds-auth-type">Authentication</label>
-          <select id="ds-auth-type" v-model="formAuthType" :disabled="saveLoading">
+      <section v-if="showAuthSettings" class="border border-border rounded-[12px] bg-surface-1 shadow-sm p-4">
+        <h2 class="mb-[0.85rem] text-[0.92rem] uppercase tracking-[0.06em] text-text-1">Authentication</h2>
+        <div class="mb-[0.95rem]">
+          <label for="ds-auth-type" class="block mb-[0.45rem] text-[0.83rem] font-medium">Authentication</label>
+          <select id="ds-auth-type" v-model="formAuthType" :disabled="saveLoading" class="ds-select w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent">
             <option value="none">None</option>
             <option value="basic">Basic auth</option>
             <option value="bearer">Bearer token</option>
             <option value="api_key">API key</option>
           </select>
         </div>
-
-        <div v-if="formAuthType === 'basic'" class="form-grid">
-          <div class="form-group">
-            <label for="ds-basic-username">Username <span class="required">*</span></label>
-            <input
-              id="ds-basic-username"
-              v-model="formBasicUsername"
-              type="text"
-              :disabled="saveLoading"
-              autocomplete="off"
-            />
+        <div v-if="formAuthType === 'basic'" class="grid grid-cols-2 gap-[0.8rem] max-md:grid-cols-1">
+          <div class="mb-[0.95rem]">
+            <label for="ds-basic-username" class="block mb-[0.45rem] text-[0.83rem] font-medium">Username <span class="text-danger">*</span></label>
+            <input id="ds-basic-username" v-model="formBasicUsername" type="text" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent" />
           </div>
-          <div class="form-group">
-            <label for="ds-basic-password">Password</label>
-            <input
-              id="ds-basic-password"
-              v-model="formBasicPassword"
-              type="password"
-              :disabled="saveLoading"
-              autocomplete="new-password"
-            />
+          <div class="mb-[0.95rem]">
+            <label for="ds-basic-password" class="block mb-[0.45rem] text-[0.83rem] font-medium">Password</label>
+            <input id="ds-basic-password" v-model="formBasicPassword" type="password" :disabled="saveLoading" autocomplete="new-password" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent" />
           </div>
         </div>
-
-        <div v-else-if="formAuthType === 'bearer'" class="form-group compact-group">
-          <label for="ds-bearer-token">Bearer token <span class="required">*</span></label>
-          <input
-            id="ds-bearer-token"
-            v-model="formBearerToken"
-            type="password"
-            :disabled="saveLoading"
-            autocomplete="new-password"
-          />
+        <div v-else-if="formAuthType === 'bearer'">
+          <label for="ds-bearer-token" class="block mb-[0.45rem] text-[0.83rem] font-medium">Bearer token <span class="text-danger">*</span></label>
+          <input id="ds-bearer-token" v-model="formBearerToken" type="password" :disabled="saveLoading" autocomplete="new-password" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent" />
         </div>
-
-        <div v-else-if="formAuthType === 'api_key'" class="form-grid">
-          <div class="form-group">
-            <label for="ds-api-header">Header name</label>
-            <input
-              id="ds-api-header"
-              v-model="formApiKeyHeader"
-              type="text"
-              :disabled="saveLoading"
-              autocomplete="off"
-            />
+        <div v-else-if="formAuthType === 'api_key'" class="grid grid-cols-2 gap-[0.8rem] max-md:grid-cols-1">
+          <div class="mb-[0.95rem]">
+            <label for="ds-api-header" class="block mb-[0.45rem] text-[0.83rem] font-medium">Header name</label>
+            <input id="ds-api-header" v-model="formApiKeyHeader" type="text" :disabled="saveLoading" autocomplete="off" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent" />
           </div>
-          <div class="form-group">
-            <label for="ds-api-value">API key <span class="required">*</span></label>
-            <input
-              id="ds-api-value"
-              v-model="formApiKeyValue"
-              type="password"
-              :disabled="saveLoading"
-              autocomplete="new-password"
-            />
+          <div class="mb-[0.95rem]">
+            <label for="ds-api-value" class="block mb-[0.45rem] text-[0.83rem] font-medium">API key <span class="text-danger">*</span></label>
+            <input id="ds-api-value" v-model="formApiKeyValue" type="password" :disabled="saveLoading" autocomplete="new-password" class="w-full py-[0.72rem] px-[0.9rem] bg-bg-2 border border-border rounded-[8px] text-text-0 text-[0.88rem] focus:outline-none focus:border-accent" />
           </div>
         </div>
       </section>
 
-      <section class="form-section">
-        <h2>Connection Test</h2>
-        <p class="section-subtitle">
-          Run a connection test before saving to verify URL, auth, and datasource availability.
-        </p>
-        <div class="test-actions">
-          <button type="button" class="btn btn-secondary" :disabled="testLoading || saveLoading" @click="handleTestConnection">
-            <Loader2 v-if="testLoading" :size="16" class="icon-spin" />
+      <section class="border border-border rounded-[12px] bg-surface-1 shadow-sm p-4">
+        <h2 class="mb-[0.85rem] text-[0.92rem] uppercase tracking-[0.06em] text-text-1">Connection Test</h2>
+        <p class="text-text-2 text-[0.82rem] -mt-1 mb-[0.8rem]">Run a connection test before saving to verify URL, auth, and datasource availability.</p>
+        <div class="flex items-center gap-[0.7rem] flex-wrap">
+          <button type="button" class="inline-flex items-center gap-[0.45rem] border border-accent rounded-[8px] py-[0.56rem] px-[0.9rem] bg-transparent text-text-accent text-[0.85rem] font-medium cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed" :disabled="testLoading || saveLoading" @click="handleTestConnection">
+            <Loader2 v-if="testLoading" :size="16" class="animate-[spin_0.8s_linear_infinite]" />
             <HeartPulse v-else :size="16" />
             {{ testLoading ? 'Testing...' : 'Test Connection' }}
           </button>
-          <span v-if="testSuccess && !isTestStale" class="test-result test-ok">
-            <CheckCircle2 :size="16" />
-            {{ testSuccess }}
+          <span v-if="testSuccess && !isTestStale" class="inline-flex items-center gap-[0.35rem] text-[0.82rem] text-[#59a14f]">
+            <CheckCircle2 :size="16" /> {{ testSuccess }}
           </span>
-          <span v-else-if="isTestStale" class="test-result test-stale">
-            <CircleAlert :size="16" />
-            Configuration changed since last successful test
+          <span v-else-if="isTestStale" class="inline-flex items-center gap-[0.35rem] text-[0.82rem] text-[#f59e0b]">
+            <CircleAlert :size="16" /> Configuration changed since last successful test
           </span>
-          <span v-else-if="testError" class="test-result test-error">
-            <CircleAlert :size="16" />
-            {{ testError }}
+          <span v-else-if="testError" class="inline-flex items-center gap-[0.35rem] text-[0.82rem] text-danger">
+            <CircleAlert :size="16" /> {{ testError }}
           </span>
         </div>
       </section>
 
-      <section class="form-section compact-section">
-        <label class="checkbox-label">
-          <input type="checkbox" v-model="formIsDefault" :disabled="saveLoading" />
+      <section class="border border-border rounded-[12px] bg-surface-1 shadow-sm py-3 px-4">
+        <label class="inline-flex items-center gap-2 cursor-pointer text-[0.88rem]">
+          <input type="checkbox" v-model="formIsDefault" :disabled="saveLoading" class="w-4 h-4" />
           Set as default data source
         </label>
       </section>
 
-      <div v-if="formError" class="error-message">{{ formError }}</div>
+      <div v-if="formError" class="py-3 px-[0.9rem] rounded-[8px] text-danger text-[0.86rem]" style="background: rgba(255, 107, 107, 0.12); border: 1px solid rgba(255, 107, 107, 0.35)">{{ formError }}</div>
 
-      <footer class="form-actions">
-        <button type="button" class="btn btn-secondary" :disabled="saveLoading" @click="router.push('/app/datasources')">
-          Cancel
-        </button>
-        <button type="submit" class="btn btn-primary" :disabled="saveLoading">
-          <Loader2 v-if="saveLoading" :size="16" class="icon-spin" />
+      <footer class="flex justify-end gap-[0.65rem] max-md:flex-col-reverse">
+        <button type="button" class="inline-flex items-center justify-center gap-[0.45rem] border border-accent rounded-[8px] py-[0.56rem] px-[0.9rem] bg-transparent text-text-accent text-[0.85rem] font-medium cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed max-md:w-full" :disabled="saveLoading" @click="router.push('/app/datasources')">Cancel</button>
+        <button type="submit" class="inline-flex items-center justify-center gap-[0.45rem] rounded-[8px] py-[0.56rem] px-[0.9rem] bg-accent text-[#1a0f00] text-[0.85rem] font-medium cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed max-md:w-full" :disabled="saveLoading">
+          <Loader2 v-if="saveLoading" :size="16" class="animate-[spin_0.8s_linear_infinite]" />
           <Database v-else :size="16" />
           {{ saveButtonText }}
         </button>
@@ -844,257 +711,13 @@ watch(
   </div>
 </template>
 
-<style scoped>
-.datasource-create {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 1.25rem 1.5rem 2rem;
-}
-
-.page-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  margin-bottom: 1rem;
-}
-
-.header-copy h1 {
-  margin: 0;
-  font-size: 1.12rem;
-  font-family: var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.header-copy p {
-  margin: 0.25rem 0 0;
-  color: var(--text-secondary);
-  font-size: 0.87rem;
-}
-
-.load-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 0.9rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  background: var(--surface-1);
-  color: var(--text-secondary);
-  font-size: 0.86rem;
-  margin-bottom: 0.9rem;
-}
-
-.form-shell {
-  display: flex;
-  flex-direction: column;
-  gap: 0.95rem;
-}
-
-.form-section {
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  background: var(--surface-1);
-  box-shadow: var(--shadow-sm);
-  padding: 1rem;
-}
-
-.compact-section {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-}
-
-.form-section h2 {
-  margin: 0 0 0.85rem;
-  font-size: 0.92rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-secondary);
-}
-
-.section-subtitle {
-  margin: -0.2rem 0 0.8rem;
-  color: var(--text-tertiary);
-  font-size: 0.82rem;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.8rem;
-}
-
-.form-group {
-  margin-bottom: 0.95rem;
-}
-
-.compact-group {
-  margin-bottom: 0;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.45rem;
-  font-size: 0.83rem;
-  font-weight: 500;
-}
-
-.required {
-  color: var(--accent-danger);
-}
-
-.form-group input[type='text'],
-.form-group input[type='password'],
-.form-group select {
-  width: 100%;
-  padding: 0.72rem 0.9rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-size: 0.88rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: var(--focus-ring);
-}
-
-.form-group input::placeholder {
-  color: var(--text-tertiary);
-}
-
-.form-group select {
+<style>
+/* Select arrow styling (requires CSS for appearance override) */
+.ds-select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   padding-right: 2.3rem;
-}
-
-.checkbox-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  font-size: 0.88rem;
-}
-
-.checkbox-label input[type='checkbox'] {
-  width: 16px;
-  height: 16px;
-}
-
-.test-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-}
-
-.test-result {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.82rem;
-}
-
-.test-ok {
-  color: #59a14f;
-}
-
-.test-error {
-  color: var(--accent-danger);
-}
-
-.test-stale {
-  color: #f59e0b;
-}
-
-.error-message {
-  padding: 0.75rem 0.9rem;
-  border-radius: 8px;
-  background: rgba(255, 107, 107, 0.12);
-  border: 1px solid rgba(255, 107, 107, 0.35);
-  color: var(--accent-danger);
-  font-size: 0.86rem;
-}
-
-.load-error {
-  margin-bottom: 0.9rem;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.65rem;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 0.56rem 0.9rem;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: transparent;
-  border-color: #F59E0B;
-  color: #FCD34D;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--bg-hover);
-}
-
-.btn-primary {
-  background: var(--accent-primary);
-  color: #1a0f00;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-primary-hover);
-}
-
-.icon-spin {
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 900px) {
-  .datasource-create {
-    padding: 0.9rem;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    flex-direction: column-reverse;
-  }
-
-  .form-actions .btn {
-    width: 100%;
-  }
 }
 </style>
