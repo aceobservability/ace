@@ -19,6 +19,7 @@ const (
 	DataSourceClickHouse      DataSourceType = "clickhouse"
 	DataSourceCloudWatch      DataSourceType = "cloudwatch"
 	DataSourceElasticsearch   DataSourceType = "elasticsearch"
+	DataSourceVMAlert         DataSourceType = "vmalert"
 )
 
 type DataSource struct {
@@ -54,7 +55,7 @@ type UpdateDataSourceRequest struct {
 
 func (t DataSourceType) Valid() bool {
 	switch t {
-	case DataSourcePrometheus, DataSourceLoki, DataSourceVictoriaLogs, DataSourceVictoriaMetrics, DataSourceTempo, DataSourceVictoriaTraces, DataSourceClickHouse, DataSourceCloudWatch, DataSourceElasticsearch:
+	case DataSourcePrometheus, DataSourceLoki, DataSourceVictoriaLogs, DataSourceVictoriaMetrics, DataSourceTempo, DataSourceVictoriaTraces, DataSourceClickHouse, DataSourceCloudWatch, DataSourceElasticsearch, DataSourceVMAlert:
 		return true
 	}
 	return false

@@ -6,7 +6,7 @@ import { useOrganization } from '../composables/useOrganization'
 import { useDatasource } from '../composables/useDatasource'
 import { getDataSource, testDataSourceDraftConnection } from '../api/datasources'
 import type { CreateDataSourceRequest, DataSource, DataSourceType } from '../types/datasource'
-import { dataSourceTypeLabels, isTracingType } from '../types/datasource'
+import { dataSourceTypeLabels, isTracingType, isAlertingType } from '../types/datasource'
 
 const route = useRoute()
 const router = useRouter()
@@ -69,8 +69,9 @@ const saveButtonText = computed(() =>
 const isClickHouseType = computed(() => formType.value === 'clickhouse')
 const isCloudWatchType = computed(() => formType.value === 'cloudwatch')
 const isElasticsearchType = computed(() => formType.value === 'elasticsearch')
+const isVMAlertType = computed(() => formType.value === 'vmalert')
 const showAuthSettings = computed(() =>
-  (isTracingType(formType.value) || isClickHouseType.value || isElasticsearchType.value) && !isCloudWatchType.value,
+  (isTracingType(formType.value) || isClickHouseType.value || isElasticsearchType.value || isAlertingType(formType.value)) && !isCloudWatchType.value,
 )
 
 const formSignature = computed(() => JSON.stringify({
@@ -564,6 +565,7 @@ watch(
               <option value="clickhouse">ClickHouse (SQL)</option>
               <option value="cloudwatch">CloudWatch (Metrics + Logs)</option>
               <option value="elasticsearch">Elasticsearch (ELK)</option>
+              <option value="vmalert">VMAlert (Alerting)</option>
             </select>
           </div>
         </div>

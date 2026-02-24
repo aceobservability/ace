@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { LayoutDashboard, Settings, Activity, ChevronLeft, ChevronRight, Compass, LogOut, Database, ChevronDown, Shield } from 'lucide-vue-next'
+import { LayoutDashboard, Settings, Activity, ChevronLeft, ChevronRight, Compass, LogOut, Database, ChevronDown, Shield, BellRing } from 'lucide-vue-next'
 import OrganizationDropdown from './OrganizationDropdown.vue'
 import CreateOrganizationModal from './CreateOrganizationModal.vue'
 import { useOrganization } from '../composables/useOrganization'
@@ -35,6 +35,7 @@ interface NavChild {
 
 const navItems: NavItem[] = [
   { id: 'dashboards', icon: LayoutDashboard, label: 'Dashboards', path: '/app/dashboards' },
+  { id: 'alerts', icon: BellRing, label: 'Alerts', path: '/app/alerts' },
   {
     id: 'explore',
     icon: Compass,

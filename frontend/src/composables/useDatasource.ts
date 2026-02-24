@@ -89,6 +89,10 @@ export function useDatasource() {
     ),
   )
 
+  const vmalertDatasources = computed(() =>
+    datasources.value.filter((d) => d.type === 'vmalert'),
+  )
+
   return {
     datasources,
     loading,
@@ -96,6 +100,7 @@ export function useDatasource() {
     metricsDatasources,
     logsDatasources,
     tracingDatasources,
+    vmalertDatasources,
     fetchDatasources,
     addDatasource,
     editDatasource,

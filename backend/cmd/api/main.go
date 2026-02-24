@@ -201,6 +201,13 @@ func main() {
 	mux.HandleFunc("POST /api/datasources/{id}/stream", auth.RequireAuth(jwtManager, dsHandler.Stream))
 	mux.HandleFunc("POST /api/datasources/{id}/test", auth.RequireAuth(jwtManager, dsHandler.TestConnection))
 
+	// VMAlert proxy routes
+	vmAlertHandler := handlers.NewVMAlertHandler(pool)
+	mux.HandleFunc("GET /api/datasources/{id}/vmalert/alerts", auth.RequireAuth(jwtManager, vmAlertHandler.Alerts))
+	mux.HandleFunc("GET /api/datasources/{id}/vmalert/groups", auth.RequireAuth(jwtManager, vmAlertHandler.Groups))
+	mux.HandleFunc("GET /api/datasources/{id}/vmalert/rules", auth.RequireAuth(jwtManager, vmAlertHandler.Rules))
+	mux.HandleFunc("GET /api/datasources/{id}/vmalert/health", auth.RequireAuth(jwtManager, vmAlertHandler.Health))
+
 	// Grafana conversion route
 	grafanaConverterHandler := handlers.NewGrafanaConverterHandler()
 	mux.HandleFunc("POST /api/convert/grafana", auth.RequireAuth(jwtManager, grafanaConverterHandler.Convert))

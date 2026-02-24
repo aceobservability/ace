@@ -68,7 +68,7 @@ const { timeRange, isCustomRange, onRefresh } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { tracingDatasources, fetchDatasources } = useDatasource()
 
-const dataSourceTypeLogos: Record<DataSourceType, string> = {
+const dataSourceTypeLogos: Partial<Record<DataSourceType, string>> = {
   prometheus: prometheusLogo,
   loki: lokiLogo,
   victoriametrics: victoriaMetricsLogo,

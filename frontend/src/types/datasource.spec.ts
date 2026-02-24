@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isMetricsType, isLogsType, isTracingType, dataSourceTypeLabels } from './datasource'
+import { isMetricsType, isLogsType, isTracingType, isAlertingType, dataSourceTypeLabels } from './datasource'
 import type { DataSourceType } from './datasource'
 
 describe('datasource types', () => {
@@ -93,6 +93,16 @@ describe('datasource types', () => {
     })
   })
 
+  describe('isAlertingType', () => {
+    it('returns true for vmalert', () => {
+      expect(isAlertingType('vmalert')).toBe(true)
+    })
+
+    it('returns false for prometheus', () => {
+      expect(isAlertingType('prometheus')).toBe(false)
+    })
+  })
+
   describe('dataSourceTypeLabels', () => {
     it('has labels for all types', () => {
       const types: DataSourceType[] = [
@@ -105,6 +115,7 @@ describe('datasource types', () => {
         'clickhouse',
         'cloudwatch',
         'elasticsearch',
+        'vmalert',
       ]
       for (const type_ of types) {
         expect(dataSourceTypeLabels[type_]).toBeDefined()
@@ -146,6 +157,10 @@ describe('datasource types', () => {
 
     it('returns correct label for elasticsearch', () => {
       expect(dataSourceTypeLabels.elasticsearch).toBe('Elasticsearch')
+    })
+
+    it('returns correct label for vmalert', () => {
+      expect(dataSourceTypeLabels.vmalert).toBe('VMAlert')
     })
   })
 })

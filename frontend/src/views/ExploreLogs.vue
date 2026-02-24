@@ -28,7 +28,7 @@ const { timeRange, onRefresh, setCustomRange } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { logsDatasources, fetchDatasources } = useDatasource()
 
-const dataSourceTypeLogos: Record<DataSourceType, string> = {
+const dataSourceTypeLogos: Partial<Record<DataSourceType, string>> = {
   prometheus: prometheusLogo,
   loki: lokiLogo,
   victoriametrics: victoriaMetricsLogo,

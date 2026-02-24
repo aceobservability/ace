@@ -8,6 +8,7 @@ export type DataSourceType =
   | 'clickhouse'
   | 'cloudwatch'
   | 'elasticsearch'
+  | 'vmalert'
 
 export interface DataSource {
   id: string
@@ -163,6 +164,54 @@ export function isTracingType(type_: DataSourceType): boolean {
   return type_ === 'tempo' || type_ === 'victoriatraces' || type_ === 'clickhouse'
 }
 
+export interface VMAlertAlert {
+  state: string
+  name: string
+  value: string
+  labels: Record<string, string>
+  annotations: Record<string, string>
+  activeAt: string
+  expression?: string
+}
+
+export interface VMAlertAlertsResponse {
+  status: string
+  data: {
+    alerts: VMAlertAlert[]
+  }
+}
+
+export interface VMAlertRule {
+  state: string
+  name: string
+  query: string
+  duration: number
+  labels: Record<string, string>
+  annotations: Record<string, string>
+  lastError?: string
+  health?: string
+  type: string
+  alerts?: VMAlertAlert[]
+}
+
+export interface VMAlertRuleGroup {
+  name: string
+  file: string
+  rules: VMAlertRule[]
+  interval: number
+}
+
+export interface VMAlertGroupsResponse {
+  status: string
+  data: {
+    groups: VMAlertRuleGroup[]
+  }
+}
+
+export function isAlertingType(type_: DataSourceType): boolean {
+  return type_ === 'vmalert'
+}
+
 export const dataSourceTypeLabels: Record<DataSourceType, string> = {
   prometheus: 'Prometheus',
   loki: 'Loki',
@@ -173,4 +222,5 @@ export const dataSourceTypeLabels: Record<DataSourceType, string> = {
   clickhouse: 'ClickHouse',
   cloudwatch: 'CloudWatch',
   elasticsearch: 'Elasticsearch',
+  vmalert: 'VMAlert',
 }

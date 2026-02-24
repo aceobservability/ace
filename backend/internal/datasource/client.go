@@ -124,6 +124,8 @@ func TestConnection(ctx context.Context, ds models.DataSource) error {
 		return client.TestConnection(ctx)
 	case models.DataSourceElasticsearch:
 		return runHTTPConnectionCheck(ctx, ds, []string{"/_cluster/health", "/_cat/indices?format=json&h=index&bytes=b", "/"})
+	case models.DataSourceVMAlert:
+		return runHTTPConnectionCheck(ctx, ds, []string{"/health", "/api/v1/alerts", "/"})
 	default:
 		return fmt.Errorf("unsupported datasource type: %s", ds.Type)
 	}

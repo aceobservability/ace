@@ -35,7 +35,7 @@ const testAllLoading = ref(false)
 const healthStatus = ref<Record<string, 'unknown' | 'checking' | 'healthy' | 'unhealthy'>>({})
 const healthErrors = ref<Record<string, string>>({})
 
-const dataSourceTypeLogos: Record<DataSourceType, string> = {
+const dataSourceTypeLogos: Partial<Record<DataSourceType, string>> = {
   prometheus: prometheusLogo,
   loki: lokiLogo,
   victoriametrics: victoriaMetricsLogo,
@@ -57,7 +57,7 @@ function openEditPage(dsId: string) {
   router.push(`/app/datasources/${dsId}/edit`)
 }
 
-function getTypeLogo(type_: DataSourceType): string {
+function getTypeLogo(type_: DataSourceType): string | undefined {
   return dataSourceTypeLogos[type_]
 }
 
@@ -81,6 +81,8 @@ function getTypeColor(type_: DataSourceType): string {
       return '#38bdf8'
     case 'elasticsearch':
       return '#00bfb3'
+    case 'vmalert':
+      return '#ef4444'
   }
 }
 
@@ -198,7 +200,8 @@ watch(
               class="type-panel"
               :style="{ borderColor: getTypeColor(ds.type) + '4d', background: getTypeColor(ds.type) + '14' }"
             >
-              <img :src="getTypeLogo(ds.type)" :alt="`${dataSourceTypeLabels[ds.type]} logo`" class="type-panel-logo" />
+              <img v-if="getTypeLogo(ds.type)" :src="getTypeLogo(ds.type)" :alt="`${dataSourceTypeLabels[ds.type]} logo`" class="type-panel-logo" />
+              <Database v-else :size="26" class="type-panel-logo-icon" />
               <div class="type-panel-meta">
                 <span class="type-panel-label">Source Type</span>
                 <strong class="type-panel-name">{{ dataSourceTypeLabels[ds.type] }}</strong>
