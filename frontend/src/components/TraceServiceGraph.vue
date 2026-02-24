@@ -251,8 +251,16 @@ function handleSelectEdge(edge: PositionedEdge) {
         aria-label="Service dependency graph"
       >
         <defs>
-          <marker id="service-graph-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-            <path d="M0,0 L8,4 L0,8 z" fill="#64748b" />
+          <marker
+            id="service-graph-arrow"
+            markerUnits="userSpaceOnUse"
+            markerWidth="5"
+            markerHeight="5"
+            refX="4.5"
+            refY="2.5"
+            orient="auto"
+          >
+            <path d="M0,0 L5,2.5 L0,5 z" fill="#64748b" />
           </marker>
         </defs>
 
@@ -400,7 +408,7 @@ function handleSelectEdge(edge: PositionedEdge) {
 }
 
 .node-circle.selected {
-  stroke: #38bdf8;
+  stroke: #F59E0B;
   stroke-width: 2.4;
 }
 

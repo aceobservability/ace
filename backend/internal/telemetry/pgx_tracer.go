@@ -19,7 +19,7 @@ type PGXTracer struct {
 }
 
 func NewPGXTracer() *PGXTracer {
-	return &PGXTracer{tracer: otel.Tracer("dash.db")}
+	return &PGXTracer{tracer: otel.Tracer("ace.db")}
 }
 
 func (t *PGXTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryStartData) context.Context {

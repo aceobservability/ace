@@ -43,14 +43,14 @@ interface PieFormatterParam {
 
 // Color palette matching the dashboard theme
 const pieColors = [
-  '#38bdf8',
-  '#34d399',
+  '#F59E0B',
+  '#60A5FA',
   '#f59e0b',
   '#fb7185',
   '#22d3ee',
   '#a3e635',
   '#f97316',
-  '#0ea5e9',
+  '#D97706',
   '#14b8a6',
   '#eab308',
 ]
@@ -92,7 +92,7 @@ const chartOption = computed<EChartsOption>(() => {
       formatter: (params: PieFormatterParam) => {
         const percent = getPercentage(params.value)
         return `<div style="display: flex; align-items: center; gap: 8px;">
-          <span style="display: inline-block; width: 10px; height: 10px; background: ${params.color || '#38bdf8'}; border-radius: 50%;"></span>
+          <span style="display: inline-block; width: 10px; height: 10px; background: ${params.color || '#F59E0B'}; border-radius: 50%;"></span>
           <span style="color: #a0a0a0;">${params.name}</span>
         </div>
         <div style="margin-top: 4px; font-weight: 600;">

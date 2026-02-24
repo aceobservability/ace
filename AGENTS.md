@@ -7,7 +7,8 @@ Practical instructions for agentic coding workflows in this repository.
   - `frontend/` - Vue 3 + TypeScript + Vite + Vitest
 - Key root files:
   - `Makefile` (dev/lint/seed/security entrypoints)
-  - `docker-compose.yml` (local infra)
+  - `Tiltfile` (local dev orchestration)
+  - `deploy/charts/ace-local-infra/` (local infra Helm chart)
   - `mise.toml` (`go = 1.25`)
   - `backend/.golangci.yml` (backend lint policy)
   - `frontend/biome.jsonc` (frontend lint/format policy)
@@ -15,7 +16,9 @@ Practical instructions for agentic coding workflows in this repository.
 ## 2) Prerequisites
 - Node.js 18+
 - Go 1.25+
-- Docker + Docker Compose
+- Docker
+- A local Kubernetes cluster (kind/minikube/Docker Desktop Kubernetes)
+- kubectl + Helm + Tilt
 - Optional: `air` for backend hot reload
 
 ## 3) Core local commands
@@ -23,8 +26,8 @@ Run from repo root unless noted.
 
 ### Infra + dev servers
 ```bash
-docker-compose up -d
-docker-compose down
+tilt up
+tilt down
 
 make backend
 make frontend
@@ -33,6 +36,7 @@ make frontend
 Notes:
 - Backend default URL: `http://localhost:8080`
 - Frontend default URL: `http://localhost:5173`
+- Optional observability services (`prometheus`, `loki`, `victoria-metrics`, `victoria-logs`, `tempo`) are disabled by default in Tilt and can be enabled from the Tilt UI
 - `make backend` uses `air` if installed, else `go run ./cmd/api`
 
 ### Seed data

@@ -432,7 +432,7 @@ onUnmounted(() => {
 }
 
 .preset-item.selected {
-  background: rgba(56, 189, 248, 0.16);
+  background: rgba(245, 158, 11, 0.16);
   color: var(--accent-primary);
   font-weight: 500;
 }
@@ -506,9 +506,9 @@ onUnmounted(() => {
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid #F59E0B;
+  color: #FCD34D;
 }
 
 .btn-secondary:hover {
@@ -519,7 +519,7 @@ onUnmounted(() => {
 .btn-primary {
   background: var(--accent-primary);
   border: 1px solid var(--accent-primary);
-  color: white;
+  color: #1a0f00;
 }
 
 .btn-primary:hover {

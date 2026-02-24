@@ -57,6 +57,22 @@ vi.mock('../api/panels', () => ({
   updatePanel: vi.fn(() => Promise.resolve())
 }))
 
+vi.mock('../api/datasources', () => ({
+  listDataSources: vi.fn().mockResolvedValue([]),
+  createDataSource: vi.fn(),
+  updateDataSource: vi.fn(),
+  deleteDataSource: vi.fn(),
+  queryDataSource: vi.fn().mockResolvedValue({
+    status: 'success',
+    resultType: 'matrix',
+    data: {
+      result: [],
+    },
+  }),
+  searchDataSourceTraces: vi.fn().mockResolvedValue([]),
+  fetchDataSourceLabelValues: vi.fn().mockResolvedValue([]),
+}))
+
 const mockCurrentOrg = {
   value: {
     id: 'org-1',
@@ -122,6 +138,9 @@ vi.mock('../composables/useTimeRange', () => ({
 
 // Mock useProm (used by Panel component)
 vi.mock('../composables/useProm', () => ({
+  fetchMetrics: vi.fn().mockResolvedValue([]),
+  fetchLabels: vi.fn().mockResolvedValue([]),
+  fetchLabelValues: vi.fn().mockResolvedValue([]),
   useProm: () => ({
     chartData: { value: { series: [] } },
     loading: { value: false },

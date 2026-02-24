@@ -1,0 +1,147 @@
+postgres:
+  enabled: false
+  image: postgres:16-alpine
+  database: dash
+  username: dash
+  password: dash
+  persistence:
+    enabled: false
+    size: 5Gi
+
+valkey:
+  enabled: false
+  image: valkey/valkey:7
+  persistence:
+    enabled: false
+    size: 2Gi
+
+backend:
+  enabled: false
+  image: ace-backend
+  databaseURL: postgres://dash:dash@postgres:5432/dash?sslmode=disable
+  valkeyURL: redis://valkey:6379
+  otlpEndpoint: tempo:4318
+
+prometheus:
+  enabled: false
+  image: prom/prometheus:v2.48.0
+  persistence:
+    enabled: false
+    size: 5Gi
+  config: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+loki:
+  enabled: false
+  image: grafana/loki:3.0.0
+  persistence:
+    enabled: false
+    size: 5Gi
+  config: |
+    auth_enabled: false
+
+    server:
+      http_listen_port: 3100
+
+    common:
+      ring:
+        kvstore:
+          store: inmemory
+        instance_addr: 127.0.0.1
+      replication_factor: 1
+      path_prefix: /loki
+
+    schema_config:
+      configs:
+        - from: '2024-01-01'
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+
+    storage_config:
+      filesystem:
+        directory: /loki/chunks
+
+victoriaMetrics:
+  enabled: false
+  image: victoriametrics/victoria-metrics:v1.101.0
+  persistence:
+    enabled: false
+    size: 5Gi
+  prometheusConfig: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+victoriaLogs:
+  enabled: false
+  image: victoriametrics/victoria-logs:v1.3.1-victorialogs
+  persistence:
+    enabled: false
+    size: 5Gi
+
+tempo:
+  enabled: false
+  image: grafana/tempo:2.7.2
+  persistence:
+    enabled: false
+    size: 5Gi
+  config: |
+    auth_enabled: false
+
+    server:
+      http_listen_port: 3200
+      grpc_listen_port: 9095
+
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+
+    ingester:
+      max_block_duration: 5m
+
+    compactor:
+      compaction:
+        compacted_block_retention: 1h
+
+    storage:
+      trace:
+        backend: local
+        wal:
+          path: /var/tempo/wal
+        local:
+          path: /var/tempo/blocks
+
+    querier:
+      frontend_worker:
+        frontend_address: 127.0.0.1:9095
+
+    query_frontend:
+      search:
+        duration_slo: 5s
+        throughput_bytes_slo: 1073741824
+        metadata_slo:
+          duration_slo: 5s
+          throughput_bytes_slo: 1073741824
+      trace_by_id:
+        duration_slo: 5s

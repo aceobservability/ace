@@ -54,14 +54,14 @@ const chartRef = ref<typeof VChart | null>(null)
 
 // Dashboard palette for line series
 const lineColors = [
-  '#38bdf8',
-  '#34d399',
+  '#F59E0B',
+  '#60A5FA',
   '#f59e0b',
   '#fb7185',
   '#22d3ee',
   '#a3e635',
   '#f97316',
-  '#0ea5e9',
+  '#D97706',
 ]
 
 // Format timestamp for display (compact format for axis labels)

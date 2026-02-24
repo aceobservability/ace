@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { LayoutDashboard, Settings, Activity, ChevronLeft, ChevronRight, Compass, LogOut, Database, ChevronDown } from 'lucide-vue-next'
+import { LayoutDashboard, Settings, Activity, ChevronLeft, ChevronRight, Compass, LogOut, Database, ChevronDown, Shield, BellRing } from 'lucide-vue-next'
 import OrganizationDropdown from './OrganizationDropdown.vue'
 import CreateOrganizationModal from './CreateOrganizationModal.vue'
 import { useOrganization } from '../composables/useOrganization'
@@ -35,6 +35,7 @@ interface NavChild {
 
 const navItems: NavItem[] = [
   { id: 'dashboards', icon: LayoutDashboard, label: 'Dashboards', path: '/app/dashboards' },
+  { id: 'alerts', icon: BellRing, label: 'Alerts', path: '/app/alerts' },
   {
     id: 'explore',
     icon: Compass,
@@ -67,6 +68,8 @@ const settingsPath = computed(() => {
   }
   return null
 })
+
+const privacySettingsPath = '/app/settings/privacy'
 
 watch(() => route.path, (path) => {
   if (normalizeAppPath(path).startsWith('/explore')) {
@@ -145,7 +148,7 @@ defineExpose({ isExpanded })
       <div class="sidebar-logo">
         <Activity class="logo-icon" :size="24" />
         <div v-if="isVisuallyExpanded" class="logo-copy">
-          <span class="logo-text">Dash</span>
+          <span class="logo-text">Ace</span>
           <span class="logo-subtext">developer cockpit</span>
         </div>
       </div>
@@ -210,6 +213,16 @@ defineExpose({ isExpanded })
           <span v-if="isVisuallyExpanded" class="nav-label">Settings</span>
           <span v-else class="nav-tooltip">Settings</span>
         </button>
+        <button
+          class="nav-item"
+          :class="{ active: isRouteMatch(privacySettingsPath) }"
+          @click="navigate(privacySettingsPath)"
+          :title="isVisuallyExpanded ? undefined : 'Privacy'"
+        >
+          <Shield :size="20" />
+          <span v-if="isVisuallyExpanded" class="nav-label">Privacy</span>
+          <span v-else class="nav-tooltip">Privacy</span>
+        </button>
         <div v-if="isVisuallyExpanded && user" class="user-info">
           <span class="user-email">{{ user.email }}</span>
         </div>
@@ -261,7 +274,7 @@ defineExpose({ isExpanded })
   right: -1px;
   width: 1px;
   height: 100%;
-  background: linear-gradient(180deg, transparent, rgba(56, 189, 248, 0.4), transparent);
+  background: linear-gradient(180deg, transparent, rgba(245, 158, 11, 0.4), transparent);
   pointer-events: none;
 }
 
@@ -298,8 +311,13 @@ defineExpose({ isExpanded })
   flex-shrink: 0;
   padding: 0.35rem;
   border-radius: 10px;
-  background: linear-gradient(140deg, rgba(56, 189, 248, 0.24), rgba(52, 211, 153, 0.2));
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.3);
+  background: linear-gradient(140deg, rgba(245, 158, 11, 0.24), rgba(99, 102, 241, 0.2));
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.3);
+  transition: box-shadow 0.2s ease;
+}
+
+.logo-icon:hover {
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.3), 0 0 12px rgba(245, 158, 11, 0.35);
 }
 
 .logo-copy {
@@ -314,7 +332,7 @@ defineExpose({ isExpanded })
   letter-spacing: 0.02em;
   text-transform: uppercase;
   font-family: var(--font-mono);
-  color: var(--text-primary);
+  color: #F59E0B;
 }
 
 .logo-subtext {
@@ -433,14 +451,14 @@ defineExpose({ isExpanded })
 
 .nav-sub-item:hover {
   background: rgba(31, 49, 73, 0.64);
-  border-color: rgba(125, 211, 252, 0.2);
+  border-color: rgba(252, 211, 77, 0.2);
   color: var(--text-primary);
 }
 
 .nav-sub-item.active {
-  background: rgba(56, 189, 248, 0.14);
-  border-color: rgba(56, 189, 248, 0.28);
-  color: #bde9ff;
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.28);
+  color: #FCD34D;
 }
 
 .nav-sub-label {
@@ -457,31 +475,15 @@ defineExpose({ isExpanded })
 
 .nav-item:hover {
   background: rgba(31, 49, 73, 0.74);
-  border-color: rgba(125, 211, 252, 0.22);
+  border-color: rgba(252, 211, 77, 0.22);
   color: var(--text-primary);
 }
 
 .nav-item.active {
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.18), rgba(52, 211, 153, 0.1));
-  border-color: rgba(56, 189, 248, 0.34);
-  color: #bde9ff;
-}
-
-.nav-item.active::before {
-  content: '';
-  position: absolute;
-  left: -5px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 6px;
-  background: var(--accent-primary);
-  border-radius: 999px;
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.7);
-}
-
-.sidebar:not(.expanded) .nav-item.active::before {
-  left: -3px;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.18), rgba(99, 102, 241, 0.1));
+  border-color: rgba(245, 158, 11, 0.34);
+  border-left: 3px solid #F59E0B;
+  color: #FCD34D;
 }
 
 .nav-label {

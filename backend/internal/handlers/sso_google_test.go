@@ -387,6 +387,7 @@ func TestGoogleSSOCallbackClearsStateCookieWithSecureAttributes(t *testing.T) {
 
 	if clearedStateCookie == nil {
 		t.Fatal("Expected oauth_state cookie to be cleared")
+		return
 	}
 
 	if !clearedStateCookie.HttpOnly {

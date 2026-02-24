@@ -104,6 +104,7 @@ func TestNewPrometheusHandler(t *testing.T) {
 
 	if handler == nil {
 		t.Fatal("expected handler to be non-nil")
+		return
 	}
 
 	if handler.prometheusURL != "http://localhost:9090" {

@@ -4,6 +4,9 @@ import { Play, AlertCircle, History, X, Loader2, HeartPulse, CircleAlert, Chevro
 import TimeRangePicker from '../components/TimeRangePicker.vue'
 import LogViewer from '../components/LogViewer.vue'
 import LogQLQueryBuilder from '../components/LogQLQueryBuilder.vue'
+import ClickHouseSQLEditor from '../components/ClickHouseSQLEditor.vue'
+import CloudWatchQueryEditor from '../components/CloudWatchQueryEditor.vue'
+import ElasticsearchQueryEditor from '../components/ElasticsearchQueryEditor.vue'
 import { useTimeRange } from '../composables/useTimeRange'
 import { useOrganization } from '../composables/useOrganization'
 import { useDatasource } from '../composables/useDatasource'
@@ -17,18 +20,24 @@ import victoriaMetricsLogo from '../assets/datasources/victoriametrics-logo.svg'
 import victoriaLogsLogo from '../assets/datasources/victorialogs-logo.svg'
 import tempoLogo from '../assets/datasources/tempo-logo.svg'
 import victoriaTracesLogo from '../assets/datasources/victoriatraces-logo.svg'
+import clickhouseLogo from '../assets/datasources/clickhouse-logo.svg'
+import cloudwatchLogo from '../assets/datasources/cloudwatch-logo.svg'
+import elasticsearchLogo from '../assets/datasources/elasticsearch-logo.svg'
 
 const { timeRange, onRefresh, setCustomRange } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { logsDatasources, fetchDatasources } = useDatasource()
 
-const dataSourceTypeLogos: Record<DataSourceType, string> = {
+const dataSourceTypeLogos: Partial<Record<DataSourceType, string>> = {
   prometheus: prometheusLogo,
   loki: lokiLogo,
   victoriametrics: victoriaMetricsLogo,
   victorialogs: victoriaLogsLogo,
   tempo: tempoLogo,
   victoriatraces: victoriaTracesLogo,
+  clickhouse: clickhouseLogo,
+  cloudwatch: cloudwatchLogo,
+  elasticsearch: elasticsearchLogo,
 }
 
 type DatasourceHealthStatus = 'unknown' | 'checking' | 'healthy' | 'unhealthy'
@@ -84,15 +93,42 @@ function escapeForDoubleQuotedValue(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 }
 
+function escapeForSingleQuotedValue(value: string): string {
+  return value.replace(/'/g, "''")
+}
+
 function buildTraceLogsQuery(type_: DataSourceType, traceId: string, serviceName: string): string {
   const escapedTraceId = escapeForDoubleQuotedValue(traceId)
   const escapedServiceName = escapeForDoubleQuotedValue(serviceName)
+  const escapedTraceIdSql = escapeForSingleQuotedValue(traceId)
+  const escapedServiceNameSql = escapeForSingleQuotedValue(serviceName)
 
   if (type_ === 'loki') {
     const selector = escapedServiceName
       ? `{service_name="${escapedServiceName}"}`
       : '{job=~".+"}'
     return `${selector} |= "${escapedTraceId}"`
+  }
+
+  if (type_ === 'clickhouse') {
+    const serviceCondition = escapedServiceNameSql
+      ? `AND service_name = '${escapedServiceNameSql}'`
+      : ''
+    return `SELECT timestamp, message, level\nFROM logs\nWHERE message ILIKE '%${escapedTraceIdSql}%' ${serviceCondition}\nORDER BY timestamp DESC\nLIMIT 500`
+  }
+
+  if (type_ === 'cloudwatch') {
+    const serviceFilter = escapedServiceName
+      ? ` | filter service_name = "${escapedServiceName}"`
+      : ''
+    return `fields @timestamp, @message, @logStream\n| filter @message like /${escapedTraceId}/${serviceFilter}\n| sort @timestamp desc\n| limit 500`
+  }
+
+  if (type_ === 'elasticsearch') {
+    if (escapedServiceName) {
+      return `trace.id:"${escapedTraceId}" AND service.name:"${escapedServiceName}"`
+    }
+    return `trace.id:"${escapedTraceId}"`
   }
 
   if (escapedServiceName) {
@@ -565,6 +601,7 @@ async function runQuery() {
 
     const response = await queryDataSource(selectedDatasourceId.value, {
       query: query.value,
+      signal: isClickHouseDatasource.value || isCloudWatchDatasource.value || isElasticsearchDatasource.value ? 'logs' : undefined,
       start,
       end,
       step: 15,
@@ -673,6 +710,15 @@ const isLiveBusy = computed(() => liveState.value === 'connecting' || liveState.
 const activeDatasource = computed(
   () => logsDatasources.value.find(ds => ds.id === selectedDatasourceId.value) || null,
 )
+const isClickHouseDatasource = computed(() => activeDatasource.value?.type === 'clickhouse')
+const isCloudWatchDatasource = computed(() => activeDatasource.value?.type === 'cloudwatch')
+const isElasticsearchDatasource = computed(() => activeDatasource.value?.type === 'elasticsearch')
+const supportsLabelDiscovery = computed(
+  () => activeDatasource.value?.type === 'loki' || activeDatasource.value?.type === 'victorialogs',
+)
+const supportsLiveStreaming = computed(
+  () => activeDatasource.value?.type === 'loki' || activeDatasource.value?.type === 'victorialogs',
+)
 const queryLanguage = computed<'logql' | 'logsql'>(() => {
   if (activeDatasource.value?.type === 'victorialogs') {
     return 'logsql'
@@ -734,6 +780,15 @@ function getSmokeQuery(type_: DataSourceType): string {
   if (type_ === 'prometheus' || type_ === 'victoriametrics') {
     return 'up'
   }
+  if (type_ === 'clickhouse') {
+    return 'SELECT now() AS timestamp, \'healthcheck\' AS message LIMIT 1'
+  }
+  if (type_ === 'cloudwatch') {
+    return 'fields @timestamp, @message | sort @timestamp desc | limit 1'
+  }
+  if (type_ === 'elasticsearch') {
+    return '*'
+  }
   if (type_ === 'loki') {
     return '{job=~".+"}'
   }
@@ -750,6 +805,7 @@ async function checkDatasourceHealth(datasourceId: string, type_: DataSourceType
   try {
     const healthResult = await queryDataSource(datasourceId, {
       query: getSmokeQuery(type_),
+      signal: type_ === 'clickhouse' || type_ === 'cloudwatch' || type_ === 'elasticsearch' ? 'logs' : undefined,
       start,
       end,
       step: 15,
@@ -790,6 +846,12 @@ watch(selectedDatasourceId, () => {
   clearLogHighlights()
 })
 
+watch(supportsLiveStreaming, (supports) => {
+  if (!supports && isLive.value) {
+    stopLive()
+  }
+})
+
 watch(query, (nextQuery, previousQuery) => {
   if (nextQuery !== previousQuery && isLive.value) {
     stopLive(false)
@@ -797,7 +859,7 @@ watch(query, (nextQuery, previousQuery) => {
 })
 
 watch(() => selectedDatasourceId.value, (datasourceId) => {
-  if (!datasourceId) {
+  if (!datasourceId || !supportsLabelDiscovery.value) {
     indexedLabels.value = []
     return
   }
@@ -891,7 +953,28 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
         </div>
 
         <div class="query-builder-wrapper">
+          <ClickHouseSQLEditor
+            v-if="isClickHouseDatasource"
+            v-model="query"
+            signal="logs"
+            :disabled="loading || !hasLogsDatasources"
+          />
+          <CloudWatchQueryEditor
+            v-else-if="isCloudWatchDatasource"
+            v-model="query"
+            signal="logs"
+            :show-signal-selector="false"
+            :disabled="loading || !hasLogsDatasources"
+          />
+          <ElasticsearchQueryEditor
+            v-else-if="isElasticsearchDatasource"
+            v-model="query"
+            signal="logs"
+            :show-signal-selector="false"
+            :disabled="loading || !hasLogsDatasources"
+          />
           <LogQLQueryBuilder
+            v-else
             v-model="query"
             :query-language="queryLanguage"
             :datasource-id="selectedDatasourceId"
@@ -945,8 +1028,9 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
           <button
             class="btn btn-live"
             :class="{ active: isLive }"
-            :disabled="loading || (!isLive && (!query.trim() || !selectedDatasourceId || !hasLogsDatasources))"
+            :disabled="loading || !supportsLiveStreaming || (!isLive && (!query.trim() || !selectedDatasourceId || !hasLogsDatasources))"
             @click="toggleLive"
+            :title="supportsLiveStreaming ? '' : 'Live streaming is only available for Loki and Victoria Logs datasources'"
           >
             <Loader2 v-if="isLiveBusy" :size="16" class="icon-spin" />
             <X v-else-if="isLive" :size="16" />
@@ -994,12 +1078,31 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 
         <div v-else-if="!hasLogsDatasources" class="empty-state">
           <p>No logs datasource configured.</p>
-          <p class="hint-text">Add a Loki or Victoria Logs datasource in Data Sources.</p>
+          <p class="hint-text">Add a Loki, Victoria Logs, CloudWatch, or Elasticsearch datasource in Data Sources.</p>
         </div>
 
         <div v-else class="empty-state">
-          <p>Write a log query and click "Run Query" to inspect logs.</p>
-          <p class="hint-text">Examples: <code>{job=~".+"}</code>, <code>{app="api"} |= "error"</code>, <code>*</code></p>
+          <p>
+            {{
+              isClickHouseDatasource
+                ? 'Write a SQL query and click "Run Query" to inspect logs.'
+                : isCloudWatchDatasource
+                  ? 'Write a CloudWatch Logs Insights query and click "Run Query" to inspect logs.'
+                  : isElasticsearchDatasource
+                    ? 'Write an Elasticsearch/Lucene query and click "Run Query" to inspect logs.'
+                    : 'Write a log query and click "Run Query" to inspect logs.'
+            }}
+          </p>
+          <p v-if="isClickHouseDatasource" class="hint-text">
+            Examples: <code>SELECT timestamp, message, level FROM logs WHERE timestamp &gt;= toDateTime({start})</code>
+          </p>
+          <p v-else-if="isCloudWatchDatasource" class="hint-text">
+            Example: <code>fields @timestamp, @message | filter @message like /error/ | sort @timestamp desc | limit 200</code>
+          </p>
+          <p v-else-if="isElasticsearchDatasource" class="hint-text">
+            Examples: <code>service.name:"api" AND level:error</code>, <code>{"index":"logs-*","query":{"query_string":{"query":"error"}}}</code>
+          </p>
+          <p v-else class="hint-text">Examples: <code>{job=~".+"}</code>, <code>{app="api"} |= "error"</code>, <code>*</code></p>
         </div>
       </div>
     </div>
@@ -1046,9 +1149,9 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 .mode-badge {
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid rgba(56, 189, 248, 0.38);
-  background: rgba(56, 189, 248, 0.14);
-  color: #bde9ff;
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  background: rgba(245, 158, 11, 0.14);
+  color: #FCD34D;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1201,7 +1304,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 }
 
 .datasource-option.selected {
-  background: rgba(56, 189, 248, 0.14);
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .datasource-option-logo {
@@ -1445,10 +1548,10 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1.1rem;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 10px;
-  color: #bde9ff;
+  color: #FCD34D;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
@@ -1457,8 +1560,8 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 }
 
 .btn-live:hover:not(:disabled) {
-  background: rgba(56, 189, 248, 0.2);
-  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
 }
 
 .btn-live.active {

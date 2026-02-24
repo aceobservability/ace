@@ -4,6 +4,7 @@ import type {
   UpdateGoogleSSOConfigRequest,
   UpdateMicrosoftSSOConfigRequest,
 } from '../types/sso'
+import { trackEvent } from '../analytics'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
@@ -49,13 +50,22 @@ export async function updateGoogleSSOConfig(
   })
 
   if (!response.ok) {
+    trackEvent('settings_sso_google_update_failed', {
+      org_id: orgId,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Admin access required')
     }
     throw new Error(await getErrorMessage(response, 'Failed to update Google SSO config'))
   }
 
-  return response.json()
+  const config = await response.json()
+  trackEvent('settings_sso_google_updated', {
+    org_id: orgId,
+    enabled: config.enabled,
+  })
+  return config
 }
 
 export async function getMicrosoftSSOConfig(orgId: string): Promise<MicrosoftSSOConfig> {
@@ -87,11 +97,20 @@ export async function updateMicrosoftSSOConfig(
   })
 
   if (!response.ok) {
+    trackEvent('settings_sso_microsoft_update_failed', {
+      org_id: orgId,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Admin access required')
     }
     throw new Error(await getErrorMessage(response, 'Failed to update Microsoft SSO config'))
   }
 
-  return response.json()
+  const config = await response.json()
+  trackEvent('settings_sso_microsoft_updated', {
+    org_id: orgId,
+    enabled: config.enabled,
+  })
+  return config
 }

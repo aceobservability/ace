@@ -73,20 +73,28 @@ export function useDatasource() {
 
   const metricsDatasources = computed(() =>
     datasources.value.filter(
-      (d) => d.type === 'prometheus' || d.type === 'victoriametrics',
+      (d) => d.type === 'prometheus' || d.type === 'victoriametrics' || d.type === 'clickhouse' || d.type === 'cloudwatch' || d.type === 'elasticsearch',
     ),
   )
 
   const logsDatasources = computed(() =>
     datasources.value.filter(
-      (d) => d.type === 'loki' || d.type === 'victorialogs',
+      (d) => d.type === 'loki' || d.type === 'victorialogs' || d.type === 'clickhouse' || d.type === 'cloudwatch' || d.type === 'elasticsearch',
     ),
   )
 
   const tracingDatasources = computed(() =>
     datasources.value.filter(
-      (d) => d.type === 'tempo' || d.type === 'victoriatraces',
+      (d) => d.type === 'tempo' || d.type === 'victoriatraces' || d.type === 'clickhouse',
     ),
+  )
+
+  const vmalertDatasources = computed(() =>
+    datasources.value.filter((d) => d.type === 'vmalert'),
+  )
+
+  const alertingDatasources = computed(() =>
+    datasources.value.filter((d) => d.type === 'vmalert' || d.type === 'alertmanager'),
   )
 
   return {
@@ -96,6 +104,8 @@ export function useDatasource() {
     metricsDatasources,
     logsDatasources,
     tracingDatasources,
+    vmalertDatasources,
+    alertingDatasources,
     fetchDatasources,
     addDatasource,
     editDatasource,

@@ -1,6 +1,7 @@
 import { ref, computed, readonly } from 'vue'
 import * as authApi from '../api/auth'
 import type { User, MeResponse } from '../api/auth'
+import { identifyUser, resetUserAnalytics, trackEvent } from '../analytics'
 
 // Global state (singleton pattern)
 const user = ref<User | null>(null)
@@ -33,6 +34,11 @@ export function useAuth() {
         updated_at: me.updated_at,
       }
       userOrganizations.value = me.organizations || []
+      identifyUser({
+        id: me.id,
+        email: me.email,
+        name: me.name,
+      })
       initialized.value = true
       loading.value = false
       return true
@@ -42,6 +48,7 @@ export function useAuth() {
       localStorage.removeItem('refresh_token')
       user.value = null
       userOrganizations.value = []
+      resetUserAnalytics()
       initialized.value = true
       loading.value = false
       return false
@@ -63,6 +70,14 @@ export function useAuth() {
       updated_at: me.updated_at,
     }
     userOrganizations.value = me.organizations || []
+    identifyUser({
+      id: me.id,
+      email: me.email,
+      name: me.name,
+    })
+    trackEvent('auth_login', {
+      organization_count: userOrganizations.value.length,
+    })
   }
 
   async function register(email: string, password: string, name?: string): Promise<void> {
@@ -80,6 +95,14 @@ export function useAuth() {
       updated_at: me.updated_at,
     }
     userOrganizations.value = me.organizations || []
+    identifyUser({
+      id: me.id,
+      email: me.email,
+      name: me.name,
+    })
+    trackEvent('auth_signup', {
+      organization_count: userOrganizations.value.length,
+    })
   }
 
   async function logout(): Promise<void> {
@@ -95,6 +118,8 @@ export function useAuth() {
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('current_org_id')
+    trackEvent('auth_logout')
+    resetUserAnalytics()
     user.value = null
     userOrganizations.value = []
   }
@@ -112,6 +137,11 @@ export function useAuth() {
         updated_at: me.updated_at,
       }
       userOrganizations.value = me.organizations || []
+      identifyUser({
+        id: me.id,
+        email: me.email,
+        name: me.name,
+      })
     } catch {
       // If refresh fails, log out
       await logout()

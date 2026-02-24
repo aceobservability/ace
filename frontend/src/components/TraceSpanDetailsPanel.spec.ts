@@ -145,13 +145,17 @@ describe('TraceSpanDetailsPanel', () => {
     expect(copyTraceButton).toBeTruthy()
     expect(exportButton).toBeTruthy()
 
-    await copySpanButton!.trigger('click')
-    await copyTraceButton!.trigger('click')
+    if (!copySpanButton || !copyTraceButton || !exportButton) {
+      throw new Error('Expected trace action buttons to be present')
+    }
+
+    await copySpanButton.trigger('click')
+    await copyTraceButton.trigger('click')
 
     expect(clipboardWrite).toHaveBeenNthCalledWith(1, 'span-child')
     expect(clipboardWrite).toHaveBeenNthCalledWith(2, 'trace-abc-123')
 
-    await exportButton!.trigger('click')
+    await exportButton.trigger('click')
     expect(createObjectURL).toHaveBeenCalledTimes(1)
     expect(revokeObjectURL).toHaveBeenCalledTimes(1)
   })
@@ -174,8 +178,12 @@ describe('TraceSpanDetailsPanel', () => {
     expect(openLogsButton).toBeTruthy()
     expect(openMetricsButton).toBeTruthy()
 
-    await openLogsButton!.trigger('click')
-    await openMetricsButton!.trigger('click')
+    if (!openLogsButton || !openMetricsButton) {
+      throw new Error('Expected trace navigation buttons to be present')
+    }
+
+    await openLogsButton.trigger('click')
+    await openMetricsButton.trigger('click')
 
     expect(wrapper.emitted('open-trace-logs')).toEqual([
       [

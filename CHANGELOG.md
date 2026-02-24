@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.3.0](https://github.com/janhoon/ace/compare/v0.2.0...v0.3.0) (2026-02-20)
+
+
+### Features
+
+* 265 add ClickHouse backend datasource core ([2b3cb60](https://github.com/janhoon/ace/commit/2b3cb604ba57f8d10452746e860e24c67e4c6ece))
+* 266 - agent/prd.json.backup agent/progress.txt.backup frontend/src/components/Panel.vue frontend/src/composables/useDatasource.ts frontend/src/types/datasource.ts frontend/src/views/Explore.vue frontend/src/views/ExploreLogs.spec.ts frontend/src/views/ExploreLogs.vue frontend/src/views/ExploreTraces.vue ([fa19d15](https://github.com/janhoon/ace/commit/fa19d15b4200b10fbd1a9cc51dec07610c119d86))
+* 266 - agent/prd.json.backup agent/progress.txt.backup frontend/src/components/Panel.vue frontend/src/composables/useDatasource.ts frontend/src/types/datasource.ts frontend/src/views/Explore.vue frontend/src/views/ExploreLogs.spec.ts frontend/src/views/ExploreLogs.vue frontend/src/views/ExploreTraces.vue ([c8d4296](https://github.com/janhoon/ace/commit/c8d429637a4fe3aeabf89dae8f12992684253463))
+* 266 add clickhouse sql editor and settings ([1e10f39](https://github.com/janhoon/ace/commit/1e10f39935091eb8da6f06904d99d2a7662ff623))
+* 267 clickhouse explore views and panel routing ([8a4803b](https://github.com/janhoon/ace/commit/8a4803b0efaf8765d4bd43dc70cdf5bfa2aa6146))
+* add ClickHouse datasource tickets [#265](https://github.com/janhoon/ace/issues/265), [#266](https://github.com/janhoon/ace/issues/266), [#267](https://github.com/janhoon/ace/issues/267) to PRD ([102aea5](https://github.com/janhoon/ace/commit/102aea5e10f4638d3960ae443f38f1d823e6dd50))
+* LANDING-COMPARISON-001 add comparison table ([ae27477](https://github.com/janhoon/ace/commit/ae27477149537798dd61014d89c6ae06b7715cb6))
+* LANDING-FEATURES-001 add landing feature cards ([3ca4ae5](https://github.com/janhoon/ace/commit/3ca4ae5b3535866016fb96ef225a84700b570443))
+* LANDING-FOOTER-001 add landing footer CTA ([1bb0bf9](https://github.com/janhoon/ace/commit/1bb0bf9b45d7fd0f9db6c4c2a497b7440185faa5))
+* LANDING-HERO-001 build landing hero section ([ac8cb1e](https://github.com/janhoon/ace/commit/ac8cb1edc9fc67b89938909b3a7b061829bf5726))
+* LANDING-SCREENSHOTS-001 add landing screenshot gallery ([3c5cbc3](https://github.com/janhoon/ace/commit/3c5cbc3429acf0c1adfbde9e0b445cc32bd8c8a3))
+* LANDING-SETUP-001 add landing route and SEO foundation ([92698c3](https://github.com/janhoon/ace/commit/92698c331208fbafd79a9efb12b883ee8157b041))
+* POSTHOG-BACKEND-001 add backend PostHog analytics ([f80f912](https://github.com/janhoon/ace/commit/f80f91268afb4c0b0885888e96e4cd3e2062c2fd))
+* POSTHOG-FRONTEND-001 add frontend analytics ([64590d6](https://github.com/janhoon/ace/commit/64590d65149e216e9e20ceb5205b7d5f4777de95))
+* task-1 - frontend/src/views/Explore.spec.ts ([c1a67b0](https://github.com/janhoon/ace/commit/c1a67b0499e67a886528c904b151ba8b824e4b29))
+* task-1 - frontend/src/views/Explore.spec.ts ([e58d36f](https://github.com/janhoon/ace/commit/e58d36f4de4065cfbf29116234f56bf170391a65))
+* update Ralph workflow to use PRs for changelog tracking ([646f101](https://github.com/janhoon/ace/commit/646f101044a6c30bc526b5a1f76c18dcd372c9d4))
+
+
+### Bug Fixes
+
+* normalize trace search results and refine graph arrows ([8513820](https://github.com/janhoon/ace/commit/8513820742075f67c9b8c00532a16fba113d249f))
+
+
+### Documentation
+
+* Add PostHog backend and frontend integration tickets ([#249](https://github.com/janhoon/ace/issues/249), [#250](https://github.com/janhoon/ace/issues/250)) ([5143d75](https://github.com/janhoon/ace/commit/5143d75092d9a161aa856ae567a2e3a4db69af30))
+* Add PostHog EU region config and API keys ([2ff560b](https://github.com/janhoon/ace/commit/2ff560b76b2833b385292e28e95f122517fba293))
+* Remove PostHog API keys (moved to Speke) ([bdc1752](https://github.com/janhoon/ace/commit/bdc1752450fec3b61581d8b6b5904ec5bfd64ef3))
+* Update PostHog host to https://eu.i.posthog.com ([173c726](https://github.com/janhoon/ace/commit/173c7266436d2d969bfc2d63337fd08a231a391b))
+
 ## [0.2.0](https://github.com/janhoon/dash/compare/v0.1.0...v0.2.0) (2026-02-10)
 
 

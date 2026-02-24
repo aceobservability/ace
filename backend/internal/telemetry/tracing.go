@@ -16,7 +16,7 @@ import (
 
 const (
 	defaultOTLPEndpoint = "localhost:4318"
-	defaultServiceName  = "dash-backend"
+	defaultServiceName  = "ace-backend"
 	defaultEnvironment  = "development"
 )
 
@@ -25,7 +25,7 @@ const (
 // Supported variables:
 //   - OTEL_ENABLED (default: true)
 //   - OTEL_EXPORTER_OTLP_ENDPOINT (default: localhost:4318)
-//   - OTEL_SERVICE_NAME (default: dash-backend)
+//   - OTEL_SERVICE_NAME (default: ace-backend)
 //   - OTEL_ENVIRONMENT (default: development)
 func Setup(ctx context.Context) (func(context.Context) error, error) {
 	if !enabledFromEnv() {

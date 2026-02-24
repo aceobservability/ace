@@ -16,6 +16,11 @@ const (
 	DataSourceVictoriaMetrics DataSourceType = "victoriametrics"
 	DataSourceTempo           DataSourceType = "tempo"
 	DataSourceVictoriaTraces  DataSourceType = "victoriatraces"
+	DataSourceClickHouse      DataSourceType = "clickhouse"
+	DataSourceCloudWatch      DataSourceType = "cloudwatch"
+	DataSourceElasticsearch   DataSourceType = "elasticsearch"
+	DataSourceVMAlert         DataSourceType = "vmalert"
+	DataSourceAlertManager    DataSourceType = "alertmanager"
 )
 
 type DataSource struct {
@@ -51,20 +56,20 @@ type UpdateDataSourceRequest struct {
 
 func (t DataSourceType) Valid() bool {
 	switch t {
-	case DataSourcePrometheus, DataSourceLoki, DataSourceVictoriaLogs, DataSourceVictoriaMetrics, DataSourceTempo, DataSourceVictoriaTraces:
+	case DataSourcePrometheus, DataSourceLoki, DataSourceVictoriaLogs, DataSourceVictoriaMetrics, DataSourceTempo, DataSourceVictoriaTraces, DataSourceClickHouse, DataSourceCloudWatch, DataSourceElasticsearch, DataSourceVMAlert, DataSourceAlertManager:
 		return true
 	}
 	return false
 }
 
 func (t DataSourceType) IsMetrics() bool {
-	return t == DataSourcePrometheus || t == DataSourceVictoriaMetrics
+	return t == DataSourcePrometheus || t == DataSourceVictoriaMetrics || t == DataSourceClickHouse || t == DataSourceCloudWatch || t == DataSourceElasticsearch
 }
 
 func (t DataSourceType) IsLogs() bool {
-	return t == DataSourceLoki || t == DataSourceVictoriaLogs
+	return t == DataSourceLoki || t == DataSourceVictoriaLogs || t == DataSourceClickHouse || t == DataSourceCloudWatch || t == DataSourceElasticsearch
 }
 
 func (t DataSourceType) IsTraces() bool {
-	return t == DataSourceTempo || t == DataSourceVictoriaTraces
+	return t == DataSourceTempo || t == DataSourceVictoriaTraces || t == DataSourceClickHouse
 }

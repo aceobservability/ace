@@ -14,7 +14,7 @@ func main() {
 	flag.Parse()
 
 	if flag.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: converter <grafana.json> --output <dash.json|dash.yaml> [--format json|yaml]")
+		fmt.Fprintln(os.Stderr, "usage: converter <grafana.json> --output <ace.json|ace.yaml> [--format json|yaml]")
 		os.Exit(1)
 	}
 

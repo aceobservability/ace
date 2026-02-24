@@ -1,4 +1,5 @@
 import type { Panel, CreatePanelRequest, UpdatePanelRequest } from '../types/panel'
+import { trackEvent } from '../analytics'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
@@ -27,9 +28,20 @@ export async function createPanel(dashboardId: string, data: CreatePanelRequest)
     body: JSON.stringify(data),
   })
   if (!response.ok) {
+    trackEvent('panel_create_failed', {
+      dashboard_id: dashboardId,
+      status_code: response.status,
+    })
     throw new Error('Failed to create panel')
   }
-  return response.json()
+
+  const panel = await response.json()
+  trackEvent('panel_created', {
+    panel_id: panel.id,
+    dashboard_id: dashboardId,
+    panel_type: panel.type,
+  })
+  return panel
 }
 
 export async function updatePanel(id: string, data: UpdatePanelRequest): Promise<Panel> {
@@ -39,9 +51,19 @@ export async function updatePanel(id: string, data: UpdatePanelRequest): Promise
     body: JSON.stringify(data),
   })
   if (!response.ok) {
+    trackEvent('panel_update_failed', {
+      panel_id: id,
+      status_code: response.status,
+    })
     throw new Error('Failed to update panel')
   }
-  return response.json()
+
+  const panel = await response.json()
+  trackEvent('panel_updated', {
+    panel_id: id,
+    updated_fields: Object.keys(data),
+  })
+  return panel
 }
 
 export async function deletePanel(id: string): Promise<void> {
@@ -50,6 +72,14 @@ export async function deletePanel(id: string): Promise<void> {
     headers: getAuthHeaders(),
   })
   if (!response.ok) {
+    trackEvent('panel_delete_failed', {
+      panel_id: id,
+      status_code: response.status,
+    })
     throw new Error('Failed to delete panel')
   }
+
+  trackEvent('panel_deleted', {
+    panel_id: id,
+  })
 }

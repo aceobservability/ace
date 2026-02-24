@@ -12,9 +12,7 @@ const props = defineProps<{
   selectedSpanId?: string | null
 }>()
 
-const emit = defineEmits<{
-  (e: 'select-span', span: TraceSpan): void
-}>()
+const emit = defineEmits<(e: 'select-span', span: TraceSpan) => void>()
 
 const zoomPercent = ref(100)
 const panPercent = ref(0)
@@ -145,7 +143,7 @@ const svgHeight = computed(() => axisHeight + Math.max(visibleRows.value.length,
 const svgWidth = labelWidth + barsWidth + 12
 
 const serviceColorPalette = [
-  '#38bdf8',
+  '#F59E0B',
   '#22c55e',
   '#f59e0b',
   '#f97316',

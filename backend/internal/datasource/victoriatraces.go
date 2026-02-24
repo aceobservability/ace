@@ -99,7 +99,7 @@ func (c *VictoriaTracesClient) SearchTraces(ctx context.Context, req TraceSearch
 			continue
 		}
 
-		return traces, nil
+		return normalizeTraceSearchResults(traces, req.Limit), nil
 	}
 
 	if lastErr != nil {

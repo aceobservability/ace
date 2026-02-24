@@ -1,0 +1,65 @@
+{{- if .Values.victoriaLogs.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: victoria-logs
+  labels:
+    app.kubernetes.io/name: victoria-logs
+spec:
+  selector:
+    app.kubernetes.io/name: victoria-logs
+  ports:
+    - name: http
+      port: 9428
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: victoria-logs
+  labels:
+    app.kubernetes.io/name: victoria-logs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: victoria-logs
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: victoria-logs
+    spec:
+      containers:
+        - name: victoria-logs
+          image: {{ .Values.victoriaLogs.image | quote }}
+          args:
+            - --storageDataPath=/victoria-logs-data
+            - --httpListenAddr=:9428
+          ports:
+            - name: http
+              containerPort: 9428
+          volumeMounts:
+            - name: data
+              mountPath: /victoria-logs-data
+      volumes:
+        - name: data
+{{- if .Values.victoriaLogs.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: victoria-logs-data
+{{- else }}
+          emptyDir: {}
+{{- end }}
+{{- if .Values.victoriaLogs.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: victoria-logs-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.victoriaLogs.persistence.size | quote }}
+{{- end }}
+{{- end }}

@@ -1,4 +1,5 @@
 import { ref, type Ref, watch } from 'vue'
+import { trackEvent } from '../analytics'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
@@ -174,12 +175,24 @@ export function useProm(options: UsePromOptions): UsePromReturn {
       data.value = result
 
       if (result.status === 'error') {
+        trackEvent('query_builder_query_failed', {
+          query_length: options.query.value.length,
+          error: result.error,
+        })
         error.value = result.error || 'Query failed'
         chartData.value = { series: [] }
       } else {
+        trackEvent('query_builder_query_succeeded', {
+          query_length: options.query.value.length,
+          series_count: result.data?.result.length || 0,
+        })
         chartData.value = transformToChartData(result)
       }
     } catch (e) {
+      trackEvent('query_builder_query_failed', {
+        query_length: options.query.value.length,
+        error: e instanceof Error ? e.message : 'Failed to fetch data',
+      })
       error.value = e instanceof Error ? e.message : 'Failed to fetch data'
       data.value = null
       chartData.value = { series: [] }

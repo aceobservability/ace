@@ -1,4 +1,4 @@
-.PHONY: help backend seed-admin seed-datasources frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check
+.PHONY: help backend seed-admin seed-datasources frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down
 
 EMAIL ?= admin@admin.com
 PASSWORD ?= Admin1234
@@ -23,10 +23,8 @@ help:
 	@printf "                 Defaults: EMAIL=admin@admin.com PASSWORD=Admin1234 ORG=default\n"
 	@printf "  make seed-datasources [ORG=...]\n"
 	@printf "                 Seeds default connectors into existing ORG (default=default)\n"
-	@printf "  make otel-load-start Start continuous OTel trace load generator (Compose profile)\n"
-	@printf "  make otel-load-stop  Stop continuous OTel trace load generator\n"
-	@printf "  make otel-load-logs  Follow continuous OTel trace load generator logs\n"
-	@printf "  make otel-load-status Show continuous OTel trace load generator status\n"
+	@printf "  make tilt-up   Start Tilt with local Helm infra + app services\n"
+	@printf "  make tilt-down Stop Tilt and tear down deployed resources\n"
 	@printf "  make frontend  Start Vite frontend dev server\n"
 	@printf "  make test      Run backend and frontend test suites\n"
 	@printf "  make frontend-lint Run frontend lint checks (Biome + Knip)\n"
@@ -112,17 +110,11 @@ seed-datasources:
 	fi; \
 	cd backend && "$$GO_BIN" run ./cmd/seed-datasources -org "$(ORG)"
 
-otel-load-start:
-	@docker compose --profile otel-load up -d otel-loadgen
+tilt-up:
+	@tilt up
 
-otel-load-stop:
-	@docker compose stop otel-loadgen
-
-otel-load-logs:
-	@docker compose logs -f otel-loadgen
-
-otel-load-status:
-	@docker compose ps otel-loadgen
+tilt-down:
+	@tilt down
 
 frontend:
 	@cd frontend && npm run dev

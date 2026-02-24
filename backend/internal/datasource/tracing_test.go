@@ -221,6 +221,72 @@ func TestBuildTempoTraceSearchParams_BuildsServiceTraceQLWhenQueryEmpty(t *testi
 	}
 }
 
+func TestNormalizeTraceSearchResults_DeduplicatesSortsAndLimits(t *testing.T) {
+	normalized := normalizeTraceSearchResults([]TraceSummary{
+		{
+			TraceID:           "trace-b",
+			StartTimeUnixNano: 300,
+			DurationNano:      100,
+			SpanCount:         1,
+		},
+		{
+			TraceID:           "trace-a",
+			StartTimeUnixNano: 200,
+			DurationNano:      80,
+			SpanCount:         2,
+		},
+		{
+			TraceID:           " trace-b ",
+			StartTimeUnixNano: 350,
+			DurationNano:      120,
+			SpanCount:         3,
+			RootServiceName:   "api",
+		},
+		{
+			TraceID:           "trace-c",
+			StartTimeUnixNano: 400,
+			DurationNano:      90,
+			SpanCount:         2,
+		},
+		{
+			TraceID:           "",
+			StartTimeUnixNano: 999,
+		},
+	}, 2)
+
+	if len(normalized) != 2 {
+		t.Fatalf("expected 2 traces after normalization, got %d", len(normalized))
+	}
+
+	if normalized[0].TraceID != "trace-c" {
+		t.Fatalf("expected latest trace to be trace-c, got %q", normalized[0].TraceID)
+	}
+
+	if normalized[1].TraceID != "trace-b" {
+		t.Fatalf("expected second trace to be deduplicated trace-b, got %q", normalized[1].TraceID)
+	}
+
+	if normalized[1].StartTimeUnixNano != 350 {
+		t.Fatalf("expected deduplicated trace-b to keep latest start time 350, got %d", normalized[1].StartTimeUnixNano)
+	}
+}
+
+func TestNormalizeTraceSearchResults_UsesDefaultLimit(t *testing.T) {
+	normalized := normalizeTraceSearchResults([]TraceSummary{
+		{TraceID: "trace-1", StartTimeUnixNano: 100},
+		{TraceID: "trace-2", StartTimeUnixNano: 99},
+		{TraceID: "trace-3", StartTimeUnixNano: 98},
+	}, 0)
+
+	if len(normalized) != 3 {
+		t.Fatalf("expected all traces under default limit, got %d", len(normalized))
+	}
+
+	if normalized[0].TraceID != "trace-1" || normalized[1].TraceID != "trace-2" || normalized[2].TraceID != "trace-3" {
+		t.Fatalf("expected traces to remain sorted by start time descending, got %#v", normalized)
+	}
+}
+
 func TestBuildTraceServiceGraph_AggregatesNodesAndEdges(t *testing.T) {
 	graph := BuildTraceServiceGraph(&Trace{
 		TraceID: "trace-graph-1",

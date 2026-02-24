@@ -204,6 +204,21 @@ func TestDataSourceHandler_TestConnection_InvalidUUID(t *testing.T) {
 	}
 }
 
+func TestDataSourceHandler_TestConnectionDraft_InvalidOrgID(t *testing.T) {
+	handler := &DataSourceHandler{pool: nil}
+
+	body := bytes.NewBufferString(`{"type":"prometheus","url":"http://localhost:9090"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/orgs/invalid/datasources/test", body)
+	req.SetPathValue("orgId", "not-a-uuid")
+	rr := httptest.NewRecorder()
+
+	handler.TestConnectionDraft(rr, req)
+
+	if rr.Code != http.StatusUnauthorized {
+		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, rr.Code)
+	}
+}
+
 func TestDataSourceHandler_List_InvalidOrgID(t *testing.T) {
 	handler := &DataSourceHandler{pool: nil}
 
@@ -278,6 +293,9 @@ func TestDataSourceType_Valid(t *testing.T) {
 		{models.DataSourceVictoriaMetrics, true},
 		{models.DataSourceTempo, true},
 		{models.DataSourceVictoriaTraces, true},
+		{models.DataSourceClickHouse, true},
+		{models.DataSourceCloudWatch, true},
+		{models.DataSourceElasticsearch, true},
 		{"invalid", false},
 		{"", false},
 	}
@@ -300,6 +318,9 @@ func TestDataSourceType_IsMetrics(t *testing.T) {
 		{models.DataSourceVictoriaLogs, false},
 		{models.DataSourceTempo, false},
 		{models.DataSourceVictoriaTraces, false},
+		{models.DataSourceClickHouse, true},
+		{models.DataSourceCloudWatch, true},
+		{models.DataSourceElasticsearch, true},
 	}
 
 	for _, tt := range tests {
@@ -320,6 +341,9 @@ func TestDataSourceType_IsLogs(t *testing.T) {
 		{models.DataSourceVictoriaLogs, true},
 		{models.DataSourceTempo, false},
 		{models.DataSourceVictoriaTraces, false},
+		{models.DataSourceClickHouse, true},
+		{models.DataSourceCloudWatch, true},
+		{models.DataSourceElasticsearch, true},
 	}
 
 	for _, tt := range tests {
@@ -340,6 +364,9 @@ func TestDataSourceType_IsTraces(t *testing.T) {
 		{models.DataSourceVictoriaLogs, false},
 		{models.DataSourceTempo, true},
 		{models.DataSourceVictoriaTraces, true},
+		{models.DataSourceClickHouse, true},
+		{models.DataSourceCloudWatch, false},
+		{models.DataSourceElasticsearch, false},
 	}
 
 	for _, tt := range tests {
@@ -357,6 +384,9 @@ func TestCreateDataSourceRequest_AllTypes(t *testing.T) {
 		models.DataSourceVictoriaMetrics,
 		models.DataSourceTempo,
 		models.DataSourceVictoriaTraces,
+		models.DataSourceClickHouse,
+		models.DataSourceCloudWatch,
+		models.DataSourceElasticsearch,
 	}
 
 	for _, dsType := range types {

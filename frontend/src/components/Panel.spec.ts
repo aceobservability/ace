@@ -76,6 +76,14 @@ vi.mock('./TraceHeatmapPanel.vue', () => ({
   },
 }))
 
+vi.mock('./LogViewer.vue', () => ({
+  default: {
+    name: 'LogViewer',
+    props: ['logs'],
+    template: '<div class="mock-log-viewer">{{ logs.length }} logs</div>',
+  },
+}))
+
 describe('Panel', () => {
   const mockPanel = {
     id: '1',
@@ -307,5 +315,130 @@ describe('Panel', () => {
       expect.objectContaining({ service: 'api' }),
     )
     expect(wrapper.find('.mock-trace-heatmap-panel').exists()).toBe(true)
+  })
+
+  it('queries clickhouse logs panels with logs signal', async () => {
+    mockQueryDataSource.mockResolvedValue({
+      status: 'success',
+      resultType: 'logs',
+      data: {
+        logs: [
+          {
+            timestamp: '2026-02-01T00:00:00Z',
+            line: 'request complete',
+            level: 'info',
+          },
+        ],
+      },
+    })
+
+    const logsPanel = {
+      ...mockPanel,
+      type: 'logs',
+      query: {
+        datasource_id: 'ds-clickhouse-1',
+        expr: 'SELECT timestamp, message FROM logs LIMIT 10',
+        signal: 'logs',
+      },
+    }
+
+    const wrapper = mount(Panel, {
+      props: { panel: logsPanel },
+    })
+    await flushPromises()
+
+    expect(mockQueryDataSource).toHaveBeenCalledWith(
+      'ds-clickhouse-1',
+      expect.objectContaining({
+        query: 'SELECT timestamp, message FROM logs LIMIT 10',
+        signal: 'logs',
+      }),
+    )
+    expect(wrapper.find('.mock-log-viewer').exists()).toBe(true)
+    expect(wrapper.find('.mock-log-viewer').text()).toContain('1 logs')
+  })
+
+  it('queries clickhouse trace panels with traces signal and keeps trace navigation disabled', async () => {
+    mockQueryDataSource.mockResolvedValue({
+      status: 'success',
+      resultType: 'traces',
+      data: {
+        traces: [
+          {
+            spanId: 'span-1',
+            operationName: 'GET /api/orders',
+            serviceName: 'api',
+            startTimeUnixNano: 1_700_000_000_000_000_000,
+            durationNano: 1_500_000,
+            tags: { trace_id: 'trace-clickhouse-1' },
+          },
+        ],
+      },
+    })
+
+    const tracePanel = {
+      ...mockPanel,
+      type: 'trace_list',
+      query: {
+        datasource_id: 'ds-clickhouse-1',
+        expr: 'SELECT * FROM traces LIMIT 100',
+        signal: 'traces',
+      },
+    }
+
+    const wrapper = mount(Panel, {
+      props: { panel: tracePanel },
+    })
+    await flushPromises()
+
+    expect(mockQueryDataSource).toHaveBeenCalledWith(
+      'ds-clickhouse-1',
+      expect.objectContaining({
+        query: 'SELECT * FROM traces LIMIT 100',
+        signal: 'traces',
+      }),
+    )
+    expect(wrapper.find('.mock-trace-list-panel').exists()).toBe(true)
+
+    await wrapper.find('.mock-open-trace').trigger('click')
+    expect(wrapper.emitted('open-trace')).toBeFalsy()
+  })
+
+  it('infers logs signal for datasource log panels when signal is omitted', async () => {
+    mockQueryDataSource.mockResolvedValue({
+      status: 'success',
+      resultType: 'logs',
+      data: {
+        logs: [
+          {
+            timestamp: '2026-02-01T00:00:00Z',
+            line: 'cloudwatch log line',
+            level: 'info',
+          },
+        ],
+      },
+    })
+
+    const logsPanel = {
+      ...mockPanel,
+      type: 'logs',
+      query: {
+        datasource_id: 'ds-cloudwatch-1',
+        expr: 'fields @timestamp, @message | limit 10',
+      },
+    }
+
+    const wrapper = mount(Panel, {
+      props: { panel: logsPanel },
+    })
+    await flushPromises()
+
+    expect(mockQueryDataSource).toHaveBeenCalledWith(
+      'ds-cloudwatch-1',
+      expect.objectContaining({
+        signal: 'logs',
+      }),
+    )
+    expect(wrapper.find('.mock-log-viewer').text()).toContain('1 logs')
   })
 })

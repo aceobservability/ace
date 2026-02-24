@@ -220,7 +220,7 @@ function getDropdownPosition() {
 }
 
 .org-item.active {
-  background: rgba(56, 189, 248, 0.14);
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .org-item-avatar {

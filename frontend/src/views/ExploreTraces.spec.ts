@@ -7,6 +7,7 @@ const mockSearchDataSourceTraces = vi.hoisted(() => vi.fn())
 const mockFetchDataSourceTrace = vi.hoisted(() => vi.fn())
 const mockFetchDataSourceTraceServices = vi.hoisted(() => vi.fn())
 const mockFetchDataSourceTraceServiceGraph = vi.hoisted(() => vi.fn())
+const mockQueryDataSource = vi.hoisted(() => vi.fn())
 const mockRouterPush = vi.hoisted(() => vi.fn())
 
 vi.mock('vue-router', () => ({
@@ -61,6 +62,30 @@ vi.mock('../components/TraceServiceGraph.vue', () => ({
   },
 }))
 
+vi.mock('../components/ClickHouseSQLEditor.vue', () => ({
+  default: {
+    name: 'ClickHouseSQLEditor',
+    props: ['modelValue', 'signal', 'disabled'],
+    emits: ['update:modelValue'],
+    template: `
+      <textarea
+        id="clickhouse-query"
+        :value="modelValue"
+        :disabled="disabled"
+        @input="$emit('update:modelValue', $event.target.value)"
+      ></textarea>
+    `,
+  },
+}))
+
+vi.mock('../components/TraceListPanel.vue', () => ({
+  default: {
+    name: 'TraceListPanel',
+    props: ['traces'],
+    template: '<div class="mock-trace-list-panel">{{ traces.length }} traces</div>',
+  },
+}))
+
 vi.mock('../composables/useTimeRange', () => ({
   useTimeRange: () => ({
     timeRange: {
@@ -96,6 +121,17 @@ vi.mock('../composables/useDatasource', async () => {
       created_at: '2026-01-01T00:00:00Z',
       updated_at: '2026-01-01T00:00:00Z',
     },
+    {
+      id: 'ds-trace-2',
+      organization_id: 'org-1',
+      name: 'ClickHouse Traces',
+      type: 'clickhouse',
+      url: 'http://localhost:8123',
+      is_default: false,
+      auth_type: 'none',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
   ])
 
   return {
@@ -107,6 +143,7 @@ vi.mock('../composables/useDatasource', async () => {
 })
 
 vi.mock('../api/datasources', () => ({
+  queryDataSource: mockQueryDataSource,
   searchDataSourceTraces: mockSearchDataSourceTraces,
   fetchDataSourceTrace: mockFetchDataSourceTrace,
   fetchDataSourceTraceServices: mockFetchDataSourceTraceServices,
@@ -140,6 +177,13 @@ describe('ExploreTraces', () => {
       edges: [],
       totalRequests: 2,
       totalErrorCount: 0,
+    })
+    mockQueryDataSource.mockResolvedValue({
+      status: 'success',
+      resultType: 'traces',
+      data: {
+        traces: [],
+      },
     })
   })
 
@@ -394,7 +438,11 @@ describe('ExploreTraces', () => {
       .find((button) => button.text() === 'View Logs')
     expect(logsButton).toBeTruthy()
 
-    await logsButton!.trigger('click')
+    if (!logsButton) {
+      throw new Error('Expected View Logs action button to be present')
+    }
+
+    await logsButton.trigger('click')
 
     expect(mockRouterPush).toHaveBeenCalledWith('/app/explore/logs')
     expect(JSON.parse(localStorage.getItem('trace_logs_navigation') || '{}')).toMatchObject({
@@ -447,11 +495,74 @@ describe('ExploreTraces', () => {
       .find((button) => button.text() === 'View Service Metrics')
     expect(metricsButton).toBeTruthy()
 
-    await metricsButton!.trigger('click')
+    if (!metricsButton) {
+      throw new Error('Expected View Service Metrics action button to be present')
+    }
+
+    await metricsButton.trigger('click')
 
     expect(mockRouterPush).toHaveBeenCalledWith('/app/explore/metrics')
     expect(JSON.parse(localStorage.getItem('trace_metrics_navigation') || '{}')).toMatchObject({
       serviceName: 'api',
     })
+  })
+
+  it('uses ClickHouse SQL editor and renders TraceListPanel for clickhouse datasource', async () => {
+    mockQueryDataSource.mockResolvedValue({
+      status: 'success',
+      resultType: 'traces',
+      data: {
+        traces: [
+          {
+            spanId: 'span-1',
+            operationName: 'GET /checkout',
+            serviceName: 'api',
+            startTimeUnixNano: 1_700_000_000_000_000_000,
+            durationNano: 2_000_000,
+            tags: { trace_id: 'trace-1' },
+          },
+          {
+            spanId: 'span-2',
+            parentSpanId: 'span-1',
+            operationName: 'SELECT cart',
+            serviceName: 'db',
+            startTimeUnixNano: 1_700_000_000_001_000_000,
+            durationNano: 500_000,
+            tags: { trace_id: 'trace-1' },
+          },
+          {
+            spanId: 'span-3',
+            operationName: 'POST /payment',
+            serviceName: 'payments',
+            startTimeUnixNano: 1_700_000_100_000_000_000,
+            durationNano: 1_500_000,
+            tags: { trace_id: 'trace-2' },
+          },
+        ],
+      },
+    })
+
+    const wrapper = mount(ExploreTraces)
+    await flushPromises()
+
+    await wrapper.find('.datasource-trigger').trigger('click')
+    const options = wrapper.findAll('.datasource-option')
+    await options[1].trigger('click')
+    await flushPromises()
+
+    expect(wrapper.findComponent({ name: 'ClickHouseSQLEditor' }).exists()).toBe(true)
+
+    await wrapper.find('#clickhouse-query').setValue('SELECT * FROM traces LIMIT 200')
+    await wrapper.find('.btn-search').trigger('click')
+    await flushPromises()
+
+    expect(mockQueryDataSource).toHaveBeenLastCalledWith(
+      'ds-trace-2',
+      expect.objectContaining({
+        query: 'SELECT * FROM traces LIMIT 200',
+        signal: 'traces',
+      }),
+    )
+    expect(wrapper.find('.mock-trace-list-panel').text()).toContain('2 traces')
   })
 })

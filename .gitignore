@@ -47,9 +47,11 @@ temp/
 postgres_data/
 prometheus_data/
 
-# Ralph agent working files (local only, not part of the project)
-agent/prd.json
-agent/progress.txt
+# Agent directory policy: only keep core runner files tracked
+agent/**
+!agent/ralph.sh
+!agent/opencode-auto-allow.json
+!agent/prompt.md
 
 # Local progress tracker
 /progress.txt

@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/janhoon/dash/backend/internal/analytics"
 	"github.com/janhoon/dash/backend/internal/auth"
 	"github.com/janhoon/dash/backend/internal/db"
 	"github.com/janhoon/dash/backend/internal/handlers"
@@ -71,6 +72,17 @@ func main() {
 
 		if shutdownErr := telemetryShutdown(shutdownCtx); shutdownErr != nil {
 			log.Printf("Warning: OpenTelemetry tracing shutdown failed: %v", shutdownErr)
+		}
+	}()
+
+	analyticsService, err := analytics.NewFromEnv()
+	if err != nil {
+		log.Printf("Warning: analytics disabled: %v", err)
+	}
+	analytics.SetGlobal(analyticsService)
+	defer func() {
+		if closeErr := analyticsService.Close(); closeErr != nil {
+			log.Printf("Warning: PostHog shutdown failed: %v", closeErr)
 		}
 	}()
 
@@ -173,6 +185,7 @@ func main() {
 
 	// Multi-source datasource routes
 	dsHandler := handlers.NewDataSourceHandler(pool)
+	mux.HandleFunc("POST /api/orgs/{orgId}/datasources/test", auth.RequireAuth(jwtManager, dsHandler.TestConnectionDraft))
 	mux.HandleFunc("POST /api/orgs/{orgId}/datasources", auth.RequireAuth(jwtManager, dsHandler.Create))
 	mux.HandleFunc("GET /api/orgs/{orgId}/datasources", auth.RequireAuth(jwtManager, dsHandler.List))
 	mux.HandleFunc("GET /api/datasources/{id}", auth.RequireAuth(jwtManager, dsHandler.Get))
@@ -188,12 +201,28 @@ func main() {
 	mux.HandleFunc("POST /api/datasources/{id}/stream", auth.RequireAuth(jwtManager, dsHandler.Stream))
 	mux.HandleFunc("POST /api/datasources/{id}/test", auth.RequireAuth(jwtManager, dsHandler.TestConnection))
 
+	// VMAlert proxy routes
+	vmAlertHandler := handlers.NewVMAlertHandler(pool)
+	mux.HandleFunc("GET /api/datasources/{id}/vmalert/alerts", auth.RequireAuth(jwtManager, vmAlertHandler.Alerts))
+	mux.HandleFunc("GET /api/datasources/{id}/vmalert/groups", auth.RequireAuth(jwtManager, vmAlertHandler.Groups))
+	mux.HandleFunc("GET /api/datasources/{id}/vmalert/rules", auth.RequireAuth(jwtManager, vmAlertHandler.Rules))
+	mux.HandleFunc("GET /api/datasources/{id}/vmalert/health", auth.RequireAuth(jwtManager, vmAlertHandler.Health))
+
+	// AlertManager proxy routes
+	alertManagerHandler := handlers.NewAlertManagerHandler(pool)
+	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/alerts", auth.RequireAuth(jwtManager, alertManagerHandler.ListAlerts))
+	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/silences", auth.RequireAuth(jwtManager, alertManagerHandler.ListSilences))
+	mux.HandleFunc("POST /api/datasources/{id}/alertmanager/silences", auth.RequireAuth(jwtManager, alertManagerHandler.CreateSilence))
+	mux.HandleFunc("DELETE /api/datasources/{id}/alertmanager/silences/{silenceId}", auth.RequireAuth(jwtManager, alertManagerHandler.ExpireSilence))
+	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/receivers", auth.RequireAuth(jwtManager, alertManagerHandler.ListReceivers))
+	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/health", auth.RequireAuth(jwtManager, alertManagerHandler.Health))
+
 	// Grafana conversion route
 	grafanaConverterHandler := handlers.NewGrafanaConverterHandler()
 	mux.HandleFunc("POST /api/convert/grafana", auth.RequireAuth(jwtManager, grafanaConverterHandler.Convert))
 
 	// Apply middleware
-	handler := corsMiddleware(otelhttp.NewHandler(mux, "dash-api"))
+	handler := corsMiddleware(otelhttp.NewHandler(mux, "ace-api"))
 
 	// Create server
 	server := &http.Server{

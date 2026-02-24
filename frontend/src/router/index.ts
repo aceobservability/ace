@@ -2,17 +2,13 @@ import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded, typ
 import { useAuth } from '../composables/useAuth'
 
 const defaultDescription =
-  'Dash is an open-source monitoring dashboard with multi-datasource support for Prometheus, Loki, Tempo, and VictoriaMetrics.'
+  'Ace Observability is an open-source monitoring dashboard with multi-datasource support for Prometheus, Loki, Tempo, and VictoriaMetrics.'
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'landing',
-    component: () => import('../views/LandingView.vue'),
-    meta: {
-      public: true,
-      title: 'Dash | Open-Source Monitoring Dashboard',
-      description: defaultDescription,
+    redirect: {
+      path: '/app/dashboards',
     },
   },
   {
@@ -21,8 +17,8 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/LoginView.vue'),
     meta: {
       public: true,
-      title: 'Sign in | Dash',
-      description: 'Sign in to Dash to manage dashboards, alerts, and observability workflows.',
+      title: 'Sign in | Ace',
+      description: 'Sign in to Ace to manage dashboards, alerts, and observability workflows.',
     },
   },
   {
@@ -38,8 +34,8 @@ const routes: RouteRecordRaw[] = [
     alias: '/dashboards',
     meta: {
       appLayout: 'app',
-      title: 'Dashboards | Dash',
-      description: 'Browse and organize dashboards in Dash.',
+      title: 'Dashboards | Ace',
+      description: 'Browse and organize dashboards in Ace.',
     },
   },
   {
@@ -49,8 +45,8 @@ const routes: RouteRecordRaw[] = [
     alias: '/dashboards/:id',
     meta: {
       appLayout: 'app',
-      title: 'Dashboard | Dash',
-      description: 'Inspect, configure, and monitor dashboard panels in Dash.',
+      title: 'Dashboard | Ace',
+      description: 'Inspect, configure, and monitor dashboard panels in Ace.',
     },
   },
   {
@@ -74,8 +70,19 @@ const routes: RouteRecordRaw[] = [
     alias: '/dashboards/:id/settings/:section',
     meta: {
       appLayout: 'app',
-      title: 'Dashboard Settings | Dash',
+      title: 'Dashboard Settings | Ace',
       description: 'Configure dashboard settings, YAML, and permissions.',
+    },
+  },
+  {
+    path: '/app/alerts',
+    name: 'alerts',
+    component: () => import('../views/AlertsView.vue'),
+    alias: '/alerts',
+    meta: {
+      appLayout: 'app',
+      title: 'Alerts | Ace',
+      description: 'Monitor active alerts and alerting rule groups from VMAlert datasources.',
     },
   },
   {
@@ -97,7 +104,7 @@ const routes: RouteRecordRaw[] = [
     alias: '/explore/metrics',
     meta: {
       appLayout: 'app',
-      title: 'Explore Metrics | Dash',
+      title: 'Explore Metrics | Ace',
       description: 'Query and visualize metrics from connected datasources.',
     },
   },
@@ -108,8 +115,8 @@ const routes: RouteRecordRaw[] = [
     alias: '/explore/logs',
     meta: {
       appLayout: 'app',
-      title: 'Explore Logs | Dash',
-      description: 'Search and analyze logs with Dash Explore.',
+      title: 'Explore Logs | Ace',
+      description: 'Search and analyze logs with Ace Explore.',
     },
   },
   {
@@ -119,7 +126,7 @@ const routes: RouteRecordRaw[] = [
     alias: '/explore/traces',
     meta: {
       appLayout: 'app',
-      title: 'Explore Traces | Dash',
+      title: 'Explore Traces | Ace',
       description: 'Investigate trace timelines, spans, and service dependencies.',
     },
   },
@@ -144,7 +151,7 @@ const routes: RouteRecordRaw[] = [
     alias: '/settings/org/:id/:section',
     meta: {
       appLayout: 'app',
-      title: 'Organization Settings | Dash',
+      title: 'Organization Settings | Ace',
       description: 'Manage organization profile, members, groups, and authentication providers.',
     },
   },
@@ -155,8 +162,41 @@ const routes: RouteRecordRaw[] = [
     alias: '/datasources',
     meta: {
       appLayout: 'app',
-      title: 'Data Sources | Dash',
+      title: 'Data Sources | Ace',
       description: 'Configure and test datasources for metrics, logs, and traces.',
+    },
+  },
+  {
+    path: '/app/datasources/new',
+    name: 'datasource-create',
+    component: () => import('../views/DataSourceCreateView.vue'),
+    alias: '/datasources/new',
+    meta: {
+      appLayout: 'app',
+      title: 'Add Data Source | Dash',
+      description: 'Configure and test a datasource before saving it to your organization.',
+    },
+  },
+  {
+    path: '/app/datasources/:id/edit',
+    name: 'datasource-edit',
+    component: () => import('../views/DataSourceCreateView.vue'),
+    alias: '/datasources/:id/edit',
+    meta: {
+      appLayout: 'app',
+      title: 'Edit Data Source | Dash',
+      description: 'Update and validate datasource settings before saving changes.',
+    },
+  },
+  {
+    path: '/app/settings/privacy',
+    name: 'privacy-settings',
+    component: () => import('../views/PrivacySettingsView.vue'),
+    alias: '/settings/privacy',
+    meta: {
+      appLayout: 'app',
+      title: 'Privacy Settings | Ace',
+      description: 'Manage analytics, consent, session recording, and feature flag preferences.',
     },
   },
   {
@@ -197,7 +237,7 @@ function upsertCanonical(url: string) {
 }
 
 function applySeoMetadata(to: RouteLocationNormalizedLoaded) {
-  const title = typeof to.meta.title === 'string' ? to.meta.title : 'Dash'
+  const title = typeof to.meta.title === 'string' ? to.meta.title : 'Ace'
   const description = typeof to.meta.description === 'string' ? to.meta.description : defaultDescription
   const url = `${window.location.origin}${to.fullPath}`
 

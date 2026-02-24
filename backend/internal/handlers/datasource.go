@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/janhoon/dash/backend/internal/analytics"
 	"github.com/janhoon/dash/backend/internal/auth"
 	"github.com/janhoon/dash/backend/internal/datasource"
 	"github.com/janhoon/dash/backend/internal/models"
@@ -59,7 +60,7 @@ func (h *DataSourceHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !req.Type.Valid() {
-		http.Error(w, `{"error":"invalid datasource type, must be one of: prometheus, loki, victorialogs, victoriametrics, tempo, victoriatraces"}`, http.StatusBadRequest)
+		http.Error(w, `{"error":"invalid datasource type, must be one of: prometheus, loki, victorialogs, victoriametrics, tempo, victoriatraces, clickhouse, cloudwatch, elasticsearch, vmalert, alertmanager"}`, http.StatusBadRequest)
 		return
 	}
 	if req.URL == "" {
@@ -102,6 +103,19 @@ func (h *DataSourceHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf(`{"error":"failed to create datasource: %s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}
+
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "datasource_created",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id":         userID.String(),
+			"organization_id": orgID.String(),
+			"datasource_id":   ds.ID.String(),
+			"datasource_type": ds.Type,
+			"is_default":      ds.IsDefault,
+		},
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -258,6 +272,18 @@ func (h *DataSourceHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "datasource_updated",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id":         userID.String(),
+			"organization_id": orgID.String(),
+			"datasource_id":   ds.ID.String(),
+			"datasource_type": ds.Type,
+		},
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(ds)
 }
@@ -305,6 +331,17 @@ func (h *DataSourceHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
 		return
 	}
+
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "datasource_deleted",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id":         userID.String(),
+			"organization_id": orgID.String(),
+			"datasource_id":   id.String(),
+		},
+	})
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -385,21 +422,236 @@ func (h *DataSourceHandler) Query(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute query via client
-	client, err := datasource.NewClient(ds)
-	if err != nil {
+	signal := strings.TrimSpace(queryReq.Signal)
+	if signal == "" {
+		signal = strings.TrimSpace(r.URL.Query().Get("signal"))
+	}
+
+	var result *datasource.QueryResult
+	var queryErr error
+
+	switch ds.Type {
+	case models.DataSourceClickHouse:
+		clickHouseClient, clientErr := datasource.NewClickHouseClient(ds)
+		if clientErr != nil {
+			analytics.Track(r.Context(), analytics.Event{
+				DistinctID: userID.String(),
+				Name:       "datasource_query_failed",
+				OptOut:     analytics.RequestOptedOut(r),
+				Properties: map[string]any{
+					"user_id":         userID.String(),
+					"organization_id": ds.OrganizationID.String(),
+					"datasource_id":   ds.ID.String(),
+					"datasource_type": ds.Type,
+					"error":           clientErr.Error(),
+				},
+			})
+
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
+			return
+		}
+
+		result, queryErr = clickHouseClient.QueryWithSignal(ctx, queryReq.Query, signal, start, end, step, queryReq.Limit)
+	case models.DataSourceCloudWatch:
+		cloudWatchClient, clientErr := datasource.NewCloudWatchClient(ds)
+		if clientErr != nil {
+			analytics.Track(r.Context(), analytics.Event{
+				DistinctID: userID.String(),
+				Name:       "datasource_query_failed",
+				OptOut:     analytics.RequestOptedOut(r),
+				Properties: map[string]any{
+					"user_id":         userID.String(),
+					"organization_id": ds.OrganizationID.String(),
+					"datasource_id":   ds.ID.String(),
+					"datasource_type": ds.Type,
+					"error":           clientErr.Error(),
+				},
+			})
+
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
+			return
+		}
+
+		result, queryErr = cloudWatchClient.QueryWithSignal(ctx, queryReq.Query, signal, start, end, step, queryReq.Limit)
+	case models.DataSourceElasticsearch:
+		elasticsearchClient, clientErr := datasource.NewElasticsearchClient(ds)
+		if clientErr != nil {
+			analytics.Track(r.Context(), analytics.Event{
+				DistinctID: userID.String(),
+				Name:       "datasource_query_failed",
+				OptOut:     analytics.RequestOptedOut(r),
+				Properties: map[string]any{
+					"user_id":         userID.String(),
+					"organization_id": ds.OrganizationID.String(),
+					"datasource_id":   ds.ID.String(),
+					"datasource_type": ds.Type,
+					"error":           clientErr.Error(),
+				},
+			})
+
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
+			return
+		}
+
+		result, queryErr = elasticsearchClient.QueryWithSignal(ctx, queryReq.Query, signal, start, end, step, queryReq.Limit)
+	default:
+		client, clientErr := datasource.NewClient(ds)
+		if clientErr != nil {
+			analytics.Track(r.Context(), analytics.Event{
+				DistinctID: userID.String(),
+				Name:       "datasource_query_failed",
+				OptOut:     analytics.RequestOptedOut(r),
+				Properties: map[string]any{
+					"user_id":         userID.String(),
+					"organization_id": ds.OrganizationID.String(),
+					"datasource_id":   ds.ID.String(),
+					"datasource_type": ds.Type,
+					"error":           clientErr.Error(),
+				},
+			})
+
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
+			return
+		}
+
+		result, queryErr = client.Query(ctx, queryReq.Query, start, end, step, queryReq.Limit)
+	}
+
+	if queryErr != nil {
+		analytics.Track(r.Context(), analytics.Event{
+			DistinctID: userID.String(),
+			Name:       "datasource_query_failed",
+			OptOut:     analytics.RequestOptedOut(r),
+			Properties: map[string]any{
+				"user_id":         userID.String(),
+				"organization_id": ds.OrganizationID.String(),
+				"datasource_id":   ds.ID.String(),
+				"datasource_type": ds.Type,
+				"query_length":    len(queryReq.Query),
+				"error":           queryErr.Error(),
+			},
+		})
+
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "query failed: " + queryErr.Error()})
 		return
 	}
 
-	result, err := client.Query(ctx, queryReq.Query, start, end, step, queryReq.Limit)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "query failed: " + err.Error()})
-		return
-	}
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "datasource_query_executed",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id":         userID.String(),
+			"organization_id": ds.OrganizationID.String(),
+			"datasource_id":   ds.ID.String(),
+			"datasource_type": ds.Type,
+			"query_length":    len(queryReq.Query),
+			"limit":           queryReq.Limit,
+		},
+	})
 
 	json.NewEncoder(w).Encode(result)
+}
+
+// TestConnectionDraft tests datasource connectivity against unsaved configuration.
+func (h *DataSourceHandler) TestConnectionDraft(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	orgID, err := uuid.Parse(r.PathValue("orgId"))
+	if err != nil {
+		http.Error(w, `{"error":"invalid organization id"}`, http.StatusBadRequest)
+		return
+	}
+
+	var req models.CreateDataSourceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	if !req.Type.Valid() {
+		http.Error(w, `{"error":"invalid datasource type, must be one of: prometheus, loki, victorialogs, victoriametrics, tempo, victoriatraces, clickhouse, cloudwatch, elasticsearch, vmalert, alertmanager"}`, http.StatusBadRequest)
+		return
+	}
+
+	datasourceURL := strings.TrimSpace(req.URL)
+	if datasourceURL == "" {
+		http.Error(w, `{"error":"url is required"}`, http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	defer cancel()
+
+	role, err := h.checkOrgMembership(ctx, userID, orgID)
+	if err != nil {
+		http.Error(w, `{"error":"not a member of this organization"}`, http.StatusForbidden)
+		return
+	}
+	if role != "admin" {
+		http.Error(w, `{"error":"only admins can test datasource connections"}`, http.StatusForbidden)
+		return
+	}
+
+	authType := "none"
+	if req.AuthType != nil {
+		authType = *req.AuthType
+	}
+
+	requestDatasource := models.DataSource{
+		OrganizationID: orgID,
+		Name:           strings.TrimSpace(req.Name),
+		Type:           req.Type,
+		URL:            datasourceURL,
+		AuthType:       authType,
+		AuthConfig:     req.AuthConfig,
+	}
+
+	if err := datasource.TestConnection(ctx, requestDatasource); err != nil {
+		analytics.Track(r.Context(), analytics.Event{
+			DistinctID: userID.String(),
+			Name:       "datasource_connection_draft_test_failed",
+			OptOut:     analytics.RequestOptedOut(r),
+			Properties: map[string]any{
+				"user_id":         userID.String(),
+				"organization_id": orgID.String(),
+				"datasource_type": req.Type,
+				"error":           err.Error(),
+			},
+		})
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadGateway)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "connection test failed: " + err.Error()})
+		return
+	}
+
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "datasource_connection_draft_test_succeeded",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id":         userID.String(),
+			"organization_id": orgID.String(),
+			"datasource_type": req.Type,
+		},
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(struct {
+		Status string `json:"status"`
+	}{
+		Status: "success",
+	})
 }
 
 // TestConnection tests datasource connectivity and auth configuration.
@@ -436,11 +688,36 @@ func (h *DataSourceHandler) TestConnection(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := datasource.TestConnection(ctx, ds); err != nil {
+		analytics.Track(r.Context(), analytics.Event{
+			DistinctID: userID.String(),
+			Name:       "datasource_connection_test_failed",
+			OptOut:     analytics.RequestOptedOut(r),
+			Properties: map[string]any{
+				"user_id":         userID.String(),
+				"organization_id": ds.OrganizationID.String(),
+				"datasource_id":   ds.ID.String(),
+				"datasource_type": ds.Type,
+				"error":           err.Error(),
+			},
+		})
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadGateway)
 		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "connection test failed: " + err.Error()})
 		return
 	}
+
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "datasource_connection_test_succeeded",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id":         userID.String(),
+			"organization_id": ds.OrganizationID.String(),
+			"datasource_id":   ds.ID.String(),
+			"datasource_type": ds.Type,
+		},
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(struct {
@@ -1140,17 +1417,53 @@ func (h *DataSourceHandler) QueryByParams(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	client, err := datasource.NewClient(ds)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
-		return
+	signal := strings.TrimSpace(r.URL.Query().Get("signal"))
+
+	var result *datasource.QueryResult
+	var queryErr error
+
+	switch ds.Type {
+	case models.DataSourceClickHouse:
+		clickHouseClient, clientErr := datasource.NewClickHouseClient(ds)
+		if clientErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
+			return
+		}
+
+		result, queryErr = clickHouseClient.QueryWithSignal(ctx, query, signal, start, end, step, limit)
+	case models.DataSourceCloudWatch:
+		cloudWatchClient, clientErr := datasource.NewCloudWatchClient(ds)
+		if clientErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
+			return
+		}
+
+		result, queryErr = cloudWatchClient.QueryWithSignal(ctx, query, signal, start, end, step, limit)
+	case models.DataSourceElasticsearch:
+		elasticsearchClient, clientErr := datasource.NewElasticsearchClient(ds)
+		if clientErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
+			return
+		}
+
+		result, queryErr = elasticsearchClient.QueryWithSignal(ctx, query, signal, start, end, step, limit)
+	default:
+		client, clientErr := datasource.NewClient(ds)
+		if clientErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
+			return
+		}
+
+		result, queryErr = client.Query(ctx, query, start, end, step, limit)
 	}
 
-	result, err := client.Query(ctx, query, start, end, step, limit)
-	if err != nil {
+	if queryErr != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "query failed: " + err.Error()})
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "query failed: " + queryErr.Error()})
 		return
 	}
 

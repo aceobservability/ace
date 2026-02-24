@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/janhoon/dash/backend/internal/analytics"
 	"github.com/janhoon/dash/backend/internal/auth"
 	"github.com/janhoon/dash/backend/internal/authz"
 	"github.com/janhoon/dash/backend/internal/models"
@@ -125,6 +126,17 @@ func (h *DashboardHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"failed to create dashboard"}`, http.StatusInternalServerError)
 		return
 	}
+
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "dashboard_created",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id":         userID.String(),
+			"dashboard_id":    dashboard.ID.String(),
+			"organization_id": orgID.String(),
+		},
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -246,6 +258,16 @@ func (h *DashboardHandler) Get(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "dashboard_viewed",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id":      userID.String(),
+			"dashboard_id": dashboard.ID.String(),
+		},
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(dashboard)
 }
@@ -335,6 +357,24 @@ func (h *DashboardHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	properties := map[string]any{
+		"user_id":             userID.String(),
+		"dashboard_id":        dashboard.ID.String(),
+		"title_updated":       req.Title != nil,
+		"description_updated": req.Description != nil,
+		"folder_updated":      req.FolderIDSet,
+	}
+	if dashboard.OrganizationID != nil {
+		properties["organization_id"] = dashboard.OrganizationID.String()
+	}
+
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "dashboard_updated",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: properties,
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(dashboard)
 }
@@ -394,6 +434,21 @@ func (h *DashboardHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"dashboard not found"}`, http.StatusNotFound)
 		return
 	}
+
+	properties := map[string]any{
+		"user_id":      userID.String(),
+		"dashboard_id": id.String(),
+	}
+	if orgID != nil {
+		properties["organization_id"] = orgID.String()
+	}
+
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "dashboard_deleted",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: properties,
+	})
 
 	w.WriteHeader(http.StatusNoContent)
 }

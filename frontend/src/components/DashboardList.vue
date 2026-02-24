@@ -1296,21 +1296,21 @@ onMounted(() => {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  border-color: rgba(125, 211, 252, 0.4);
-  color: white;
-  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.24);
+  background: #F59E0B;
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #1a0f00;
+  box-shadow: 0 8px 20px rgba(217, 119, 6, 0.24);
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(14, 165, 233, 0.28);
+  box-shadow: 0 12px 24px rgba(217, 119, 6, 0.28);
 }
 
 .btn-secondary {
-  background: var(--surface-2);
-  border-color: var(--border-primary);
-  color: var(--text-primary);
+  background: transparent;
+  border-color: #F59E0B;
+  color: #FCD34D;
 }
 
 .btn-secondary:hover {
@@ -1408,7 +1408,7 @@ onMounted(() => {
   height: 120px;
   border: 1px solid var(--border-primary);
   border-radius: 20px;
-  background: linear-gradient(160deg, rgba(56, 189, 248, 0.14), rgba(52, 211, 153, 0.08));
+  background: linear-gradient(160deg, rgba(245, 158, 11, 0.14), rgba(99, 102, 241, 0.08));
   color: var(--text-tertiary);
   margin-bottom: 1rem;
 }
@@ -1543,12 +1543,12 @@ onMounted(() => {
 
 .tree-item-row:hover {
   border-color: var(--border-primary);
-  background: rgba(56, 189, 248, 0.05);
+  background: rgba(245, 158, 11, 0.05);
 }
 
 .tree-item-row-drop-active {
-  border-color: rgba(56, 189, 248, 0.72);
-  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(245, 158, 11, 0.72);
+  background: rgba(245, 158, 11, 0.15);
 }
 
 .tree-toggle,
@@ -1588,20 +1588,20 @@ onMounted(() => {
 }
 
 .tree-item:hover {
-  border-color: rgba(56, 189, 248, 0.2);
-  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.08);
   color: var(--text-primary);
 }
 
 .tree-item-active {
-  border-color: rgba(56, 189, 248, 0.55);
-  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.18);
   color: var(--text-primary);
 }
 
 .tree-item-active .tree-count {
-  border-color: rgba(56, 189, 248, 0.45);
-  background: rgba(56, 189, 248, 0.16);
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.16);
   color: var(--text-primary);
 }
 
@@ -1631,13 +1631,13 @@ onMounted(() => {
 }
 
 .tree-file-item:hover {
-  border-color: rgba(56, 189, 248, 0.2);
+  border-color: rgba(245, 158, 11, 0.2);
   color: var(--text-primary);
 }
 
 .tree-file-item.tree-item-active {
-  border-color: rgba(56, 189, 248, 0.45);
-  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .tree-count {
@@ -1778,7 +1778,7 @@ onMounted(() => {
 }
 
 .subfolder-chip:hover {
-  border-color: rgba(56, 189, 248, 0.45);
+  border-color: rgba(245, 158, 11, 0.45);
   color: var(--text-primary);
   transform: translateY(-1px);
 }
@@ -1844,8 +1844,8 @@ onMounted(() => {
 }
 
 .folder-section-drop-active {
-  border-color: rgba(56, 189, 248, 0.85);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3);
+  border-color: rgba(245, 158, 11, 0.85);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3);
 }
 
 .folder-section-header {
@@ -1931,7 +1931,7 @@ onMounted(() => {
 }
 
 .dashboard-card:hover {
-  border-color: rgba(56, 189, 248, 0.55);
+  border-color: rgba(245, 158, 11, 0.55);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }

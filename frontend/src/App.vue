@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
+import CookieConsentBanner from './components/CookieConsentBanner.vue'
 import { useAuth } from './composables/useAuth'
 
 const route = useRoute()
@@ -24,6 +25,7 @@ const showSidebar = computed(() => {
     <main class="main-content" :style="showSidebar ? { marginLeft: sidebarWidth } : {}">
       <RouterView />
     </main>
+    <CookieConsentBanner />
   </div>
 </template>
 

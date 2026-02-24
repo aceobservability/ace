@@ -172,7 +172,7 @@ jobs:
         working-directory: backend
 
       - name: Upload backend package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: backend-package-${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
@@ -215,7 +215,7 @@ jobs:
           tar -czf "dist-release/dash-frontend_${version}.tar.gz" -C frontend dist
 
       - name: Upload frontend package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: frontend-package
           path: dist-release/*.tar.gz
@@ -296,7 +296,7 @@ jobs:
         run: cosign sign "${{ steps.vars.outputs.image_repo }}@${{ steps.build.outputs.digest }}"
 
       - name: Attest backend image provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-name: ${{ steps.vars.outputs.image_repo }}
           subject-digest: ${{ steps.build.outputs.digest }}
@@ -311,7 +311,7 @@ jobs:
             -o spdx-json=sbom-backend-image-${RELEASE_TAG#v}.spdx.json
 
       - name: Upload backend image SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-backend-image
           path: sbom-backend-image-*.spdx.json
@@ -392,7 +392,7 @@ jobs:
         run: cosign sign "${{ steps.vars.outputs.image_repo }}@${{ steps.build.outputs.digest }}"
 
       - name: Attest frontend image provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-name: ${{ steps.vars.outputs.image_repo }}
           subject-digest: ${{ steps.build.outputs.digest }}
@@ -407,7 +407,7 @@ jobs:
             -o spdx-json=sbom-frontend-image-${RELEASE_TAG#v}.spdx.json
 
       - name: Upload frontend image SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-frontend-image
           path: sbom-frontend-image-*.spdx.json
@@ -420,14 +420,14 @@ jobs:
       - build-frontend-artifact
     steps:
       - name: Download backend packages
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           pattern: backend-package-*
           merge-multiple: true
           path: release-assets/backend
 
       - name: Download frontend package
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: frontend-package
           path: release-assets/frontend
@@ -438,7 +438,7 @@ jobs:
           sha256sum release-assets/backend/* release-assets/frontend/* > release-assets/checksums.txt
 
       - name: Upload checksums file
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: release-checksums
           path: release-assets/checksums.txt
@@ -454,32 +454,32 @@ jobs:
       - checksums
     steps:
       - name: Download backend packages
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           pattern: backend-package-*
           merge-multiple: true
           path: release-assets/backend
 
       - name: Download frontend package
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: frontend-package
           path: release-assets/frontend
 
       - name: Download checksums
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: release-checksums
           path: release-assets
 
       - name: Download backend image SBOM
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: sbom-backend-image
           path: release-assets/sbom
 
       - name: Download frontend image SBOM
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: sbom-frontend-image
           path: release-assets/sbom

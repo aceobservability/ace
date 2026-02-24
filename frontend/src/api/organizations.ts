@@ -7,6 +7,7 @@ import type {
   CreateInvitationRequest,
   UpdateMemberRoleRequest,
 } from '../types/organization'
+import { trackEvent } from '../analytics'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
@@ -67,6 +68,10 @@ export async function updateOrganization(
     body: JSON.stringify(data),
   })
   if (!response.ok) {
+    trackEvent('organization_update_failed', {
+      org_id: id,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Admin access required')
     }
@@ -75,7 +80,12 @@ export async function updateOrganization(
     }
     throw new Error('Failed to update organization')
   }
-  return response.json()
+  const organization = await response.json()
+  trackEvent('organization_updated', {
+    org_id: id,
+    updated_fields: Object.keys(data),
+  })
+  return organization
 }
 
 export async function deleteOrganization(id: string): Promise<void> {
@@ -101,6 +111,11 @@ export async function createInvitation(
     body: JSON.stringify(data),
   })
   if (!response.ok) {
+    trackEvent('organization_invite_failed', {
+      org_id: orgId,
+      role: data.role,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Admin access required')
     }
@@ -110,7 +125,12 @@ export async function createInvitation(
     const error = await response.json().catch(() => ({}))
     throw new Error(error.error || 'Failed to create invitation')
   }
-  return response.json()
+  const invitation = await response.json()
+  trackEvent('organization_invite_created', {
+    org_id: orgId,
+    role: data.role,
+  })
+  return invitation
 }
 
 export async function listMembers(orgId: string): Promise<Member[]> {
@@ -137,6 +157,11 @@ export async function updateMemberRole(
     body: JSON.stringify(data),
   })
   if (!response.ok) {
+    trackEvent('organization_member_role_update_failed', {
+      org_id: orgId,
+      user_id: userId,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Admin access required')
     }
@@ -146,6 +171,12 @@ export async function updateMemberRole(
     }
     throw new Error('Failed to update member role')
   }
+
+  trackEvent('organization_member_role_updated', {
+    org_id: orgId,
+    user_id: userId,
+    role: data.role,
+  })
 }
 
 export async function removeMember(orgId: string, userId: string): Promise<void> {
@@ -154,6 +185,11 @@ export async function removeMember(orgId: string, userId: string): Promise<void>
     headers: getAuthHeaders(),
   })
   if (!response.ok) {
+    trackEvent('organization_member_remove_failed', {
+      org_id: orgId,
+      user_id: userId,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Admin access required')
     }
@@ -163,4 +199,9 @@ export async function removeMember(orgId: string, userId: string): Promise<void>
     }
     throw new Error('Failed to remove member')
   }
+
+  trackEvent('organization_member_removed', {
+    org_id: orgId,
+    user_id: userId,
+  })
 }

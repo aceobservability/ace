@@ -1,0 +1,82 @@
+{{- if .Values.victoriaMetrics.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: victoria-metrics-prometheus-config
+  labels:
+    app.kubernetes.io/name: victoria-metrics
+data:
+  prometheus.yml: |
+{{ .Values.victoriaMetrics.prometheusConfig | indent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: victoria-metrics
+  labels:
+    app.kubernetes.io/name: victoria-metrics
+spec:
+  selector:
+    app.kubernetes.io/name: victoria-metrics
+  ports:
+    - name: http
+      port: 8428
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: victoria-metrics
+  labels:
+    app.kubernetes.io/name: victoria-metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: victoria-metrics
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: victoria-metrics
+    spec:
+      containers:
+        - name: victoria-metrics
+          image: {{ .Values.victoriaMetrics.image | quote }}
+          args:
+            - --promscrape.config=/etc/prometheus/prometheus.yml
+            - --promscrape.config.strictParse=false
+            - --storageDataPath=/victoria-metrics-data
+            - --httpListenAddr=:8428
+          ports:
+            - name: http
+              containerPort: 8428
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: data
+              mountPath: /victoria-metrics-data
+      volumes:
+        - name: config
+          configMap:
+            name: victoria-metrics-prometheus-config
+        - name: data
+{{- if .Values.victoriaMetrics.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: victoria-metrics-data
+{{- else }}
+          emptyDir: {}
+{{- end }}
+{{- if .Values.victoriaMetrics.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: victoria-metrics-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.victoriaMetrics.persistence.size | quote }}
+{{- end }}
+{{- end }}

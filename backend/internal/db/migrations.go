@@ -130,7 +130,7 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 			organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
 			name VARCHAR(255) NOT NULL,
-			type VARCHAR(50) NOT NULL CHECK (type IN ('prometheus', 'loki', 'victorialogs', 'victoriametrics')),
+			type VARCHAR(50) NOT NULL CHECK (type IN ('prometheus', 'loki', 'victorialogs', 'victoriametrics', 'clickhouse', 'cloudwatch', 'elasticsearch')),
 			url VARCHAR(500) NOT NULL,
 			is_default BOOLEAN DEFAULT false,
 			auth_type VARCHAR(50) DEFAULT 'none',
@@ -207,7 +207,7 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 		`ALTER TABLE datasources DROP CONSTRAINT IF EXISTS datasources_type_check`,
 		`ALTER TABLE datasources
 			ADD CONSTRAINT datasources_type_check
-			CHECK (type IN ('prometheus', 'loki', 'victorialogs', 'victoriametrics', 'tempo', 'victoriatraces'))`,
+			CHECK (type IN ('prometheus', 'loki', 'victorialogs', 'victoriametrics', 'tempo', 'victoriatraces', 'clickhouse', 'cloudwatch', 'elasticsearch'))`,
 	}
 
 	for _, migration := range migrations {

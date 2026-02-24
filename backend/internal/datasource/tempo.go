@@ -64,7 +64,12 @@ func (c *TempoClient) SearchTraces(ctx context.Context, req TraceSearchRequest) 
 		return nil, err
 	}
 
-	return parseTraceSearchResponse(payload)
+	traces, err := parseTraceSearchResponse(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	return normalizeTraceSearchResults(traces, req.Limit), nil
 }
 
 func buildTempoTraceSearchParams(req TraceSearchRequest) url.Values {

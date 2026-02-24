@@ -1,0 +1,7 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ClickHouse logo">
+  <rect x="12" y="18" width="20" height="84" rx="4" fill="#FFD400" />
+  <rect x="38" y="38" width="20" height="64" rx="4" fill="#FFD400" />
+  <rect x="64" y="28" width="20" height="74" rx="4" fill="#FFD400" />
+  <rect x="90" y="50" width="18" height="52" rx="4" fill="#FFB300" />
+  <circle cx="99" cy="30" r="10" fill="#1F2430" />
+</svg>

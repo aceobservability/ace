@@ -1,2 +1,6 @@
 [tools]
 go = "1.25.1"
+helm = "latest"
+k3d = "latest"
+kubectl = "latest"
+tilt = "latest"

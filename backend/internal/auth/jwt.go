@@ -102,7 +102,7 @@ func (m *JWTManager) GenerateAccessToken(userID uuid.UUID, email string, name st
 			ExpiresAt: jwt.NewNumericDate(now.Add(15 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    "dash",
+			Issuer:    "ace",
 			Subject:   userID.String(),
 		},
 	}

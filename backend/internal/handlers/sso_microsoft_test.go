@@ -393,6 +393,7 @@ func TestMicrosoftSSOCallbackClearsStateCookieWithSecureAttributes(t *testing.T)
 
 	if clearedStateCookie == nil {
 		t.Fatal("Expected ms_oauth_state cookie to be cleared")
+		return
 	}
 
 	if !clearedStateCookie.HttpOnly {

@@ -13,9 +13,9 @@
   --surface-2: rgba(22, 37, 58, 0.9);
   --surface-3: #1c2f48;
 
-  --accent-primary: #38bdf8;
-  --accent-primary-hover: #0ea5e9;
-  --accent-secondary: #34d399;
+  --accent-primary: #F59E0B;
+  --accent-primary-hover: #D97706;
+  --accent-secondary: #60A5FA;
   --accent-danger: #fb7185;
   --accent-danger-hover: #f43f5e;
   --accent-warning: #f59e0b;
@@ -24,11 +24,11 @@
   --text-primary: #ecf3ff;
   --text-secondary: #9eb0ca;
   --text-tertiary: #6d7f9c;
-  --text-accent: #7dd3fc;
+  --text-accent: #FCD34D;
 
   --border-primary: #223954;
   --border-secondary: #325173;
-  --border-accent: #38bdf8;
+  --border-accent: #F59E0B;
 
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -36,7 +36,7 @@
 
   --shadow-sm: 0 4px 14px rgba(2, 8, 23, 0.26);
   --shadow-md: 0 14px 34px rgba(2, 8, 23, 0.42);
-  --focus-ring: 0 0 0 3px rgba(56, 189, 248, 0.24);
+  --focus-ring: 0 0 0 3px rgba(245, 158, 11, 0.28);
 
   font-family: var(--font-sans);
   line-height: 1.5;
@@ -54,7 +54,7 @@
 }
 
 *::selection {
-  background: rgba(56, 189, 248, 0.28);
+  background: rgba(245, 158, 11, 0.22);
   color: #f5faff;
 }
 
@@ -68,13 +68,13 @@ body {
 body {
   background-color: var(--bg-primary);
   background-image:
-    radial-gradient(circle at 16% -10%, rgba(52, 211, 153, 0.18), transparent 42%),
-    radial-gradient(circle at 86% 0%, rgba(56, 189, 248, 0.2), transparent 46%),
-    linear-gradient(rgba(23, 37, 60, 0.62), rgba(12, 20, 32, 0.92)),
+    radial-gradient(circle at 16% -10%, rgba(245, 158, 11, 0.12), transparent 42%),
+    radial-gradient(circle at 86% 0%, rgba(99, 102, 241, 0.15), transparent 46%),
+    linear-gradient(rgba(23, 17, 5, 0.62), rgba(12, 10, 2, 0.92)),
     repeating-linear-gradient(
       90deg,
-      rgba(148, 163, 184, 0.05) 0,
-      rgba(148, 163, 184, 0.05) 1px,
+      rgba(148, 163, 184, 0.04) 0,
+      rgba(148, 163, 184, 0.04) 1px,
       transparent 1px,
       transparent 72px
     );
@@ -101,14 +101,19 @@ h6 {
 
 h1 {
   font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 h2 {
   font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 h3 {
   font-size: 1.15rem;
+  font-weight: 600;
 }
 
 p {

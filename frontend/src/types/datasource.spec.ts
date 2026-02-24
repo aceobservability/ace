@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isMetricsType, isLogsType, isTracingType, dataSourceTypeLabels } from './datasource'
+import { isMetricsType, isLogsType, isTracingType, isAlertingType, dataSourceTypeLabels } from './datasource'
 import type { DataSourceType } from './datasource'
 
 describe('datasource types', () => {
@@ -23,6 +23,18 @@ describe('datasource types', () => {
     it('returns false for tempo', () => {
       expect(isMetricsType('tempo')).toBe(false)
     })
+
+    it('returns true for clickhouse', () => {
+      expect(isMetricsType('clickhouse')).toBe(true)
+    })
+
+    it('returns true for cloudwatch', () => {
+      expect(isMetricsType('cloudwatch')).toBe(true)
+    })
+
+    it('returns true for elasticsearch', () => {
+      expect(isMetricsType('elasticsearch')).toBe(true)
+    })
   })
 
   describe('isLogsType', () => {
@@ -45,6 +57,18 @@ describe('datasource types', () => {
     it('returns false for victoriatraces', () => {
       expect(isLogsType('victoriatraces')).toBe(false)
     })
+
+    it('returns true for clickhouse', () => {
+      expect(isLogsType('clickhouse')).toBe(true)
+    })
+
+    it('returns true for cloudwatch', () => {
+      expect(isLogsType('cloudwatch')).toBe(true)
+    })
+
+    it('returns true for elasticsearch', () => {
+      expect(isLogsType('elasticsearch')).toBe(true)
+    })
   })
 
   describe('isTracingType', () => {
@@ -59,11 +83,45 @@ describe('datasource types', () => {
     it('returns false for loki', () => {
       expect(isTracingType('loki')).toBe(false)
     })
+
+    it('returns true for clickhouse', () => {
+      expect(isTracingType('clickhouse')).toBe(true)
+    })
+
+    it('returns false for elasticsearch', () => {
+      expect(isTracingType('elasticsearch')).toBe(false)
+    })
+  })
+
+  describe('isAlertingType', () => {
+    it('returns true for vmalert', () => {
+      expect(isAlertingType('vmalert')).toBe(true)
+    })
+
+    it('returns true for alertmanager', () => {
+      expect(isAlertingType('alertmanager')).toBe(true)
+    })
+
+    it('returns false for prometheus', () => {
+      expect(isAlertingType('prometheus')).toBe(false)
+    })
   })
 
   describe('dataSourceTypeLabels', () => {
     it('has labels for all types', () => {
-      const types: DataSourceType[] = ['prometheus', 'loki', 'victorialogs', 'victoriametrics', 'tempo', 'victoriatraces']
+      const types: DataSourceType[] = [
+        'prometheus',
+        'loki',
+        'victorialogs',
+        'victoriametrics',
+        'tempo',
+        'victoriatraces',
+        'clickhouse',
+        'cloudwatch',
+        'elasticsearch',
+        'vmalert',
+        'alertmanager',
+      ]
       for (const type_ of types) {
         expect(dataSourceTypeLabels[type_]).toBeDefined()
         expect(typeof dataSourceTypeLabels[type_]).toBe('string')
@@ -92,6 +150,26 @@ describe('datasource types', () => {
 
     it('returns correct label for victoriatraces', () => {
       expect(dataSourceTypeLabels.victoriatraces).toBe('VictoriaTraces')
+    })
+
+    it('returns correct label for clickhouse', () => {
+      expect(dataSourceTypeLabels.clickhouse).toBe('ClickHouse')
+    })
+
+    it('returns correct label for cloudwatch', () => {
+      expect(dataSourceTypeLabels.cloudwatch).toBe('CloudWatch')
+    })
+
+    it('returns correct label for elasticsearch', () => {
+      expect(dataSourceTypeLabels.elasticsearch).toBe('Elasticsearch')
+    })
+
+    it('returns correct label for vmalert', () => {
+      expect(dataSourceTypeLabels.vmalert).toBe('VMAlert')
+    })
+
+    it('returns correct label for alertmanager', () => {
+      expect(dataSourceTypeLabels.alertmanager).toBe('AlertManager')
     })
   })
 })

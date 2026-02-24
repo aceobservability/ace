@@ -49,7 +49,7 @@ function switchMode() {
               <path d="M18 9l-5 5-4-4-3 3" />
             </svg>
           </div>
-          <span class="logo-text">Dash</span>
+          <span class="logo-text">Ace</span>
         </div>
         <h1>{{ mode === 'login' ? 'Welcome back' : 'Create account' }}</h1>
         <p class="subtitle">
@@ -159,7 +159,7 @@ function switchMode() {
 .login-page::before {
   width: 340px;
   height: 340px;
-  background: rgba(56, 189, 248, 0.28);
+  background: rgba(245, 158, 11, 0.28);
   top: -110px;
   left: -100px;
 }
@@ -167,7 +167,7 @@ function switchMode() {
 .login-page::after {
   width: 360px;
   height: 360px;
-  background: rgba(52, 211, 153, 0.2);
+  background: rgba(99, 102, 241, 0.2);
   right: -120px;
   bottom: -160px;
 }
@@ -207,7 +207,7 @@ function switchMode() {
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 10px 22px rgba(14, 165, 233, 0.3);
+  box-shadow: 0 10px 22px rgba(217, 119, 6, 0.3);
 }
 
 .logo-icon svg {
@@ -221,7 +221,7 @@ function switchMode() {
   font-family: var(--font-mono);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-primary);
+  color: #F59E0B;
 }
 
 .login-header h1 {
@@ -318,19 +318,19 @@ function switchMode() {
   justify-content: center;
   gap: 8px;
   padding: 14px 20px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  color: white;
+  background: #F59E0B;
+  color: #1a0f00;
   border: none;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.24);
+  transition: background 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 10px 24px rgba(217, 119, 6, 0.24);
 }
 
 .btn-primary:hover:not(:disabled) {
-  opacity: 0.96;
+  background: #D97706;
   transform: translateY(-1px);
 }
 
@@ -342,8 +342,8 @@ function switchMode() {
 .spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border: 2px solid rgba(26, 15, 0, 0.3);
+  border-top-color: #1a0f00;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

@@ -1,5 +1,6 @@
 import { ref, computed, watch } from 'vue'
 import { fetchMetrics, fetchLabels, fetchLabelValues } from './useProm'
+import { trackEvent } from '../analytics'
 
 // Supported aggregation functions
 export const AGGREGATION_FUNCTIONS = [
@@ -131,6 +132,9 @@ export function useQueryBuilder(initialQuery = '') {
     loadingMetrics.value = true
     try {
       metricsCache.value = await fetchMetrics()
+      trackEvent('query_builder_metrics_loaded', {
+        metric_count: metricsCache.value.length,
+      })
       return metricsCache.value
     } catch (error) {
       console.error('Failed to load metrics:', error)
@@ -147,6 +151,9 @@ export function useQueryBuilder(initialQuery = '') {
     loadingLabels.value = true
     try {
       labelsCache.value = await fetchLabels()
+      trackEvent('query_builder_labels_loaded', {
+        label_count: labelsCache.value.length,
+      })
       return labelsCache.value
     } catch (error) {
       console.error('Failed to load labels:', error)
@@ -166,6 +173,10 @@ export function useQueryBuilder(initialQuery = '') {
     try {
       const values = await fetchLabelValues(labelName)
       labelValuesCache.value.set(labelName, values)
+      trackEvent('query_builder_label_values_loaded', {
+        label: labelName,
+        value_count: values.length,
+      })
       return values
     } catch (error) {
       console.error(`Failed to load values for label ${labelName}:`, error)
@@ -183,11 +194,17 @@ export function useQueryBuilder(initialQuery = '') {
       operator: '=',
       value: ''
     })
+    trackEvent('query_builder_filter_added', {
+      filter_count: labelFilters.value.length,
+    })
   }
 
   // Remove a label filter
   function removeLabelFilter(id: string) {
     labelFilters.value = labelFilters.value.filter(f => f.id !== id)
+    trackEvent('query_builder_filter_removed', {
+      filter_count: labelFilters.value.length,
+    })
   }
 
   // Update a label filter
@@ -206,6 +223,11 @@ export function useQueryBuilder(initialQuery = '') {
     } else {
       groupByLabels.value.splice(index, 1)
     }
+
+    trackEvent('query_builder_group_by_toggled', {
+      label,
+      group_by_count: groupByLabels.value.length,
+    })
   }
 
   // Set query from external source (e.g., loading saved panel)
@@ -237,6 +259,12 @@ export function useQueryBuilder(initialQuery = '') {
       if (generatedQuery.value) {
         codeQuery.value = generatedQuery.value
       }
+    }
+
+    if (newMode !== oldMode) {
+      trackEvent('query_builder_mode_changed', {
+        mode: newMode,
+      })
     }
   })
 

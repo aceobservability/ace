@@ -19,26 +19,27 @@
   },
   "dependencies": {
     "echarts": "^6.0.0",
-    "lucide-vue-next": "^0.563.0",
+    "lucide-vue-next": "^0.575.0",
     "monaco-editor": "^0.55.1",
+    "posthog-js": "^1.352.0",
     "vue": "^3.5.28",
     "vue-echarts": "^8.0.1",
-    "vue-router": "^5.0.2",
+    "vue-router": "^5.0.3",
     "vue3-grid-layout-next": "^1.0.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.14",
-    "@types/node": "^25.2.2",
+    "@biomejs/biome": "^2.4.4",
+    "@types/node": "^25.3.0",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vitest/coverage-v8": "^4.0.18",
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.8.1",
-    "happy-dom": "^20.5.3",
-    "knip": "^5.64.1",
+    "happy-dom": "^20.7.0",
+    "knip": "^5.85.0",
     "typescript": "~5.9.3",
     "vite": "^7.2.4",
     "vite-plugin-monaco-editor": "^1.1.0",
     "vitest": "^4.0.18",
-    "vue-tsc": "^3.1.4"
+    "vue-tsc": "^3.2.5"
   }
 }

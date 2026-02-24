@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/janhoon/dash/backend/internal/analytics"
 	"github.com/janhoon/dash/backend/internal/auth"
 	"github.com/redis/go-redis/v9"
 )
@@ -167,6 +168,18 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		response.RefreshToken = refreshToken
 	}
 
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "auth_signup",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id":           userID.String(),
+			"email":             userEmail,
+			"auth_method":       "password",
+			"has_refresh_token": response.RefreshToken != "",
+		},
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(response)
@@ -253,6 +266,18 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 		response.RefreshToken = refreshToken
 	}
+
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "auth_login",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id":           userID.String(),
+			"email":             userEmail,
+			"auth_method":       "password",
+			"has_refresh_token": response.RefreshToken != "",
+		},
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
@@ -389,10 +414,24 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
+	distinctID := "anonymous"
+	if tokenData, err := h.refreshTokenManager.GetRefreshToken(ctx, req.RefreshToken); err == nil {
+		distinctID = tokenData.UserID.String()
+	}
+
 	if err := h.refreshTokenManager.RevokeRefreshToken(ctx, req.RefreshToken); err != nil {
 		http.Error(w, `{"error":"failed to logout"}`, http.StatusInternalServerError)
 		return
 	}
+
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: distinctID,
+		Name:       "auth_logout",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"auth_method": "refresh_token",
+		},
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -419,6 +458,15 @@ func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"failed to logout from all devices"}`, http.StatusInternalServerError)
 		return
 	}
+
+	analytics.Track(r.Context(), analytics.Event{
+		DistinctID: userID.String(),
+		Name:       "auth_logout_all",
+		OptOut:     analytics.RequestOptedOut(r),
+		Properties: map[string]any{
+			"user_id": userID.String(),
+		},
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

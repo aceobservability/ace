@@ -4,9 +4,13 @@ You are working on the "dash" project (Grafana-like monitoring dashboard).
 
 ## Execution Mode: One Task Per Session
 
-This run is a single isolated OpenCode session/thread.
+This run is a single isolated OpenClaw sub-agent session/thread.
 Do exactly one task, then exit.
 Do not continue to a second task in the same run.
+
+Execution profile for sub-agent runs:
+- Model: `openai/gpt-5.3-codex`
+- Thinking: `high`
 
 ## Task Selection (Automatic)
 

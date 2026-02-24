@@ -57,6 +57,57 @@ vi.mock('../components/LogQLQueryBuilder.vue', () => ({
   },
 }))
 
+vi.mock('../components/ClickHouseSQLEditor.vue', () => ({
+  default: {
+    name: 'ClickHouseSQLEditor',
+    props: ['modelValue', 'signal', 'disabled'],
+    emits: ['update:modelValue'],
+    template: `
+      <textarea
+        id="clickhouse-query"
+        class="query-input clickhouse-query-input"
+        :value="modelValue"
+        :disabled="disabled"
+        @input="$emit('update:modelValue', $event.target.value)"
+      ></textarea>
+    `,
+  },
+}))
+
+vi.mock('../components/CloudWatchQueryEditor.vue', () => ({
+  default: {
+    name: 'CloudWatchQueryEditor',
+    props: ['modelValue', 'signal', 'disabled'],
+    emits: ['update:modelValue'],
+    template: `
+      <textarea
+        id="cloudwatch-query"
+        class="query-input cloudwatch-query-input"
+        :value="modelValue"
+        :disabled="disabled"
+        @input="$emit('update:modelValue', $event.target.value)"
+      ></textarea>
+    `,
+  },
+}))
+
+vi.mock('../components/ElasticsearchQueryEditor.vue', () => ({
+  default: {
+    name: 'ElasticsearchQueryEditor',
+    props: ['modelValue', 'signal', 'disabled'],
+    emits: ['update:modelValue'],
+    template: `
+      <textarea
+        id="elasticsearch-query"
+        class="query-input elasticsearch-query-input"
+        :value="modelValue"
+        :disabled="disabled"
+        @input="$emit('update:modelValue', $event.target.value)"
+      ></textarea>
+    `,
+  },
+}))
+
 vi.mock('../composables/useTimeRange', () => ({
   useTimeRange: () => ({
     timeRange: { value: { start: Date.now() - 3600000, end: Date.now() } },
@@ -97,6 +148,41 @@ vi.mock('../composables/useDatasource', async () => {
       url: 'http://localhost:9428',
       is_default: false,
       auth_type: 'none',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'ds-3',
+      organization_id: 'org-1',
+      name: 'ClickHouse Logs',
+      type: 'clickhouse',
+      url: 'http://localhost:8123',
+      is_default: false,
+      auth_type: 'none',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'ds-4',
+      organization_id: 'org-1',
+      name: 'CloudWatch Logs',
+      type: 'cloudwatch',
+      url: 'https://monitoring.us-east-1.amazonaws.com',
+      is_default: false,
+      auth_type: 'none',
+      auth_config: { region: 'us-east-1', log_group: '/aws/lambda/test' },
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'ds-5',
+      organization_id: 'org-1',
+      name: 'Elasticsearch Logs',
+      type: 'elasticsearch',
+      url: 'http://localhost:9200',
+      is_default: false,
+      auth_type: 'none',
+      auth_config: { index: 'logs-*' },
       created_at: '2026-01-01T00:00:00Z',
       updated_at: '2026-01-01T00:00:00Z',
     },
@@ -287,6 +373,40 @@ describe('ExploreLogs', () => {
     expect(wrapper.findComponent({ name: 'LogQLQueryBuilder' }).props('queryLanguage')).toBe('logsql')
   })
 
+  it('uses ClickHouse SQL editor and passes logs signal for clickhouse datasource', async () => {
+    mockQueryDataSource.mockResolvedValue({
+      status: 'success',
+      resultType: 'logs',
+      data: {
+        resultType: 'streams',
+        logs: [],
+      },
+    })
+
+    const wrapper = mount(ExploreLogs)
+    await flushPromises()
+
+    await wrapper.find('.datasource-trigger').trigger('click')
+    const options = wrapper.findAll('.datasource-option')
+    await options[2].trigger('click')
+    await flushPromises()
+
+    expect(wrapper.findComponent({ name: 'ClickHouseSQLEditor' }).exists()).toBe(true)
+    expect(wrapper.find('.btn-live').attributes('disabled')).toBeDefined()
+
+    await wrapper.find('#clickhouse-query').setValue('SELECT timestamp, message FROM logs LIMIT 10')
+    await wrapper.find('.btn-run').trigger('click')
+    await flushPromises()
+
+    expect(mockQueryDataSource).toHaveBeenLastCalledWith(
+      'ds-3',
+      expect.objectContaining({
+        query: 'SELECT timestamp, message FROM logs LIMIT 10',
+        signal: 'logs',
+      }),
+    )
+  })
+
   it('passes indexed labels to the LogQL builder', async () => {
     const wrapper = mount(ExploreLogs)
     await flushPromises()
@@ -313,5 +433,52 @@ describe('ExploreLogs', () => {
     )
     expect(mockSetCustomRange).toHaveBeenCalledWith(1_700_000_000_000, 1_700_000_300_000)
     expect(localStorage.getItem('trace_logs_navigation')).toBeNull()
+  })
+
+  it('uses CloudWatch editor and passes logs signal for cloudwatch datasource', async () => {
+    const wrapper = mount(ExploreLogs)
+    await flushPromises()
+
+    await wrapper.find('.datasource-trigger').trigger('click')
+    const options = wrapper.findAll('.datasource-option')
+    await options[3].trigger('click')
+    await flushPromises()
+
+    expect(wrapper.findComponent({ name: 'CloudWatchQueryEditor' }).exists()).toBe(true)
+
+    await wrapper.find('#cloudwatch-query').setValue('fields @timestamp, @message | limit 5')
+    await wrapper.find('.btn-run').trigger('click')
+    await flushPromises()
+
+    expect(mockQueryDataSource).toHaveBeenLastCalledWith(
+      'ds-4',
+      expect.objectContaining({
+        signal: 'logs',
+      }),
+    )
+  })
+
+  it('uses Elasticsearch editor and passes logs signal for elasticsearch datasource', async () => {
+    const wrapper = mount(ExploreLogs)
+    await flushPromises()
+
+    await wrapper.find('.datasource-trigger').trigger('click')
+    const options = wrapper.findAll('.datasource-option')
+    await options[4].trigger('click')
+    await flushPromises()
+
+    expect(wrapper.findComponent({ name: 'ElasticsearchQueryEditor' }).exists()).toBe(true)
+    expect(wrapper.find('.btn-live').attributes('disabled')).toBeDefined()
+
+    await wrapper.find('#elasticsearch-query').setValue('service.name:"api" AND level:error')
+    await wrapper.find('.btn-run').trigger('click')
+    await flushPromises()
+
+    expect(mockQueryDataSource).toHaveBeenLastCalledWith(
+      'ds-5',
+      expect.objectContaining({
+        signal: 'logs',
+      }),
+    )
   })
 })

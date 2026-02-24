@@ -5,6 +5,7 @@ import type {
   UserGroup,
   UserGroupMembership,
 } from '../types/rbac'
+import { trackEvent } from '../analytics'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
@@ -44,13 +45,22 @@ export async function createGroup(orgId: string, data: CreateUserGroupRequest): 
   })
 
   if (!response.ok) {
+    trackEvent('settings_group_create_failed', {
+      org_id: orgId,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Admin access required')
     }
     throw new Error(await getErrorMessage(response, 'Failed to create group'))
   }
 
-  return response.json()
+  const group = await response.json()
+  trackEvent('settings_group_created', {
+    org_id: orgId,
+    group_id: group.id,
+  })
+  return group
 }
 
 export async function updateGroup(
@@ -65,6 +75,11 @@ export async function updateGroup(
   })
 
   if (!response.ok) {
+    trackEvent('settings_group_update_failed', {
+      org_id: orgId,
+      group_id: groupId,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Admin access required')
     }
@@ -74,7 +89,13 @@ export async function updateGroup(
     throw new Error(await getErrorMessage(response, 'Failed to update group'))
   }
 
-  return response.json()
+  const group = await response.json()
+  trackEvent('settings_group_updated', {
+    org_id: orgId,
+    group_id: groupId,
+    updated_fields: Object.keys(data),
+  })
+  return group
 }
 
 export async function deleteGroup(orgId: string, groupId: string): Promise<void> {
@@ -84,6 +105,11 @@ export async function deleteGroup(orgId: string, groupId: string): Promise<void>
   })
 
   if (!response.ok) {
+    trackEvent('settings_group_delete_failed', {
+      org_id: orgId,
+      group_id: groupId,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Admin access required')
     }
@@ -92,6 +118,11 @@ export async function deleteGroup(orgId: string, groupId: string): Promise<void>
     }
     throw new Error(await getErrorMessage(response, 'Failed to delete group'))
   }
+
+  trackEvent('settings_group_deleted', {
+    org_id: orgId,
+    group_id: groupId,
+  })
 }
 
 export async function listGroupMembers(orgId: string, groupId: string): Promise<UserGroupMembership[]> {
@@ -124,6 +155,11 @@ export async function addGroupMember(
   })
 
   if (!response.ok) {
+    trackEvent('settings_group_member_add_failed', {
+      org_id: orgId,
+      group_id: groupId,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Admin access required')
     }
@@ -133,7 +169,13 @@ export async function addGroupMember(
     throw new Error(await getErrorMessage(response, 'Failed to add group member'))
   }
 
-  return response.json()
+  const membership = await response.json()
+  trackEvent('settings_group_member_added', {
+    org_id: orgId,
+    group_id: groupId,
+    user_id: data.user_id,
+  })
+  return membership
 }
 
 export async function removeGroupMember(orgId: string, groupId: string, userId: string): Promise<void> {
@@ -143,6 +185,12 @@ export async function removeGroupMember(orgId: string, groupId: string, userId: 
   })
 
   if (!response.ok) {
+    trackEvent('settings_group_member_remove_failed', {
+      org_id: orgId,
+      group_id: groupId,
+      user_id: userId,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Admin access required')
     }
@@ -151,4 +199,10 @@ export async function removeGroupMember(orgId: string, groupId: string, userId: 
     }
     throw new Error(await getErrorMessage(response, 'Failed to remove group member'))
   }
+
+  trackEvent('settings_group_member_removed', {
+    org_id: orgId,
+    group_id: groupId,
+    user_id: userId,
+  })
 }

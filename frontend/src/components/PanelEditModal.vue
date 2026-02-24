@@ -7,10 +7,29 @@ import { createPanel, updatePanel } from '../api/panels'
 import { useDatasource } from '../composables/useDatasource'
 import { useOrganization } from '../composables/useOrganization'
 import QueryBuilder from './QueryBuilder.vue'
+import ClickHouseSQLEditor from './ClickHouseSQLEditor.vue'
+import CloudWatchQueryEditor from './CloudWatchQueryEditor.vue'
+import ElasticsearchQueryEditor from './ElasticsearchQueryEditor.vue'
 
 interface Threshold {
   value: number
   color: string
+}
+
+type QuerySignal = 'logs' | 'metrics' | 'traces'
+
+function getDefaultQuerySignal(panelType: string): QuerySignal {
+  if (panelType === 'logs') {
+    return 'logs'
+  }
+  if (panelType === 'trace_list' || panelType === 'trace_heatmap') {
+    return 'traces'
+  }
+  return 'metrics'
+}
+
+function isQuerySignal(value: unknown): value is QuerySignal {
+  return value === 'logs' || value === 'metrics' || value === 'traces'
 }
 
 const props = defineProps<{
@@ -40,6 +59,11 @@ const promqlQuery = ref(
     : typeof props.panel?.query?.expr === 'string'
       ? props.panel.query.expr
       : ''
+)
+const querySignal = ref<QuerySignal>(
+  isQuerySignal(props.panel?.query?.signal)
+    ? props.panel.query.signal
+    : getDefaultQuerySignal(props.panel?.type || 'line_chart')
 )
 
 onMounted(() => {
@@ -114,6 +138,21 @@ const isStatType = computed(() => panelType.value === 'stat')
 const isTracePanelType = computed(
   () => panelType.value === 'trace_list' || panelType.value === 'trace_heatmap'
 )
+const selectedDatasource = computed(() => {
+  return datasources.value.find((datasource) => datasource.id === selectedDatasourceId.value) || null
+})
+const isClickHouseDatasource = computed(() => selectedDatasource.value?.type === 'clickhouse')
+const isCloudWatchDatasource = computed(() => selectedDatasource.value?.type === 'cloudwatch')
+const isElasticsearchDatasource = computed(() => selectedDatasource.value?.type === 'elasticsearch')
+const isSignalDatasource = computed(() => isClickHouseDatasource.value || isCloudWatchDatasource.value || isElasticsearchDatasource.value)
+const nonTraceSignal = computed<'logs' | 'metrics'>({
+  get() {
+    return querySignal.value === 'logs' ? 'logs' : 'metrics'
+  },
+  set(value) {
+    querySignal.value = value
+  },
+})
 const availableDatasources = computed(() => {
   if (isTracePanelType.value) {
     return datasources.value.filter((datasource) => isTracingType(datasource.type))
@@ -138,6 +177,26 @@ watch(
   },
   { immediate: true }
 )
+
+watch(
+  panelType,
+  (nextType) => {
+    if (!isSignalDatasource.value) {
+      return
+    }
+    querySignal.value = getDefaultQuerySignal(nextType)
+  },
+)
+
+watch(selectedDatasource, (nextDatasource, prevDatasource) => {
+  const switchedToSignalDatasource =
+    (nextDatasource?.type === 'clickhouse' || nextDatasource?.type === 'cloudwatch' || nextDatasource?.type === 'elasticsearch') &&
+    prevDatasource?.type !== nextDatasource?.type
+
+  if (switchedToSignalDatasource) {
+    querySignal.value = getDefaultQuerySignal(panelType.value)
+  }
+})
 
 function addThreshold() {
   const lastValue = gaugeThresholds.value.length > 0
@@ -185,6 +244,14 @@ async function handleSubmit() {
       query.expr = trimmedQuery
     } else {
       query.promql = trimmedQuery
+    }
+  }
+
+  if (isSignalDatasource.value) {
+    if ((isCloudWatchDatasource.value || isElasticsearchDatasource.value) && querySignal.value === 'traces') {
+      query.signal = panelType.value === 'logs' ? 'logs' : 'metrics'
+    } else {
+      query.signal = querySignal.value
     }
   }
 
@@ -307,9 +374,40 @@ async function handleSubmit() {
         </div>
 
         <div class="form-group query-builder-group">
-          <label>{{ isTracePanelType ? 'Trace Search Query' : 'Query' }}</label>
+          <label>
+            {{
+              isClickHouseDatasource
+                ? 'SQL Query'
+                : isCloudWatchDatasource
+                  ? 'CloudWatch Query'
+                  : isElasticsearchDatasource
+                    ? 'Elasticsearch Query'
+                    : isTracePanelType
+                      ? 'Trace Search Query'
+                      : 'Query'
+            }}
+          </label>
           <QueryBuilder
+            v-if="!isSignalDatasource"
             v-model="promqlQuery"
+            :disabled="loading"
+          />
+          <ClickHouseSQLEditor
+            v-else-if="isClickHouseDatasource"
+            v-model="promqlQuery"
+            v-model:signal="querySignal"
+            :disabled="loading"
+          />
+          <CloudWatchQueryEditor
+            v-else-if="isCloudWatchDatasource"
+            v-model="promqlQuery"
+            v-model:signal="nonTraceSignal"
+            :disabled="loading"
+          />
+          <ElasticsearchQueryEditor
+            v-else
+            v-model="promqlQuery"
+            v-model:signal="nonTraceSignal"
             :disabled="loading"
           />
         </div>
@@ -776,9 +874,9 @@ form {
 }
 
 .btn-secondary {
-  background: var(--bg-tertiary);
-  border-color: var(--border-primary);
-  color: var(--text-primary);
+  background: transparent;
+  border-color: #F59E0B;
+  color: #FCD34D;
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -788,7 +886,7 @@ form {
 
 .btn-primary {
   background: var(--accent-primary);
-  color: white;
+  color: #1a0f00;
 }
 
 .btn-primary:hover:not(:disabled) {

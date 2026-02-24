@@ -7,6 +7,7 @@ import {
   deleteDataSource,
   queryDataSource,
   testDataSourceConnection,
+  testDataSourceDraftConnection,
   fetchDataSourceLabels,
   fetchDataSourceLabelValues,
   fetchDataSourceTrace,
@@ -180,6 +181,40 @@ describe('datasources API', () => {
       })
 
       await expect(testDataSourceConnection('ds-1')).rejects.toThrow('connection test failed: timeout')
+    })
+  })
+
+  describe('testDataSourceDraftConnection', () => {
+    it('tests unsaved datasource connectivity', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ status: 'success' }),
+      })
+
+      await testDataSourceDraftConnection('org-1', {
+        name: 'Draft Prometheus',
+        type: 'prometheus',
+        url: 'http://localhost:9090',
+      })
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/orgs/org-1/datasources/test'),
+        expect.objectContaining({ method: 'POST' }),
+      )
+    })
+
+    it('throws admin error on 403', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        json: () => Promise.resolve({}),
+      })
+
+      await expect(testDataSourceDraftConnection('org-1', {
+        name: 'Draft Prometheus',
+        type: 'prometheus',
+        url: 'http://localhost:9090',
+      })).rejects.toThrow('Only admins can test datasource connections')
     })
   })
 

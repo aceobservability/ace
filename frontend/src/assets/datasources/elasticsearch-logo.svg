@@ -1,0 +1,7 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Elasticsearch logo</title>
+  <desc id="desc">Three overlapping circles representing Elasticsearch</desc>
+  <circle cx="86" cy="86" r="62" fill="#FEC514"/>
+  <circle cx="170" cy="86" r="62" fill="#00BFB3"/>
+  <circle cx="128" cy="170" r="62" fill="#1BA9F5"/>
+</svg>

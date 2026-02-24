@@ -2,6 +2,9 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { Play, AlertCircle, History, X, Loader2, HeartPulse, CircleAlert, ChevronDown, ChevronUp, Check } from 'lucide-vue-next'
 import QueryBuilder from '../components/QueryBuilder.vue'
+import ClickHouseSQLEditor from '../components/ClickHouseSQLEditor.vue'
+import CloudWatchQueryEditor from '../components/CloudWatchQueryEditor.vue'
+import ElasticsearchQueryEditor from '../components/ElasticsearchQueryEditor.vue'
 import TimeRangePicker from '../components/TimeRangePicker.vue'
 import LineChart from '../components/LineChart.vue'
 import { useTimeRange } from '../composables/useTimeRange'
@@ -17,19 +20,25 @@ import victoriaMetricsLogo from '../assets/datasources/victoriametrics-logo.svg'
 import victoriaLogsLogo from '../assets/datasources/victorialogs-logo.svg'
 import tempoLogo from '../assets/datasources/tempo-logo.svg'
 import victoriaTracesLogo from '../assets/datasources/victoriatraces-logo.svg'
+import clickhouseLogo from '../assets/datasources/clickhouse-logo.svg'
+import cloudwatchLogo from '../assets/datasources/cloudwatch-logo.svg'
+import elasticsearchLogo from '../assets/datasources/elasticsearch-logo.svg'
 import type { ChartSeries } from '../components/LineChart.vue'
 
 const { timeRange, onRefresh, setCustomRange } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { metricsDatasources, fetchDatasources } = useDatasource()
 
-const dataSourceTypeLogos: Record<DataSourceType, string> = {
+const dataSourceTypeLogos: Partial<Record<DataSourceType, string>> = {
   prometheus: prometheusLogo,
   loki: lokiLogo,
   victoriametrics: victoriaMetricsLogo,
   victorialogs: victoriaLogsLogo,
   tempo: tempoLogo,
   victoriatraces: victoriaTracesLogo,
+  clickhouse: clickhouseLogo,
+  cloudwatch: cloudwatchLogo,
+  elasticsearch: elasticsearchLogo,
 }
 
 type DatasourceHealthStatus = 'unknown' | 'checking' | 'healthy' | 'unhealthy'
@@ -69,7 +78,62 @@ function escapePromQLLabelValue(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 }
 
-function buildServiceMetricsQuery(serviceName: string): string {
+function escapeForSingleQuotedValue(value: string): string {
+  return value.replace(/'/g, "''")
+}
+
+function buildServiceMetricsQuery(type_: DataSourceType, serviceName: string): string {
+  if (type_ === 'clickhouse') {
+    const escapedService = escapeForSingleQuotedValue(serviceName)
+    if (!escapedService) {
+      return 'SELECT timestamp, value, metric FROM metrics WHERE timestamp >= toDateTime({start}) AND timestamp <= toDateTime({end}) ORDER BY timestamp'
+    }
+
+    return `SELECT timestamp, value, metric\nFROM metrics\nWHERE timestamp >= toDateTime({start}) AND timestamp <= toDateTime({end})\nAND service_name = '${escapedService}'\nORDER BY timestamp`
+  }
+
+  if (type_ === 'cloudwatch') {
+    return JSON.stringify(
+      {
+        namespace: 'AWS/ECS',
+        metric_name: 'CPUUtilization',
+        dimensions: serviceName ? { ServiceName: serviceName } : {},
+        stat: 'Average',
+        period: 60,
+      },
+      null,
+      2,
+    )
+  }
+
+  if (type_ === 'elasticsearch') {
+    const serviceFilter = serviceName
+      ? [{ term: { 'service.name.keyword': serviceName } }]
+      : []
+
+    return JSON.stringify(
+      {
+        index: 'logs-*',
+        query: {
+          bool: {
+            filter: serviceFilter,
+          },
+        },
+        aggs: {
+          timeseries: {
+            date_histogram: {
+              field: '@timestamp',
+              fixed_interval: '30s',
+              min_doc_count: 0,
+            },
+          },
+        },
+      },
+      null,
+      2,
+    )
+  }
+
   if (!serviceName) {
     return 'sum(rate(http_requests_total[5m]))'
   }
@@ -117,7 +181,7 @@ function applyTraceMetricsNavigationContext() {
     return
   }
 
-  query.value = buildServiceMetricsQuery(pendingServiceName.value)
+  query.value = buildServiceMetricsQuery(activeDatasource.value?.type || 'prometheus', pendingServiceName.value)
 
   if (pendingStartMs.value !== null && pendingEndMs.value !== null) {
     setCustomRange(pendingStartMs.value, pendingEndMs.value)
@@ -231,6 +295,7 @@ async function runQuery() {
 
     const response = await queryDataSource(selectedDatasourceId.value, {
       query: query.value,
+      signal: isClickHouseDatasource.value || isCloudWatchDatasource.value || isElasticsearchDatasource.value ? 'metrics' : undefined,
       start,
       end,
       step,
@@ -311,6 +376,9 @@ const hasMetricsDatasources = computed(() => metricsDatasources.value.length > 0
 const activeDatasource = computed(
   () => metricsDatasources.value.find(ds => ds.id === selectedDatasourceId.value) || null,
 )
+const isClickHouseDatasource = computed(() => activeDatasource.value?.type === 'clickhouse')
+const isCloudWatchDatasource = computed(() => activeDatasource.value?.type === 'cloudwatch')
+const isElasticsearchDatasource = computed(() => activeDatasource.value?.type === 'elasticsearch')
 const activeDatasourceHealth = computed<DatasourceHealthStatus>(() => {
   if (!activeDatasource.value) {
     return 'unknown'
@@ -360,6 +428,15 @@ function getSmokeQuery(type_: DataSourceType): string {
   if (type_ === 'prometheus' || type_ === 'victoriametrics') {
     return 'up'
   }
+  if (type_ === 'clickhouse') {
+    return 'SELECT now() AS timestamp, toFloat64(1) AS value, \'up\' AS metric LIMIT 1'
+  }
+  if (type_ === 'cloudwatch') {
+    return '{"namespace":"AWS/EC2","metric_name":"CPUUtilization","stat":"Average","period":60}'
+  }
+  if (type_ === 'elasticsearch') {
+    return '{"index":"logs-*","aggs":{"timeseries":{"date_histogram":{"field":"@timestamp","fixed_interval":"1m","min_doc_count":0}}}}'
+  }
   if (type_ === 'loki') {
     return '{job=~".+"}'
   }
@@ -376,6 +453,7 @@ async function checkDatasourceHealth(datasourceId: string, type_: DataSourceType
   try {
     const healthResult = await queryDataSource(datasourceId, {
       query: getSmokeQuery(type_),
+      signal: type_ === 'clickhouse' || type_ === 'cloudwatch' || type_ === 'elasticsearch' ? 'metrics' : undefined,
       start,
       end,
       step: 15,
@@ -500,7 +578,27 @@ watch(selectedDatasourceId, () => {
         </div>
 
         <div class="query-builder-wrapper">
-          <QueryBuilder v-model="query" :disabled="loading || !hasMetricsDatasources" />
+          <ClickHouseSQLEditor
+            v-if="isClickHouseDatasource"
+            v-model="query"
+            signal="metrics"
+            :disabled="loading || !hasMetricsDatasources"
+          />
+          <CloudWatchQueryEditor
+            v-else-if="isCloudWatchDatasource"
+            v-model="query"
+            signal="metrics"
+            :show-signal-selector="false"
+            :disabled="loading || !hasMetricsDatasources"
+          />
+          <ElasticsearchQueryEditor
+            v-else-if="isElasticsearchDatasource"
+            v-model="query"
+            signal="metrics"
+            :show-signal-selector="false"
+            :disabled="loading || !hasMetricsDatasources"
+          />
+          <QueryBuilder v-else v-model="query" :disabled="loading || !hasMetricsDatasources" />
 
           <!-- History button -->
           <div v-if="queryHistory.length > 0" class="history-container">
@@ -575,12 +673,31 @@ watch(selectedDatasourceId, () => {
 
         <div v-else-if="!hasMetricsDatasources" class="empty-state">
           <p>No metrics datasource configured.</p>
-          <p class="hint-text">Add a Prometheus or VictoriaMetrics datasource in Data Sources.</p>
+          <p class="hint-text">Add a Prometheus, VictoriaMetrics, CloudWatch, or Elasticsearch datasource in Data Sources.</p>
         </div>
 
         <div v-else class="empty-state">
-          <p>Write a PromQL query and click "Run Query" to visualize your metrics.</p>
-          <p class="hint-text">Examples: <code>up</code>, <code>rate(http_requests_total[5m])</code>, <code>node_cpu_seconds_total</code></p>
+          <p>
+            {{
+              isClickHouseDatasource
+                ? 'Write a SQL query and click "Run Query" to visualize your metrics.'
+                : isCloudWatchDatasource
+                  ? 'Write a CloudWatch metrics query and click "Run Query" to visualize your metrics.'
+                  : isElasticsearchDatasource
+                    ? 'Write an Elasticsearch aggregation query and click "Run Query" to visualize your metrics.'
+                    : 'Write a PromQL query and click "Run Query" to visualize your metrics.'
+            }}
+          </p>
+          <p v-if="isClickHouseDatasource" class="hint-text">
+            Examples: <code>SELECT timestamp, value, metric FROM metrics WHERE timestamp &gt;= toDateTime({start})</code>
+          </p>
+          <p v-else-if="isCloudWatchDatasource" class="hint-text">
+            Example: <code>{"namespace":"AWS/EC2","metric_name":"CPUUtilization","stat":"Average","period":60}</code>
+          </p>
+          <p v-else-if="isElasticsearchDatasource" class="hint-text">
+            Example: <code>{"index":"logs-*","aggs":{"timeseries":{"date_histogram":{"field":"@timestamp","fixed_interval":"1m"}}}}</code>
+          </p>
+          <p v-else class="hint-text">Examples: <code>up</code>, <code>rate(http_requests_total[5m])</code>, <code>node_cpu_seconds_total</code></p>
         </div>
       </div>
     </div>
@@ -627,8 +744,8 @@ watch(selectedDatasourceId, () => {
 .mode-badge {
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid rgba(52, 211, 153, 0.38);
-  background: rgba(52, 211, 153, 0.14);
+  border: 1px solid rgba(99, 102, 241, 0.38);
+  background: rgba(99, 102, 241, 0.14);
   color: #b7f3dd;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
@@ -782,7 +899,7 @@ watch(selectedDatasourceId, () => {
 }
 
 .datasource-option.selected {
-  background: rgba(56, 189, 248, 0.14);
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .datasource-option-logo {

@@ -54,7 +54,7 @@ function formatValue(value: number): string {
 // Build color stops for gauge based on thresholds
 function buildAxisLineColors(): Array<[number, string]> {
   if (!props.thresholds || props.thresholds.length === 0) {
-    return [[1, '#38bdf8']]
+    return [[1, '#F59E0B']]
   }
 
   const range = props.max - props.min
@@ -79,13 +79,13 @@ function buildAxisLineColors(): Array<[number, string]> {
     colors.push([1, prevColor])
   }
 
-  return colors.length > 0 ? colors : [[1, '#38bdf8']]
+  return colors.length > 0 ? colors : [[1, '#F59E0B']]
 }
 
 // Get color for current value
 function getValueColor(): string {
   if (!props.thresholds || props.thresholds.length === 0) {
-    return '#38bdf8'
+    return '#F59E0B'
   }
 
   const sortedThresholds = [...props.thresholds].sort((a, b) => a.value - b.value)

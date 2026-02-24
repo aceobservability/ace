@@ -332,12 +332,12 @@ watch(displayLogs, () => {
 
 .log-row.highlighted td {
   animation: row-highlight-fade 2.4s ease-out;
-  background: rgba(56, 189, 248, 0.14);
+  background: rgba(245, 158, 11, 0.14);
 }
 
 @keyframes row-highlight-fade {
   0% {
-    background: rgba(56, 189, 248, 0.28);
+    background: rgba(245, 158, 11, 0.28);
   }
   100% {
     background: transparent;
@@ -395,7 +395,7 @@ watch(displayLogs, () => {
 }
 
 .level-info .level-badge {
-  background: rgba(56, 189, 248, 0.15);
+  background: rgba(245, 158, 11, 0.15);
   color: var(--accent-primary);
 }
 

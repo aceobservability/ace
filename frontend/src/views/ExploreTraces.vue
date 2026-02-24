@@ -6,10 +6,13 @@ import TimeRangePicker from '../components/TimeRangePicker.vue'
 import TraceTimeline from '../components/TraceTimeline.vue'
 import TraceSpanDetailsPanel from '../components/TraceSpanDetailsPanel.vue'
 import TraceServiceGraph from '../components/TraceServiceGraph.vue'
+import TraceListPanel from '../components/TraceListPanel.vue'
+import ClickHouseSQLEditor from '../components/ClickHouseSQLEditor.vue'
 import { useTimeRange } from '../composables/useTimeRange'
 import { useOrganization } from '../composables/useOrganization'
 import { useDatasource } from '../composables/useDatasource'
 import {
+  queryDataSource,
   fetchDataSourceTrace,
   fetchDataSourceTraceServiceGraph,
   fetchDataSourceTraceServices,
@@ -29,6 +32,9 @@ import victoriaMetricsLogo from '../assets/datasources/victoriametrics-logo.svg'
 import victoriaLogsLogo from '../assets/datasources/victorialogs-logo.svg'
 import tempoLogo from '../assets/datasources/tempo-logo.svg'
 import victoriaTracesLogo from '../assets/datasources/victoriatraces-logo.svg'
+import clickhouseLogo from '../assets/datasources/clickhouse-logo.svg'
+import cloudwatchLogo from '../assets/datasources/cloudwatch-logo.svg'
+import elasticsearchLogo from '../assets/datasources/elasticsearch-logo.svg'
 
 interface TraceNavigationContext {
   datasourceId?: string
@@ -62,13 +68,16 @@ const { timeRange, isCustomRange, onRefresh } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { tracingDatasources, fetchDatasources } = useDatasource()
 
-const dataSourceTypeLogos: Record<DataSourceType, string> = {
+const dataSourceTypeLogos: Partial<Record<DataSourceType, string>> = {
   prometheus: prometheusLogo,
   loki: lokiLogo,
   victoriametrics: victoriaMetricsLogo,
   victorialogs: victoriaLogsLogo,
   tempo: tempoLogo,
   victoriatraces: victoriaTracesLogo,
+  clickhouse: clickhouseLogo,
+  cloudwatch: cloudwatchLogo,
+  elasticsearch: elasticsearchLogo,
 }
 
 const selectedDatasourceId = ref('')
@@ -102,6 +111,7 @@ const hasTracingDatasources = computed(() => tracingDatasources.value.length > 0
 const activeDatasource = computed(
   () => tracingDatasources.value.find((ds) => ds.id === selectedDatasourceId.value) || null,
 )
+const isClickHouseDatasource = computed(() => activeDatasource.value?.type === 'clickhouse')
 
 function getTypeLogo(type_: DataSourceType): string {
   return dataSourceTypeLogos[type_]
@@ -144,6 +154,12 @@ function formatStart(unixNanoTimestamp: number): string {
 }
 
 async function loadServices() {
+  if (isClickHouseDatasource.value) {
+    services.value = []
+    selectedService.value = ''
+    return
+  }
+
   if (!selectedDatasourceId.value) {
     services.value = []
     selectedService.value = ''
@@ -166,6 +182,11 @@ async function loadServices() {
 async function runSearch() {
   if (!selectedDatasourceId.value) {
     error.value = 'Select a tracing datasource'
+    return
+  }
+
+  if (isClickHouseDatasource.value) {
+    await runClickHouseTraceQuery()
     return
   }
 
@@ -205,7 +226,173 @@ async function runSearch() {
   }
 }
 
+function getTagValue(tags: Record<string, string> | undefined, keys: string[]): string {
+  if (!tags || Object.keys(tags).length === 0) {
+    return ''
+  }
+
+  const byNormalizedName: Record<string, string> = {}
+  for (const [key, value] of Object.entries(tags)) {
+    const normalizedKey = key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
+    if (normalizedKey && !(normalizedKey in byNormalizedName)) {
+      byNormalizedName[normalizedKey] = value
+    }
+  }
+
+  for (const key of keys) {
+    const normalizedKey = key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
+    if (normalizedKey in byNormalizedName) {
+      const value = byNormalizedName[normalizedKey].trim()
+      if (value) {
+        return value
+      }
+    }
+  }
+
+  return ''
+}
+
+function isTraceErrorSpan(span: TraceSpan): boolean {
+  if (typeof span.status === 'string' && span.status.toLowerCase() === 'error') {
+    return true
+  }
+
+  const errorTag = getTagValue(span.tags, ['error', 'otelStatusCode', 'statusCode'])
+  const normalized = errorTag.toLowerCase()
+  return normalized === 'true' || normalized === '1' || normalized === 'error'
+}
+
+function getTraceIdForSpan(span: TraceSpan): string {
+  const traceIdFromTags = getTagValue(span.tags, ['traceId', 'trace_id', 'traceid', 'otelTraceId', 'trace'])
+  if (traceIdFromTags) {
+    return traceIdFromTags
+  }
+
+  return span.spanId || 'unknown-trace'
+}
+
+function convertClickHouseSpansToTraceSummaries(spans: TraceSpan[]): TraceSummary[] {
+  const grouped = new Map<
+    string,
+    {
+      traceId: string
+      spans: TraceSpan[]
+      services: Set<string>
+      errorSpanCount: number
+      startTimeUnixNano: number
+      endTimeUnixNano: number
+    }
+  >()
+
+  for (const span of spans) {
+    const traceId = getTraceIdForSpan(span)
+    const group = grouped.get(traceId) || {
+      traceId,
+      spans: [],
+      services: new Set<string>(),
+      errorSpanCount: 0,
+      startTimeUnixNano: Number.MAX_SAFE_INTEGER,
+      endTimeUnixNano: 0,
+    }
+
+    group.spans.push(span)
+    if (span.serviceName) {
+      group.services.add(span.serviceName)
+    }
+
+    if (isTraceErrorSpan(span)) {
+      group.errorSpanCount += 1
+    }
+
+    const spanStart = Math.max(0, span.startTimeUnixNano || 0)
+    const spanEnd = spanStart + Math.max(0, span.durationNano || 0)
+    group.startTimeUnixNano = Math.min(group.startTimeUnixNano, spanStart)
+    group.endTimeUnixNano = Math.max(group.endTimeUnixNano, spanEnd)
+
+    grouped.set(traceId, group)
+  }
+
+  const summaries: TraceSummary[] = []
+  for (const group of grouped.values()) {
+    const spanIds = new Set(group.spans.map((span) => span.spanId))
+    const rootSpan = [...group.spans]
+      .sort((left, right) => left.startTimeUnixNano - right.startTimeUnixNano)
+      .find((span) => !span.parentSpanId || !spanIds.has(span.parentSpanId)) || group.spans[0]
+
+    const startTimeUnixNano =
+      group.startTimeUnixNano === Number.MAX_SAFE_INTEGER ? 0 : group.startTimeUnixNano
+    const durationNano = Math.max(0, group.endTimeUnixNano - startTimeUnixNano)
+
+    summaries.push({
+      traceId: group.traceId,
+      rootServiceName: rootSpan?.serviceName || 'unknown',
+      rootOperationName: rootSpan?.operationName || '',
+      startTimeUnixNano,
+      durationNano,
+      spanCount: group.spans.length,
+      serviceCount: group.services.size,
+      errorSpanCount: group.errorSpanCount,
+    })
+  }
+
+  return summaries.sort((left, right) => right.startTimeUnixNano - left.startTimeUnixNano)
+}
+
+async function runClickHouseTraceQuery() {
+  if (!query.value.trim()) {
+    error.value = 'Query is required'
+    return
+  }
+
+  hasSearched.value = true
+  loadingSearch.value = true
+  error.value = null
+  activeTrace.value = null
+  activeServiceGraph.value = null
+  serviceGraphError.value = null
+  selectedTraceId.value = ''
+  selectedSpan.value = null
+
+  try {
+    const start = Math.floor(timeRange.value.start / 1000)
+    const end = Math.floor(timeRange.value.end / 1000)
+
+    const response = await queryDataSource(selectedDatasourceId.value, {
+      query: query.value,
+      signal: 'traces',
+      start,
+      end,
+      step: 15,
+      limit: limit.value,
+    })
+
+    if (response.status === 'error') {
+      error.value = response.error || 'Query failed'
+      traceSummaries.value = []
+      return
+    }
+
+    if (response.resultType !== 'traces') {
+      error.value = 'Selected datasource did not return trace results'
+      traceSummaries.value = []
+      return
+    }
+
+    traceSummaries.value = convertClickHouseSpansToTraceSummaries(response.data?.traces || [])
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to query traces'
+    traceSummaries.value = []
+  } finally {
+    loadingSearch.value = false
+  }
+}
+
 async function loadTrace(traceId: string) {
+  if (isClickHouseDatasource.value) {
+    error.value = 'Trace detail lookup is not available for ClickHouse SQL results yet'
+    return
+  }
+
   if (!selectedDatasourceId.value) {
     error.value = 'Select a tracing datasource'
     return
@@ -243,6 +430,11 @@ async function loadTrace(traceId: string) {
 }
 
 async function lookupTraceById() {
+  if (isClickHouseDatasource.value) {
+    error.value = 'Open Trace ID is not available for ClickHouse SQL results yet'
+    return
+  }
+
   const traceId = traceIdInput.value.trim()
   if (!traceId) {
     error.value = 'Trace ID is required'
@@ -438,10 +630,21 @@ watch(
     hasSearched.value = false
 
     await loadServices()
-    await tryLoadPendingTrace()
+    if (!isClickHouseDatasource.value) {
+      await tryLoadPendingTrace()
+    }
   },
   { immediate: true },
 )
+
+async function handleOpenTraceFromList(traceId: string) {
+  if (isClickHouseDatasource.value) {
+    error.value = 'Trace detail lookup is not available for ClickHouse SQL results yet'
+    return
+  }
+
+  await loadTrace(traceId)
+}
 
 onMounted(() => {
   consumeTraceNavigationContext()
@@ -544,26 +747,36 @@ onUnmounted(() => {
         </div>
 
         <div class="search-filters-row">
-          <label class="filter-field">
-            <span>Service</span>
-            <select v-model="selectedService" :disabled="loadingServices || services.length === 0">
-              <option value="">All services</option>
-              <option v-for="service in services" :key="service" :value="service">{{ service }}</option>
-            </select>
-          </label>
+          <template v-if="!isClickHouseDatasource">
+            <label class="filter-field">
+              <span>Service</span>
+              <select v-model="selectedService" :disabled="loadingServices || services.length === 0">
+                <option value="">All services</option>
+                <option v-for="service in services" :key="service" :value="service">{{ service }}</option>
+              </select>
+            </label>
 
-          <label class="filter-field limit-field">
-            <span>Limit</span>
-            <select v-model.number="limit">
-              <option :value="10">10</option>
-              <option :value="20">20</option>
-              <option :value="50">50</option>
-              <option :value="100">100</option>
-            </select>
-          </label>
+            <label class="filter-field limit-field">
+              <span>Limit</span>
+              <select v-model.number="limit">
+                <option :value="10">10</option>
+                <option :value="20">20</option>
+                <option :value="50">50</option>
+                <option :value="100">100</option>
+              </select>
+            </label>
+          </template>
+
+          <template v-else>
+            <ClickHouseSQLEditor
+              v-model="query"
+              signal="traces"
+              :disabled="loadingSearch || !selectedDatasourceId"
+            />
+          </template>
         </div>
 
-        <div class="search-query-row">
+        <div v-if="!isClickHouseDatasource" class="search-query-row">
           <label for="trace-search-query" class="query-label">Search Query</label>
           <input
             id="trace-search-query"
@@ -577,16 +790,16 @@ onUnmounted(() => {
         <div class="query-actions">
           <button
             class="btn btn-search"
-            :disabled="loadingSearch || !selectedDatasourceId"
+            :disabled="loadingSearch || !selectedDatasourceId || (isClickHouseDatasource && !query.trim())"
             @click="runSearch"
           >
             <Loader2 v-if="loadingSearch" :size="16" class="icon-spin" />
             <Search v-else :size="16" />
-            <span>{{ loadingSearch ? 'Searching...' : 'Search Traces' }}</span>
+            <span>{{ loadingSearch ? 'Searching...' : (isClickHouseDatasource ? 'Run Query' : 'Search Traces') }}</span>
           </button>
         </div>
 
-        <div class="trace-lookup-row">
+        <div v-if="!isClickHouseDatasource" class="trace-lookup-row">
           <label for="trace-id-input">Open Trace ID</label>
           <div class="trace-lookup-input-wrap">
             <input
@@ -617,7 +830,23 @@ onUnmounted(() => {
       <div class="results-section">
         <div v-if="!hasTracingDatasources" class="empty-state">
           <p>No tracing datasource configured.</p>
-          <p class="hint-text">Add a Tempo or VictoriaTraces datasource in Data Sources.</p>
+          <p class="hint-text">Add a Tempo, VictoriaTraces, or ClickHouse datasource in Data Sources.</p>
+        </div>
+
+        <div v-else-if="isClickHouseDatasource" class="clickhouse-results-layout">
+          <div v-if="loadingSearch" class="loading-state">
+            <Loader2 :size="18" class="icon-spin" />
+            <span>Executing trace SQL...</span>
+          </div>
+
+          <div v-else-if="traceSummaries.length > 0" class="clickhouse-trace-list">
+            <TraceListPanel :traces="traceSummaries" @open-trace="handleOpenTraceFromList" />
+          </div>
+
+          <div v-else class="empty-state">
+            <p>Run a ClickHouse SQL query to inspect traces.</p>
+            <p class="hint-text">Expected columns include span_id, operation_name, service_name, start_time_unix_nano, and duration_nano.</p>
+          </div>
         </div>
 
         <div v-else class="trace-layout">
@@ -777,9 +1006,9 @@ onUnmounted(() => {
 .mode-badge {
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid rgba(14, 165, 233, 0.38);
-  background: rgba(14, 165, 233, 0.14);
-  color: #bde9ff;
+  border: 1px solid rgba(217, 119, 6, 0.38);
+  background: rgba(217, 119, 6, 0.14);
+  color: #FCD34D;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -937,7 +1166,7 @@ onUnmounted(() => {
 }
 
 .datasource-option.selected {
-  background: rgba(56, 189, 248, 0.14);
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .datasource-option-logo {
@@ -1037,8 +1266,8 @@ onUnmounted(() => {
 }
 
 .btn-find-trace {
-  background: rgba(56, 189, 248, 0.16);
-  border-color: rgba(56, 189, 248, 0.28);
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.28);
   color: #ccefff;
 }
 
@@ -1070,6 +1299,18 @@ onUnmounted(() => {
   grid-template-columns: 320px minmax(0, 1fr);
   min-height: 460px;
   flex: 1;
+}
+
+.clickhouse-results-layout {
+  display: flex;
+  flex: 1;
+  min-height: 420px;
+}
+
+.clickhouse-trace-list {
+  flex: 1;
+  min-height: 0;
+  padding: 0.8rem;
 }
 
 .trace-results-panel {
@@ -1127,13 +1368,13 @@ onUnmounted(() => {
 }
 
 .trace-result-row:hover {
-  border-color: rgba(56, 189, 248, 0.42);
+  border-color: rgba(245, 158, 11, 0.42);
   background: rgba(18, 29, 45, 0.9);
 }
 
 .trace-result-row.active {
-  border-color: rgba(56, 189, 248, 0.52);
-  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(245, 158, 11, 0.52);
+  background: rgba(245, 158, 11, 0.12);
 }
 
 .trace-id {

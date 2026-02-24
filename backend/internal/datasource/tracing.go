@@ -317,6 +317,100 @@ func doTracingRequest(ctx context.Context, httpClient *http.Client, ds models.Da
 	return nil, fmt.Errorf("tracing api request failed with status %d: %s", resp.StatusCode, message)
 }
 
+func normalizeTraceSearchLimit(limit int) int {
+	if limit <= 0 {
+		return 20
+	}
+
+	if limit > 1000 {
+		return 1000
+	}
+
+	return limit
+}
+
+func normalizeTraceSearchResults(traces []TraceSummary, requestedLimit int) []TraceSummary {
+	if len(traces) == 0 {
+		return []TraceSummary{}
+	}
+
+	traceByID := make(map[string]TraceSummary, len(traces))
+	for _, trace := range traces {
+		traceID := strings.TrimSpace(trace.TraceID)
+		if traceID == "" {
+			continue
+		}
+
+		trace.TraceID = traceID
+		existing, ok := traceByID[traceID]
+		if !ok || shouldReplaceTraceSummary(existing, trace) {
+			traceByID[traceID] = trace
+		}
+	}
+
+	if len(traceByID) == 0 {
+		return []TraceSummary{}
+	}
+
+	normalized := make([]TraceSummary, 0, len(traceByID))
+	for _, trace := range traceByID {
+		normalized = append(normalized, trace)
+	}
+
+	sort.Slice(normalized, func(i, j int) bool {
+		if normalized[i].StartTimeUnixNano != normalized[j].StartTimeUnixNano {
+			return normalized[i].StartTimeUnixNano > normalized[j].StartTimeUnixNano
+		}
+		if normalized[i].DurationNano != normalized[j].DurationNano {
+			return normalized[i].DurationNano > normalized[j].DurationNano
+		}
+		if normalized[i].SpanCount != normalized[j].SpanCount {
+			return normalized[i].SpanCount > normalized[j].SpanCount
+		}
+
+		return normalized[i].TraceID < normalized[j].TraceID
+	})
+
+	limit := normalizeTraceSearchLimit(requestedLimit)
+	if len(normalized) > limit {
+		return normalized[:limit]
+	}
+
+	return normalized
+}
+
+func shouldReplaceTraceSummary(existing, candidate TraceSummary) bool {
+	if candidate.StartTimeUnixNano != existing.StartTimeUnixNano {
+		return candidate.StartTimeUnixNano > existing.StartTimeUnixNano
+	}
+
+	if candidate.SpanCount != existing.SpanCount {
+		return candidate.SpanCount > existing.SpanCount
+	}
+
+	if candidate.ServiceCount != existing.ServiceCount {
+		return candidate.ServiceCount > existing.ServiceCount
+	}
+
+	if candidate.ErrorSpanCount != existing.ErrorSpanCount {
+		return candidate.ErrorSpanCount > existing.ErrorSpanCount
+	}
+
+	if candidate.DurationNano != existing.DurationNano {
+		return candidate.DurationNano > existing.DurationNano
+	}
+
+	if existing.RootServiceName == "" && candidate.RootServiceName != "" {
+		return true
+	}
+
+	if existing.RootOperationName == "" && candidate.RootOperationName != "" {
+		return true
+	}
+
+	return false
+}
+
 func buildTraceSearchParams(req TraceSearchRequest) url.Values {
 	values := url.Values{}
 
@@ -343,14 +437,7 @@ func buildTraceSearchParams(req TraceSearchRequest) url.Values {
 		values.Set("end", strconv.FormatInt(req.End, 10))
 	}
 
-	limit := req.Limit
-	if limit <= 0 {
-		limit = 20
-	}
-	if limit > 1000 {
-		limit = 1000
-	}
-	values.Set("limit", strconv.Itoa(limit))
+	values.Set("limit", strconv.Itoa(normalizeTraceSearchLimit(req.Limit)))
 
 	if len(req.Tags) > 0 {
 		keys := make([]string, 0, len(req.Tags))

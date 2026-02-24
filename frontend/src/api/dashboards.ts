@@ -1,4 +1,5 @@
 import type { Dashboard, CreateDashboardRequest, UpdateDashboardRequest } from '../types/dashboard'
+import { trackEvent } from '../analytics'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
@@ -43,12 +44,22 @@ export async function createDashboard(orgId: string, data: CreateDashboardReques
     body: JSON.stringify(data),
   })
   if (!response.ok) {
+    trackEvent('dashboard_create_failed', {
+      org_id: orgId,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Not authorized to create dashboards in this organization')
     }
     throw new Error('Failed to create dashboard')
   }
-  return response.json()
+
+  const dashboard = await response.json()
+  trackEvent('dashboard_created', {
+    dashboard_id: dashboard.id,
+    org_id: orgId,
+  })
+  return dashboard
 }
 
 export async function updateDashboard(id: string, data: UpdateDashboardRequest): Promise<Dashboard> {
@@ -58,12 +69,22 @@ export async function updateDashboard(id: string, data: UpdateDashboardRequest):
     body: JSON.stringify(data),
   })
   if (!response.ok) {
+    trackEvent('dashboard_update_failed', {
+      dashboard_id: id,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Not authorized to update this dashboard')
     }
     throw new Error('Failed to update dashboard')
   }
-  return response.json()
+
+  const dashboard = await response.json()
+  trackEvent('dashboard_updated', {
+    dashboard_id: id,
+    updated_fields: Object.keys(data),
+  })
+  return dashboard
 }
 
 export async function deleteDashboard(id: string): Promise<void> {
@@ -72,11 +93,19 @@ export async function deleteDashboard(id: string): Promise<void> {
     headers: getAuthHeaders(),
   })
   if (!response.ok) {
+    trackEvent('dashboard_delete_failed', {
+      dashboard_id: id,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Not authorized to delete this dashboard')
     }
     throw new Error('Failed to delete dashboard')
   }
+
+  trackEvent('dashboard_deleted', {
+    dashboard_id: id,
+  })
 }
 
 export async function exportDashboardYaml(id: string): Promise<Blob> {

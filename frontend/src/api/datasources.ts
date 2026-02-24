@@ -11,6 +11,7 @@ import type {
   TraceSummary,
   TraceSearchRequest,
 } from '../types/datasource'
+import { trackEvent } from '../analytics'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
@@ -55,13 +56,25 @@ export async function createDataSource(
     body: JSON.stringify(data),
   })
   if (!response.ok) {
+    trackEvent('datasource_create_failed', {
+      org_id: orgId,
+      datasource_type: data.type,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Only admins can create datasources')
     }
     const err = await response.json().catch(() => ({}))
     throw new Error(err.error || 'Failed to create datasource')
   }
-  return response.json()
+
+  const datasource = await response.json()
+  trackEvent('datasource_created', {
+    datasource_id: datasource.id,
+    datasource_type: datasource.type,
+    org_id: orgId,
+  })
+  return datasource
 }
 
 export async function updateDataSource(
@@ -74,12 +87,23 @@ export async function updateDataSource(
     body: JSON.stringify(data),
   })
   if (!response.ok) {
+    trackEvent('datasource_update_failed', {
+      datasource_id: id,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Only admins can update datasources')
     }
     throw new Error('Failed to update datasource')
   }
-  return response.json()
+
+  const datasource = await response.json()
+  trackEvent('datasource_updated', {
+    datasource_id: id,
+    datasource_type: datasource.type,
+    updated_fields: Object.keys(data),
+  })
+  return datasource
 }
 
 export async function deleteDataSource(id: string): Promise<void> {
@@ -88,11 +112,19 @@ export async function deleteDataSource(id: string): Promise<void> {
     headers: getAuthHeaders(),
   })
   if (!response.ok) {
+    trackEvent('datasource_delete_failed', {
+      datasource_id: id,
+      status_code: response.status,
+    })
     if (response.status === 403) {
       throw new Error('Only admins can delete datasources')
     }
     throw new Error('Failed to delete datasource')
   }
+
+  trackEvent('datasource_deleted', {
+    datasource_id: id,
+  })
 }
 
 export async function queryDataSource(
@@ -107,9 +139,21 @@ export async function queryDataSource(
   })
   if (!response.ok) {
     const err = await response.json().catch(() => ({}))
+    trackEvent('datasource_query_failed', {
+      datasource_id: id,
+      status_code: response.status,
+      query_length: data.query.length,
+    })
     throw new Error(err.error || 'Query failed')
   }
-  return response.json()
+
+  const result = await response.json()
+  trackEvent('datasource_query_succeeded', {
+    datasource_id: id,
+    query_length: data.query.length,
+    result_status: result.status,
+  })
+  return result
 }
 
 interface TraceResponse {
@@ -227,8 +271,45 @@ export async function testDataSourceConnection(id: string): Promise<void> {
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}))
+    trackEvent('datasource_test_failed', {
+      datasource_id: id,
+      status_code: response.status,
+    })
     throw new Error(err.error || 'Connection test failed')
   }
+
+  trackEvent('datasource_test_succeeded', {
+    datasource_id: id,
+  })
+}
+
+export async function testDataSourceDraftConnection(
+  orgId: string,
+  data: CreateDataSourceRequest,
+): Promise<void> {
+  const response = await fetch(`${API_BASE}/api/orgs/${orgId}/datasources/test`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    trackEvent('datasource_draft_test_failed', {
+      org_id: orgId,
+      datasource_type: data.type,
+      status_code: response.status,
+    })
+    if (response.status === 403) {
+      throw new Error('Only admins can test datasource connections')
+    }
+    throw new Error(err.error || 'Connection test failed')
+  }
+
+  trackEvent('datasource_draft_test_succeeded', {
+    org_id: orgId,
+    datasource_type: data.type,
+  })
 }
 
 interface ParsedSSEEvent {
