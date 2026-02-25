@@ -237,7 +237,7 @@ watch(
     const hasSelected = sources.some(ds => ds.id === selectedDatasourceId.value)
     if (!hasSelected) {
       const defaultDatasource = sources.find(ds => ds.is_default)
-      selectedDatasourceId.value = defaultDatasource?.id || sources[0].id
+      selectedDatasourceId.value = defaultDatasource?.id || sources[0]!.id
     }
   },
   { immediate: true },
@@ -753,7 +753,7 @@ const activeDatasourceHealthError = computed(() => {
 })
 
 function getTypeLogo(type_: DataSourceType): string {
-  return dataSourceTypeLogos[type_]
+  return dataSourceTypeLogos[type_] ?? ''
 }
 
 function toggleDatasourceMenu() {
@@ -869,16 +869,16 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 </script>
 
 <template>
-  <div class="explore-page">
-    <header class="explore-header">
-      <div class="header-title">
+  <div class="flex flex-col py-5 px-6 max-w-[1400px] mx-auto max-md:p-[0.9rem]">
+    <header class="flex justify-between items-center gap-4 mb-4 p-4 border border-border rounded-[14px] bg-surface-1 shadow-sm">
+      <div class="flex items-center gap-3">
         <h1>Explore</h1>
         <span class="mode-badge">Logs</span>
       </div>
     </header>
 
-    <div class="explore-content">
-      <div class="query-section">
+    <div class="flex flex-col gap-4">
+      <div class="bg-surface-1 border border-border rounded-[14px] p-5 shadow-sm flex flex-col gap-4">
         <div class="query-context-row">
           <div class="datasource-row">
             <label>Data Source</label>
@@ -1053,15 +1053,15 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
         </div>
       </div>
 
-      <div class="results-section">
-        <div v-if="loading" class="loading-state">
-          <div class="loading-spinner"></div>
+      <div class="bg-surface-1 border border-border rounded-[14px] p-5 shadow-sm min-h-[300px]">
+        <div v-if="loading" class="flex flex-col items-center justify-center p-12 gap-4 text-text-1">
+          <div class="w-10 h-10 border-3 border-border border-t-accent rounded-full animate-[spin_0.8s_linear_infinite]"></div>
           <span>Executing query...</span>
         </div>
 
-        <div v-else-if="hasResults" class="results-container">
-          <div class="results-header">
-            <span class="result-count">{{ logs.length }} {{ logs.length === 1 ? 'entry' : 'entries' }}</span>
+        <div v-else-if="hasResults" class="flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-text-1">{{ logs.length }} {{ logs.length === 1 ? 'entry' : 'entries' }}</span>
             <span v-if="liveStatusLabel" class="result-live-pill" :class="`live-${liveState}`">
               <span class="live-dot"></span>
               {{ liveStatusLabel }}
@@ -1072,16 +1072,16 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
           </div>
         </div>
 
-        <div v-else-if="hasSuccessfulQuery && logs.length === 0" class="empty-state">
+        <div v-else-if="hasSuccessfulQuery && logs.length === 0" class="flex flex-col items-center justify-center p-12 text-center text-text-1">
           <p>No logs returned for the selected time range.</p>
         </div>
 
-        <div v-else-if="!hasLogsDatasources" class="empty-state">
+        <div v-else-if="!hasLogsDatasources" class="flex flex-col items-center justify-center p-12 text-center text-text-1">
           <p>No logs datasource configured.</p>
           <p class="hint-text">Add a Loki, Victoria Logs, CloudWatch, or Elasticsearch datasource in Data Sources.</p>
         </div>
 
-        <div v-else class="empty-state">
+        <div v-else class="flex flex-col items-center justify-center p-12 text-center text-text-1">
           <p>
             {{
               isClickHouseDatasource
@@ -1109,7 +1109,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .explore-page {
   display: flex;
   flex-direction: column;
@@ -1123,9 +1123,9 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   align-items: center;
   margin-bottom: 1rem;
   padding: 0.95rem 1.15rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: var(--surface-1);
+  background: var(--color-surface-1);
   box-shadow: var(--shadow-sm);
 }
 
@@ -1141,8 +1141,8 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  font-family: var(--font-mono);
-  color: var(--text-primary);
+  font-family: var(--font-family-mono);
+  color: var(--color-text-0);
   margin: 0;
 }
 
@@ -1163,8 +1163,8 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
   border-radius: 12px;
-  border: 1px solid var(--border-primary);
-  background: var(--bg-tertiary);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-2);
 }
 
 .datasource-trigger {
@@ -1175,8 +1175,8 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 }
 
 .datasource-trigger:hover:not(:disabled) {
-  border-color: var(--border-secondary);
-  background: var(--bg-hover);
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-hover);
 }
 
 .datasource-trigger:disabled {
@@ -1202,13 +1202,13 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   font-size: 0.68rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .active-datasource-name {
   font-size: 0.86rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1216,11 +1216,11 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 
 .active-datasource-type {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .active-datasource-empty {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.85rem;
 }
 
@@ -1232,13 +1232,13 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
   font-size: 0.72rem;
-  border: 1px solid var(--border-primary);
-  color: var(--text-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-1);
 }
 
 .source-health-badge.health-checking {
   border-color: rgba(148, 163, 184, 0.45);
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .source-health-badge.health-healthy {
@@ -1268,7 +1268,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 
 .datasource-chevron {
   margin-left: 0.25rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   flex-shrink: 0;
 }
 
@@ -1278,7 +1278,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   left: 0;
   right: 0;
   background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   z-index: 110;
@@ -1295,12 +1295,12 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   background: transparent;
   border: none;
   text-align: left;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   cursor: pointer;
 }
 
 .datasource-option:hover {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 .datasource-option.selected {
@@ -1324,17 +1324,17 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 .datasource-option-meta strong {
   font-size: 0.84rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .datasource-option-meta span {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .datasource-option-check {
   margin-left: auto;
-  color: var(--accent-primary);
+  color: var(--color-accent);
 }
 
 .header-actions {
@@ -1355,8 +1355,8 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   flex-direction: column;
   gap: 1rem;
   padding: 1.2rem;
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   box-shadow: var(--shadow-sm);
 }
@@ -1377,7 +1377,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 .datasource-row label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1391,7 +1391,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 .query-time-controls label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1405,7 +1405,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 .query-label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1423,10 +1423,10 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -1434,9 +1434,9 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 
 .history-btn:hover,
 .history-btn.active {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-  border-color: var(--border-secondary);
+  background: var(--color-bg-hover);
+  color: var(--color-text-0);
+  border-color: var(--color-border-strong);
 }
 
 .history-dropdown {
@@ -1447,7 +1447,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   max-height: 300px;
   overflow-y: auto;
   background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   z-index: 100;
@@ -1458,10 +1458,10 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -1475,14 +1475,14 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   background: transparent;
   border: none;
   border-radius: 4px;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .clear-history-btn:hover {
-  background: var(--bg-hover);
-  color: var(--accent-danger);
+  background: var(--color-bg-hover);
+  color: var(--color-danger);
 }
 
 .history-item {
@@ -1497,14 +1497,14 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 }
 
 .history-item:hover {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 .history-item code {
   display: block;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1522,8 +1522,8 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
-  background: var(--accent-success);
-  border: 1px solid var(--accent-success);
+  background: var(--color-success);
+  border: 1px solid var(--color-success);
   border-radius: 10px;
   color: white;
   font-size: 0.875rem;
@@ -1577,7 +1577,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 
 .hint {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .live-status {
@@ -1585,9 +1585,9 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   align-items: center;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   font-size: 0.72rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .live-status.live-connected {
@@ -1610,7 +1610,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   background: rgba(251, 113, 133, 0.1);
   border: 1px solid rgba(251, 113, 133, 0.3);
   border-radius: 8px;
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 0.875rem;
 }
 
@@ -1624,8 +1624,8 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   overflow: hidden;
   min-height: 400px;
@@ -1639,7 +1639,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   justify-content: center;
   gap: 1rem;
   padding: 3rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   flex: 1;
 }
 
@@ -1647,7 +1647,7 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   width: 32px;
   height: 32px;
   border: 3px solid rgba(50, 81, 115, 0.65);
-  border-top-color: var(--accent-primary);
+  border-top-color: var(--color-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -1668,13 +1668,13 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
   background: rgba(20, 32, 50, 0.9);
 }
 
 .result-count {
   font-size: 0.8125rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .result-live-pill {
@@ -1683,9 +1683,9 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
   gap: 0.35rem;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   font-size: 0.72rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .result-live-pill.live-connected {
@@ -1743,22 +1743,22 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 
 .empty-state p {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.9375rem;
 }
 
 .empty-state .hint-text {
   font-size: 0.8125rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .empty-state code {
   padding: 0.125rem 0.375rem;
-  background: var(--bg-tertiary);
+  background: var(--color-bg-2);
   border-radius: 4px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.8125rem;
-  color: var(--text-accent);
+  color: var(--color-text-accent);
 }
 
 @media (max-width: 900px) {

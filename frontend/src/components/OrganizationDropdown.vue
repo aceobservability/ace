@@ -103,7 +103,7 @@ function getDropdownPosition() {
 }
 </script>
 
-<style scoped>
+<style>
 .org-dropdown {
   position: relative;
   margin: 0.75rem 0.5rem;
@@ -116,15 +116,15 @@ function getDropdownPosition() {
   width: 100%;
   padding: 0.5rem;
   background: rgba(20, 33, 52, 0.85);
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .org-trigger:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-secondary);
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-strong);
 }
 
 .org-trigger:not(.expanded) {
@@ -139,7 +139,7 @@ function getDropdownPosition() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(145deg, var(--color-accent), var(--color-accent-secondary));
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -152,14 +152,14 @@ function getDropdownPosition() {
   text-align: left;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .chevron {
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   transition: transform 0.2s;
   flex-shrink: 0;
 }
@@ -171,7 +171,7 @@ function getDropdownPosition() {
 .dropdown-menu {
   width: 260px;
   background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   overflow: hidden;
@@ -193,7 +193,7 @@ function getDropdownPosition() {
   padding: 0.75rem 1rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -216,7 +216,7 @@ function getDropdownPosition() {
 }
 
 .org-item:hover {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 .org-item.active {
@@ -229,7 +229,7 @@ function getDropdownPosition() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(145deg, var(--color-accent), var(--color-accent-secondary));
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 600;
@@ -247,7 +247,7 @@ function getDropdownPosition() {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -256,18 +256,18 @@ function getDropdownPosition() {
 .org-item-role {
   display: block;
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   text-transform: capitalize;
 }
 
 .check-icon {
-  color: var(--accent-primary);
+  color: var(--color-accent);
   flex-shrink: 0;
 }
 
 .dropdown-divider {
   height: 1px;
-  background: var(--border-primary);
+  background: var(--color-border);
   margin: 0.5rem 0;
 }
 
@@ -280,13 +280,13 @@ function getDropdownPosition() {
   background: transparent;
   border: none;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .dropdown-action:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--color-bg-hover);
+  color: var(--color-text-0);
 }
 </style>

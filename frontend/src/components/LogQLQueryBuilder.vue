@@ -435,7 +435,7 @@ watch(activeQuery, (newValue) => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .query-builder {
   display: flex;
   flex-direction: column;
@@ -451,7 +451,7 @@ watch(activeQuery, (newValue) => {
   display: flex;
   background: rgba(20, 33, 52, 0.8);
   border-radius: 10px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   padding: 2px;
   width: fit-content;
 }
@@ -466,7 +466,7 @@ watch(activeQuery, (newValue) => {
   border-radius: 8px;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -479,7 +479,7 @@ watch(activeQuery, (newValue) => {
 .mode-btn.active {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(99, 102, 241, 0.14));
   border: 1px solid rgba(245, 158, 11, 0.24);
-  color: var(--text-primary);
+  color: var(--color-text-0);
   box-shadow: 0 2px 10px rgba(2, 8, 23, 0.28);
 }
 
@@ -505,7 +505,7 @@ watch(activeQuery, (newValue) => {
 .section-label {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .btn-add {
@@ -513,28 +513,28 @@ watch(activeQuery, (newValue) => {
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-add:hover:not(:disabled) {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-  border-color: var(--border-secondary);
+  background: var(--color-bg-hover);
+  color: var(--color-text-0);
+  border-color: var(--color-border-strong);
 }
 
 .empty-filters {
   padding: 1rem;
   text-align: center;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.8125rem;
-  background: var(--bg-tertiary);
+  background: var(--color-bg-2);
   border-radius: 6px;
 }
 
@@ -553,11 +553,11 @@ watch(activeQuery, (newValue) => {
 .filter-select,
 .filter-input {
   padding: 0.5rem 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .filter-select {
@@ -586,18 +586,18 @@ watch(activeQuery, (newValue) => {
   background: transparent;
   border: none;
   border-radius: 4px;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   cursor: pointer;
 }
 
 .btn-remove:hover:not(:disabled) {
   background: rgba(255, 107, 107, 0.1);
-  color: var(--accent-danger);
+  color: var(--color-danger);
 }
 
 .values-loading {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .line-filter-row {
@@ -609,13 +609,13 @@ watch(activeQuery, (newValue) => {
 .preview-section {
   margin-top: 0.5rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border-primary);
+  border-top: 1px solid var(--color-border);
 }
 
 .preview-box {
   padding: 0.75rem 1rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   min-height: 48px;
 }
@@ -623,12 +623,12 @@ watch(activeQuery, (newValue) => {
 .preview-box code {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.8125rem;
-  color: var(--accent-primary);
+  color: var(--color-accent);
   word-break: break-all;
 }
 
 .preview-placeholder {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.8125rem;
 }
 </style>

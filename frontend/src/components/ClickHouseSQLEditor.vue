@@ -94,7 +94,7 @@ function handleQueryInput(event: Event) {
   </div>
 </template>
 
-<style scoped>
+<style>
 .clickhouse-sql-editor {
   display: flex;
   flex-direction: column;
@@ -117,32 +117,32 @@ function handleQueryInput(event: Event) {
 .query-row label {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .signal-row select,
 .query-row textarea {
   width: 100%;
   padding: 0.75rem 0.9rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .signal-row select:focus,
 .query-row textarea:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
 .signal-row select:disabled,
 .query-row textarea:disabled {
-  background: var(--bg-primary);
-  color: var(--text-tertiary);
+  background: var(--color-bg-0);
+  color: var(--color-text-2);
   cursor: not-allowed;
 }
 
@@ -164,14 +164,14 @@ function handleQueryInput(event: Event) {
 
 .help-box {
   padding: 0.75rem 0.85rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: rgba(16, 26, 40, 0.55);
 }
 
 .help-title {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.75rem;
 }
 
@@ -190,13 +190,13 @@ function handleQueryInput(event: Event) {
   border-radius: 4px;
   background: rgba(245, 158, 11, 0.12);
   border: 1px solid rgba(245, 158, 11, 0.25);
-  color: var(--text-primary);
+  color: var(--color-text-0);
   font-size: 0.72rem;
 }
 
 .help-note {
   margin: 0.65rem 0 0;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.73rem;
   line-height: 1.45;
 }

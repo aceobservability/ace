@@ -334,9 +334,9 @@ function exportSpanJson() {
   </aside>
 </template>
 
-<style scoped>
+<style>
 .trace-span-details {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   background: rgba(12, 21, 33, 0.9);
   padding: 0.85rem;
@@ -356,7 +356,7 @@ function exportSpanJson() {
 .details-header h3 {
   margin: 0;
   font-size: 0.8rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -364,7 +364,7 @@ function exportSpanJson() {
 .span-title {
   margin: 0.2rem 0 0;
   font-size: 0.86rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .status-pill {
@@ -391,10 +391,10 @@ function exportSpanJson() {
 }
 
 .action-button {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: rgba(20, 31, 48, 0.78);
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.74rem;
   padding: 0.38rem 0.56rem;
   cursor: pointer;
@@ -423,7 +423,7 @@ function exportSpanJson() {
 .details-section h4 {
   margin: 0;
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -439,19 +439,19 @@ function exportSpanJson() {
   flex-direction: column;
   gap: 0.15rem;
   min-width: 0;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.78rem;
 }
 
 .label {
   font-size: 0.69rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 code {
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   word-break: break-all;
 }
 
@@ -490,7 +490,7 @@ code {
 .empty-copy {
   margin: 0;
   font-size: 0.76rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .attribute-table {
@@ -501,7 +501,7 @@ code {
 
 .attribute-table th {
   text-align: left;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   border-bottom: 1px solid rgba(71, 85, 105, 0.5);
   padding-bottom: 0.35rem;
 }
@@ -547,7 +547,7 @@ code {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.72rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .event-fields {

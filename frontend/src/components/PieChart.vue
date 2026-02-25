@@ -5,7 +5,6 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { PieChart as EChartsPieChart } from 'echarts/charts'
 import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components'
-import type { EChartsOption } from 'echarts'
 
 // Register ECharts components
 use([CanvasRenderer, EChartsPieChart, TitleComponent, TooltipComponent, LegendComponent])
@@ -64,7 +63,7 @@ function getPercentage(value: number): string {
   return `${((value / total.value) * 100).toFixed(1)}%`
 }
 
-const chartOption = computed<EChartsOption>(() => {
+const chartOption = computed(() => {
   const radius = props.displayAs === 'donut' ? ['40%', '70%'] : [0, '70%']
 
   return {
@@ -184,19 +183,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="pie-chart" :style="{ height: typeof height === 'number' ? `${height}px` : height }">
-    <VChart ref="chartRef" :option="chartOption" :autoresize="true" class="chart" />
+  <div class="w-full min-h-[200px]" :style="{ height: typeof height === 'number' ? `${height}px` : height }">
+    <VChart ref="chartRef" :option="chartOption" :autoresize="true" class="w-full h-full" />
   </div>
 </template>
 
-<style scoped>
-.pie-chart {
-  width: 100%;
-  min-height: 200px;
-}
-
-.chart {
-  width: 100%;
-  height: 100%;
-}
-</style>

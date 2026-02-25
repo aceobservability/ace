@@ -315,9 +315,9 @@ function handleSelectEdge(edge: PositionedEdge) {
   </div>
 </template>
 
-<style scoped>
+<style>
 .service-graph {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   background: rgba(8, 14, 24, 0.88);
   padding: 0.7rem;
@@ -337,8 +337,8 @@ function handleSelectEdge(edge: PositionedEdge) {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.72rem;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-primary);
+  color: var(--color-text-1);
+  border: 1px solid var(--color-border);
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.8);
   padding: 0.25rem 0.5rem;
@@ -350,7 +350,7 @@ function handleSelectEdge(edge: PositionedEdge) {
 
 .control-item strong {
   font-size: 0.7rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   min-width: 2.4rem;
   text-align: right;
 }
@@ -362,11 +362,11 @@ function handleSelectEdge(edge: PositionedEdge) {
 }
 
 .graph-summary span {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 999px;
   padding: 0.22rem 0.48rem;
   background: rgba(15, 24, 39, 0.78);
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.72rem;
 }
 
@@ -432,7 +432,7 @@ function handleSelectEdge(edge: PositionedEdge) {
 .graph-inspector {
   border-top: 1px solid rgba(71, 85, 105, 0.55);
   padding-top: 0.45rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.75rem;
 }
 
@@ -444,7 +444,7 @@ function handleSelectEdge(edge: PositionedEdge) {
 }
 
 .graph-inspector strong {
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 @media (max-width: 900px) {

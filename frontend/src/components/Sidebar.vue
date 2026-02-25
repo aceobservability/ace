@@ -61,7 +61,6 @@ const openNavGroups = ref<Record<string, boolean>>({
   explore: normalizeAppPath(route.path).startsWith('/explore'),
 })
 
-// Settings path is dynamic based on current organization
 const settingsPath = computed(() => {
   if (currentOrg.value) {
     return `/app/settings/org/${currentOrg.value.id}/general`
@@ -145,11 +144,11 @@ defineExpose({ isExpanded })
     @mouseleave="handleSidebarMouseLeave"
   >
     <div class="sidebar-header" :class="{ collapsed: !isVisuallyExpanded }">
-      <div class="sidebar-logo">
+      <div class="sidebar-logo flex items-center gap-[0.65rem] pl-[0.1rem]">
         <Activity class="logo-icon" :size="24" />
-        <div v-if="isVisuallyExpanded" class="logo-copy">
-          <span class="logo-text">Ace</span>
-          <span class="logo-subtext">developer cockpit</span>
+        <div v-if="isVisuallyExpanded" class="flex flex-col min-w-0">
+          <span class="text-[0.95rem] font-bold tracking-[0.02em] uppercase font-mono text-accent">Ace</span>
+          <span class="text-[0.64rem] uppercase tracking-[0.08em] text-text-2 whitespace-nowrap">developer cockpit</span>
         </div>
       </div>
       <button class="toggle-btn" @click="toggleSidebar" :title="isExpanded ? 'Collapse' : 'Expand'">
@@ -159,12 +158,12 @@ defineExpose({ isExpanded })
 
     <OrganizationDropdown :expanded="isVisuallyExpanded" @createOrg="showCreateOrgModal = true" />
 
-    <nav class="sidebar-nav">
-      <div class="nav-main">
+    <nav class="flex-1 flex flex-col justify-between py-[0.9rem]">
+      <div class="flex flex-col gap-1">
         <div
           v-for="item in navItems"
           :key="item.id"
-          class="nav-item-group"
+          class="flex flex-col gap-1"
         >
           <button
             class="nav-item"
@@ -173,20 +172,20 @@ defineExpose({ isExpanded })
             :title="isVisuallyExpanded ? undefined : item.label"
           >
             <component :is="item.icon" :size="20" />
-            <span v-if="isVisuallyExpanded" class="nav-label">{{ item.label }}</span>
+            <span v-if="isVisuallyExpanded" class="text-[0.82rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis">{{ item.label }}</span>
             <span v-else class="nav-tooltip">{{ item.label }}</span>
             <span
               v-if="isVisuallyExpanded && item.children"
               class="nav-chevron-toggle"
               @click.stop="toggleNavGroup(item.id)"
             >
-              <ChevronDown :size="14" class="nav-chevron" :class="{ open: isNavGroupOpen(item.id) }" />
+              <ChevronDown :size="14" class="transition-transform duration-200" :class="{ 'rotate-180': isNavGroupOpen(item.id) }" />
             </span>
           </button>
 
           <div
             v-if="isVisuallyExpanded && item.children && isNavGroupOpen(item.id)"
-            class="nav-children"
+            class="flex flex-col gap-[0.2rem] mx-[0.6rem] mb-[0.35rem] ml-[1.8rem]"
           >
             <button
               v-for="child in item.children"
@@ -195,13 +194,13 @@ defineExpose({ isExpanded })
               :class="{ active: isRouteMatch(child.path) }"
               @click="navigate(child.path)"
             >
-              <span class="nav-sub-label">{{ child.label }}</span>
+              <span class="text-[0.76rem] tracking-[0.01em]">{{ child.label }}</span>
             </button>
           </div>
         </div>
       </div>
 
-      <div class="nav-bottom">
+      <div class="flex flex-col gap-1">
         <button
           v-if="settingsPath"
           class="nav-item"
@@ -210,7 +209,7 @@ defineExpose({ isExpanded })
           :title="isVisuallyExpanded ? undefined : 'Settings'"
         >
           <Settings :size="20" />
-          <span v-if="isVisuallyExpanded" class="nav-label">Settings</span>
+          <span v-if="isVisuallyExpanded" class="text-[0.82rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis">Settings</span>
           <span v-else class="nav-tooltip">Settings</span>
         </button>
         <button
@@ -220,11 +219,11 @@ defineExpose({ isExpanded })
           :title="isVisuallyExpanded ? undefined : 'Privacy'"
         >
           <Shield :size="20" />
-          <span v-if="isVisuallyExpanded" class="nav-label">Privacy</span>
+          <span v-if="isVisuallyExpanded" class="text-[0.82rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis">Privacy</span>
           <span v-else class="nav-tooltip">Privacy</span>
         </button>
-        <div v-if="isVisuallyExpanded && user" class="user-info">
-          <span class="user-email">{{ user.email }}</span>
+        <div v-if="isVisuallyExpanded && user" class="py-[0.65rem] px-[0.9rem] mt-2 mx-2 border-t border-border rounded-[10px]" style="background: rgba(19, 32, 50, 0.5)">
+          <span class="text-[0.72rem] font-mono text-text-2 overflow-hidden text-ellipsis whitespace-nowrap block">{{ user.email }}</span>
         </div>
         <button
           class="nav-item logout-btn"
@@ -232,7 +231,7 @@ defineExpose({ isExpanded })
           :title="isVisuallyExpanded ? undefined : 'Log out'"
         >
           <LogOut :size="20" />
-          <span v-if="isVisuallyExpanded" class="nav-label">Log out</span>
+          <span v-if="isVisuallyExpanded" class="text-[0.82rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis">Log out</span>
           <span v-else class="nav-tooltip">Log out</span>
         </button>
       </div>
@@ -246,12 +245,13 @@ defineExpose({ isExpanded })
   </aside>
 </template>
 
-<style scoped>
+<style>
+/* Sidebar requires minimal CSS for pseudo-elements, parent-state selectors, and tooltip arrows */
 .sidebar {
   width: 64px;
   min-height: 100vh;
   background: linear-gradient(180deg, rgba(12, 21, 34, 0.95), rgba(10, 17, 28, 0.92));
-  border-right: 1px solid var(--border-primary);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -262,11 +262,7 @@ defineExpose({ isExpanded })
   transition: width 0.24s ease;
   backdrop-filter: blur(10px);
 }
-
-.sidebar.expanded {
-  width: 232px;
-}
-
+.sidebar.expanded { width: 232px; }
 .sidebar::before {
   content: '';
   position: absolute;
@@ -277,16 +273,14 @@ defineExpose({ isExpanded })
   background: linear-gradient(180deg, transparent, rgba(245, 158, 11, 0.4), transparent);
   pointer-events: none;
 }
-
 .sidebar-header {
   height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 0.75rem;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
 }
-
 .sidebar-header.collapsed {
   height: 88px;
   flex-direction: column;
@@ -294,20 +288,9 @@ defineExpose({ isExpanded })
   gap: 0.45rem;
   padding: 0.5rem 0;
 }
-
-.sidebar-header.collapsed .sidebar-logo {
-  padding-left: 0;
-}
-
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding-left: 0.1rem;
-}
-
+.sidebar-header.collapsed .sidebar-logo { padding-left: 0; }
 .logo-icon {
-  color: var(--accent-primary);
+  color: var(--color-accent);
   flex-shrink: 0;
   padding: 0.35rem;
   border-radius: 10px;
@@ -315,34 +298,9 @@ defineExpose({ isExpanded })
   box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.3);
   transition: box-shadow 0.2s ease;
 }
-
 .logo-icon:hover {
   box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.3), 0 0 12px rgba(245, 158, 11, 0.35);
 }
-
-.logo-copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.logo-text {
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  font-family: var(--font-mono);
-  color: #F59E0B;
-}
-
-.logo-subtext {
-  font-size: 0.64rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-tertiary);
-  white-space: nowrap;
-}
-
 .toggle-btn {
   display: flex;
   align-items: center;
@@ -350,45 +308,19 @@ defineExpose({ isExpanded })
   width: 30px;
   height: 30px;
   background: rgba(20, 35, 54, 0.9);
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
-
 .toggle-btn:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-secondary);
-  color: var(--text-primary);
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-0);
 }
-
-.sidebar:not(.expanded) .toggle-btn {
-  margin: 0 auto;
-}
-
-.sidebar-nav {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 0.9rem 0;
-}
-
-.nav-main,
-.nav-bottom {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.nav-item-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
+.sidebar:not(.expanded) .toggle-btn { margin: 0 auto; }
 .nav-item {
   position: relative;
   height: 42px;
@@ -400,11 +332,10 @@ defineExpose({ isExpanded })
   background: transparent;
   border: 1px solid transparent;
   border-radius: 10px;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   cursor: pointer;
   transition: all 0.2s ease;
 }
-
 .nav-chevron-toggle {
   margin-left: auto;
   display: inline-flex;
@@ -412,30 +343,10 @@ defineExpose({ isExpanded })
   justify-content: center;
   width: 20px;
   height: 20px;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   border-radius: 4px;
 }
-
-.nav-chevron-toggle:hover {
-  background: rgba(31, 49, 73, 0.84);
-  color: var(--text-primary);
-}
-
-.nav-chevron {
-  transition: transform 0.2s ease;
-}
-
-.nav-chevron.open {
-  transform: rotate(180deg);
-}
-
-.nav-children {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  margin: 0 0.6rem 0.35rem 1.8rem;
-}
-
+.nav-chevron-toggle:hover { background: rgba(31, 49, 73, 0.84); color: var(--color-text-0); }
 .nav-sub-item {
   height: 32px;
   display: flex;
@@ -444,57 +355,37 @@ defineExpose({ isExpanded })
   background: transparent;
   border: 1px solid transparent;
   border-radius: 8px;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   cursor: pointer;
   transition: all 0.2s ease;
 }
-
 .nav-sub-item:hover {
   background: rgba(31, 49, 73, 0.64);
   border-color: rgba(252, 211, 77, 0.2);
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
-
 .nav-sub-item.active {
   background: rgba(245, 158, 11, 0.14);
   border-color: rgba(245, 158, 11, 0.28);
   color: #FCD34D;
 }
-
-.nav-sub-label {
-  font-size: 0.76rem;
-  letter-spacing: 0.01em;
-}
-
 .sidebar:not(.expanded) .nav-item {
   width: 44px;
   margin: 0 auto;
   padding: 0;
   justify-content: center;
 }
-
 .nav-item:hover {
   background: rgba(31, 49, 73, 0.74);
   border-color: rgba(252, 211, 77, 0.22);
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
-
 .nav-item.active {
   background: linear-gradient(90deg, rgba(245, 158, 11, 0.18), rgba(99, 102, 241, 0.1));
   border-color: rgba(245, 158, 11, 0.34);
   border-left: 3px solid #F59E0B;
   color: #FCD34D;
 }
-
-.nav-label {
-  font-size: 0.82rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .nav-tooltip {
   position: absolute;
   left: calc(100% + 12px);
@@ -502,11 +393,11 @@ defineExpose({ isExpanded })
   transform: translateY(-50%);
   padding: 0.5rem 0.75rem;
   background: rgba(11, 20, 31, 0.96);
-  border: 1px solid var(--border-secondary);
+  border: 1px solid var(--color-border-strong);
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
@@ -514,7 +405,6 @@ defineExpose({ isExpanded })
   pointer-events: none;
   z-index: 100;
 }
-
 .nav-tooltip::before {
   content: '';
   position: absolute;
@@ -522,41 +412,15 @@ defineExpose({ isExpanded })
   top: 50%;
   transform: translateY(-50%);
   border: 5px solid transparent;
-  border-right-color: var(--border-secondary);
+  border-right-color: var(--color-border-strong);
 }
-
-.sidebar:not(.expanded) .nav-item:hover .nav-tooltip {
-  opacity: 1;
-  visibility: visible;
-}
-
-.user-info {
-  padding: 0.65rem 0.9rem;
-  margin: 0.5rem 0.5rem 0;
-  border-top: 1px solid var(--border-primary);
-  background: rgba(19, 32, 50, 0.5);
-  border-radius: 10px;
-}
-
-.user-email {
-  font-size: 0.72rem;
-  font-family: var(--font-mono);
-  color: var(--text-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: block;
-}
-
+.sidebar:not(.expanded) .nav-item:hover .nav-tooltip { opacity: 1; visibility: visible; }
 .logout-btn:hover {
   background: rgba(251, 113, 133, 0.15);
   border-color: rgba(251, 113, 133, 0.34);
-  color: var(--accent-danger);
+  color: var(--color-danger);
 }
-
 @media (max-width: 900px) {
-  .sidebar.expanded {
-    width: 210px;
-  }
+  .sidebar.expanded { width: 210px; }
 }
 </style>

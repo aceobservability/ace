@@ -233,7 +233,7 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .time-range-picker {
   position: relative;
   display: inline-block;
@@ -282,37 +282,37 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.52rem 0.75rem;
-  background: var(--surface-2);
-  border: 1px solid var(--border-primary);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   cursor: pointer;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   transition: all 0.2s;
 }
 
 .time-display:hover {
-  border-color: var(--border-secondary);
-  background: var(--bg-tertiary);
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-2);
 }
 
 .time-display.active {
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
 .clock-icon {
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .display-text {
   min-width: 100px;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   font-size: 0.76rem;
 }
 
 .dropdown-arrow {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .refresh-btn {
@@ -321,22 +321,22 @@ onUnmounted(() => {
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-primary);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   transition: all 0.2s;
 }
 
 .refresh-btn:hover {
-  border-color: var(--border-secondary);
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-2);
+  color: var(--color-text-0);
 }
 
 .refresh-btn.refreshing {
-  color: var(--accent-primary);
+  color: var(--color-accent);
 }
 
 .refresh-btn.refreshing svg {
@@ -350,7 +350,7 @@ onUnmounted(() => {
 
 .refresh-status {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   padding: 0 0.5rem;
 }
 
@@ -360,11 +360,11 @@ onUnmounted(() => {
 
 .refresh-interval-selector select {
   padding: 0.52rem 2rem 0.52rem 0.75rem;
-  background: var(--surface-2);
-  border: 1px solid var(--border-primary);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   cursor: pointer;
   transition: all 0.2s;
   appearance: none;
@@ -374,12 +374,12 @@ onUnmounted(() => {
 }
 
 .refresh-interval-selector select:hover {
-  border-color: var(--border-secondary);
+  border-color: var(--color-border-strong);
 }
 
 .refresh-interval-selector select:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
@@ -389,7 +389,7 @@ onUnmounted(() => {
   left: 0;
   min-width: 220px;
   background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   z-index: 1000;
@@ -409,7 +409,7 @@ onUnmounted(() => {
   padding: 0.5rem 1rem;
   font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -422,29 +422,29 @@ onUnmounted(() => {
   border: none;
   text-align: left;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   cursor: pointer;
   transition: background-color 0.15s;
 }
 
 .preset-item:hover {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 .preset-item.selected {
   background: rgba(245, 158, 11, 0.16);
-  color: var(--accent-primary);
+  color: var(--color-accent);
   font-weight: 500;
 }
 
 .dropdown-divider {
   height: 1px;
-  background: var(--border-primary);
+  background: var(--color-border);
   margin: 0.25rem 0;
 }
 
 .custom-range-btn {
-  color: var(--accent-primary);
+  color: var(--color-accent);
 }
 
 .custom-range-form {
@@ -460,23 +460,23 @@ onUnmounted(() => {
   margin-bottom: 0.375rem;
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .form-group input {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   color-scheme: dark;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
@@ -485,7 +485,7 @@ onUnmounted(() => {
   background: rgba(255, 107, 107, 0.1);
   border: 1px solid rgba(255, 107, 107, 0.3);
   border-radius: 6px;
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 0.75rem;
   margin-bottom: 0.75rem;
 }
@@ -512,18 +512,18 @@ onUnmounted(() => {
 }
 
 .btn-secondary:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-secondary);
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-strong);
 }
 
 .btn-primary {
-  background: var(--accent-primary);
-  border: 1px solid var(--accent-primary);
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
   color: #1a0f00;
 }
 
 .btn-primary:hover {
-  background: var(--accent-primary-hover);
-  border-color: var(--accent-primary-hover);
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 </style>

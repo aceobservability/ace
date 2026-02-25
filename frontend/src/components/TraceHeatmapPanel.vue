@@ -36,8 +36,8 @@ const timeRange = computed(() => {
     return { min: 0, max: 0, width: 1 }
   }
 
-  let min = props.traces[0].startTimeUnixNano
-  let max = props.traces[0].startTimeUnixNano
+  let min = props.traces[0]!.startTimeUnixNano
+  let max = props.traces[0]!.startTimeUnixNano
 
   for (const trace of props.traces) {
     if (trace.startTimeUnixNano < min) {
@@ -78,7 +78,7 @@ const matrix = computed(() => {
   for (const trace of props.traces) {
     const durationIdx = durationBucketIndex(trace.durationNano)
     const timeIdx = timeBucketIndex(trace.startTimeUnixNano)
-    rows[durationIdx][timeIdx] += 1
+    rows[durationIdx]![timeIdx]! += 1
   }
 
   return rows
@@ -101,8 +101,8 @@ const heatmapRows = computed(() => {
 
   for (let i = durationBuckets.length - 1; i >= 0; i -= 1) {
     rows.push({
-      label: durationBuckets[i].label,
-      cells: matrix.value[i],
+      label: durationBuckets[i]!.label,
+      cells: matrix.value[i]!,
     })
   }
 
@@ -196,7 +196,7 @@ function openTrace(traceId: string) {
   </div>
 </template>
 
-<style scoped>
+<style>
 .trace-heatmap-panel {
   height: 100%;
   display: flex;
@@ -221,7 +221,7 @@ function openTrace(traceId: string) {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.65rem;
   white-space: nowrap;
 }
@@ -248,7 +248,7 @@ function openTrace(traceId: string) {
 .time-axis {
   display: flex;
   justify-content: space-between;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.65rem;
   margin-left: calc(3.9rem + 0.45rem);
 }
@@ -261,7 +261,7 @@ function openTrace(traceId: string) {
 .recent-traces h4 {
   margin: 0 0 0.4rem;
   font-size: 0.72rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -293,16 +293,16 @@ function openTrace(traceId: string) {
 }
 
 .trace-id {
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   font-size: 0.68rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .trace-duration {
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.68rem;
 }
 </style>

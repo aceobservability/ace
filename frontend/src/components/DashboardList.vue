@@ -789,7 +789,7 @@ onMounted(() => {
     </header>
 
     <div v-if="loading" class="state-container">
-      <div class="loading-spinner"></div>
+      <div class="w-10 h-10 border-3 border-border border-t-accent rounded-full animate-[spin_0.8s_linear_infinite]"></div>
       <p>Loading dashboards...</p>
     </div>
 
@@ -1226,7 +1226,7 @@ onMounted(() => {
       @saved="onFolderPermissionsSaved"
     />
 
-    <div v-if="showDeleteConfirm" class="modal-overlay" @click.self="cancelDelete">
+    <div v-if="showDeleteConfirm" class="fixed inset-0 flex items-center justify-center z-[1000] animate-[fadeIn_0.2s_ease-out]" style="background: rgba(3, 10, 18, 0.76); backdrop-filter: blur(8px)" @click.self="cancelDelete">
       <div class="modal delete-modal">
         <div class="modal-icon">
           <Trash2 :size="24" />
@@ -1243,7 +1243,7 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .dashboard-list {
   padding: 1.5rem 1.75rem 2rem;
   max-width: 1560px;
@@ -1257,22 +1257,22 @@ onMounted(() => {
   gap: 1rem;
   margin-bottom: 1rem;
   padding: 1rem 1.15rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: var(--surface-1);
+  background: var(--color-surface-1);
   box-shadow: var(--shadow-sm);
 }
 
 .header-content h1 {
   margin-bottom: 0.25rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   font-size: 1.08rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .header-subtitle {
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.86rem;
 }
 
@@ -1314,8 +1314,8 @@ onMounted(() => {
 }
 
 .btn-secondary:hover {
-  border-color: var(--border-secondary);
-  background: var(--bg-hover);
+  border-color: var(--color-border-strong);
+  background: var(--color-bg-hover);
 }
 
 .btn-sm {
@@ -1324,12 +1324,12 @@ onMounted(() => {
 }
 
 .btn-danger {
-  background: var(--accent-danger);
+  background: var(--color-danger);
   color: white;
 }
 
 .btn-danger:hover {
-  background: var(--accent-danger-hover);
+  background: var(--color-danger-hover);
 }
 
 .btn-icon {
@@ -1342,19 +1342,19 @@ onMounted(() => {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .btn-icon:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--color-bg-hover);
+  color: var(--color-text-0);
 }
 
 .btn-icon-danger:hover {
   background: rgba(251, 113, 133, 0.15);
-  color: var(--accent-danger);
+  color: var(--color-danger);
 }
 
 .state-container {
@@ -1364,20 +1364,20 @@ onMounted(() => {
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
-  color: var(--text-secondary);
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
+  color: var(--color-text-1);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
   min-height: 320px;
 }
 
 .state-container.error {
-  color: var(--accent-danger);
+  color: var(--color-danger);
 }
 
 .state-container h2 {
   margin: 1rem 0 0.5rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .state-container p {
@@ -1388,7 +1388,7 @@ onMounted(() => {
   width: 40px;
   height: 40px;
   border: 3px solid rgba(50, 81, 115, 0.65);
-  border-top-color: var(--accent-primary);
+  border-top-color: var(--color-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-bottom: 1rem;
@@ -1406,10 +1406,10 @@ onMounted(() => {
   justify-content: center;
   width: 120px;
   height: 120px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 20px;
   background: linear-gradient(160deg, rgba(245, 158, 11, 0.14), rgba(99, 102, 241, 0.08));
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   margin-bottom: 1rem;
 }
 
@@ -1428,9 +1428,9 @@ onMounted(() => {
 .explorer-sidebar,
 .explorer-main,
 .preview-pane {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: var(--surface-1);
+  background: var(--color-surface-1);
   box-shadow: var(--shadow-sm);
 }
 
@@ -1446,9 +1446,9 @@ onMounted(() => {
 }
 
 .finder-header {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: var(--surface-2);
+  background: var(--color-surface-2);
   padding: 0.58rem 0.65rem;
   margin-bottom: 0.65rem;
 }
@@ -1461,10 +1461,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: var(--surface-2);
-  color: var(--text-secondary);
+  background: var(--color-surface-2);
+  color: var(--color-text-1);
   padding: 0.55rem 0.6rem;
   margin-bottom: 0.75rem;
 }
@@ -1479,9 +1479,9 @@ onMounted(() => {
 
 .tree-toolbar p {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.72rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1493,10 +1493,10 @@ onMounted(() => {
 }
 
 .tree-toolbar-btn {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--surface-2);
-  color: var(--text-secondary);
+  background: var(--color-surface-2);
+  color: var(--color-text-1);
   font-size: 0.72rem;
   padding: 0.22rem 0.48rem;
   cursor: pointer;
@@ -1504,16 +1504,16 @@ onMounted(() => {
 }
 
 .tree-toolbar-btn:hover {
-  border-color: var(--border-secondary);
-  color: var(--text-primary);
-  background: var(--bg-hover);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-0);
+  background: var(--color-bg-hover);
 }
 
 .explorer-search input {
   width: 100%;
   border: none;
   background: transparent;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   font-size: 0.82rem;
 }
 
@@ -1542,7 +1542,7 @@ onMounted(() => {
 }
 
 .tree-item-row:hover {
-  border-color: var(--border-primary);
+  border-color: var(--color-border);
   background: rgba(245, 158, 11, 0.05);
 }
 
@@ -1559,7 +1559,7 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .tree-toggle {
@@ -1569,13 +1569,13 @@ onMounted(() => {
 }
 
 .tree-toggle:hover {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 .tree-item {
   border: 1px solid transparent;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   border-radius: 8px;
   width: 100%;
   display: inline-flex;
@@ -1590,19 +1590,19 @@ onMounted(() => {
 .tree-item:hover {
   border-color: rgba(245, 158, 11, 0.2);
   background: rgba(245, 158, 11, 0.08);
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .tree-item-active {
   border-color: rgba(245, 158, 11, 0.55);
   background: rgba(245, 158, 11, 0.18);
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .tree-item-active .tree-count {
   border-color: rgba(245, 158, 11, 0.45);
   background: rgba(245, 158, 11, 0.16);
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .tree-item-row-dashboard {
@@ -1617,7 +1617,7 @@ onMounted(() => {
 
 .tree-file-item {
   font-size: 0.78rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   padding-top: 0.32rem;
   padding-bottom: 0.32rem;
 }
@@ -1632,7 +1632,7 @@ onMounted(() => {
 
 .tree-file-item:hover {
   border-color: rgba(245, 158, 11, 0.2);
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .tree-file-item.tree-item-active {
@@ -1645,26 +1645,26 @@ onMounted(() => {
   min-width: 1.5rem;
   height: 1.5rem;
   border-radius: 999px;
-  border: 1px solid var(--border-primary);
-  background: var(--surface-2);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 0.72rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
 }
 
 .inline-folder-create {
   margin-top: 0.75rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: var(--surface-2);
+  background: var(--color-surface-2);
   padding: 0.65rem;
 }
 
 .inline-parent {
   margin: 0 0 0.45rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.76rem;
 }
 
@@ -1675,21 +1675,21 @@ onMounted(() => {
 }
 
 .form-group label {
-  color: var(--text-primary);
+  color: var(--color-text-0);
   font-size: 0.8rem;
 }
 
 .form-group input {
   padding: 0.58rem 0.65rem;
   border-radius: 8px;
-  border: 1px solid var(--border-primary);
-  background: var(--surface-1);
-  color: var(--text-primary);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-1);
+  color: var(--color-text-0);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
@@ -1702,7 +1702,7 @@ onMounted(() => {
 
 .error-message {
   margin: 0.4rem 0 0;
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 0.8rem;
 }
 
@@ -1721,19 +1721,19 @@ onMounted(() => {
 .breadcrumb-item {
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   padding: 0.1rem 0.2rem;
   cursor: pointer;
   font-size: 0.8rem;
 }
 
 .breadcrumb-item-active {
-  color: var(--text-primary);
+  color: var(--color-text-0);
   font-weight: 600;
 }
 
 .breadcrumb-separator {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .main-heading {
@@ -1742,17 +1742,17 @@ onMounted(() => {
 
 .subfolder-strip {
   margin-bottom: 0.9rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  background: var(--surface-2);
+  background: var(--color-surface-2);
   padding: 0.7rem;
 }
 
 .subfolder-strip p {
   margin: 0 0 0.5rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.72rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -1767,11 +1767,11 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.42rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 999px;
   padding: 0.32rem 0.58rem;
-  background: var(--surface-1);
-  color: var(--text-secondary);
+  background: var(--color-surface-1);
+  color: var(--color-text-1);
   font-size: 0.76rem;
   cursor: pointer;
   transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
@@ -1779,7 +1779,7 @@ onMounted(() => {
 
 .subfolder-chip:hover {
   border-color: rgba(245, 158, 11, 0.45);
-  color: var(--text-primary);
+  color: var(--color-text-0);
   transform: translateY(-1px);
 }
 
@@ -1787,18 +1787,18 @@ onMounted(() => {
   min-width: 1.25rem;
   height: 1.25rem;
   border-radius: 999px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 0.66rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
 }
 
 .main-heading h2 {
   margin: 0;
   font-size: 1rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -1808,24 +1808,24 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border: 1px dashed var(--border-secondary);
+  border: 1px dashed var(--color-border-strong);
   border-radius: 12px;
   padding: 0.95rem 1rem;
-  background: var(--surface-2);
+  background: var(--color-surface-2);
   margin-bottom: 0.85rem;
 }
 
 .folder-cta h2 {
   margin: 0;
   font-size: 0.92rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .folder-cta p {
   margin: 0.25rem 0 0;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.8rem;
 }
 
@@ -1836,9 +1836,9 @@ onMounted(() => {
 }
 
 .folder-section {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  background: var(--surface-2);
+  background: var(--color-surface-2);
   padding: 0.9rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -1864,7 +1864,7 @@ onMounted(() => {
 
 .folder-section-title h2 {
   font-size: 0.9rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -1882,22 +1882,22 @@ onMounted(() => {
   min-width: 1.7rem;
   height: 1.7rem;
   border-radius: 999px;
-  border: 1px solid var(--border-primary);
-  background: var(--surface-1);
-  color: var(--text-secondary);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-1);
+  color: var(--color-text-1);
   font-size: 0.72rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
 }
 
 .folder-description {
   margin-bottom: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.8rem;
 }
 
 .section-empty {
   margin: 0.65rem 0 0;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.82rem;
 }
 
@@ -1909,7 +1909,7 @@ onMounted(() => {
 
 .dashboard-card {
   position: relative;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   background: linear-gradient(180deg, rgba(16, 27, 42, 0.92), rgba(14, 24, 38, 0.9));
   padding: 1rem;
@@ -1926,7 +1926,7 @@ onMounted(() => {
   top: 0;
   width: 100%;
   height: 2px;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-secondary));
   opacity: 0.5;
 }
 
@@ -1959,7 +1959,7 @@ onMounted(() => {
 
 .card-header h3 {
   font-size: 0.95rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   line-height: 1.35;
 }
 
@@ -1976,7 +1976,7 @@ onMounted(() => {
 
 .card-description {
   margin-bottom: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.82rem;
   line-height: 1.45;
   display: -webkit-box;
@@ -1986,9 +1986,9 @@ onMounted(() => {
 }
 
 .card-meta {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.7rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -2004,14 +2004,14 @@ onMounted(() => {
   font-size: 0.84rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-family: var(--font-mono);
-  color: var(--text-secondary);
+  font-family: var(--font-family-mono);
+  color: var(--color-text-1);
 }
 
 .preview-card {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: var(--surface-2);
+  background: var(--color-surface-2);
   padding: 0.75rem;
 }
 
@@ -2024,12 +2024,12 @@ onMounted(() => {
 
 .preview-title-row h4 {
   font-size: 0.93rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .preview-description {
   margin: 0 0 0.75rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.8rem;
   line-height: 1.45;
 }
@@ -2047,25 +2047,25 @@ onMounted(() => {
 }
 
 .preview-meta dt {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.68rem;
   text-transform: uppercase;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   letter-spacing: 0.05em;
 }
 
 .preview-meta dd {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   font-size: 0.78rem;
 }
 
 .preview-empty {
-  border: 1px dashed var(--border-primary);
+  border: 1px dashed var(--color-border);
   border-radius: 10px;
   padding: 1rem 0.8rem;
   text-align: center;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.8rem;
 }
 
@@ -2075,7 +2075,7 @@ onMounted(() => {
   border-radius: 8px;
   border: 1px solid rgba(78, 205, 196, 0.3);
   background: rgba(78, 205, 196, 0.1);
-  color: var(--accent-success);
+  color: var(--color-success);
   font-size: 0.82rem;
 }
 
@@ -2085,7 +2085,7 @@ onMounted(() => {
   border-radius: 8px;
   border: 1px solid rgba(251, 113, 133, 0.35);
   background: rgba(251, 113, 133, 0.12);
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 0.82rem;
 }
 
@@ -2103,9 +2103,9 @@ onMounted(() => {
 .modal {
   width: 100%;
   max-width: 400px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 14px;
-  background: var(--surface-1);
+  background: var(--color-surface-1);
   padding: 2rem;
 }
 
@@ -2122,7 +2122,7 @@ onMounted(() => {
   border-radius: 50%;
   margin-bottom: 1rem;
   background: rgba(251, 113, 133, 0.15);
-  color: var(--accent-danger);
+  color: var(--color-danger);
 }
 
 .delete-modal h2 {
@@ -2131,11 +2131,11 @@ onMounted(() => {
 
 .delete-modal p {
   margin-bottom: 0.45rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .warning {
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 0.86rem;
 }
 

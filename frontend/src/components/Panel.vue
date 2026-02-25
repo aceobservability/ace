@@ -50,7 +50,7 @@ function getTagValue(tags: Record<string, string> | undefined, keys: string[]): 
   for (const key of keys) {
     const normalizedKey = key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
     if (normalizedKey in byNormalizedName) {
-      const value = byNormalizedName[normalizedKey].trim()
+      const value = byNormalizedName[normalizedKey]!.trim()
       if (value) {
         return value
       }
@@ -359,9 +359,9 @@ const chartSeries = computed(() => {
 // Get the latest value for gauge chart (from first series)
 const gaugeValue = computed(() => {
   if (chartData.value.series.length === 0) return 0
-  const firstSeries = chartData.value.series[0]
+  const firstSeries = chartData.value.series[0]!
   if (firstSeries.data.length === 0) return 0
-  return firstSeries.data[firstSeries.data.length - 1].value
+  return firstSeries!.data[firstSeries!.data.length - 1]!.value
 })
 
 // Extract gauge config from panel query
@@ -382,7 +382,7 @@ const gaugeConfig = computed(() => {
 const pieData = computed<PieDataItem[]>(() => {
   return chartData.value.series.map((s) => ({
     name: s.name,
-    value: s.data.length > 0 ? s.data[s.data.length - 1].value : 0,
+    value: s.data.length > 0 ? s.data[s.data.length - 1]!.value : 0,
   }))
 })
 
@@ -406,7 +406,7 @@ watch([timeRange, onRefresh], () => {
 // Transform data to StatPanel format
 const statData = computed<DataPoint[]>(() => {
   if (chartData.value.series.length === 0) return []
-  const firstSeries = chartData.value.series[0]
+  const firstSeries = chartData.value.series[0]!
   return firstSeries.data.map((d) => ({
     timestamp: d.timestamp,
     value: d.value,
@@ -416,17 +416,17 @@ const statData = computed<DataPoint[]>(() => {
 // Get the current (latest) value for stat panel
 const statValue = computed(() => {
   if (chartData.value.series.length === 0) return 0
-  const firstSeries = chartData.value.series[0]
+  const firstSeries = chartData.value.series[0]!
   if (firstSeries.data.length === 0) return 0
-  return firstSeries.data[firstSeries.data.length - 1].value
+  return firstSeries!.data[firstSeries!.data.length - 1]!.value
 })
 
 // Get the previous value for trend calculation (second to last data point)
 const statPreviousValue = computed(() => {
   if (chartData.value.series.length === 0) return undefined
-  const firstSeries = chartData.value.series[0]
+  const firstSeries = chartData.value.series[0]!
   if (firstSeries.data.length < 2) return undefined
-  return firstSeries.data[firstSeries.data.length - 2].value
+  return firstSeries!.data[firstSeries!.data.length - 2]!.value
 })
 
 // Extract stat panel config
@@ -561,10 +561,10 @@ function handleOpenTrace(traceId: string) {
   </div>
 </template>
 
-<style scoped>
+<style>
 .panel {
   background: linear-gradient(180deg, rgba(16, 27, 42, 0.94), rgba(13, 23, 36, 0.92));
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   overflow: hidden;
   display: flex;
@@ -584,17 +584,17 @@ function handleOpenTrace(traceId: string) {
   align-items: center;
   justify-content: space-between;
   padding: 11px 14px;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
   background: rgba(21, 34, 52, 0.9);
 }
 
 .panel-title {
   font-size: 12px;
   font-weight: 600;
-  font-family: var(--font-mono);
+  font-family: var(--font-family-mono);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   margin: 0;
 }
 
@@ -607,7 +607,7 @@ function handleOpenTrace(traceId: string) {
   padding: 5px;
   background: transparent;
   border: 1px solid transparent;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   cursor: pointer;
   border-radius: 7px;
   display: flex;
@@ -619,7 +619,7 @@ function handleOpenTrace(traceId: string) {
 .panel-action-btn:hover {
   background: rgba(31, 49, 73, 0.8);
   border-color: rgba(252, 211, 77, 0.2);
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .panel-body {
@@ -646,33 +646,33 @@ function handleOpenTrace(traceId: string) {
 
 .panel-no-query,
 .panel-no-data {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .panel-error {
-  color: var(--accent-danger);
+  color: var(--color-danger);
 }
 
 .icon-muted {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .icon-warning {
-  color: var(--accent-warning);
+  color: var(--color-warning);
 }
 
 .icon-error {
-  color: var(--accent-danger);
+  color: var(--color-danger);
 }
 
 .text-muted {
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 14px;
   margin: 0;
 }
 
 .error-text {
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 14px;
   margin: 0;
 }
@@ -681,7 +681,7 @@ function handleOpenTrace(traceId: string) {
   width: 32px;
   height: 32px;
   border: 3px solid rgba(50, 81, 115, 0.65);
-  border-top-color: var(--accent-primary);
+  border-top-color: var(--color-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

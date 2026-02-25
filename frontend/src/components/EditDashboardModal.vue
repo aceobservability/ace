@@ -46,7 +46,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="modal-overlay" @click.self="emit('close')">
+  <div class="fixed inset-0 flex items-center justify-center z-[1000] animate-[fadeIn_0.2s_ease-out]" style="background: rgba(3, 10, 18, 0.76); backdrop-filter: blur(8px)" @click.self="emit('close')">
     <div class="modal">
       <header class="modal-header">
         <h2>Edit Dashboard</h2>
@@ -108,7 +108,7 @@ async function handleSubmit() {
   </div>
 </template>
 
-<style scoped>
+<style>
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -130,8 +130,8 @@ async function handleSubmit() {
 }
 
 .modal {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-1);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   width: 100%;
   max-width: 480px;
@@ -154,14 +154,14 @@ async function handleSubmit() {
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h2 {
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .btn-close {
@@ -173,14 +173,14 @@ async function handleSubmit() {
   background: transparent;
   border: none;
   border-radius: 6px;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-close:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--color-bg-hover);
+  color: var(--color-text-0);
 }
 
 form {
@@ -196,11 +196,11 @@ form {
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .required {
-  color: var(--accent-danger);
+  color: var(--color-danger);
 }
 
 .form-group input,
@@ -208,32 +208,32 @@ form {
 .form-group select {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
 .form-group input:disabled,
 .form-group textarea:disabled,
 .form-group select:disabled {
-  background: var(--bg-primary);
-  color: var(--text-tertiary);
+  background: var(--color-bg-0);
+  color: var(--color-text-2);
   cursor: not-allowed;
 }
 
@@ -247,7 +247,7 @@ form {
   background: rgba(255, 107, 107, 0.1);
   border: 1px solid rgba(255, 107, 107, 0.3);
   border-radius: 6px;
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 0.875rem;
   margin-bottom: 1.25rem;
 }
@@ -284,16 +284,16 @@ form {
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--bg-hover);
-  border-color: var(--border-secondary);
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-strong);
 }
 
 .btn-primary {
-  background: var(--accent-primary);
+  background: var(--color-accent);
   color: #1a0f00;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-primary-hover);
+  background: var(--color-accent-hover);
 }
 </style>

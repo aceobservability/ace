@@ -43,7 +43,7 @@ function readDoNotTrackEnabled(): boolean {
 
   const values = [
     navigator.doNotTrack,
-    window.doNotTrack,
+    (window as Window & { doNotTrack?: string }).doNotTrack,
     (navigator as Navigator & { msDoNotTrack?: string }).msDoNotTrack,
   ]
 

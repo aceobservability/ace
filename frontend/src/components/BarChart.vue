@@ -10,7 +10,6 @@ import {
   LegendComponent,
   GridComponent,
 } from 'echarts/components'
-import type { EChartsOption } from 'echarts'
 
 // Register ECharts components
 use([
@@ -83,7 +82,7 @@ function formatFullDateTime(timestamp: number): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-const chartOption = computed<EChartsOption>(() => {
+const chartOption = computed(() => {
   const seriesData = props.series.map((s, index) => ({
     name: s.name,
     type: 'bar' as const,
@@ -134,7 +133,7 @@ const chartOption = computed<EChartsOption>(() => {
       },
       formatter: (params: TooltipParam[]) => {
         if (!Array.isArray(params) || params.length === 0) return ''
-        const timestamp = params[0].data[0]
+        const timestamp = params[0]!.data![0]
         const timeStr = formatFullDateTime(timestamp / 1000)
         let result = `<div style="font-weight: 500; margin-bottom: 6px; color: #a0a0a0; font-size: 11px;">${timeStr}</div>`
         for (const param of params) {
@@ -235,24 +234,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="bar-chart" :style="{ height: typeof height === 'number' ? `${height}px` : height }">
+  <div class="w-full min-h-[200px]" :style="{ height: typeof height === 'number' ? `${height}px` : height }">
     <VChart
       ref="chartRef"
       :option="chartOption"
       :autoresize="true"
-      class="chart"
+      class="w-full h-full"
     />
   </div>
 </template>
 
-<style scoped>
-.bar-chart {
-  width: 100%;
-  min-height: 200px;
-}
-
-.chart {
-  width: 100%;
-  height: 100%;
-}
-</style>

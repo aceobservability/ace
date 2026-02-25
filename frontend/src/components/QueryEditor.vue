@@ -162,7 +162,7 @@ const previewData = computed(() => {
   </div>
 </template>
 
-<style scoped>
+<style>
 .query-editor {
   display: flex;
   flex-direction: column;
@@ -178,36 +178,36 @@ const previewData = computed(() => {
 .query-input-group label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .query-textarea {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-0);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.8125rem;
-  color: var(--text-primary);
+  color: var(--color-text-0);
   resize: vertical;
   min-height: 80px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .query-textarea::placeholder {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .query-textarea:focus {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
 .query-textarea:disabled {
-  background: var(--bg-tertiary);
-  color: var(--text-tertiary);
+  background: var(--color-bg-2);
+  color: var(--color-text-2);
   cursor: not-allowed;
 }
 
@@ -222,8 +222,8 @@ const previewData = computed(() => {
   align-items: center;
   gap: 0.375rem;
   padding: 0.5rem 1rem;
-  background: var(--accent-success);
-  border: 1px solid var(--accent-success);
+  background: var(--color-success);
+  border: 1px solid var(--color-success);
   border-radius: 6px;
   color: white;
   font-size: 0.8125rem;
@@ -244,7 +244,7 @@ const previewData = computed(() => {
 
 .hint {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .query-error {
@@ -252,15 +252,15 @@ const previewData = computed(() => {
   background: rgba(255, 107, 107, 0.1);
   border: 1px solid rgba(255, 107, 107, 0.3);
   border-radius: 6px;
-  color: var(--accent-danger);
+  color: var(--color-danger);
   font-size: 0.8125rem;
 }
 
 .query-preview {
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   overflow: hidden;
-  background: var(--bg-tertiary);
+  background: var(--color-bg-2);
 }
 
 .preview-header {
@@ -268,21 +268,21 @@ const previewData = computed(() => {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-primary);
+  background: var(--color-bg-1);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .preview-header h4 {
   margin: 0;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-0);
 }
 
 .result-count {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
-  background: var(--bg-tertiary);
+  color: var(--color-text-2);
+  background: var(--color-bg-2);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
 }
@@ -293,28 +293,28 @@ const previewData = computed(() => {
   flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--color-border);
   font-size: 0.8125rem;
 }
 
 .labels-icon {
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
 }
 
 .labels-title {
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-weight: 500;
 }
 
 .label-tag {
   display: inline-block;
   padding: 0.125rem 0.5rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
+  background: var(--color-bg-1);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-family: monospace;
   font-size: 0.75rem;
-  color: var(--accent-primary);
+  color: var(--color-accent);
 }
 
 .preview-table-wrapper {
@@ -332,16 +332,16 @@ const previewData = computed(() => {
 .preview-table td {
   padding: 0.625rem 1rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-primary);
-  color: var(--text-primary);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-0);
 }
 
 .preview-table th {
-  background: var(--bg-secondary);
+  background: var(--color-bg-1);
   font-weight: 500;
   position: sticky;
   top: 0;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -352,7 +352,7 @@ const previewData = computed(() => {
 }
 
 .preview-table tr:hover td {
-  background: var(--bg-hover);
+  background: var(--color-bg-hover);
 }
 
 .metric-cell {
@@ -364,13 +364,13 @@ const previewData = computed(() => {
 
 .metric-cell code {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--color-text-1);
 }
 
 .no-data {
   padding: 1.5rem;
   text-align: center;
-  color: var(--text-tertiary);
+  color: var(--color-text-2);
   font-size: 0.8125rem;
 }
 </style>
