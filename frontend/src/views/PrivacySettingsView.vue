@@ -39,199 +39,83 @@ function toggleSessionRecording(event: Event) {
 </script>
 
 <template>
-  <div class="privacy-settings">
-    <header class="page-header">
-      <button class="btn-back" @click="goBack">
-        <ArrowLeft :size="20" />
-      </button>
-      <div>
-        <h1>Privacy Settings</h1>
-        <p>Control product analytics, feature flags, and session recording preferences.</p>
-      </div>
-    </header>
+  <div class="px-8 py-6 max-w-2xl mx-auto flex flex-col gap-4">
+    <h1 class="text-2xl font-bold text-slate-900 mb-6">Privacy Settings</h1>
 
-    <section class="settings-card">
-      <div class="row">
-        <div>
-          <h2>Product analytics</h2>
-          <p>Anonymous usage events for page visits, dashboard actions, and settings interactions.</p>
+    <div class="rounded-xl border border-slate-200 bg-white p-6">
+      <!-- Product analytics toggle row -->
+      <div class="flex items-center justify-between py-4 border-b border-slate-100">
+        <div class="flex flex-col">
+          <span class="text-sm font-medium text-slate-900">Product analytics</span>
+          <span class="text-xs text-slate-500 mt-1">Anonymous usage events for page visits, dashboard actions, and settings interactions.</span>
         </div>
-        <div class="actions">
-          <button
-            class="btn btn-secondary"
-            :disabled="dntEnabled"
-            @click="updateConsent('denied')"
-          >
-            Disable
-          </button>
-          <button
-            class="btn btn-primary"
-            :disabled="dntEnabled"
-            @click="updateConsent('granted')"
-          >
-            Enable
-          </button>
-        </div>
-      </div>
-      <p class="status" :class="{ enabled: analyticsEnabled }">
-        Status:
-        <strong>
-          {{ dntEnabled ? 'Disabled by browser Do Not Track' : analyticsEnabled ? 'Enabled' : 'Disabled' }}
-        </strong>
-      </p>
-      <p v-if="consent === 'pending' && !dntEnabled" class="hint">
-        You have not chosen yet. Analytics stays disabled until you opt in.
-      </p>
-    </section>
-
-    <section class="settings-card">
-      <div class="row">
-        <div>
-          <h2>Session recording</h2>
-          <p>Optional replay sessions to debug UI flows. Requires analytics to be enabled.</p>
-        </div>
-        <label class="switch">
-          <input
-            type="checkbox"
-            :checked="sessionRecordingEnabled"
-            :disabled="!analyticsEnabled"
-            @change="toggleSessionRecording"
+        <button
+          class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition"
+          :class="analyticsEnabled ? 'bg-emerald-600' : 'bg-slate-200'"
+          :disabled="dntEnabled"
+          role="switch"
+          :aria-checked="analyticsEnabled"
+          @click="updateConsent(analyticsEnabled ? 'denied' : 'granted')"
+        >
+          <span
+            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition"
+            :class="analyticsEnabled ? 'translate-x-5' : 'translate-x-0'"
           />
-          <span>Enable session recording</span>
-        </label>
+        </button>
       </div>
-    </section>
+
+      <!-- Session recording toggle row -->
+      <div class="flex items-center justify-between py-4">
+        <div class="flex flex-col">
+          <span class="text-sm font-medium text-slate-900">Session recording</span>
+          <span class="text-xs text-slate-500 mt-1">Optional replay sessions to debug UI flows. Requires analytics to be enabled.</span>
+        </div>
+        <button
+          class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition"
+          :class="sessionRecordingEnabled && analyticsEnabled ? 'bg-emerald-600' : 'bg-slate-200'"
+          :disabled="!analyticsEnabled"
+          role="switch"
+          :aria-checked="sessionRecordingEnabled && analyticsEnabled"
+          @click="toggleSessionRecording({ target: { checked: !(sessionRecordingEnabled && analyticsEnabled) } } as any)"
+        >
+          <span
+            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition"
+            :class="sessionRecordingEnabled && analyticsEnabled ? 'translate-x-5' : 'translate-x-0'"
+          />
+        </button>
+      </div>
+
+      <!-- Status message -->
+      <div
+        v-if="dntEnabled || analyticsEnabled || consent === 'pending'"
+        class="mt-4 rounded-lg px-4 py-3 text-sm"
+        :class="analyticsEnabled
+          ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+          : 'bg-slate-50 border border-slate-200 text-slate-600'"
+      >
+        <template v-if="dntEnabled">
+          Analytics disabled by browser Do Not Track setting.
+        </template>
+        <template v-else-if="analyticsEnabled">
+          Analytics is <strong>enabled</strong>.
+        </template>
+        <template v-else-if="consent === 'pending'">
+          You have not chosen yet. Analytics stays disabled until you opt in.
+        </template>
+        <template v-else>
+          Analytics is <strong>disabled</strong>.
+        </template>
+      </div>
+    </div>
+
+    <!-- Save / back button -->
+    <div class="flex items-center gap-3 mt-2">
+      <button
+        class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+        @click="goBack"
+      >
+        Done
+      </button>
+    </div>
   </div>
 </template>
-
-<style scoped>
-.privacy-settings {
-  padding: 1.35rem 1.5rem;
-  max-width: 900px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 1rem 1.15rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 14px;
-  background: var(--surface-1);
-  box-shadow: var(--shadow-sm);
-}
-
-.page-header h1 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.page-header p {
-  margin: 0.25rem 0 0;
-  color: var(--text-secondary);
-  font-size: 0.84rem;
-}
-
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  border: 1px solid var(--border-primary);
-  background: var(--surface-2);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.settings-card {
-  border: 1px solid var(--border-primary);
-  border-radius: 14px;
-  background: var(--surface-1);
-  box-shadow: var(--shadow-sm);
-  padding: 1.2rem;
-}
-
-.row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.settings-card h2 {
-  margin: 0;
-  font-size: 0.95rem;
-}
-
-.settings-card p {
-  margin: 0.35rem 0 0;
-  color: var(--text-secondary);
-  font-size: 0.82rem;
-}
-
-.actions {
-  display: inline-flex;
-  gap: 0.55rem;
-}
-
-.btn {
-  border-radius: 9px;
-  border: 1px solid transparent;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.btn-primary {
-  color: #1a0f00;
-  background: #F59E0B;
-  border-color: rgba(245, 158, 11, 0.4);
-}
-
-.btn-secondary {
-  color: #FCD34D;
-  background: transparent;
-  border-color: #F59E0B;
-}
-
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.status {
-  margin-top: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.status.enabled {
-  color: var(--accent-success);
-}
-
-.hint {
-  margin-top: 0.45rem;
-}
-
-.switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-primary);
-  font-size: 0.82rem;
-}
-
-@media (max-width: 900px) {
-  .row {
-    flex-direction: column;
-  }
-}
-</style>
