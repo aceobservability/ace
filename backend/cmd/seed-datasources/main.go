@@ -20,11 +20,11 @@ type connector struct {
 }
 
 var defaultConnectors = []connector{
-	{Name: "Prometheus", Type: "prometheus", URL: "http://localhost:9090"},
-	{Name: "VictoriaMetrics", Type: "victoriametrics", URL: "http://localhost:8428"},
-	{Name: "Loki", Type: "loki", URL: "http://localhost:3100"},
-	{Name: "Victoria Logs", Type: "victorialogs", URL: "http://localhost:9428"},
-	{Name: "Tempo", Type: "tempo", URL: "http://localhost:3200"},
+	{Name: "Prometheus", Type: "prometheus", URL: "http://prometheus:9090"},
+	{Name: "VictoriaMetrics", Type: "victoriametrics", URL: "http://victoria-metrics:8428"},
+	{Name: "Loki", Type: "loki", URL: "http://loki:3100"},
+	{Name: "Victoria Logs", Type: "victorialogs", URL: "http://victoria-logs:9428"},
+	{Name: "Tempo", Type: "tempo", URL: "http://tempo:3200"},
 }
 
 func main() {
