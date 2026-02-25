@@ -46,6 +46,7 @@ temp/
 # Docker volumes (local data)
 postgres_data/
 prometheus_data/
+deploy/docker/data/
 
 # Agent directory policy: only keep core runner files tracked
 agent/**

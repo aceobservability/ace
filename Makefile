@@ -1,8 +1,12 @@
-.PHONY: help backend seed-admin seed-datasources frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down
+.PHONY: help backend seed-admin seed-datasources frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-logs
 
 EMAIL ?= admin@admin.com
 PASSWORD ?= Admin1234
 ORG ?= default
+PROFILES ?=
+COMPOSE_FILE := deploy/docker/docker-compose.yml
+
+comma := ,
 
 SEED_NAME :=
 SEED_SLUG :=
@@ -23,6 +27,9 @@ help:
 	@printf "                 Defaults: EMAIL=admin@admin.com PASSWORD=Admin1234 ORG=default\n"
 	@printf "  make seed-datasources [ORG=...]\n"
 	@printf "                 Seeds default connectors into existing ORG (default=default)\n"
+	@printf "  make compose-up [PROFILES=...]  Start Docker Compose infra (core + profiles)\n"
+	@printf "  make compose-down              Tear down all Docker Compose services\n"
+	@printf "  make compose-logs              Follow Docker Compose logs\n"
 	@printf "  make tilt-up   Start Tilt with local Helm infra + app services\n"
 	@printf "  make tilt-down Stop Tilt and tear down deployed resources\n"
 	@printf "  make frontend  Start Vite frontend dev server\n"
@@ -152,6 +159,15 @@ security-local:
 	docker run --rm -v "$$PWD:/repo" -w /repo/backend golang:1.25.7 /bin/sh -c 'go run golang.org/x/vuln/cmd/govulncheck@latest ./...'; \
 	printf "Running gitleaks (repo)...\n"; \
 	docker run --rm -v "$$PWD:/repo" -w /repo ghcr.io/gitleaks/gitleaks:latest detect --source . --redact --no-banner
+
+compose-up:
+	docker compose -f $(COMPOSE_FILE) $(if $(PROFILES),$(foreach p,$(subst $(comma), ,$(PROFILES)),--profile $(p)),) up -d
+
+compose-down:
+	docker compose -f $(COMPOSE_FILE) --profile victoria --profile lgtm --profile elk --profile clickhouse down
+
+compose-logs:
+	docker compose -f $(COMPOSE_FILE) logs -f
 
 check:
 	@set +e; \

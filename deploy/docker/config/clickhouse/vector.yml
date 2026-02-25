@@ -1,0 +1,33 @@
+api:
+  enabled: true
+  address: "0.0.0.0:8686"
+
+sources:
+  http_logs:
+    type: http_server
+    address: "0.0.0.0:8080"
+    encoding: json
+
+transforms:
+  parse_logs:
+    type: remap
+    inputs:
+      - http_logs
+    source: |
+      .timestamp = to_timestamp!(.timestamp)
+      .severity = upcase(to_string(.level) ?? "INFO")
+      .service_name = to_string(.service) ?? ""
+      .body = to_string(.message) ?? ""
+
+sinks:
+  clickhouse:
+    type: clickhouse
+    inputs:
+      - parse_logs
+    endpoint: "http://clickhouse:8123"
+    database: default
+    table: logs
+    encoding:
+      timestamp_format: unix
+    healthcheck:
+      enabled: true

@@ -1,0 +1,226 @@
+name: dash
+
+# ─── Core services (always started) ──────────────────────────────────────────
+
+services:
+  postgres:
+    image: postgres:${POSTGRES_VERSION:-16-alpine}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dash}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dash}
+      POSTGRES_DB: ${POSTGRES_DB:-dash}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dash}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  valkey:
+    image: valkey/valkey:${VALKEY_VERSION:-7}
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"
+    volumes:
+      - valkey_data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─── Victoria stack ───────────────────────────────────────────────────────
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:${VICTORIAMETRICS_VERSION:-v1.101.0}
+    profiles: [victoria]
+    ports:
+      - "${VICTORIAMETRICS_PORT:-8428}:8428"
+    volumes:
+      - victoriametrics_data:/victoria-metrics-data
+    command:
+      - "--storageDataPath=/victoria-metrics-data"
+      - "--httpListenAddr=:8428"
+      - "--retentionPeriod=30d"
+
+  victorialogs:
+    image: victoriametrics/victoria-logs:${VICTORIALOGS_VERSION:-v1.3.1-victorialogs}
+    profiles: [victoria]
+    ports:
+      - "${VICTORIALOGS_PORT:-9428}:9428"
+    volumes:
+      - victorialogs_data:/victoria-logs-data
+    command:
+      - "--storageDataPath=/victoria-logs-data"
+      - "--httpListenAddr=:9428"
+      - "--retentionPeriod=30d"
+
+  victoriatraces:
+    image: victoriametrics/victoria-traces:${VICTORIATRACES_VERSION:-v0.7.0}
+    profiles: [victoria]
+    ports:
+      - "${VICTORIATRACES_PORT:-10428}:10428"
+      - "${VICTORIATRACES_OTLP_GRPC_PORT:-4317}:4317"
+    volumes:
+      - victoriatraces_data:/victoria-traces-data
+
+  vmalert:
+    image: victoriametrics/vmalert:${VMALERT_VERSION:-v1.101.0}
+    profiles: [victoria]
+    ports:
+      - "${VMALERT_PORT:-8880}:8880"
+    volumes:
+      - ./config/victoria/rules.yml:/etc/vmalert/rules.yml:ro
+    command:
+      - "--datasource.url=http://victoriametrics:8428"
+      - "--remoteRead.url=http://victoriametrics:8428"
+      - "--remoteWrite.url=http://victoriametrics:8428"
+      - "--notifier.url=http://victoriametrics:8428"
+      - "--rule=/etc/vmalert/rules.yml"
+    depends_on:
+      - victoriametrics
+
+  # ─── LGTM stack ──────────────────────────────────────────────────────────
+
+  grafana:
+    image: grafana/grafana:${GRAFANA_VERSION:-11.4.0}
+    profiles: [lgtm]
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/lgtm/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+
+  loki:
+    image: grafana/loki:${LOKI_VERSION:-3.0.0}
+    profiles: [lgtm]
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - loki_data:/loki
+      - ./config/lgtm/loki.yml:/etc/loki/local-config.yaml:ro
+    command: -config.file=/etc/loki/local-config.yaml
+
+  tempo:
+    image: grafana/tempo:${TEMPO_VERSION:-2.7.2}
+    profiles: [lgtm]
+    ports:
+      - "${TEMPO_PORT:-3200}:3200"
+      - "${TEMPO_OTLP_GRPC_PORT:-4320}:4317"
+      - "${TEMPO_OTLP_HTTP_PORT:-4321}:4318"
+    volumes:
+      - tempo_data:/var/tempo
+      - ./config/lgtm/tempo.yml:/etc/tempo/tempo.yml:ro
+    command: -config.file=/etc/tempo/tempo.yml
+
+  mimir:
+    image: grafana/mimir:${MIMIR_VERSION:-2.14.0}
+    profiles: [lgtm]
+    ports:
+      - "${MIMIR_PORT:-9009}:9009"
+    volumes:
+      - mimir_data:/data/mimir
+    command:
+      - "--config.file=/etc/mimir/mimir.yml"
+      - "--target=all"
+    configs:
+      - source: mimir_config
+        target: /etc/mimir/mimir.yml
+
+  # ─── ELK stack ────────────────────────────────────────────────────────────
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-8.17.0}
+    profiles: [elk]
+    ports:
+      - "${ELASTICSEARCH_PORT:-9200}:9200"
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${ELASTIC_VERSION:-8.17.0}
+    profiles: [elk]
+    ports:
+      - "${LOGSTASH_BEATS_PORT:-5044}:5044"
+      - "${LOGSTASH_TCP_PORT:-5000}:5000"
+    volumes:
+      - ./config/elk/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION:-8.17.0}
+    profiles: [elk]
+    ports:
+      - "${KIBANA_PORT:-5601}:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # ─── ClickHouse stack ─────────────────────────────────────────────────────
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION:-24-alpine}
+    profiles: [clickhouse]
+    ports:
+      - "${CLICKHOUSE_HTTP_PORT:-8123}:8123"
+      - "${CLICKHOUSE_NATIVE_PORT:-9000}:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./config/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --query 'SELECT 1' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  vector:
+    image: timberio/vector:${VECTOR_VERSION:-0.43.0-alpine}
+    profiles: [clickhouse]
+    ports:
+      - "${VECTOR_API_PORT:-8686}:8686"
+    volumes:
+      - ./config/clickhouse/vector.yml:/etc/vector/vector.yml:ro
+    command: ["--config", "/etc/vector/vector.yml"]
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+# ─── Named volumes ────────────────────────────────────────────────────────────
+
+volumes:
+  postgres_data:
+  valkey_data:
+  victoriametrics_data:
+  victorialogs_data:
+  victoriatraces_data:
+  grafana_data:
+  loki_data:
+  tempo_data:
+  mimir_data:
+  elasticsearch_data:
+  clickhouse_data:
+
+# ─── Configs ──────────────────────────────────────────────────────────────────
+
+configs:
+  mimir_config:
+    file: ./config/lgtm/mimir.yml
