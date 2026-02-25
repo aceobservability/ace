@@ -56,13 +56,14 @@ function handleQueryInput(event: Event) {
 </script>
 
 <template>
-  <div class="clickhouse-sql-editor" :class="{ disabled: props.disabled }">
-    <div class="signal-row">
-      <label for="clickhouse-signal">Signal Type</label>
+  <div class="flex flex-col gap-3.5" :class="{ 'opacity-60 pointer-events-none': props.disabled }">
+    <div class="flex flex-col gap-1.5">
+      <label for="clickhouse-signal" class="text-sm font-medium text-slate-900">Signal Type</label>
       <select
         id="clickhouse-signal"
         :value="props.signal"
         :disabled="props.disabled"
+        class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
         @change="handleSignalChange"
       >
         <option value="logs">Logs</option>
@@ -71,8 +72,8 @@ function handleQueryInput(event: Event) {
       </select>
     </div>
 
-    <div class="query-row">
-      <label for="clickhouse-query">SQL</label>
+    <div class="flex flex-col gap-1.5">
+      <label for="clickhouse-query" class="text-sm font-medium text-slate-900">SQL</label>
       <textarea
         id="clickhouse-query"
         :value="props.modelValue"
@@ -80,124 +81,17 @@ function handleQueryInput(event: Event) {
         :placeholder="placeholder"
         rows="7"
         spellcheck="false"
+        class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-3 text-sm font-mono text-slate-900 min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
         @input="handleQueryInput"
       />
     </div>
 
-    <div class="help-box">
-      <p class="help-title">Expected columns for {{ props.signal }} queries:</p>
-      <p class="help-columns">
-        <code v-for="column in expectedColumns" :key="column">{{ column }}</code>
+    <div class="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3">
+      <p class="m-0 text-xs text-slate-500">Expected columns for {{ props.signal }} queries:</p>
+      <p class="mt-2 mb-0 flex flex-wrap gap-1.5">
+        <code v-for="column in expectedColumns" :key="column" class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{{ column }}</code>
       </p>
-      <p class="help-note">Time placeholders supported: <code>{start}</code>, <code>{end}</code>, <code>{step}</code>, <code>{start_ms}</code>, <code>{end_ms}</code>, <code>{start_ns}</code>, <code>{end_ns}</code>.</p>
+      <p class="mt-2.5 mb-0 text-xs text-slate-400 leading-relaxed">Time placeholders supported: <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{start}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{end}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{step}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{start_ms}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{end_ms}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{start_ns}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{end_ns}</code>.</p>
     </div>
   </div>
 </template>
-
-<style scoped>
-.clickhouse-sql-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.clickhouse-sql-editor.disabled {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.signal-row,
-.query-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.signal-row label,
-.query-row label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.signal-row select,
-.query-row textarea {
-  width: 100%;
-  padding: 0.75rem 0.9rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.signal-row select:focus,
-.query-row textarea:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: var(--focus-ring);
-}
-
-.signal-row select:disabled,
-.query-row textarea:disabled {
-  background: var(--bg-primary);
-  color: var(--text-tertiary);
-  cursor: not-allowed;
-}
-
-.signal-row select {
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  padding-right: 2.5rem;
-}
-
-.query-row textarea {
-  min-height: 140px;
-  resize: vertical;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  line-height: 1.45;
-}
-
-.help-box {
-  padding: 0.75rem 0.85rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  background: rgba(16, 26, 40, 0.55);
-}
-
-.help-title {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-}
-
-.help-columns {
-  margin: 0.5rem 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.help-columns code,
-.help-note code {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.1rem 0.35rem;
-  border-radius: 4px;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.25);
-  color: var(--text-primary);
-  font-size: 0.72rem;
-}
-
-.help-note {
-  margin: 0.65rem 0 0;
-  color: var(--text-tertiary);
-  font-size: 0.73rem;
-  line-height: 1.45;
-}
-</style>

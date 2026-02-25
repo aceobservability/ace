@@ -90,287 +90,74 @@ const previewData = computed(() => {
 </script>
 
 <template>
-  <div class="query-editor">
-    <div class="query-input-group">
-      <label for="promql-query">PromQL Query</label>
+  <div class="flex flex-col gap-3">
+    <div class="flex flex-col gap-2">
+      <label for="promql-query" class="text-sm font-medium text-slate-900">PromQL Query</label>
       <textarea
         id="promql-query"
         v-model="query"
         placeholder="up"
         rows="3"
         :disabled="disabled || loading"
-        class="query-textarea"
+        class="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 font-mono text-sm text-slate-900 resize-y min-h-[80px] transition-colors duration-200 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
         @keydown.ctrl.enter="runQuery"
       ></textarea>
-      <div class="query-actions">
+      <div class="flex items-center gap-4">
         <button
           type="button"
-          class="btn btn-run"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 border border-emerald-600 rounded-lg text-white text-sm font-medium cursor-pointer transition-all duration-200 hover:enabled:bg-emerald-700 hover:enabled:border-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="disabled || loading || !query.trim()"
           @click="runQuery"
         >
           <Play :size="14" />
           <span>{{ loading ? 'Running...' : 'Run Query' }}</span>
         </button>
-        <span class="hint">Ctrl+Enter to run</span>
+        <span class="text-xs text-slate-400">Ctrl+Enter to run</span>
       </div>
     </div>
 
-    <div v-if="error" class="query-error">
+    <div v-if="error" class="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
       {{ error }}
     </div>
 
-    <div v-if="showPreview && result?.status === 'success'" class="query-preview">
-      <div class="preview-header">
-        <h4>Query Results</h4>
-        <span class="result-count">{{ result.data?.result?.length || 0 }} series</span>
+    <div v-if="showPreview && result?.status === 'success'" class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+      <div class="flex justify-between items-center px-4 py-3 bg-slate-50 border-b border-slate-200">
+        <h4 class="m-0 text-sm font-semibold text-slate-900">Query Results</h4>
+        <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{{ result.data?.result?.length || 0 }} series</span>
       </div>
 
-      <div v-if="metricLabels.length > 0" class="labels-section">
-        <Tag :size="14" class="labels-icon" />
-        <span class="labels-title">Labels:</span>
-        <span v-for="label in metricLabels" :key="label" class="label-tag">
+      <div v-if="metricLabels.length > 0" class="flex items-center flex-wrap gap-2 px-4 py-3 border-b border-slate-200 text-sm">
+        <Tag :size="14" class="text-slate-400" />
+        <span class="text-slate-500 font-medium">Labels:</span>
+        <span v-for="label in metricLabels" :key="label" class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 font-mono">
           {{ label }}
         </span>
       </div>
 
-      <div v-if="previewData.length > 0" class="preview-table-wrapper">
-        <table class="preview-table">
+      <div v-if="previewData.length > 0" class="max-h-[200px] overflow-y-auto">
+        <table class="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th>Metric</th>
-              <th>Latest Value</th>
-              <th>Points</th>
+              <th class="px-4 py-2.5 text-left border-b border-slate-200 bg-slate-50 font-medium sticky top-0 text-xs text-slate-500 uppercase tracking-wide">Metric</th>
+              <th class="px-4 py-2.5 text-left border-b border-slate-200 bg-slate-50 font-medium sticky top-0 text-xs text-slate-500 uppercase tracking-wide">Latest Value</th>
+              <th class="px-4 py-2.5 text-left border-b border-slate-200 bg-slate-50 font-medium sticky top-0 text-xs text-slate-500 uppercase tracking-wide">Points</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(row, index) in previewData" :key="index">
-              <td class="metric-cell">
-                <code>{{ JSON.stringify(row.metric) }}</code>
+            <tr v-for="(row, index) in previewData" :key="index" class="hover:bg-slate-50">
+              <td class="px-4 py-2.5 text-left border-b border-slate-100 text-slate-900 max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap">
+                <code class="text-xs text-slate-500">{{ JSON.stringify(row.metric) }}</code>
               </td>
-              <td>{{ row.latestValue }}</td>
-              <td>{{ row.valueCount }}</td>
+              <td class="px-4 py-2.5 text-left border-b border-slate-100 text-slate-900">{{ row.latestValue }}</td>
+              <td class="px-4 py-2.5 text-left border-b border-slate-100 text-slate-900">{{ row.valueCount }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div v-else class="no-data">
+      <div v-else class="py-6 text-center text-slate-400 text-sm">
         No data returned for the selected time range.
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.query-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.query-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.query-input-group label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.query-textarea {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.8125rem;
-  color: var(--text-primary);
-  resize: vertical;
-  min-height: 80px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.query-textarea::placeholder {
-  color: var(--text-tertiary);
-}
-
-.query-textarea:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: var(--focus-ring);
-}
-
-.query-textarea:disabled {
-  background: var(--bg-tertiary);
-  color: var(--text-tertiary);
-  cursor: not-allowed;
-}
-
-.query-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.btn-run {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 1rem;
-  background: var(--accent-success);
-  border: 1px solid var(--accent-success);
-  border-radius: 6px;
-  color: white;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-run:hover:not(:disabled) {
-  background: #00c49a;
-  border-color: #00c49a;
-}
-
-.btn-run:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.hint {
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-}
-
-.query-error {
-  padding: 0.75rem 1rem;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  border-radius: 6px;
-  color: var(--accent-danger);
-  font-size: 0.8125rem;
-}
-
-.query-preview {
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--bg-tertiary);
-}
-
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.preview-header h4 {
-  margin: 0;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.result-count {
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  background: var(--bg-tertiary);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-}
-
-.labels-section {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-primary);
-  font-size: 0.8125rem;
-}
-
-.labels-icon {
-  color: var(--text-tertiary);
-}
-
-.labels-title {
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.label-tag {
-  display: inline-block;
-  padding: 0.125rem 0.5rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 0.75rem;
-  color: var(--accent-primary);
-}
-
-.preview-table-wrapper {
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.preview-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8125rem;
-}
-
-.preview-table th,
-.preview-table td {
-  padding: 0.625rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border-primary);
-  color: var(--text-primary);
-}
-
-.preview-table th {
-  background: var(--bg-secondary);
-  font-weight: 500;
-  position: sticky;
-  top: 0;
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.preview-table tr:last-child td {
-  border-bottom: none;
-}
-
-.preview-table tr:hover td {
-  background: var(--bg-hover);
-}
-
-.metric-cell {
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.metric-cell code {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.no-data {
-  padding: 1.5rem;
-  text-align: center;
-  color: var(--text-tertiary);
-  font-size: 0.8125rem;
-}
-</style>

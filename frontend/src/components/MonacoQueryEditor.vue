@@ -202,81 +202,46 @@ defineExpose({ focus })
 </script>
 
 <template>
-  <div class="monaco-query-editor" :class="{ disabled }">
+  <div class="relative rounded-lg border border-slate-200 overflow-hidden bg-white transition-colors duration-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20" :class="{ 'opacity-60 pointer-events-none': disabled }">
     <div
       ref="containerRef"
-      class="editor-container"
+      class="w-full min-h-[60px]"
       :style="{ height: `${height}px` }"
     ></div>
-    <div v-if="showPlaceholder" class="placeholder">
+    <div v-if="showPlaceholder" class="absolute top-2 left-12 text-slate-400 font-mono text-[13px] pointer-events-none">
       {{ placeholder }}
     </div>
   </div>
 </template>
 
-<style scoped>
-.monaco-query-editor {
-  position: relative;
-  border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  background: var(--bg-secondary);
-  transition: border-color 0.2s, box-shadow 0.2s;
+<!-- Monaco editor deep overrides (must stay non-scoped / not Tailwind) -->
+<style>
+.monaco-editor {
+  border-radius: 8px;
 }
 
-.monaco-query-editor:focus-within {
-  border-color: var(--accent-primary);
-  box-shadow: var(--focus-ring);
+.monaco-editor .margin {
+  background: var(--bg-secondary, #f8fafc) !important;
 }
 
-.monaco-query-editor.disabled {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.editor-container {
-  width: 100%;
-  min-height: 60px;
-}
-
-.placeholder {
-  position: absolute;
-  top: 8px;
-  left: 48px;
-  color: var(--text-tertiary);
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 13px;
-  pointer-events: none;
-}
-
-/* Monaco editor styling overrides */
-:deep(.monaco-editor) {
-  border-radius: 6px;
-}
-
-:deep(.monaco-editor .margin) {
-  background: var(--bg-secondary) !important;
-}
-
-:deep(.monaco-editor .monaco-scrollable-element > .scrollbar > .slider) {
-  background: var(--border-secondary) !important;
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider {
+  background: #cbd5e1 !important;
   border-radius: 4px;
 }
 
-:deep(.monaco-editor .monaco-scrollable-element > .scrollbar > .slider:hover) {
-  background: #444444 !important;
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider:hover {
+  background: #94a3b8 !important;
 }
 
-/* Autocomplete widget styling */
-:deep(.monaco-editor .suggest-widget) {
+.monaco-editor .suggest-widget {
   border-radius: 6px !important;
 }
 
-:deep(.monaco-editor .suggest-widget .monaco-list-row.focused) {
-  background-color: var(--bg-hover) !important;
+.monaco-editor .suggest-widget .monaco-list-row.focused {
+  background-color: var(--bg-hover, #f1f5f9) !important;
 }
 
-/* Hover widget styling */
-:deep(.monaco-editor .monaco-hover) {
+.monaco-editor .monaco-hover {
   border-radius: 6px !important;
 }
 </style>
