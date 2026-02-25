@@ -539,104 +539,133 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="dashboard-settings">
-    <header class="page-header">
-      <button class="btn-back" @click="goBack" title="Back to Dashboard">
-        <ArrowLeft :size="20" />
-      </button>
-      <div class="header-content">
-        <h1>Dashboard Settings</h1>
-        <p v-if="dashboard">{{ dashboard.title }}</p>
-      </div>
-    </header>
+  <div class="px-8 py-6 max-w-5xl mx-auto">
+    <!-- Page header -->
+    <button
+      class="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition mb-4"
+      @click="goBack"
+      title="Back to Dashboard"
+    >
+      <ArrowLeft :size="16" />
+      <span>Back to dashboard</span>
+    </button>
+    <h1 class="text-2xl font-bold text-slate-900">
+      Dashboard Settings
+    </h1>
+    <p v-if="dashboard" class="mt-1 text-sm text-slate-500">{{ dashboard.title }}</p>
 
-    <div v-if="loading" class="loading">Loading...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
-    <div v-else-if="dashboard" class="settings-layout">
-      <aside class="settings-sidebar" data-testid="dashboard-settings-sidebar">
+    <div v-if="loading" class="text-center py-8 text-slate-500">Loading...</div>
+    <div v-else-if="error" class="text-center py-8 text-rose-600">{{ error }}</div>
+    <div v-else-if="dashboard">
+      <!-- Tab bar -->
+      <nav class="flex gap-1 border-b border-slate-200 mt-6 mb-6" data-testid="dashboard-settings-sidebar">
         <button
           v-for="section in settingsSections"
           :key="section.key"
-          class="settings-sidebar-link"
-          :class="{ active: activeSection === section.key }"
+          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2"
+          :class="activeSection === section.key
+            ? 'text-emerald-600 border-emerald-600'
+            : 'text-slate-500 hover:text-slate-700 border-transparent'"
           :data-testid="`settings-section-${section.key}`"
           @click="navigateToSection(section.key)"
         >
           {{ section.label }}
         </button>
-      </aside>
+      </nav>
 
-      <div class="settings-content">
-        <p v-if="!canEdit && activeSection !== 'permissions'" class="viewer-note">
+      <div class="flex flex-col gap-4">
+        <p
+          v-if="!canEdit && activeSection !== 'permissions'"
+          class="m-0 px-4 py-3 rounded-lg border border-amber-200 bg-amber-50 text-sm text-amber-800"
+        >
           You have view-only access. Settings are visible, but only editors and admins can save changes.
         </p>
 
-        <section v-if="activeSection === 'general'" class="settings-section">
-          <div class="section-header">
-            <h2><Settings :size="18" /> General</h2>
-          </div>
+        <!-- General tab -->
+        <section v-if="activeSection === 'general'" class="rounded-xl border border-slate-200 bg-white p-6">
+          <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-slate-900 mb-4">
+            <Settings :size="18" /> General
+          </h2>
 
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="dashboard-name">Name</label>
+          <div class="grid gap-4">
+            <div class="grid gap-1.5">
+              <label for="dashboard-name" class="text-sm font-medium text-slate-700">Name</label>
               <input
                 id="dashboard-name"
                 v-model="title"
                 type="text"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 autocomplete="off"
               />
             </div>
 
-            <div class="form-group">
-              <label for="dashboard-description">Description</label>
+            <div class="grid gap-1.5">
+              <label for="dashboard-description" class="text-sm font-medium text-slate-700">Description</label>
               <textarea
                 id="dashboard-description"
                 v-model="description"
                 rows="3"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 placeholder="Optional dashboard description"
               ></textarea>
             </div>
 
-            <div class="form-group">
-              <label for="dashboard-time-range">Default time range</label>
-              <select id="dashboard-time-range" v-model="timeRangePreset" :disabled="!canEdit || isSaving">
+            <div class="grid gap-1.5">
+              <label for="dashboard-time-range" class="text-sm font-medium text-slate-700">Default time range</label>
+              <select
+                id="dashboard-time-range"
+                v-model="timeRangePreset"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                :disabled="!canEdit || isSaving"
+              >
                 <option v-for="option in TIME_RANGE_OPTIONS" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </option>
               </select>
             </div>
 
-            <div class="form-group">
-              <label for="dashboard-refresh">Refresh interval</label>
-              <select id="dashboard-refresh" v-model="refreshInterval" :disabled="!canEdit || isSaving">
+            <div class="grid gap-1.5">
+              <label for="dashboard-refresh" class="text-sm font-medium text-slate-700">Refresh interval</label>
+              <select
+                id="dashboard-refresh"
+                v-model="refreshInterval"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                :disabled="!canEdit || isSaving"
+              >
                 <option v-for="option in REFRESH_OPTIONS" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </option>
               </select>
             </div>
 
-            <div class="form-group">
-              <label for="dashboard-variables">Variable names (comma-separated)</label>
+            <div class="grid gap-1.5">
+              <label for="dashboard-variables" class="text-sm font-medium text-slate-700">Variable names (comma-separated)</label>
               <input
                 id="dashboard-variables"
                 v-model="variablesInput"
                 type="text"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 placeholder="env, cluster, instance"
               />
             </div>
           </div>
 
-          <div class="section-actions">
-            <button type="button" class="btn btn-secondary btn-export" :disabled="isExporting" @click="exportSettings">
+          <div class="flex justify-between items-center gap-3 mt-6">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+              :disabled="isExporting"
+              @click="exportSettings"
+            >
               <Download :size="14" />
               <span>{{ isExporting ? 'Exporting...' : 'Export YAML' }}</span>
             </button>
             <button
               type="button"
-              class="btn btn-primary"
+              class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="save-dashboard-settings"
               :disabled="!canEdit || isSaving"
               @click="saveGeneralSettings"
@@ -646,12 +675,13 @@ onMounted(async () => {
           </div>
         </section>
 
-        <section v-else-if="activeSection === 'yaml'" class="settings-section yaml-section">
-          <div class="yaml-section-header">
-            <h2>Dashboard YAML</h2>
+        <!-- YAML tab -->
+        <section v-else-if="activeSection === 'yaml'" class="rounded-xl border border-slate-200 bg-white p-6">
+          <div class="flex items-center justify-between gap-3 mb-2">
+            <h2 class="m-0 text-base font-semibold text-slate-900">Dashboard YAML</h2>
             <button
               type="button"
-              class="btn btn-secondary"
+              class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
               :disabled="isConvertingGrafana || isYamlSaving"
               data-testid="grafana-replace-toggle"
               @click="showGrafanaReplace = !showGrafanaReplace"
@@ -660,59 +690,78 @@ onMounted(async () => {
             </button>
           </div>
 
-          <p class="yaml-hint">
+          <p class="m-0 text-sm text-slate-500 mb-4">
             Edit dashboard YAML directly. Validation runs as you type and shows required schema fields.
           </p>
 
-          <p v-if="isYamlLoading" class="yaml-hint">Loading current dashboard YAML...</p>
+          <p v-if="isYamlLoading" class="m-0 text-sm text-slate-500">Loading current dashboard YAML...</p>
 
-          <textarea
-            v-else
-            v-model="yamlContent"
-            class="yaml-editor"
-            data-testid="yaml-editor-input"
-            spellcheck="false"
-            :readonly="!canEdit || isYamlSaving"
-            @input="yamlValidationError = validateYamlContent(yamlContent)"
-          ></textarea>
+          <div v-else class="rounded-xl border border-slate-200 overflow-hidden mb-4">
+            <textarea
+              v-model="yamlContent"
+              class="w-full min-h-[320px] px-3 py-2.5 text-xs leading-relaxed font-mono bg-white text-slate-900 border-none focus:outline-none resize-y"
+              data-testid="yaml-editor-input"
+              spellcheck="false"
+              :readonly="!canEdit || isYamlSaving"
+              @input="yamlValidationError = validateYamlContent(yamlContent)"
+            ></textarea>
+          </div>
 
-          <div v-if="showGrafanaReplace" class="grafana-replace" data-testid="grafana-replace-panel">
-            <label for="grafana-replace-source">Grafana JSON</label>
+          <div
+            v-if="showGrafanaReplace"
+            class="rounded-lg border border-slate-200 bg-slate-50 p-4 grid gap-3 mb-4"
+            data-testid="grafana-replace-panel"
+          >
+            <label for="grafana-replace-source" class="text-sm font-medium text-slate-700">Grafana JSON</label>
             <textarea
               id="grafana-replace-source"
               v-model="grafanaSource"
               rows="5"
               placeholder="Paste Grafana dashboard JSON"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="grafana-source"
               :disabled="isConvertingGrafana || isYamlSaving"
             ></textarea>
             <button
               type="button"
-              class="btn btn-secondary"
+              class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 justify-self-start"
               :disabled="!grafanaSource.trim() || isConvertingGrafana || isYamlSaving"
               data-testid="grafana-replace-convert"
               @click="replaceWithGrafana"
             >
               {{ isConvertingGrafana ? 'Converting...' : 'Convert to YAML' }}
             </button>
-            <ul v-if="grafanaWarnings.length" class="warning-list" data-testid="grafana-warnings">
+            <ul
+              v-if="grafanaWarnings.length"
+              class="m-0 pl-5 text-xs text-amber-500"
+              data-testid="grafana-warnings"
+            >
               <li v-for="warning in grafanaWarnings" :key="warning">{{ warning }}</li>
             </ul>
           </div>
 
-          <div v-if="yamlDiffPreview.length" class="diff-preview" data-testid="yaml-diff-preview">
-            <h4>Diff preview</h4>
-            <pre>{{ yamlDiffPreview.join('\n') }}</pre>
+          <div
+            v-if="yamlDiffPreview.length"
+            class="rounded-lg border border-slate-200 bg-slate-50 p-4 mb-4"
+            data-testid="yaml-diff-preview"
+          >
+            <h4 class="m-0 mb-2 text-xs font-mono uppercase tracking-[0.07em] text-slate-500">Diff preview</h4>
+            <pre class="m-0 whitespace-pre-wrap break-words text-xs leading-snug font-mono text-slate-700">{{ yamlDiffPreview.join('\n') }}</pre>
           </div>
 
-          <div class="section-actions">
-            <button type="button" class="btn btn-secondary btn-export" :disabled="isExporting" @click="exportSettings">
+          <div class="flex justify-between items-center gap-3">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+              :disabled="isExporting"
+              @click="exportSettings"
+            >
               <Download :size="14" />
               <span>{{ isExporting ? 'Exporting...' : 'Export YAML' }}</span>
             </button>
             <button
               type="button"
-              class="btn btn-primary"
+              class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="save-dashboard-yaml"
               :disabled="!canEdit || isYamlSaving"
               @click="saveYamlSettings"
@@ -722,364 +771,44 @@ onMounted(async () => {
           </div>
         </section>
 
-        <section v-else class="settings-section permissions-section" data-testid="permissions-settings-panel">
-          <h2>Permissions</h2>
-          <p class="permissions-hint">Manage who can view, edit, or administer this dashboard.</p>
+        <!-- Permissions tab -->
+        <section v-else class="rounded-xl border border-slate-200 bg-white p-6" data-testid="permissions-settings-panel">
+          <h2 class="m-0 text-base font-semibold text-slate-900 mb-2">Permissions</h2>
+          <p class="m-0 text-sm text-slate-500 mb-4">Manage who can view, edit, or administer this dashboard.</p>
           <DashboardPermissionsEditor
             v-if="permissionsOrgId"
             data-testid="dashboard-permissions-editor"
             :dashboard="dashboard"
             :org-id="permissionsOrgId"
           />
-          <p v-else class="inline-state">Permissions are unavailable until organization context is loaded.</p>
+          <p
+            v-else
+            class="py-3 px-4 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500"
+          >
+            Permissions are unavailable until organization context is loaded.
+          </p>
         </section>
 
-        <p v-if="actionError" class="error-message">{{ actionError }}</p>
-        <p v-if="yamlValidationError" class="error-message" data-testid="yaml-validation-error">
+        <p
+          v-if="actionError"
+          class="m-0 px-4 py-3 rounded-lg border border-rose-200 bg-rose-50 text-sm text-rose-600"
+        >
+          {{ actionError }}
+        </p>
+        <p
+          v-if="yamlValidationError"
+          class="m-0 px-4 py-3 rounded-lg border border-rose-200 bg-rose-50 text-sm text-rose-600"
+          data-testid="yaml-validation-error"
+        >
           {{ yamlValidationError }}
         </p>
-        <p v-if="successMessage" class="success-message">{{ successMessage }}</p>
+        <p
+          v-if="successMessage"
+          class="m-0 px-4 py-3 rounded-lg border border-emerald-200 bg-emerald-50 text-sm text-emerald-600"
+        >
+          {{ successMessage }}
+        </p>
       </div>
     </div>
-
   </div>
 </template>
-
-<style scoped>
-.dashboard-settings {
-  padding: 1.35rem 1.5rem;
-  max-width: 1080px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.2rem;
-  padding: 1rem 1.15rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 14px;
-  background: var(--surface-1);
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-primary);
-  border-radius: 10px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-back:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.header-content h1 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.03rem;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-primary);
-}
-
-.header-content p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.loading,
-.error {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-secondary);
-}
-
-.error {
-  color: var(--accent-danger);
-}
-
-.settings-layout {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 1rem;
-  align-items: start;
-}
-
-.settings-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
-  border-radius: 14px;
-  padding: 0.75rem;
-  box-shadow: var(--shadow-sm);
-  position: sticky;
-  top: 1rem;
-}
-
-.settings-sidebar-link {
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  color: var(--text-secondary);
-  padding: 0.65rem 0.75rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.settings-sidebar-link:hover {
-  color: var(--text-primary);
-  border-color: rgba(252, 211, 77, 0.22);
-  background: rgba(31, 49, 73, 0.64);
-}
-
-.settings-sidebar-link.active {
-  color: #FCD34D;
-  border-color: rgba(245, 158, 11, 0.34);
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.18), rgba(99, 102, 241, 0.1));
-}
-
-.settings-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.settings-section {
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
-  border-radius: 14px;
-  padding: 1.2rem;
-  box-shadow: var(--shadow-sm);
-  display: grid;
-  gap: 0.7rem;
-}
-
-.section-header h2,
-.settings-section h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.viewer-note {
-  margin: 0;
-  padding: 0.75rem 1rem;
-  border: 1px solid rgba(252, 211, 77, 0.3);
-  border-radius: 10px;
-  background: rgba(252, 211, 77, 0.08);
-  color: var(--text-secondary);
-  font-size: 0.84rem;
-}
-
-.form-grid {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.form-group {
-  display: grid;
-  gap: 0.35rem;
-}
-
-label {
-  font-size: 0.82rem;
-  color: var(--text-primary);
-}
-
-input,
-textarea,
-select {
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-primary);
-  background: var(--surface-1);
-  color: var(--text-primary);
-}
-
-input:disabled,
-textarea:disabled,
-select:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.yaml-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-}
-
-.yaml-hint {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.82rem;
-}
-
-.yaml-editor {
-  min-height: 320px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.78rem;
-  line-height: 1.5;
-}
-
-.grafana-replace {
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  padding: 0.7rem;
-  background: var(--surface-2);
-  display: grid;
-  gap: 0.55rem;
-}
-
-.warning-list {
-  margin: 0;
-  padding-left: 1.1rem;
-  color: #facc15;
-  font-size: 0.78rem;
-}
-
-.diff-preview {
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  padding: 0.7rem;
-  background: rgba(148, 163, 184, 0.08);
-}
-
-.diff-preview h4 {
-  margin: 0 0 0.45rem;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-}
-
-.diff-preview pre {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-size: 0.74rem;
-  line-height: 1.45;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-}
-
-.permissions-hint {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.84rem;
-}
-
-.inline-state {
-  padding: 0.8rem;
-  border: 1px dashed var(--border-primary);
-  border-radius: 8px;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-}
-
-.section-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.7rem;
-}
-
-.error-message,
-.success-message {
-  margin: 0;
-  padding: 0.65rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.82rem;
-}
-
-.error-message {
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  background: rgba(255, 107, 107, 0.1);
-  color: var(--accent-danger);
-}
-
-.success-message {
-  border: 1px solid rgba(78, 205, 196, 0.3);
-  background: rgba(78, 205, 196, 0.1);
-  color: var(--accent-success);
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.58rem 0.9rem;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-
-.btn-secondary {
-  background: transparent;
-  border-color: #F59E0B;
-  color: #FCD34D;
-}
-
-.btn-primary {
-  background: var(--accent-primary);
-  color: #1a0f00;
-}
-
-.btn-export {
-  gap: 0.4rem;
-}
-
-@media (max-width: 900px) {
-  .dashboard-settings {
-    padding: 0.9rem;
-  }
-
-  .settings-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .settings-sidebar {
-    position: static;
-    flex-direction: row;
-    overflow-x: auto;
-    padding: 0.5rem;
-    gap: 0.35rem;
-  }
-
-  .settings-sidebar-link {
-    width: auto;
-    min-width: 110px;
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  .section-actions,
-  .yaml-section-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-</style>
