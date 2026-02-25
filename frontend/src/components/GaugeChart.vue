@@ -54,7 +54,7 @@ function formatValue(value: number): string {
 // Build color stops for gauge based on thresholds
 function buildAxisLineColors(): Array<[number, string]> {
   if (!props.thresholds || props.thresholds.length === 0) {
-    return [[1, '#F59E0B']]
+    return [[1, '#059669']]
   }
 
   const range = props.max - props.min
@@ -79,19 +79,19 @@ function buildAxisLineColors(): Array<[number, string]> {
     colors.push([1, prevColor])
   }
 
-  return colors.length > 0 ? colors : [[1, '#F59E0B']]
+  return colors.length > 0 ? colors : [[1, '#059669']]
 }
 
 // Get color for current value
 function getValueColor(): string {
   if (!props.thresholds || props.thresholds.length === 0) {
-    return '#F59E0B'
+    return '#059669'
   }
 
   const sortedThresholds = [...props.thresholds].sort((a, b) => a.value - b.value)
 
   // Find the highest threshold that is below or equal to the value
-  let color = '#34d399'
+  let color = '#059669'
   for (const threshold of sortedThresholds) {
     if (props.value >= threshold.value) {
       color = threshold.color
@@ -105,11 +105,11 @@ const chartOption = computed<EChartsOption>(() => {
     backgroundColor: 'transparent',
     tooltip: {
       show: true,
-      backgroundColor: '#1a1a1a',
-      borderColor: '#2a2a2a',
+      backgroundColor: '#fff',
+      borderColor: '#e2e8f0',
       borderWidth: 1,
       textStyle: {
-        color: '#f5f5f5',
+        color: '#334155',
         fontSize: 12,
       },
       formatter: () => {
@@ -141,7 +141,7 @@ const chartOption = computed<EChartsOption>(() => {
           length: '60%',
           width: 6,
           itemStyle: {
-            color: '#f5f5f5',
+            color: '#334155',
           },
         },
         axisLine: {
@@ -154,7 +154,7 @@ const chartOption = computed<EChartsOption>(() => {
           show: true,
           distance: -30,
           lineStyle: {
-            color: '#666666',
+            color: '#e2e8f0',
             width: 1,
           },
         },
@@ -163,14 +163,14 @@ const chartOption = computed<EChartsOption>(() => {
           distance: -35,
           length: 10,
           lineStyle: {
-            color: '#666666',
+            color: '#e2e8f0',
             width: 2,
           },
         },
         axisLabel: {
           show: true,
           distance: 10,
-          color: '#666666',
+          color: '#64748b',
           fontSize: 10,
           formatter: (value: number) => {
             if (Math.abs(value) >= 1000) {
@@ -183,7 +183,7 @@ const chartOption = computed<EChartsOption>(() => {
           show: true,
           size: 12,
           itemStyle: {
-            color: '#1a1a1a',
+            color: '#fff',
             borderColor: getValueColor(),
             borderWidth: 3,
           },
@@ -191,7 +191,7 @@ const chartOption = computed<EChartsOption>(() => {
         title: {
           show: !!props.title,
           offsetCenter: [0, '80%'],
-          color: '#a0a0a0',
+          color: '#64748b',
           fontSize: 12,
           fontWeight: 500,
         },
@@ -205,7 +205,7 @@ const chartOption = computed<EChartsOption>(() => {
           fontSize: 24,
           fontWeight: 600,
           formatter: () => formatValue(props.value),
-          color: '#f5f5f5',
+          color: '#334155',
         },
         data: [
           {
@@ -240,8 +240,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-full min-h-[200px]" :style="{ height: typeof height === 'number' ? `${height}px` : height }">
-    <VChart ref="chartRef" :option="chartOption" :autoresize="true" class="w-full h-full" />
+  <div class="h-full w-full" :style="{ height: typeof height === 'number' ? `${height}px` : height }">
+    <VChart ref="chartRef" :option="chartOption" :autoresize="true" class="h-full w-full" />
   </div>
 </template>
-

@@ -41,7 +41,7 @@ describe('PieChart', () => {
     const wrapper = mount(PieChart, {
       props: { data: [{ name: 'A', value: 50 }] },
     })
-    expect(wrapper.find('.pie-chart').exists()).toBe(true)
+    expect(wrapper.find('.h-full.w-full').exists()).toBe(true)
   })
 
   it('passes data to ECharts', () => {
@@ -135,14 +135,14 @@ describe('PieChart', () => {
     const wrapper = mount(PieChart, {
       props: { data: [{ name: 'A', value: 100 }], height: 400 },
     })
-    expect(wrapper.find('.pie-chart').attributes('style')).toContain('height: 400px')
+    expect(wrapper.find('.h-full.w-full').attributes('style')).toContain('height: 400px')
   })
 
   it('applies default height when not provided', () => {
     const wrapper = mount(PieChart, {
       props: { data: [{ name: 'A', value: 100 }] },
     })
-    expect(wrapper.find('.pie-chart').attributes('style')).toContain('height: 100%')
+    expect(wrapper.find('.h-full.w-full').attributes('style')).toContain('height: 100%')
   })
 
   it('includes title when provided', () => {
@@ -189,9 +189,9 @@ describe('PieChart', () => {
     const option = JSON.parse(chart.attributes('data-option') || '{}')
 
     // Each data item should have a color from the palette
-    expect(option.series[0].data[0].itemStyle.color).toBe('#38bdf8')
-    expect(option.series[0].data[1].itemStyle.color).toBe('#34d399')
-    expect(option.series[0].data[2].itemStyle.color).toBe('#f59e0b')
+    expect(option.series[0].data[0].itemStyle.color).toBe('#059669')
+    expect(option.series[0].data[1].itemStyle.color).toBe('#60A5FA')
+    expect(option.series[0].data[2].itemStyle.color).toBe('#64748b')
   })
 
   it('configures tooltip', () => {
@@ -217,7 +217,7 @@ describe('PieChart', () => {
 
     expect(option.series[0].data).toHaveLength(15)
     // Colors should cycle through the palette
-    expect(option.series[0].data[10].itemStyle.color).toBe('#38bdf8') // Index 10 % 10 = 0
+    expect(option.series[0].data[10].itemStyle.color).toBe('#059669') // Index 10 % 10 = 0
   })
 
   it('handles zero values correctly', () => {

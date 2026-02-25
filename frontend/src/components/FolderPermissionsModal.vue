@@ -168,28 +168,28 @@ onMounted(loadData)
 </script>
 
 <template>
-  <div class="fixed inset-0 flex items-center justify-center z-[1000] animate-[fadeIn_0.2s_ease-out]" style="background: rgba(3, 10, 18, 0.76); backdrop-filter: blur(8px)" @click.self="closeModal">
-    <div class="modal" data-testid="folder-permissions-modal">
-      <header class="modal-header">
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="closeModal">
+    <div class="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-lg max-h-[80vh] overflow-y-auto" data-testid="folder-permissions-modal">
+      <header class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
         <div>
-          <h2><Shield :size="18" /> Folder Permissions</h2>
-          <p>{{ props.folder.name }}</p>
+          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900"><Shield :size="18" /> Folder Permissions</h2>
+          <p class="mt-1 text-sm text-slate-500">{{ props.folder.name }}</p>
         </div>
-        <button class="btn-icon" @click="closeModal" aria-label="Close permissions editor">
+        <button class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-slate-600 cursor-pointer transition" @click="closeModal" aria-label="Close permissions editor">
           <X :size="18" />
         </button>
       </header>
 
-      <div v-if="loading" class="inline-state">Loading permissions...</div>
-      <div v-else-if="error" class="error-message">{{ error }}</div>
-      <div v-else class="content">
-        <div class="add-entry-panel">
-          <div class="form-row">
-            <select v-model="newPrincipalType" data-testid="principal-type-select" :disabled="saving">
+      <div v-if="loading" class="px-6 py-4 text-sm text-slate-500 border border-dashed border-slate-200 rounded-lg m-6">Loading permissions...</div>
+      <div v-else-if="error" class="mx-6 mt-4 px-3 py-2 border border-rose-200 rounded-lg bg-rose-50 text-sm text-rose-600">{{ error }}</div>
+      <div v-else class="px-6 py-4 flex flex-col gap-3">
+        <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div class="grid grid-cols-[130px_minmax(0,1fr)_120px] max-md:grid-cols-1 gap-2 flex-1 mb-0">
+            <select v-model="newPrincipalType" data-testid="principal-type-select" :disabled="saving" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
               <option value="user">User</option>
               <option value="group">Group</option>
             </select>
-            <select v-model="newPrincipalId" data-testid="principal-select" :disabled="saving || principalOptions.length === 0">
+            <select v-model="newPrincipalId" data-testid="principal-select" :disabled="saving || principalOptions.length === 0" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
               <option value="">Select {{ newPrincipalType }}</option>
               <option
                 v-for="option in principalOptions"
@@ -199,44 +199,49 @@ onMounted(loadData)
                 {{ option.label }}
               </option>
             </select>
-            <select v-model="newPermission" data-testid="permission-select" :disabled="saving">
+            <select v-model="newPermission" data-testid="permission-select" :disabled="saving" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
               <option value="view">View</option>
               <option value="edit">Edit</option>
               <option value="admin">Admin</option>
             </select>
           </div>
-          <button class="btn btn-secondary" data-testid="add-permission-entry" @click="addEntry" :disabled="saving">
+          <button class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transition" data-testid="add-permission-entry" @click="addEntry" :disabled="saving">
             Add Entry
           </button>
         </div>
 
-        <div v-if="entries.length === 0" class="inline-state">
+        <div v-if="entries.length === 0" class="px-4 py-3 text-sm text-slate-500 border border-dashed border-slate-200 rounded-lg">
           No explicit ACL entries. Organization role defaults apply.
         </div>
-        <div v-else class="entries-list">
+        <div v-else class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+          <div class="bg-slate-900 text-xs font-mono uppercase tracking-[0.07em] text-slate-300 grid grid-cols-[1fr_auto] px-4 py-3">
+            <span>Principal</span>
+            <span>Actions</span>
+          </div>
           <div
             v-for="(entry, index) in entries"
             :key="`${entry.principal_type}-${entry.principal_id}`"
-            class="entry-row"
+            class="flex items-center justify-between gap-3 px-4 py-3 text-sm text-slate-600 border-b border-slate-100 max-md:flex-col max-md:items-start"
             :data-testid="`permission-entry-${index}`"
           >
-            <div class="entry-principal">
-              <strong>{{ principalLabel(entry) }}</strong>
-              <span class="entry-type">{{ entry.principal_type }}</span>
+            <div class="flex flex-col min-w-0">
+              <strong class="text-sm text-slate-900 truncate">{{ principalLabel(entry) }}</strong>
+              <span class="mt-1 w-fit px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs uppercase tracking-wide">{{ entry.principal_type }}</span>
             </div>
-            <div class="entry-actions">
+            <div class="flex items-center gap-2 max-md:flex-col max-md:w-full max-md:items-start">
               <select
                 :value="entry.permission"
                 :data-testid="`entry-permission-${index}`"
                 :disabled="saving"
                 @change="updateEntryPermission(index, ($event.target as HTMLSelectElement).value as ResourcePermissionLevel)"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500 max-md:w-full"
               >
                 <option value="view">View</option>
                 <option value="edit">Edit</option>
                 <option value="admin">Admin</option>
               </select>
               <button
-                class="btn btn-danger btn-sm"
+                class="text-rose-500 hover:text-rose-600 transition text-sm font-medium cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed max-md:w-full"
                 :data-testid="`remove-entry-${index}`"
                 @click="removeEntry(index)"
                 :disabled="saving"
@@ -247,12 +252,12 @@ onMounted(loadData)
           </div>
         </div>
 
-        <div v-if="actionError" class="error-message">{{ actionError }}</div>
-        <div v-if="successMessage" class="success-message">{{ successMessage }}</div>
+        <div v-if="actionError" class="px-3 py-2 border border-rose-200 rounded-lg bg-rose-50 text-sm text-rose-600">{{ actionError }}</div>
+        <div v-if="successMessage" class="px-3 py-2 border border-emerald-200 rounded-lg bg-emerald-50 text-sm text-emerald-600">{{ successMessage }}</div>
 
-        <div class="modal-actions">
-          <button class="btn btn-secondary" @click="closeModal" :disabled="saving">Close</button>
-          <button class="btn btn-primary" data-testid="save-folder-permissions" @click="savePermissions" :disabled="saving">
+        <div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
+          <button class="inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer transition disabled:opacity-60 disabled:cursor-not-allowed" @click="closeModal" :disabled="saving">Close</button>
+          <button class="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 cursor-pointer transition disabled:opacity-60 disabled:cursor-not-allowed" data-testid="save-folder-permissions" @click="savePermissions" :disabled="saving">
             {{ saving ? 'Saving...' : 'Save Permissions' }}
           </button>
         </div>
@@ -260,237 +265,3 @@ onMounted(loadData)
     </div>
   </div>
 </template>
-
-<style>
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(3, 10, 18, 0.76);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-}
-
-.modal {
-  width: min(760px, calc(100vw - 2rem));
-  max-height: calc(100vh - 2rem);
-  overflow: auto;
-  background: var(--color-surface-1);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  padding: 1rem;
-}
-
-.modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.modal-header h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0;
-  font-size: 1rem;
-  font-family: var(--font-family-mono);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-.modal-header p {
-  margin: 0.25rem 0 0;
-  color: var(--color-text-1);
-  font-size: 0.82rem;
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.add-entry-panel {
-  padding: 0.85rem;
-  border-radius: 10px;
-  border: 1px solid var(--color-border);
-  background: rgba(20, 33, 52, 0.8);
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 130px minmax(0, 1fr) 120px;
-  gap: 0.6rem;
-  margin-bottom: 0.65rem;
-}
-
-select {
-  width: 100%;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-bg-1);
-  color: var(--color-text-0);
-}
-
-select:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.entries-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.entry-row {
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background: rgba(11, 19, 30, 0.55);
-  padding: 0.75rem;
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.entry-principal {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.entry-principal strong {
-  font-size: 0.84rem;
-  color: var(--color-text-0);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.entry-type {
-  margin-top: 0.25rem;
-  width: fit-content;
-  padding: 0.1rem 0.4rem;
-  border-radius: 999px;
-  background: rgba(245, 158, 11, 0.18);
-  color: var(--color-accent);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.entry-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.inline-state {
-  padding: 0.8rem;
-  border: 1px dashed var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-1);
-  font-size: 0.8rem;
-}
-
-.error-message {
-  padding: 0.55rem 0.75rem;
-  border: 1px solid rgba(251, 113, 133, 0.35);
-  border-radius: 8px;
-  background: rgba(251, 113, 133, 0.12);
-  color: var(--color-danger);
-  font-size: 0.82rem;
-}
-
-.success-message {
-  padding: 0.55rem 0.75rem;
-  border: 1px solid rgba(78, 205, 196, 0.35);
-  border-radius: 8px;
-  background: rgba(78, 205, 196, 0.12);
-  color: var(--color-success);
-  font-size: 0.82rem;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.6rem;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.55rem 0.8rem;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-sm {
-  padding: 0.4rem 0.65rem;
-  font-size: 0.78rem;
-}
-
-.btn-secondary {
-  background: transparent;
-  border-color: #F59E0B;
-  color: #FCD34D;
-}
-
-.btn-primary {
-  background: var(--color-accent);
-  color: #1a0f00;
-}
-
-.btn-danger {
-  background: var(--color-danger);
-  color: white;
-}
-
-.btn-icon {
-  width: 34px;
-  height: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-surface-2);
-  color: var(--color-text-1);
-  cursor: pointer;
-}
-
-@media (max-width: 760px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .entry-row,
-  .entry-actions {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .entry-actions {
-    width: 100%;
-  }
-
-  .entry-actions select,
-  .entry-actions button {
-    width: 100%;
-  }
-}
-</style>

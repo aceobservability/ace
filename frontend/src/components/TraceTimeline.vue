@@ -143,8 +143,8 @@ const svgHeight = computed(() => axisHeight + Math.max(visibleRows.value.length,
 const svgWidth = labelWidth + barsWidth + 12
 
 const serviceColorPalette = [
-  '#F59E0B',
-  '#22c55e',
+  '#059669',
+  '#10b981',
   '#f59e0b',
   '#f97316',
   '#ef4444',
@@ -159,7 +159,7 @@ const serviceColorMap = computed(() => {
   const services = [...new Set(props.trace.spans.map((span) => span.serviceName || 'unknown'))].sort()
   const map = new Map<string, string>()
   services.forEach((service, index) => {
-    map.set(service, serviceColorPalette[index % serviceColorPalette.length]!)
+    map.set(service, serviceColorPalette[index % serviceColorPalette.length])
   })
   return map
 })
@@ -289,18 +289,43 @@ const criticalPathSpanIds = computed(() => {
 
   return new Set(best.path)
 })
+
+function spanBarStroke(span: TraceSpan): string {
+  if (span.status === 'error') return '#f87171'
+  if (criticalPathSpanIds.value.has(span.spanId)) return '#f59e0b'
+  if (span.spanId === props.selectedSpanId) return '#334155'
+  return 'transparent'
+}
+
+function spanBarStrokeWidth(span: TraceSpan): number {
+  if (span.status === 'error') return 2
+  if (span.spanId === props.selectedSpanId) return 2
+  if (criticalPathSpanIds.value.has(span.spanId)) return 1.5
+  return 1.5
+}
+
+function spanBarOpacity(span: TraceSpan): number {
+  return span.spanId === props.selectedSpanId ? 1 : 0.85
+}
+
+function rowBgFill(rowIndex: number): string {
+  return rowIndex % 2 === 0 ? '#f8fafc' : '#ffffff'
+}
 </script>
 
 <template>
-  <div class="trace-timeline">
-    <div class="timeline-controls">
-      <label class="control-item">
+  <div class="flex flex-col gap-3">
+    <div class="flex flex-wrap gap-3">
+      <label class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 max-sm:w-full max-sm:justify-between">
         <span>Zoom</span>
-        <input v-model.number="zoomPercent" type="range" min="100" max="400" step="25" />
-        <strong>{{ zoomPercent }}%</strong>
+        <input v-model.number="zoomPercent" type="range" min="100" max="400" step="25" class="w-36 max-sm:w-30" />
+        <strong class="min-w-[3.1rem] text-right text-xs font-semibold text-slate-900">{{ zoomPercent }}%</strong>
       </label>
 
-      <label class="control-item" :class="{ disabled: maxPanDuration === 0 }">
+      <label
+        class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 max-sm:w-full max-sm:justify-between"
+        :class="{ 'opacity-60': maxPanDuration === 0 }"
+      >
         <span>Pan</span>
         <input
           v-model.number="panPercent"
@@ -308,24 +333,29 @@ const criticalPathSpanIds = computed(() => {
           min="0"
           max="100"
           :disabled="maxPanDuration === 0"
+          class="w-36 max-sm:w-30"
         />
-        <strong>{{ panPercent }}%</strong>
+        <strong class="min-w-[3.1rem] text-right text-xs font-semibold text-slate-900">{{ panPercent }}%</strong>
       </label>
     </div>
 
-    <div class="service-legend">
-      <span v-for="(color, serviceName) in serviceColorMap" :key="serviceName" class="legend-item">
-        <i class="legend-color" :style="{ backgroundColor: color as unknown as string }"></i>
+    <div class="flex flex-wrap gap-2">
+      <span
+        v-for="(color, serviceName) in serviceColorMap"
+        :key="serviceName"
+        class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-500"
+      >
+        <i class="inline-block h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: color }"></i>
         {{ serviceName }}
       </span>
-      <span class="legend-item critical">
-        <i class="legend-color critical-color"></i>
+      <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs text-amber-700">
+        <i class="inline-block h-2.5 w-2.5 rounded-full bg-amber-500"></i>
         Critical path
       </span>
     </div>
 
-    <div class="timeline-scroll-wrap">
-      <svg v-if="visibleRows.length > 0" :width="svgWidth" :height="svgHeight" class="timeline-svg" role="img" aria-label="Trace timeline waterfall">
+    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <svg v-if="visibleRows.length > 0" :width="svgWidth" :height="svgHeight" class="block" role="img" aria-label="Trace timeline waterfall">
         <g>
           <line
             v-for="marker in timeMarkers"
@@ -334,7 +364,8 @@ const criticalPathSpanIds = computed(() => {
             y1="0"
             :x2="marker.x"
             :y2="svgHeight"
-            class="axis-line"
+            stroke="#e2e8f0"
+            stroke-width="1"
           />
           <text
             v-for="marker in timeMarkers"
@@ -342,14 +373,16 @@ const criticalPathSpanIds = computed(() => {
             :x="marker.x"
             y="14"
             text-anchor="middle"
-            class="axis-label"
+            fill="#94a3b8"
+            font-size="10"
+            font-family="IBM Plex Mono, monospace"
           >
             {{ marker.label }}
           </text>
         </g>
 
         <g>
-          <line :x1="labelWidth" y1="0" :x2="labelWidth" :y2="svgHeight" class="divider-line" />
+          <line :x1="labelWidth" y1="0" :x2="labelWidth" :y2="svgHeight" stroke="#cbd5e1" stroke-width="1" />
         </g>
 
         <g v-for="(row, rowIndex) in visibleRows" :key="row.span.spanId">
@@ -358,13 +391,15 @@ const criticalPathSpanIds = computed(() => {
             :y="rowY(rowIndex)"
             :width="svgWidth"
             :height="rowHeight"
-            :class="rowIndex % 2 === 0 ? 'row-bg-even' : 'row-bg-odd'"
+            :fill="rowBgFill(rowIndex)"
           />
 
           <text
             :x="12 + row.depth * 14"
             :y="rowY(rowIndex) + 19"
-            class="span-label"
+            fill="#0f172a"
+            font-size="11"
+            class="select-none"
             :title="`${row.span.operationName} (${row.span.serviceName})`"
           >
             {{ row.span.operationName || '(unnamed span)' }}
@@ -376,195 +411,31 @@ const criticalPathSpanIds = computed(() => {
             :width="spanWidth(row.span.durationNano, row.span.startTimeUnixNano)"
             :height="rowHeight - 12"
             rx="4"
-            class="span-bar"
-            :class="{
-              critical: criticalPathSpanIds.has(row.span.spanId),
-              selected: row.span.spanId === selectedSpanId,
-              error: row.span.status === 'error',
+            class="cursor-pointer"
+            :style="{
+              fill: getServiceColor(row.span.serviceName),
+              fillOpacity: spanBarOpacity(row.span),
+              stroke: spanBarStroke(row.span),
+              strokeWidth: spanBarStrokeWidth(row.span),
             }"
-            :style="{ fill: getServiceColor(row.span.serviceName) }"
             @click="emit('select-span', row.span)"
           />
 
           <text
             :x="spanStartToX(row.span.startTimeUnixNano) + spanWidth(row.span.durationNano, row.span.startTimeUnixNano) + 6"
             :y="rowY(rowIndex) + 19"
-            class="duration-label"
+            fill="#64748b"
+            font-size="10"
+            font-family="IBM Plex Mono, monospace"
           >
             {{ formatDurationNano(row.span.durationNano) }}
           </text>
         </g>
       </svg>
 
-      <div v-else class="flex flex-col items-center justify-center p-12 text-center text-text-1">
+      <div v-else class="p-4 text-sm text-slate-500">
         No spans visible in the current zoom window.
       </div>
     </div>
   </div>
 </template>
-
-<style>
-.trace-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.timeline-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.control-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  font-size: 0.76rem;
-  color: var(--color-text-1);
-  padding: 0.45rem 0.6rem;
-  border-radius: 10px;
-  border: 1px solid var(--color-border);
-  background: rgba(20, 33, 51, 0.75);
-}
-
-.control-item input {
-  width: 140px;
-}
-
-.control-item strong {
-  color: var(--color-text-0);
-  font-size: 0.72rem;
-  min-width: 3.1rem;
-  text-align: right;
-}
-
-.control-item.disabled {
-  opacity: 0.6;
-}
-
-.service-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-}
-
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: rgba(15, 24, 39, 0.78);
-  color: var(--color-text-1);
-  font-size: 0.72rem;
-}
-
-.legend-item.critical {
-  border-color: rgba(245, 158, 11, 0.45);
-}
-
-.legend-color {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  display: inline-block;
-}
-
-.critical-color {
-  background: #f59e0b;
-}
-
-.timeline-scroll-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: rgba(8, 14, 24, 0.9);
-}
-
-.timeline-svg {
-  display: block;
-}
-
-.axis-line {
-  stroke: rgba(71, 85, 105, 0.3);
-  stroke-width: 1;
-}
-
-.axis-label {
-  font-size: 10px;
-  fill: var(--color-text-2);
-  font-family: var(--font-family-mono);
-}
-
-.divider-line {
-  stroke: rgba(71, 85, 105, 0.6);
-  stroke-width: 1;
-}
-
-.row-bg-even {
-  fill: rgba(15, 23, 42, 0.32);
-}
-
-.row-bg-odd {
-  fill: rgba(30, 41, 59, 0.22);
-}
-
-.span-label {
-  font-size: 11px;
-  fill: var(--color-text-0);
-  user-select: none;
-}
-
-.duration-label {
-  font-size: 10px;
-  fill: var(--color-text-1);
-  font-family: var(--font-family-mono);
-}
-
-.span-bar {
-  cursor: pointer;
-  fill-opacity: 0.85;
-  stroke: transparent;
-  stroke-width: 1.5;
-  transition: stroke 0.15s ease, fill-opacity 0.15s ease;
-}
-
-.span-bar:hover {
-  fill-opacity: 1;
-  stroke: rgba(226, 232, 240, 0.65);
-}
-
-.span-bar.critical {
-  stroke: rgba(245, 158, 11, 0.85);
-}
-
-.span-bar.selected {
-  stroke: #e2e8f0;
-  stroke-width: 2;
-  fill-opacity: 1;
-}
-
-.span-bar.error {
-  stroke: rgba(248, 113, 113, 0.9);
-  stroke-width: 2;
-}
-
-.empty-state {
-  padding: 1rem;
-  color: var(--color-text-1);
-  font-size: 0.86rem;
-}
-
-@media (max-width: 900px) {
-  .control-item {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .control-item input {
-    width: 120px;
-  }
-}
-</style>

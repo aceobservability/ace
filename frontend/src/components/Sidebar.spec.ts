@@ -9,7 +9,7 @@ const mockUser = ref({ email: 'user@example.com' })
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({
-    path: '/app/dashboards',
+    path: '/dashboards',
   }),
   useRouter: () => ({
     push: mockPush,
@@ -62,13 +62,20 @@ describe('Sidebar', () => {
       },
     })
 
-    expect(wrapper.get('.sidebar').classes()).not.toContain('expanded')
-    expect(wrapper.get('.sidebar-header').classes()).toContain('collapsed')
+    const aside = wrapper.find('aside')
+    // Collapsed: w-16 (narrow)
+    expect(aside.classes()).toContain('w-16')
+    expect(aside.classes()).not.toContain('w-58')
 
-    await wrapper.get('.toggle-btn').trigger('click')
+    // Click toggle button (Expand/Collapse title button)
+    const toggleBtn = wrapper.findAll('button').find(b =>
+      b.attributes('title') === 'Expand' || b.attributes('title') === 'Collapse'
+    )!
+    await toggleBtn.trigger('click')
 
-    expect(wrapper.get('.sidebar').classes()).toContain('expanded')
-    expect(wrapper.get('.sidebar-header').classes()).not.toContain('collapsed')
+    // Expanded: w-58 (wide)
+    expect(aside.classes()).toContain('w-58')
+    expect(aside.classes()).not.toContain('w-16')
   })
 
   it('temporarily expands when hovered while collapsed', async () => {
@@ -87,16 +94,18 @@ describe('Sidebar', () => {
       },
     })
 
-    expect(wrapper.get('.sidebar').classes()).not.toContain('expanded')
+    const aside = wrapper.find('aside')
+    // Collapsed: w-16
+    expect(aside.classes()).toContain('w-16')
 
-    await wrapper.get('.sidebar').trigger('mouseenter')
+    await aside.trigger('mouseenter')
 
-    expect(wrapper.get('.sidebar').classes()).toContain('expanded')
-    expect(wrapper.get('.sidebar-header').classes()).not.toContain('collapsed')
+    // Hover-expanded: w-58
+    expect(aside.classes()).toContain('w-58')
 
-    await wrapper.get('.sidebar').trigger('mouseleave')
+    await aside.trigger('mouseleave')
 
-    expect(wrapper.get('.sidebar').classes()).not.toContain('expanded')
-    expect(wrapper.get('.sidebar-header').classes()).toContain('collapsed')
+    // Back to collapsed: w-16
+    expect(aside.classes()).toContain('w-16')
   })
 })

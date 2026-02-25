@@ -131,35 +131,47 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="time-range-picker" :class="{ stacked: props.stacked }">
-    <div class="picker-controls" :class="{ stacked: props.stacked }">
-      <div class="time-select-row">
+  <div class="time-range-picker relative" :class="props.stacked ? 'block w-full' : 'inline-block'">
+    <div
+      class="flex gap-2"
+      :class="props.stacked ? 'flex-col items-start gap-[0.45rem]' : 'items-center'"
+    >
+      <!-- Time select row -->
+      <div class="flex items-center gap-2" :class="props.stacked ? 'w-full' : ''">
         <button
-          class="time-display"
+          class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition cursor-pointer hover:border-slate-300 hover:bg-slate-50"
+          :class="[
+            isOpen ? 'border-emerald-500 ring-1 ring-emerald-600/20' : '',
+            props.stacked ? 'w-full justify-between' : ''
+          ]"
           @click.stop="toggleDropdown"
-          :class="{ active: isOpen }"
         >
-          <Clock :size="16" class="clock-icon" />
-          <span class="display-text">{{ currentDisplayText }}</span>
-          <component :is="isOpen ? ChevronUp : ChevronDown" :size="14" class="dropdown-arrow" />
+          <Clock :size="16" class="text-slate-400" />
+          <span class="min-w-[100px] font-mono text-xs">{{ currentDisplayText }}</span>
+          <component :is="isOpen ? ChevronUp : ChevronDown" :size="14" class="text-slate-400" />
         </button>
       </div>
 
-      <div class="refresh-controls-row">
+      <!-- Refresh controls row -->
+      <div
+        class="flex items-center gap-2"
+        :class="props.stacked ? 'w-full flex-wrap' : ''"
+      >
         <button
-          class="refresh-btn"
-          :class="{ refreshing: isRefreshing }"
+          class="flex items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-slate-500 transition cursor-pointer hover:bg-slate-50 hover:text-slate-700"
+          :class="isRefreshing ? 'text-emerald-600' : ''"
           @click="handleRefresh"
           :title="'Last refresh: ' + formatLastRefresh()"
         >
-          <RefreshCw :size="16" />
+          <RefreshCw :size="16" :class="isRefreshing ? 'animate-spin' : ''" />
         </button>
 
-        <div class="refresh-interval-selector">
+        <div>
           <select
             :value="refreshIntervalValue"
             @change="selectRefreshInterval(($event.target as HTMLSelectElement).value)"
             title="Auto-refresh interval"
+            class="rounded-lg border border-slate-200 bg-white px-2 py-1.5 pr-7 text-xs font-medium text-slate-600 cursor-pointer transition appearance-none hover:border-slate-300 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-600/20 bg-[url('data:image/svg+xml,%3Csvg_xmlns=%27http://www.w3.org/2000/svg%27_width=%2712%27_height=%2712%27_viewBox=%270_0_24_24%27_fill=%27none%27_stroke=%27%2394a3b8%27_stroke-width=%272%27_stroke-linecap=%27round%27_stroke-linejoin=%27round%27%3E%3Cpath_d=%27m6_9_6_6_6-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.5rem_center]"
           >
             <option
               v-for="interval in refreshIntervals"
@@ -171,359 +183,95 @@ onUnmounted(() => {
           </select>
         </div>
 
-        <span v-if="refreshIntervalValue !== 'off'" class="refresh-status">
+        <span
+          v-if="refreshIntervalValue !== 'off'"
+          class="text-xs text-slate-400 px-2"
+          :class="props.stacked ? 'px-0' : ''"
+        >
           {{ isRefreshing ? 'Refreshing...' : formatLastRefresh() }}
         </span>
       </div>
     </div>
 
-    <div v-if="isOpen" class="dropdown" @click.stop>
-      <div v-if="!showCustomRange" class="preset-list">
-        <div class="dropdown-section">
-          <div class="section-title">Quick ranges</div>
+    <!-- Dropdown -->
+    <div
+      v-if="isOpen"
+      class="absolute top-[calc(100%+4px)] left-0 min-w-[220px] rounded-lg border border-slate-200 bg-white shadow-lg z-[1000] animate-fade-in"
+      @click.stop
+    >
+      <div v-if="!showCustomRange">
+        <div class="py-2">
+          <div class="px-4 py-2 text-[0.6875rem] font-semibold text-slate-400 uppercase tracking-wide">
+            Quick ranges
+          </div>
           <button
             v-for="preset in presets"
             :key="preset.value"
-            class="preset-item"
-            :class="{ selected: !isCustomRange && selectedPreset === preset.value }"
+            class="block w-full px-4 py-2.5 border-0 bg-transparent text-left text-sm text-slate-600 cursor-pointer transition hover:bg-slate-50"
+            :class="!isCustomRange && selectedPreset === preset.value ? 'bg-emerald-50 text-emerald-700 font-medium' : ''"
             @click="selectPreset(preset.value)"
           >
             {{ preset.label }}
           </button>
         </div>
 
-        <div class="dropdown-divider"></div>
+        <div class="h-px bg-slate-200 mx-0 my-1"></div>
 
-        <button class="preset-item custom-range-btn" @click="openCustomRange">
+        <button
+          class="block w-full px-4 py-2.5 border-0 bg-transparent text-left text-sm text-emerald-600 cursor-pointer transition hover:bg-slate-50"
+          @click="openCustomRange"
+        >
           Custom range...
         </button>
       </div>
 
-      <div v-else class="custom-range-form">
-        <div class="section-title">Custom time range</div>
+      <div v-else class="p-4">
+        <div class="px-0 py-2 text-[0.6875rem] font-semibold text-slate-400 uppercase tracking-wide">
+          Custom time range
+        </div>
 
-        <div class="form-group">
-          <label for="custom-from">From</label>
+        <div class="mb-3">
+          <label for="custom-from" class="block mb-1.5 text-xs font-medium text-slate-500">From</label>
           <input
             id="custom-from"
             type="datetime-local"
             v-model="customFrom"
+            class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-600/20"
           />
         </div>
 
-        <div class="form-group">
-          <label for="custom-to">To</label>
+        <div class="mb-3">
+          <label for="custom-to" class="block mb-1.5 text-xs font-medium text-slate-500">To</label>
           <input
             id="custom-to"
             type="datetime-local"
             v-model="customTo"
+            class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-600/20"
           />
         </div>
 
-        <div v-if="customRangeError" class="error-message">
+        <div
+          v-if="customRangeError"
+          class="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600"
+        >
           {{ customRangeError }}
         </div>
 
-        <div class="form-actions">
-          <button class="btn btn-secondary" @click="cancelCustomRange">Cancel</button>
-          <button class="btn btn-primary" @click="applyCustomRange">Apply</button>
+        <div class="flex justify-end gap-2">
+          <button
+            class="rounded-md px-4 py-2 text-sm font-medium border border-slate-200 bg-transparent text-slate-600 cursor-pointer transition hover:bg-slate-50"
+            @click="cancelCustomRange"
+          >
+            Cancel
+          </button>
+          <button
+            class="rounded-md px-4 py-2 text-sm font-medium border border-emerald-600 bg-emerald-600 text-white cursor-pointer transition hover:bg-emerald-700 hover:border-emerald-700"
+            @click="applyCustomRange"
+          >
+            Apply
+          </button>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style>
-.time-range-picker {
-  position: relative;
-  display: inline-block;
-}
-
-.time-range-picker.stacked {
-  display: block;
-  width: 100%;
-}
-
-.picker-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.picker-controls.stacked {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.45rem;
-}
-
-.time-select-row,
-.refresh-controls-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.time-range-picker.stacked .time-select-row {
-  width: 100%;
-}
-
-.time-range-picker.stacked .time-display {
-  width: 100%;
-  justify-content: space-between;
-}
-
-.time-range-picker.stacked .refresh-controls-row {
-  width: 100%;
-  flex-wrap: wrap;
-}
-
-.time-display {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.52rem 0.75rem;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 0.8125rem;
-  color: var(--color-text-0);
-  transition: all 0.2s;
-}
-
-.time-display:hover {
-  border-color: var(--color-border-strong);
-  background: var(--color-bg-2);
-}
-
-.time-display.active {
-  border-color: var(--color-accent);
-  box-shadow: var(--focus-ring);
-}
-
-.clock-icon {
-  color: var(--color-text-1);
-}
-
-.display-text {
-  min-width: 100px;
-  font-family: var(--font-family-mono);
-  font-size: 0.76rem;
-}
-
-.dropdown-arrow {
-  color: var(--color-text-2);
-}
-
-.refresh-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  cursor: pointer;
-  color: var(--color-text-1);
-  transition: all 0.2s;
-}
-
-.refresh-btn:hover {
-  border-color: var(--color-border-strong);
-  background: var(--color-bg-2);
-  color: var(--color-text-0);
-}
-
-.refresh-btn.refreshing {
-  color: var(--color-accent);
-}
-
-.refresh-btn.refreshing svg {
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.refresh-status {
-  font-size: 0.75rem;
-  color: var(--color-text-2);
-  padding: 0 0.5rem;
-}
-
-.time-range-picker.stacked .refresh-status {
-  padding: 0;
-}
-
-.refresh-interval-selector select {
-  padding: 0.52rem 2rem 0.52rem 0.75rem;
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-size: 0.8125rem;
-  color: var(--color-text-0);
-  cursor: pointer;
-  transition: all 0.2s;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.5rem center;
-}
-
-.refresh-interval-selector select:hover {
-  border-color: var(--color-border-strong);
-}
-
-.refresh-interval-selector select:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: var(--focus-ring);
-}
-
-.dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  min-width: 220px;
-  background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
-  animation: fadeIn 0.15s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.dropdown-section {
-  padding: 0.5rem 0;
-}
-
-.section-title {
-  padding: 0.5rem 1rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--color-text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.preset-item {
-  display: block;
-  width: 100%;
-  padding: 0.625rem 1rem;
-  background: none;
-  border: none;
-  text-align: left;
-  font-size: 0.8125rem;
-  color: var(--color-text-0);
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.preset-item:hover {
-  background: var(--color-bg-hover);
-}
-
-.preset-item.selected {
-  background: rgba(245, 158, 11, 0.16);
-  color: var(--color-accent);
-  font-weight: 500;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: var(--color-border);
-  margin: 0.25rem 0;
-}
-
-.custom-range-btn {
-  color: var(--color-accent);
-}
-
-.custom-range-form {
-  padding: 1rem;
-}
-
-.form-group {
-  margin-bottom: 0.75rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-text-1);
-}
-
-.form-group input {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font-size: 0.8125rem;
-  color: var(--color-text-0);
-  color-scheme: dark;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: var(--focus-ring);
-}
-
-.error-message {
-  padding: 0.5rem 0.75rem;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  border-radius: 6px;
-  color: var(--color-danger);
-  font-size: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary {
-  background: transparent;
-  border: 1px solid #F59E0B;
-  color: #FCD34D;
-}
-
-.btn-secondary:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-border-strong);
-}
-
-.btn-primary {
-  background: var(--color-accent);
-  border: 1px solid var(--color-accent);
-  color: #1a0f00;
-}
-
-.btn-primary:hover {
-  background: var(--color-accent-hover);
-  border-color: var(--color-accent-hover);
-}
-</style>

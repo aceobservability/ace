@@ -202,6 +202,31 @@ vi.mock('../api/datasources', () => ({
   streamDataSourceLogs: mockStreamDataSourceLogs,
 }))
 
+/** Find the datasource trigger button */
+function findDatasourceTrigger(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find((b) => b.attributes('title')?.includes('Active datasource'))!
+}
+
+/** Find datasource dropdown options */
+function findDatasourceOptions(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('.absolute button')
+}
+
+/** Find the Run Query button */
+function findRunButton(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find((b) => b.text().includes('Run Query') || b.text().includes('Running'))!
+}
+
+/** Find the Live button */
+function findLiveButton(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find((b) => b.text().includes('Start Live') || b.text().includes('Stop Live'))!
+}
+
+/** Find error display (use rounded-xl to distinguish from the health badge which uses rounded-full) */
+function findError(wrapper: ReturnType<typeof mount>) {
+  return wrapper.find('.rounded-xl.text-rose-700')
+}
+
 describe('ExploreLogs', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -225,17 +250,17 @@ describe('ExploreLogs', () => {
     const wrapper = mount(ExploreLogs)
     await flushPromises()
 
-    expect(wrapper.find('.explore-header h1').text()).toBe('Explore')
-    expect(wrapper.find('.mode-badge').text()).toBe('Logs')
-    expect(wrapper.find('.active-datasource-panel').exists()).toBe(true)
-    expect(wrapper.find('.active-datasource-name').text()).toContain('Loki Main')
-    expect(wrapper.find('.active-datasource-logo').attributes('alt')).toContain('Loki logo')
-    expect(wrapper.find('.source-health-badge').text()).toContain('Healthy')
-    expect(wrapper.find('.datasource-selector').exists()).toBe(true)
+    expect(wrapper.find('h1').text()).toBe('Explore')
+    expect(wrapper.text()).toContain('Logs')
+    const trigger = findDatasourceTrigger(wrapper)
+    expect(trigger).toBeDefined()
+    expect(wrapper.text()).toContain('Loki Main')
+    expect(wrapper.text()).toContain('Healthy')
 
-    await wrapper.find('.datasource-trigger').trigger('click')
-    expect(wrapper.find('.datasource-dropdown').exists()).toBe(true)
-    expect(wrapper.find('.datasource-option').text()).toContain('Loki Main')
+    await trigger.trigger('click')
+    const options = findDatasourceOptions(wrapper)
+    expect(options.length).toBeGreaterThan(0)
+    expect(options[0].text()).toContain('Loki Main')
 
     expect(wrapper.find('.mock-time-range-picker').exists()).toBe(true)
     expect(mockFetchDatasources).toHaveBeenCalledWith('org-1')
@@ -261,7 +286,7 @@ describe('ExploreLogs', () => {
     const wrapper = mount(ExploreLogs)
     await wrapper.find('.query-input').setValue('{job=~".+"}')
 
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(mockQueryDataSource).toHaveBeenCalledWith(
@@ -308,7 +333,7 @@ describe('ExploreLogs', () => {
     const wrapper = mount(ExploreLogs)
     await wrapper.find('.query-input').setValue('{job=~".+"}')
 
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     const viewerLogs = wrapper.findComponent({ name: 'LogViewer' }).props('logs') as Array<{ timestamp: string, line: string }>
@@ -325,16 +350,16 @@ describe('ExploreLogs', () => {
     const wrapper = mount(ExploreLogs)
     await wrapper.find('.query-input').setValue('{broken')
 
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.query-error').exists()).toBe(true)
-    expect(wrapper.find('.query-error').text()).toContain('invalid log query')
+    expect(findError(wrapper).exists()).toBe(true)
+    expect(findError(wrapper).text()).toContain('invalid log query')
   })
 
   it('disables Run Query button when query is empty', () => {
     const wrapper = mount(ExploreLogs)
-    const runButton = wrapper.find('.btn-run')
+    const runButton = findRunButton(wrapper)
 
     expect(runButton.attributes('disabled')).toBeDefined()
   })
@@ -352,7 +377,7 @@ describe('ExploreLogs', () => {
     const wrapper = mount(ExploreLogs)
     await wrapper.find('.query-input').setValue('{app="api"}')
 
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     const history = JSON.parse(sessionStorage.getItem('explore_logs_query_history') || '[]')
@@ -365,8 +390,8 @@ describe('ExploreLogs', () => {
 
     expect(wrapper.findComponent({ name: 'LogQLQueryBuilder' }).props('queryLanguage')).toBe('logql')
 
-    await wrapper.find('.datasource-trigger').trigger('click')
-    const options = wrapper.findAll('.datasource-option')
+    await findDatasourceTrigger(wrapper).trigger('click')
+    const options = findDatasourceOptions(wrapper)
     await options[1].trigger('click')
     await flushPromises()
 
@@ -386,16 +411,16 @@ describe('ExploreLogs', () => {
     const wrapper = mount(ExploreLogs)
     await flushPromises()
 
-    await wrapper.find('.datasource-trigger').trigger('click')
-    const options = wrapper.findAll('.datasource-option')
+    await findDatasourceTrigger(wrapper).trigger('click')
+    const options = findDatasourceOptions(wrapper)
     await options[2].trigger('click')
     await flushPromises()
 
     expect(wrapper.findComponent({ name: 'ClickHouseSQLEditor' }).exists()).toBe(true)
-    expect(wrapper.find('.btn-live').attributes('disabled')).toBeDefined()
+    expect(findLiveButton(wrapper).attributes('disabled')).toBeDefined()
 
     await wrapper.find('#clickhouse-query').setValue('SELECT timestamp, message FROM logs LIMIT 10')
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(mockQueryDataSource).toHaveBeenLastCalledWith(
@@ -439,15 +464,15 @@ describe('ExploreLogs', () => {
     const wrapper = mount(ExploreLogs)
     await flushPromises()
 
-    await wrapper.find('.datasource-trigger').trigger('click')
-    const options = wrapper.findAll('.datasource-option')
+    await findDatasourceTrigger(wrapper).trigger('click')
+    const options = findDatasourceOptions(wrapper)
     await options[3].trigger('click')
     await flushPromises()
 
     expect(wrapper.findComponent({ name: 'CloudWatchQueryEditor' }).exists()).toBe(true)
 
     await wrapper.find('#cloudwatch-query').setValue('fields @timestamp, @message | limit 5')
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(mockQueryDataSource).toHaveBeenLastCalledWith(
@@ -462,16 +487,16 @@ describe('ExploreLogs', () => {
     const wrapper = mount(ExploreLogs)
     await flushPromises()
 
-    await wrapper.find('.datasource-trigger').trigger('click')
-    const options = wrapper.findAll('.datasource-option')
+    await findDatasourceTrigger(wrapper).trigger('click')
+    const options = findDatasourceOptions(wrapper)
     await options[4].trigger('click')
     await flushPromises()
 
     expect(wrapper.findComponent({ name: 'ElasticsearchQueryEditor' }).exists()).toBe(true)
-    expect(wrapper.find('.btn-live').attributes('disabled')).toBeDefined()
+    expect(findLiveButton(wrapper).attributes('disabled')).toBeDefined()
 
     await wrapper.find('#elasticsearch-query').setValue('service.name:"api" AND level:error')
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(mockQueryDataSource).toHaveBeenLastCalledWith(

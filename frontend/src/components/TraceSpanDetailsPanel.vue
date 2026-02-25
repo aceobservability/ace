@@ -200,371 +200,145 @@ function exportSpanJson() {
 </script>
 
 <template>
-  <aside class="trace-span-details" aria-label="Span details panel">
-    <header class="details-header">
+  <aside class="flex min-w-0 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4" aria-label="Span details panel">
+    <header class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
       <div>
-        <h3>Span details</h3>
-        <p class="span-title">{{ span.operationName || '(unnamed span)' }}</p>
+        <h3 class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">Span details</h3>
+        <p class="mt-1 text-sm font-semibold text-slate-900">{{ span.operationName || '(unnamed span)' }}</p>
       </div>
-      <span class="status-pill" :class="{ error: span.status === 'error' }">
+      <span
+        class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide"
+        :class="span.status === 'error'
+          ? 'border border-rose-200 bg-rose-50 text-rose-700'
+          : 'border border-emerald-200 bg-emerald-50 text-emerald-700'"
+      >
         {{ span.status === 'error' ? 'Error' : 'OK' }}
       </span>
     </header>
 
-    <div class="action-row">
-      <button type="button" class="action-button" @click="copyToClipboard(span.spanId, 'Span ID')">
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="copyToClipboard(span.spanId, 'Span ID')">
         Copy span ID
       </button>
-      <button type="button" class="action-button" @click="copyToClipboard(trace.traceId, 'Trace ID')">
+      <button type="button" class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="copyToClipboard(trace.traceId, 'Trace ID')">
         Copy trace ID
       </button>
-      <button type="button" class="action-button" @click="openTraceLogs">
+      <button type="button" class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="openTraceLogs">
         View Logs
       </button>
-      <button type="button" class="action-button" @click="openServiceMetrics">
+      <button type="button" class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="openServiceMetrics">
         View Service Metrics
       </button>
-      <button type="button" class="action-button" @click="exportSpanJson">
+      <button type="button" class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="exportSpanJson">
         Export JSON
       </button>
     </div>
-    <p v-if="feedbackMessage" class="feedback-message">{{ feedbackMessage }}</p>
+    <p v-if="feedbackMessage" class="-mt-1 text-xs font-medium text-emerald-600">{{ feedbackMessage }}</p>
 
-    <section class="details-section overview-grid">
-      <div class="overview-row">
-        <span class="label">Service</span>
-        <code>{{ span.serviceName || 'unknown' }}</code>
+    <section class="grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-slate-100 p-3 max-md:grid-cols-1">
+      <div class="flex min-w-0 flex-col gap-0.5">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Service</span>
+        <code class="break-all font-mono text-sm text-slate-900">{{ span.serviceName || 'unknown' }}</code>
       </div>
-      <div class="overview-row">
-        <span class="label">Duration</span>
-        <code>{{ formatDurationNano(span.durationNano) }}</code>
+      <div class="flex min-w-0 flex-col gap-0.5">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Duration</span>
+        <code class="break-all font-mono text-sm text-slate-900">{{ formatDurationNano(span.durationNano) }}</code>
       </div>
-      <div class="overview-row">
-        <span class="label">Start</span>
-        <span>{{ formatTimestamp(span.startTimeUnixNano) }}</span>
+      <div class="flex min-w-0 flex-col gap-0.5">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Start</span>
+        <span class="text-sm text-slate-600">{{ formatTimestamp(span.startTimeUnixNano) }}</span>
       </div>
-      <div class="overview-row">
-        <span class="label">End</span>
-        <span>{{ formatTimestamp(span.startTimeUnixNano + span.durationNano) }}</span>
+      <div class="flex min-w-0 flex-col gap-0.5">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">End</span>
+        <span class="text-sm text-slate-600">{{ formatTimestamp(span.startTimeUnixNano + span.durationNano) }}</span>
       </div>
-      <div class="overview-row">
-        <span class="label">Offset</span>
-        <code>{{ formatTraceOffset(span.startTimeUnixNano) }}</code>
+      <div class="flex min-w-0 flex-col gap-0.5">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Offset</span>
+        <code class="break-all font-mono text-sm text-slate-900">{{ formatTraceOffset(span.startTimeUnixNano) }}</code>
       </div>
-      <div class="overview-row">
-        <span class="label">Span ID</span>
-        <code>{{ span.spanId }}</code>
+      <div class="flex min-w-0 flex-col gap-0.5">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Span ID</span>
+        <code class="break-all font-mono text-sm text-slate-900">{{ span.spanId }}</code>
       </div>
     </section>
 
-    <section class="details-section relationships">
-      <h4>Relationships</h4>
-      <div class="relation-block">
-        <span class="label">Parent</span>
+    <section class="flex flex-col gap-2.5 rounded-lg border border-slate-100 p-3">
+      <h4 class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">Relationships</h4>
+      <div class="flex flex-col gap-1.5">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Parent</span>
         <button
           v-if="parentSpan"
           type="button"
-          class="relation-link"
+          class="cursor-pointer rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-left text-sm text-emerald-600 transition hover:border-emerald-300 hover:text-emerald-700"
           @click="emit('select-span', parentSpan)"
         >
           {{ parentSpan.operationName || '(unnamed span)' }}
         </button>
-        <span v-else class="relation-empty">Root span</span>
+        <span v-else class="text-sm text-slate-500">Root span</span>
       </div>
 
-      <div class="relation-block">
-        <span class="label">Children</span>
-        <div v-if="childSpans.length > 0" class="child-link-list">
+      <div class="flex flex-col gap-1.5">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Children</span>
+        <div v-if="childSpans.length > 0" class="flex flex-col gap-1">
           <button
             v-for="child in childSpans"
             :key="child.spanId"
             type="button"
-            class="relation-link"
+            class="cursor-pointer rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-left text-sm text-emerald-600 transition hover:border-emerald-300 hover:text-emerald-700"
             @click="emit('select-span', child)"
           >
             {{ child.operationName || '(unnamed span)' }}
           </button>
         </div>
-        <span v-else class="relation-empty">No child spans</span>
+        <span v-else class="text-sm text-slate-500">No child spans</span>
       </div>
     </section>
 
-    <section class="details-section">
-      <h4>Attributes</h4>
-      <table v-if="sortedTags.length > 0" class="attribute-table">
+    <section class="flex flex-col gap-2 rounded-lg border border-slate-100 p-3">
+      <h4 class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">Attributes</h4>
+      <table v-if="sortedTags.length > 0" class="w-full border-collapse text-sm">
         <thead>
           <tr>
-            <th>Key</th>
-            <th>Value</th>
+            <th class="border-b border-slate-200 pb-1.5 text-left text-xs text-slate-500">Key</th>
+            <th class="border-b border-slate-200 pb-1.5 text-left text-xs text-slate-500">Value</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="([key, value]) in sortedTags" :key="key">
-            <td><code class="token-key">{{ key }}</code></td>
-            <td><code class="token-value">{{ value }}</code></td>
+            <td class="border-b border-slate-50 py-1.5 align-top">
+              <code class="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-500">{{ key }}</code>
+            </td>
+            <td class="border-b border-slate-50 py-1.5 align-top">
+              <code class="rounded-md bg-slate-50 px-1.5 py-0.5 font-mono text-xs text-slate-900">{{ value }}</code>
+            </td>
           </tr>
         </tbody>
       </table>
-      <p v-else class="empty-copy">No span attributes.</p>
+      <p v-else class="m-0 text-sm text-slate-500">No span attributes.</p>
     </section>
 
-    <section class="details-section">
-      <h4>Logs and events</h4>
-      <div v-if="sortedLogs.length > 0" class="event-timeline">
-        <article v-for="(log, index) in sortedLogs" :key="`${log.timestampUnixNano}-${index}`" class="event-row">
-          <div class="event-meta">
+    <section class="flex flex-col gap-2 rounded-lg border border-slate-100 p-3">
+      <h4 class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">Logs and events</h4>
+      <div v-if="sortedLogs.length > 0" class="flex flex-col gap-2">
+        <article v-for="(log, index) in sortedLogs" :key="`${log.timestampUnixNano}-${index}`" class="flex flex-col gap-2 rounded-lg border border-slate-100 p-2.5">
+          <div class="flex items-center justify-between gap-2 text-xs text-slate-500">
             <span>{{ formatTimestamp(log.timestampUnixNano) }}</span>
-            <code>{{ formatTraceOffset(log.timestampUnixNano) }}</code>
+            <code class="font-mono">{{ formatTraceOffset(log.timestampUnixNano) }}</code>
           </div>
-          <div v-if="formatLogFields(log).length > 0" class="event-fields">
+          <div v-if="formatLogFields(log).length > 0" class="flex flex-col gap-1">
             <div
               v-for="([fieldKey, fieldValue]) in formatLogFields(log)"
               :key="fieldKey"
-              class="event-field"
+              class="flex items-start gap-2"
             >
-              <code class="token-key">{{ fieldKey }}</code>
-              <code class="token-value">{{ fieldValue }}</code>
+              <code class="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-500">{{ fieldKey }}</code>
+              <code class="rounded-md bg-slate-50 px-1.5 py-0.5 font-mono text-xs text-slate-900">{{ fieldValue }}</code>
             </div>
           </div>
-          <p v-else class="empty-copy">No log fields</p>
+          <p v-else class="m-0 text-sm text-slate-500">No log fields</p>
         </article>
       </div>
-      <p v-else class="empty-copy">No logs or events for this span.</p>
+      <p v-else class="m-0 text-sm text-slate-500">No logs or events for this span.</p>
     </section>
   </aside>
 </template>
-
-<style>
-.trace-span-details {
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: rgba(12, 21, 33, 0.9);
-  padding: 0.85rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-width: 0;
-}
-
-.details-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.7rem;
-}
-
-.details-header h3 {
-  margin: 0;
-  font-size: 0.8rem;
-  color: var(--color-text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.span-title {
-  margin: 0.2rem 0 0;
-  font-size: 0.86rem;
-  color: var(--color-text-0);
-}
-
-.status-pill {
-  border-radius: 999px;
-  border: 1px solid rgba(99, 102, 241, 0.45);
-  background: rgba(16, 185, 129, 0.15);
-  color: #9bf5d2;
-  font-size: 0.69rem;
-  letter-spacing: 0.04em;
-  padding: 0.2rem 0.5rem;
-  text-transform: uppercase;
-}
-
-.status-pill.error {
-  border-color: rgba(248, 113, 113, 0.45);
-  background: rgba(248, 113, 113, 0.14);
-  color: #fecaca;
-}
-
-.action-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-}
-
-.action-button {
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: rgba(20, 31, 48, 0.78);
-  color: var(--color-text-1);
-  font-size: 0.74rem;
-  padding: 0.38rem 0.56rem;
-  cursor: pointer;
-}
-
-.action-button:hover {
-  border-color: rgba(245, 158, 11, 0.42);
-  color: #d5efff;
-}
-
-.feedback-message {
-  margin: -0.2rem 0 0;
-  font-size: 0.74rem;
-  color: #FCD34D;
-}
-
-.details-section {
-  border: 1px solid rgba(71, 85, 105, 0.4);
-  border-radius: 10px;
-  padding: 0.7rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.details-section h4 {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--color-text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.overview-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.45rem 0.75rem;
-}
-
-.overview-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-  color: var(--color-text-1);
-  font-size: 0.78rem;
-}
-
-.label {
-  font-size: 0.69rem;
-  color: var(--color-text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-code {
-  font-family: var(--font-family-mono);
-  word-break: break-all;
-}
-
-.relationships {
-  gap: 0.65rem;
-}
-
-.relation-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.child-link-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.relation-link {
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  border-radius: 8px;
-  background: rgba(8, 24, 38, 0.82);
-  color: #d5efff;
-  font-size: 0.76rem;
-  text-align: left;
-  padding: 0.34rem 0.48rem;
-  cursor: pointer;
-}
-
-.relation-link:hover {
-  border-color: rgba(252, 211, 77, 0.6);
-}
-
-.relation-empty,
-.empty-copy {
-  margin: 0;
-  font-size: 0.76rem;
-  color: var(--color-text-1);
-}
-
-.attribute-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.74rem;
-}
-
-.attribute-table th {
-  text-align: left;
-  color: var(--color-text-2);
-  border-bottom: 1px solid rgba(71, 85, 105, 0.5);
-  padding-bottom: 0.35rem;
-}
-
-.attribute-table td {
-  vertical-align: top;
-  padding: 0.35rem 0;
-  border-bottom: 1px solid rgba(71, 85, 105, 0.24);
-}
-
-.token-key {
-  color: #bae6fd;
-  background: rgba(217, 119, 6, 0.12);
-  border-radius: 6px;
-  padding: 0.12rem 0.3rem;
-}
-
-.token-value {
-  color: #cbd5e1;
-  background: rgba(71, 85, 105, 0.23);
-  border-radius: 6px;
-  padding: 0.12rem 0.3rem;
-}
-
-.event-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.event-row {
-  border: 1px solid rgba(71, 85, 105, 0.45);
-  border-radius: 8px;
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.event-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.72rem;
-  color: var(--color-text-1);
-}
-
-.event-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 0.32rem;
-}
-
-.event-field {
-  display: flex;
-  gap: 0.4rem;
-  align-items: flex-start;
-}
-
-@media (max-width: 820px) {
-  .overview-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

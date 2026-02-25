@@ -199,7 +199,6 @@ describe('DashboardDetailView', () => {
   it('should display loading state initially', () => {
     const wrapper = mount(DashboardDetailView)
 
-    expect(wrapper.find('.state-container').exists()).toBe(true)
     expect(wrapper.text()).toContain('Loading dashboard')
   })
 
@@ -207,20 +206,20 @@ describe('DashboardDetailView', () => {
     const wrapper = mount(DashboardDetailView)
     await flushPromises()
 
-    const backBtn = wrapper.find('.btn-back')
-    expect(backBtn.exists()).toBe(true)
+    const backBtn = wrapper.findAll('button').find((b) => b.attributes('title') === 'Back to Dashboards')
+    expect(backBtn).toBeDefined()
 
-    await backBtn.trigger('click')
-    expect(mockPush).toHaveBeenCalledWith('/app/dashboards')
+    await backBtn!.trigger('click')
+    expect(mockPush).toHaveBeenCalledWith('/dashboards')
   })
 
   it('should show Add Panel button', async () => {
     const wrapper = mount(DashboardDetailView)
     await flushPromises()
 
-    const addBtn = wrapper.find('.btn-primary')
-    expect(addBtn.exists()).toBe(true)
-    expect(addBtn.text()).toContain('Add Panel')
+    const addBtn = wrapper.findAll('button').find((b) => b.text().includes('Add Panel'))
+    expect(addBtn).toBeDefined()
+    expect(addBtn!.text()).toContain('Add Panel')
   })
 
   it('should hide dashboard permissions button from dashboard header', async () => {
@@ -241,7 +240,7 @@ describe('DashboardDetailView', () => {
     await flushPromises()
 
     await wrapper.get('[data-testid="dashboard-settings-button"]').trigger('click')
-    expect(mockPush).toHaveBeenCalledWith('/app/dashboards/test-dashboard-id/settings/general')
+    expect(mockPush).toHaveBeenCalledWith('/dashboards/test-dashboard-id/settings/general')
   })
 
   it('shows dashboard settings button for viewers and admins', async () => {
@@ -270,8 +269,8 @@ describe('DashboardDetailView', () => {
     const wrapper = mount(DashboardDetailView)
     await flushPromises()
 
-    const addBtn = wrapper.find('.btn-primary')
-    await addBtn.trigger('click')
+    const addBtn = wrapper.findAll('button').find((b) => b.text().includes('Add Panel'))
+    await addBtn!.trigger('click')
 
     expect(wrapper.findComponent({ name: 'PanelEditModal' }).exists()).toBe(true)
   })
@@ -290,7 +289,6 @@ describe('DashboardDetailView', () => {
     const wrapper = mount(DashboardDetailView)
     await flushPromises()
 
-    expect(wrapper.find('.state-container').exists()).toBe(true)
     expect(wrapper.text()).toContain('No panels yet')
   })
 
@@ -302,7 +300,7 @@ describe('DashboardDetailView', () => {
     panel.vm.$emit('open-trace', { datasourceId: 'ds-trace-1', traceId: 'trace-abc' })
     await flushPromises()
 
-    expect(mockPush).toHaveBeenCalledWith('/app/explore/traces')
+    expect(mockPush).toHaveBeenCalledWith('/explore/traces')
     expect(JSON.parse(localStorage.getItem('dashboard_trace_navigation') || '{}')).toEqual({
       datasourceId: 'ds-trace-1',
       traceId: 'trace-abc',

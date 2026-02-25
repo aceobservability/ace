@@ -84,7 +84,7 @@ describe('TraceSpanDetailsPanel', () => {
       },
     })
 
-    expect(wrapper.find('.trace-span-details').exists()).toBe(true)
+    expect(wrapper.find('aside[aria-label="Span details panel"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Span details')
     expect(wrapper.text()).toContain('SELECT orders')
     expect(wrapper.text()).toContain('Error')
@@ -106,7 +106,10 @@ describe('TraceSpanDetailsPanel', () => {
       },
     })
 
-    await childWrapper.find('.relation-link').trigger('click')
+    // The parent relation link is the button with emerald styling in the Relationships section
+    const parentButton = childWrapper.findAll('button').find((b) => b.text().includes('GET /api/orders'))
+    expect(parentButton).toBeTruthy()
+    await parentButton!.trigger('click')
     const parentEmit = childWrapper.emitted('select-span')
     expect(parentEmit).toBeTruthy()
     expect(parentEmit?.[0]?.[0]).toMatchObject({ spanId: 'span-root' })
@@ -119,7 +122,10 @@ describe('TraceSpanDetailsPanel', () => {
       },
     })
 
-    await rootWrapper.find('.child-link-list .relation-link').trigger('click')
+    // The child relation link is the button with the child span's operation name
+    const childButton = rootWrapper.findAll('button').find((b) => b.text().includes('SELECT orders'))
+    expect(childButton).toBeTruthy()
+    await childButton!.trigger('click')
     const childEmit = rootWrapper.emitted('select-span')
     expect(childEmit).toBeTruthy()
     expect(childEmit?.[0]?.[0]).toMatchObject({ spanId: 'span-child' })
@@ -136,10 +142,10 @@ describe('TraceSpanDetailsPanel', () => {
       },
     })
 
-    const actionButtons = wrapper.findAll('.action-button')
-    const copySpanButton = actionButtons.find((button) => button.text() === 'Copy span ID')
-    const copyTraceButton = actionButtons.find((button) => button.text() === 'Copy trace ID')
-    const exportButton = actionButtons.find((button) => button.text() === 'Export JSON')
+    const allButtons = wrapper.findAll('button')
+    const copySpanButton = allButtons.find((button) => button.text() === 'Copy span ID')
+    const copyTraceButton = allButtons.find((button) => button.text() === 'Copy trace ID')
+    const exportButton = allButtons.find((button) => button.text() === 'Export JSON')
 
     expect(copySpanButton).toBeTruthy()
     expect(copyTraceButton).toBeTruthy()
@@ -171,9 +177,9 @@ describe('TraceSpanDetailsPanel', () => {
       },
     })
 
-    const actionButtons = wrapper.findAll('.action-button')
-    const openLogsButton = actionButtons.find((button) => button.text() === 'View Logs')
-    const openMetricsButton = actionButtons.find((button) => button.text() === 'View Service Metrics')
+    const allButtons = wrapper.findAll('button')
+    const openLogsButton = allButtons.find((button) => button.text() === 'View Logs')
+    const openMetricsButton = allButtons.find((button) => button.text() === 'View Service Metrics')
 
     expect(openLogsButton).toBeTruthy()
     expect(openMetricsButton).toBeTruthy()

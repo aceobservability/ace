@@ -67,11 +67,11 @@ function formatValue(value: number): string {
 // Get the color based on thresholds
 function getValueColor(): string {
   if (!props.thresholds || props.thresholds.length === 0) {
-    return '#f5f5f5' // Default text color
+    return '#0f172a' // Default text color (slate-900)
   }
 
   const sortedThresholds = [...props.thresholds].sort((a, b) => a.value - b.value)
-  let color = '#f5f5f5' // Default
+  let color = '#0f172a' // Default (slate-900)
 
   for (const threshold of sortedThresholds) {
     if (props.value >= threshold.value) {
@@ -206,118 +206,47 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="stat-panel"
+    class="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg p-4"
     :style="{
       height: typeof height === 'number' ? `${height}px` : height,
       backgroundColor: backgroundColor,
     }"
   >
-    <div class="stat-content">
-      <div class="stat-value" :style="{ color: valueColor }">
+    <div class="z-10 flex flex-col items-center gap-1">
+      <div class="text-center text-3xl font-bold leading-tight" :style="{ color: valueColor }">
         {{ formattedValue }}
+        <span v-if="unit" class="ml-1 text-lg font-medium text-slate-400">{{ unit }}</span>
       </div>
 
-      <div v-if="label" class="stat-label">
+      <div v-if="label" class="mt-1 max-w-full truncate text-sm text-slate-500">
         {{ label }}
       </div>
 
-      <div v-if="showTrend && trend !== 'neutral'" class="stat-trend" :class="`trend-${trend}`">
+      <div
+        v-if="showTrend && trend !== 'neutral'"
+        class="mt-1 flex items-center gap-1 text-xs font-medium"
+        :class="{
+          'text-emerald-600': trend === 'up',
+          'text-rose-500': trend === 'down',
+          'text-slate-400': trend === 'neutral',
+        }"
+      >
         <TrendingUp v-if="trend === 'up'" :size="16" />
         <TrendingDown v-if="trend === 'down'" :size="16" />
-        <Minus v-if="(trend as string) === 'neutral'" :size="16" />
-        <span v-if="trendPercentage" class="trend-value">
+        <Minus v-if="trend === 'neutral'" :size="16" />
+        <span v-if="trendPercentage" class="tabular-nums">
           {{ trend === 'up' ? '+' : '' }}{{ trendPercentage }}%
         </span>
       </div>
     </div>
 
-    <div v-if="showSparkline && hasSparklineData" class="stat-sparkline">
+    <div v-if="showSparkline && hasSparklineData" class="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 opacity-50">
       <VChart
         ref="chartRef"
         :option="sparklineOption"
         :autoresize="true"
-        class="sparkline-chart"
+        class="h-full w-full"
       />
     </div>
   </div>
 </template>
-
-<style>
-.stat-panel {
-  width: 100%;
-  min-height: 100px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
-  border-radius: 8px;
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  z-index: 1;
-}
-
-.stat-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  line-height: 1.1;
-  text-align: center;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: var(--color-text-1);
-  text-align: center;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.stat-trend {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  margin-top: 0.25rem;
-}
-
-.trend-up {
-  color: #4ecdc4;
-}
-
-.trend-down {
-  color: #ff6b6b;
-}
-
-.trend-neutral {
-  color: var(--color-text-2);
-}
-
-.trend-value {
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-sparkline {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 40%;
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.sparkline-chart {
-  width: 100%;
-  height: 100%;
-}
-</style>

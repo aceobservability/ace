@@ -15,14 +15,17 @@ const sidebarWidth = computed(() => {
 })
 
 const showSidebar = computed(() => {
-  return isAuthenticated.value && route.meta.appLayout === 'app'
+  return isAuthenticated.value && route.meta.layout === 'app'
 })
 </script>
 
 <template>
-  <div class="flex min-h-screen w-full relative" :class="{ '!block': !showSidebar }">
+  <div class="relative flex min-h-screen w-full" :class="{ 'block': !showSidebar }">
     <Sidebar v-if="showSidebar" ref="sidebarRef" />
-    <main class="flex-1 min-h-screen bg-transparent transition-[margin-left] duration-[0.24s] ease" :style="showSidebar ? { marginLeft: sidebarWidth } : { marginLeft: '0' }">
+    <main
+      class="min-h-screen flex-1 bg-slate-50 transition-[margin-left] duration-200 ease-out"
+      :style="showSidebar ? { marginLeft: sidebarWidth } : {}"
+    >
       <RouterView />
     </main>
     <CookieConsentBanner />

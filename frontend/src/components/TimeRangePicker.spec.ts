@@ -3,6 +3,37 @@ import { mount } from '@vue/test-utils'
 import TimeRangePicker from './TimeRangePicker.vue'
 import { useTimeRange } from '../composables/useTimeRange'
 
+/** Find the time-display toggle button (contains Clock icon + display text). */
+function findTimeDisplay(wrapper: ReturnType<typeof mount>) {
+  // It's the first button inside the .time-range-picker
+  return wrapper.find('.time-range-picker button')
+}
+
+/** Find the refresh button (has RefreshCw, title starts with "Last refresh"). */
+function findRefreshBtn(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find(b => b.attributes('title')?.startsWith('Last refresh'))!
+}
+
+/** Find the dropdown (absolute-positioned div that appears when isOpen is true). */
+function findDropdown(wrapper: ReturnType<typeof mount>) {
+  return wrapper.find('.absolute')
+}
+
+/** Find all preset buttons inside dropdown (the full-width buttons with preset text). */
+function findPresetItems(wrapper: ReturnType<typeof mount>) {
+  // Presets are buttons with text like "Last ..." inside the dropdown
+  const dropdown = findDropdown(wrapper)
+  if (!dropdown.exists()) return []
+  return dropdown.findAll('button').filter(b => b.text().startsWith('Last '))
+}
+
+/** Find the "Custom range..." button. */
+function findCustomRangeBtn(wrapper: ReturnType<typeof mount>) {
+  const dropdown = findDropdown(wrapper)
+  if (!dropdown.exists()) return undefined
+  return dropdown.findAll('button').find(b => b.text().includes('Custom range'))
+}
+
 describe('TimeRangePicker', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -22,20 +53,20 @@ describe('TimeRangePicker', () => {
   it('should render with default time range display', () => {
     const wrapper = mount(TimeRangePicker)
 
-    expect(wrapper.find('.time-display').exists()).toBe(true)
-    expect(wrapper.find('.display-text').text()).toBe('Last 1 hour')
+    expect(findTimeDisplay(wrapper).exists()).toBe(true)
+    expect(wrapper.find('.font-mono.text-xs').text()).toBe('Last 1 hour')
   })
 
   it('should render refresh button', () => {
     const wrapper = mount(TimeRangePicker)
 
-    expect(wrapper.find('.refresh-btn').exists()).toBe(true)
+    expect(findRefreshBtn(wrapper).exists()).toBe(true)
   })
 
   it('should render refresh interval selector', () => {
     const wrapper = mount(TimeRangePicker)
 
-    const select = wrapper.find('.refresh-interval-selector select')
+    const select = wrapper.find('select')
     expect(select.exists()).toBe(true)
 
     const options = select.findAll('option')
@@ -45,22 +76,22 @@ describe('TimeRangePicker', () => {
   it('should toggle dropdown when clicking time display', async () => {
     const wrapper = mount(TimeRangePicker)
 
-    expect(wrapper.find('.dropdown').exists()).toBe(false)
+    expect(findDropdown(wrapper).exists()).toBe(false)
 
-    await wrapper.find('.time-display').trigger('click')
-    expect(wrapper.find('.dropdown').exists()).toBe(true)
+    await findTimeDisplay(wrapper).trigger('click')
+    expect(findDropdown(wrapper).exists()).toBe(true)
 
-    await wrapper.find('.time-display').trigger('click')
-    expect(wrapper.find('.dropdown').exists()).toBe(false)
+    await findTimeDisplay(wrapper).trigger('click')
+    expect(findDropdown(wrapper).exists()).toBe(false)
   })
 
   it('should display preset options in dropdown', async () => {
     const wrapper = mount(TimeRangePicker)
 
-    await wrapper.find('.time-display').trigger('click')
+    await findTimeDisplay(wrapper).trigger('click')
 
-    const presetItems = wrapper.findAll('.preset-item')
-    // 7 presets + 1 custom range button
+    const presetItems = findPresetItems(wrapper)
+    // 7 presets
     expect(presetItems.length).toBeGreaterThanOrEqual(7)
 
     expect(wrapper.text()).toContain('Last 5 minutes')
@@ -75,10 +106,10 @@ describe('TimeRangePicker', () => {
   it('should select preset and close dropdown', async () => {
     const wrapper = mount(TimeRangePicker)
 
-    await wrapper.find('.time-display').trigger('click')
+    await findTimeDisplay(wrapper).trigger('click')
 
     // Find and click '5 minutes' preset
-    const presetButtons = wrapper.findAll('.preset-item')
+    const presetButtons = findPresetItems(wrapper)
     const fiveMinButton = presetButtons.find(btn => btn.text() === 'Last 5 minutes')
     expect(fiveMinButton).toBeDefined()
     if (!fiveMinButton) {
@@ -88,24 +119,23 @@ describe('TimeRangePicker', () => {
     await fiveMinButton.trigger('click')
 
     // Dropdown should close
-    expect(wrapper.find('.dropdown').exists()).toBe(false)
+    expect(findDropdown(wrapper).exists()).toBe(false)
 
     // Display should update
-    expect(wrapper.find('.display-text').text()).toBe('Last 5 minutes')
+    expect(wrapper.find('.font-mono.text-xs').text()).toBe('Last 5 minutes')
   })
 
   it('should show custom range form when clicking custom range option', async () => {
     const wrapper = mount(TimeRangePicker)
 
-    await wrapper.find('.time-display').trigger('click')
+    await findTimeDisplay(wrapper).trigger('click')
 
-    const customRangeBtn = wrapper.find('.custom-range-btn')
-    expect(customRangeBtn.exists()).toBe(true)
+    const customRangeBtn = findCustomRangeBtn(wrapper)
+    expect(customRangeBtn).toBeDefined()
 
-    await customRangeBtn.trigger('click')
+    await customRangeBtn!.trigger('click')
 
     // Should show custom range form
-    expect(wrapper.find('.custom-range-form').exists()).toBe(true)
     expect(wrapper.find('#custom-from').exists()).toBe(true)
     expect(wrapper.find('#custom-to').exists()).toBe(true)
   })
@@ -113,8 +143,8 @@ describe('TimeRangePicker', () => {
   it('should apply custom range', async () => {
     const wrapper = mount(TimeRangePicker)
 
-    await wrapper.find('.time-display').trigger('click')
-    await wrapper.find('.custom-range-btn').trigger('click')
+    await findTimeDisplay(wrapper).trigger('click')
+    await findCustomRangeBtn(wrapper)!.trigger('click')
 
     // Set custom dates
     const fromInput = wrapper.find('#custom-from')
@@ -123,57 +153,60 @@ describe('TimeRangePicker', () => {
     await fromInput.setValue('2026-02-01T10:00')
     await toInput.setValue('2026-02-02T14:00')
 
-    // Click apply
-    await wrapper.find('.btn.btn-primary').trigger('click')
+    // Click apply (the emerald-colored button)
+    const applyBtn = wrapper.findAll('button').find(b => b.text() === 'Apply')!
+    await applyBtn.trigger('click')
 
     // Dropdown should close
-    expect(wrapper.find('.dropdown').exists()).toBe(false)
+    expect(findDropdown(wrapper).exists()).toBe(false)
 
     // Display should show custom range
-    expect(wrapper.find('.display-text').text()).toContain('2026-02-01')
-    expect(wrapper.find('.display-text').text()).toContain('2026-02-02')
+    expect(wrapper.find('.font-mono.text-xs').text()).toContain('2026-02-01')
+    expect(wrapper.find('.font-mono.text-xs').text()).toContain('2026-02-02')
   })
 
   it('should show error when start time is after end time', async () => {
     const wrapper = mount(TimeRangePicker)
 
-    await wrapper.find('.time-display').trigger('click')
-    await wrapper.find('.custom-range-btn').trigger('click')
+    await findTimeDisplay(wrapper).trigger('click')
+    await findCustomRangeBtn(wrapper)!.trigger('click')
 
     // Set invalid dates (start after end)
     await wrapper.find('#custom-from').setValue('2026-02-02T14:00')
     await wrapper.find('#custom-to').setValue('2026-02-01T10:00')
 
     // Click apply
-    await wrapper.find('.btn.btn-primary').trigger('click')
+    const applyBtn = wrapper.findAll('button').find(b => b.text() === 'Apply')!
+    await applyBtn.trigger('click')
 
     // Should show error
-    expect(wrapper.find('.error-message').exists()).toBe(true)
-    expect(wrapper.find('.error-message').text()).toContain('Start time must be before end time')
+    expect(wrapper.find('.text-red-600').exists()).toBe(true)
+    expect(wrapper.find('.text-red-600').text()).toContain('Start time must be before end time')
 
     // Dropdown should still be open
-    expect(wrapper.find('.dropdown').exists()).toBe(true)
+    expect(findDropdown(wrapper).exists()).toBe(true)
   })
 
   it('should cancel custom range and go back to presets', async () => {
     const wrapper = mount(TimeRangePicker)
 
-    await wrapper.find('.time-display').trigger('click')
-    await wrapper.find('.custom-range-btn').trigger('click')
+    await findTimeDisplay(wrapper).trigger('click')
+    await findCustomRangeBtn(wrapper)!.trigger('click')
 
-    expect(wrapper.find('.custom-range-form').exists()).toBe(true)
+    expect(wrapper.find('#custom-from').exists()).toBe(true)
 
-    await wrapper.find('.btn.btn-secondary').trigger('click')
+    const cancelBtn = wrapper.findAll('button').find(b => b.text() === 'Cancel')!
+    await cancelBtn.trigger('click')
 
     // Should go back to presets
-    expect(wrapper.find('.custom-range-form').exists()).toBe(false)
-    expect(wrapper.find('.preset-list').exists()).toBe(true)
+    expect(wrapper.find('#custom-from').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Quick ranges')
   })
 
   it('should change refresh interval', async () => {
     const wrapper = mount(TimeRangePicker)
 
-    const select = wrapper.find('.refresh-interval-selector select')
+    const select = wrapper.find('select')
 
     await select.setValue('5s')
 
@@ -189,11 +222,13 @@ describe('TimeRangePicker', () => {
     setPreset('5m')
     await wrapper.vm.$nextTick()
 
-    await wrapper.find('.time-display').trigger('click')
+    await findTimeDisplay(wrapper).trigger('click')
 
-    const selectedItem = wrapper.find('.preset-item.selected')
-    expect(selectedItem.exists()).toBe(true)
-    expect(selectedItem.text()).toBe('Last 5 minutes')
+    const selectedItem = wrapper.findAll('button').find(b =>
+      b.text() === 'Last 5 minutes' && b.classes().includes('bg-emerald-50')
+    )
+    expect(selectedItem).toBeDefined()
+    expect(selectedItem!.text()).toBe('Last 5 minutes')
   })
 
   it('should call refresh when clicking refresh button', async () => {
@@ -203,7 +238,7 @@ describe('TimeRangePicker', () => {
     const callback = vi.fn()
     onRefresh(callback)
 
-    await wrapper.find('.refresh-btn').trigger('click')
+    await findRefreshBtn(wrapper).trigger('click')
 
     expect(callback).toHaveBeenCalled()
   })
@@ -212,24 +247,28 @@ describe('TimeRangePicker', () => {
     const wrapper = mount(TimeRangePicker)
 
     // Enable auto-refresh
-    const select = wrapper.find('.refresh-interval-selector select')
+    const select = wrapper.find('select')
     await select.setValue('5s')
 
-    // Should show refresh status
-    expect(wrapper.find('.refresh-status').exists()).toBe(true)
+    // Should show refresh status text (the span with refresh timing info)
+    expect(wrapper.text()).toMatch(/Refreshing|ago|just now/)
   })
 
   it('should not show refresh status when auto-refresh is off', () => {
     const wrapper = mount(TimeRangePicker)
 
-    // Auto-refresh is off by default
-    expect(wrapper.find('.refresh-status').exists()).toBe(false)
+    // Auto-refresh is off by default; the refresh status span should not exist
+    // The span with "Refreshing..." or "Xm ago" only appears when refreshIntervalValue !== 'off'
+    const statusTexts = wrapper.findAll('span').filter(s =>
+      s.text().includes('Refreshing') || s.text().match(/\d+[smh] ago/)
+    )
+    expect(statusTexts.length).toBe(0)
   })
 
   it('should show last refresh time in refresh button title', async () => {
     const wrapper = mount(TimeRangePicker)
 
-    const refreshBtn = wrapper.find('.refresh-btn')
+    const refreshBtn = findRefreshBtn(wrapper)
     const title = refreshBtn.attributes('title')
 
     expect(title).toContain('Last refresh')
@@ -247,8 +286,7 @@ describe('TimeRangePicker', () => {
     vi.advanceTimersByTime(5000)
     await wrapper.vm.$nextTick()
 
-    // The refresh button should have the refreshing class during refresh
-    // Since refresh is async, we check that the component handles it
-    expect(wrapper.find('.refresh-btn').exists()).toBe(true)
+    // The refresh button should still exist
+    expect(findRefreshBtn(wrapper).exists()).toBe(true)
   })
 })

@@ -36,8 +36,8 @@ const timeRange = computed(() => {
     return { min: 0, max: 0, width: 1 }
   }
 
-  let min = props.traces[0]!.startTimeUnixNano
-  let max = props.traces[0]!.startTimeUnixNano
+  let min = props.traces[0].startTimeUnixNano
+  let max = props.traces[0].startTimeUnixNano
 
   for (const trace of props.traces) {
     if (trace.startTimeUnixNano < min) {
@@ -78,7 +78,7 @@ const matrix = computed(() => {
   for (const trace of props.traces) {
     const durationIdx = durationBucketIndex(trace.durationNano)
     const timeIdx = timeBucketIndex(trace.startTimeUnixNano)
-    rows[durationIdx]![timeIdx]! += 1
+    rows[durationIdx][timeIdx] += 1
   }
 
   return rows
@@ -101,8 +101,8 @@ const heatmapRows = computed(() => {
 
   for (let i = durationBuckets.length - 1; i >= 0; i -= 1) {
     rows.push({
-      label: durationBuckets[i]!.label,
-      cells: matrix.value[i]!,
+      label: durationBuckets[i].label,
+      cells: matrix.value[i],
     })
   }
 
@@ -134,6 +134,12 @@ function cellIntensity(count: number): number {
   return count / maxCellCount.value
 }
 
+function cellBg(count: number): string {
+  const intensity = cellIntensity(count)
+  const alpha = 0.06 + intensity * 0.7
+  return `rgba(16, 185, 129, ${alpha})`
+}
+
 function cellTitle(rowLabel: string, cellIndex: number, count: number): string {
   if (count === 0) {
     return `${rowLabel}, bucket ${cellIndex + 1}: no traces`
@@ -160,149 +166,38 @@ function openTrace(traceId: string) {
 </script>
 
 <template>
-  <div class="trace-heatmap-panel">
-    <div class="heatmap-layout">
-      <div class="duration-axis">
-        <span v-for="row in heatmapRows" :key="row.label" class="duration-label">{{ row.label }}</span>
+  <div class="flex h-full flex-col gap-2.5 rounded-xl border border-slate-200 bg-white p-4">
+    <div class="grid min-h-[150px] grid-cols-[auto_1fr] gap-2">
+      <div class="grid grid-rows-[repeat(8,1fr)] gap-[3px]">
+        <span v-for="row in heatmapRows" :key="row.label" class="flex items-center justify-end whitespace-nowrap text-[0.65rem] text-slate-400">{{ row.label }}</span>
       </div>
-      <div class="heatmap-grid">
-        <div v-for="row in heatmapRows" :key="row.label" class="heatmap-row">
+      <div class="grid grid-rows-[repeat(8,1fr)] gap-[3px]">
+        <div v-for="row in heatmapRows" :key="row.label" class="grid grid-cols-[repeat(12,1fr)] gap-[3px]">
           <div
             v-for="(count, cellIndex) in row.cells"
             :key="`${row.label}-${cellIndex}`"
-            class="heatmap-cell"
-            :style="{ '--cell-intensity': String(cellIntensity(count)) }"
+            class="min-h-4 rounded border border-emerald-200/30"
+            :style="{ backgroundColor: cellBg(count) }"
             :title="cellTitle(row.label, cellIndex, count)"
           ></div>
         </div>
       </div>
     </div>
 
-    <div class="time-axis">
+    <div class="ml-[calc(3.9rem+0.45rem)] flex justify-between text-[0.65rem] text-slate-400">
       <span v-for="(label, index) in timeLabels" :key="`${label}-${index}`">{{ label }}</span>
     </div>
 
-    <div class="recent-traces">
-      <h4>Recent traces</h4>
-      <ul>
+    <div class="border-t border-slate-100 pt-2">
+      <h4 class="m-0 mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Recent traces</h4>
+      <ul class="m-0 grid list-none grid-cols-2 gap-x-2.5 gap-y-1.5 p-0">
         <li v-for="trace in recentTraces" :key="trace.traceId">
-          <button type="button" class="trace-link" @click="openTrace(trace.traceId)">
-            <span class="trace-id">{{ trace.traceId }}</span>
-            <span class="trace-duration">{{ formatDuration(trace.durationNano) }}</span>
+          <button type="button" class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-none bg-emerald-50 px-2.5 py-1.5 transition hover:bg-emerald-100" @click="openTrace(trace.traceId)">
+            <span class="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-slate-900">{{ trace.traceId }}</span>
+            <span class="text-xs text-slate-500">{{ formatDuration(trace.durationNano) }}</span>
           </button>
         </li>
       </ul>
     </div>
   </div>
 </template>
-
-<style>
-.trace-heatmap-panel {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.heatmap-layout {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.45rem;
-  min-height: 150px;
-}
-
-.duration-axis {
-  display: grid;
-  grid-template-rows: repeat(8, 1fr);
-  gap: 3px;
-}
-
-.duration-label {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  color: var(--color-text-2);
-  font-size: 0.65rem;
-  white-space: nowrap;
-}
-
-.heatmap-grid {
-  display: grid;
-  grid-template-rows: repeat(8, 1fr);
-  gap: 3px;
-}
-
-.heatmap-row {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 3px;
-}
-
-.heatmap-cell {
-  min-height: 16px;
-  border-radius: 4px;
-  border: 1px solid rgba(252, 211, 77, 0.12);
-  background: rgba(245, 158, 11, calc(0.08 + var(--cell-intensity) * 0.75));
-}
-
-.time-axis {
-  display: flex;
-  justify-content: space-between;
-  color: var(--color-text-2);
-  font-size: 0.65rem;
-  margin-left: calc(3.9rem + 0.45rem);
-}
-
-.recent-traces {
-  border-top: 1px solid rgba(113, 145, 176, 0.2);
-  padding-top: 0.5rem;
-}
-
-.recent-traces h4 {
-  margin: 0 0 0.4rem;
-  font-size: 0.72rem;
-  color: var(--color-text-1);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.recent-traces ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.35rem 0.6rem;
-}
-
-.trace-link {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  border: none;
-  background: rgba(245, 158, 11, 0.08);
-  border-radius: 6px;
-  padding: 0.35rem 0.5rem;
-  cursor: pointer;
-}
-
-.trace-link:hover {
-  background: rgba(245, 158, 11, 0.16);
-}
-
-.trace-id {
-  font-family: var(--font-family-mono);
-  font-size: 0.68rem;
-  color: var(--color-text-0);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.trace-duration {
-  color: var(--color-text-1);
-  font-size: 0.68rem;
-}
-</style>

@@ -186,6 +186,21 @@ function nodeRadius(node: TraceServiceGraphNode): number {
   return 14 + ratio * 17
 }
 
+function nodeColor(node: TraceServiceGraphNode): string {
+  return node.errorRate >= 0.25 ? '#e11d48' : '#10b981'
+}
+
+function nodeStroke(node: TraceServiceGraphNode, isSelected: boolean): string {
+  if (isSelected) {
+    return '#059669'
+  }
+  return node.errorRate >= 0.25 ? '#fda4af' : '#a7f3d0'
+}
+
+function nodeStrokeWidth(isSelected: boolean): number {
+  return isSelected ? 2.5 : 1.5
+}
+
 function formatDurationNano(durationNano: number): string {
   if (durationNano >= 1_000_000_000) {
     return `${(durationNano / 1_000_000_000).toFixed(durationNano >= 10_000_000_000 ? 1 : 2)}s`
@@ -213,40 +228,40 @@ function handleSelectEdge(edge: PositionedEdge) {
 </script>
 
 <template>
-  <div class="service-graph">
-    <div class="graph-controls">
-      <label class="control-item">
+  <div class="flex flex-col gap-2.5 rounded-xl border border-slate-200 bg-white p-4">
+    <div class="flex flex-wrap gap-2.5">
+      <label class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-500 max-sm:w-full max-sm:justify-between">
         <span>Zoom</span>
-        <input v-model.number="zoomPercent" type="range" min="80" max="180" step="5" />
-        <strong>{{ zoomPercent }}%</strong>
+        <input v-model.number="zoomPercent" type="range" min="80" max="180" step="5" class="w-28 max-sm:w-30" />
+        <strong class="min-w-[2.4rem] text-right text-xs font-semibold text-slate-900">{{ zoomPercent }}%</strong>
       </label>
 
-      <label class="control-item">
+      <label class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-500 max-sm:w-full max-sm:justify-between">
         <span>Pan X</span>
-        <input v-model.number="panX" type="range" min="-220" max="220" step="10" />
-        <strong>{{ panX }}</strong>
+        <input v-model.number="panX" type="range" min="-220" max="220" step="10" class="w-28 max-sm:w-30" />
+        <strong class="min-w-[2.4rem] text-right text-xs font-semibold text-slate-900">{{ panX }}</strong>
       </label>
 
-      <label class="control-item">
+      <label class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-500 max-sm:w-full max-sm:justify-between">
         <span>Pan Y</span>
-        <input v-model.number="panY" type="range" min="-140" max="140" step="10" />
-        <strong>{{ panY }}</strong>
+        <input v-model.number="panY" type="range" min="-140" max="140" step="10" class="w-28 max-sm:w-30" />
+        <strong class="min-w-[2.4rem] text-right text-xs font-semibold text-slate-900">{{ panY }}</strong>
       </label>
     </div>
 
-    <div class="graph-summary">
-      <span>{{ graph.nodes.length }} services</span>
-      <span>{{ graph.edges.length }} dependencies</span>
-      <span>{{ graph.totalRequests }} spans</span>
-      <span>{{ graph.totalErrorCount }} errors</span>
+    <div class="flex flex-wrap gap-2">
+      <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-500">{{ graph.nodes.length }} services</span>
+      <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-500">{{ graph.edges.length }} dependencies</span>
+      <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-500">{{ graph.totalRequests }} spans</span>
+      <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-500">{{ graph.totalErrorCount }} errors</span>
     </div>
 
-    <div class="graph-shell">
+    <div class="overflow-auto rounded-lg border border-slate-200 bg-slate-50">
       <svg
         :width="graphWidth"
         :height="graphHeight"
         viewBox="0 0 940 340"
-        class="graph-svg"
+        class="block"
         role="img"
         aria-label="Service dependency graph"
       >
@@ -269,192 +284,53 @@ function handleSelectEdge(edge: PositionedEdge) {
             v-for="edge in positionedEdges"
             :key="edge.key"
             :d="edgePath(edge)"
-            class="edge-path"
-            :class="{ selected: selectedEdgeKey === edge.key }"
+            fill="none"
+            class="cursor-pointer transition-opacity"
             :style="{
               stroke: edgeColor(edge),
               strokeWidth: edgeWidth(edge),
+              strokeOpacity: selectedEdgeKey === edge.key ? 1 : 0.84,
+              filter: selectedEdgeKey === edge.key ? 'drop-shadow(0 0 4px rgba(16, 185, 129, 0.4))' : 'none',
             }"
             marker-end="url(#service-graph-arrow)"
             @click="handleSelectEdge(edge)"
           />
 
-          <g v-for="node in positionedNodes" :key="node.serviceName" class="node-group" @click="handleSelectService(node.serviceName)">
+          <g v-for="node in positionedNodes" :key="node.serviceName" class="cursor-pointer" @click="handleSelectService(node.serviceName)">
             <circle
               :cx="node.x"
               :cy="node.y"
               :r="nodeRadius(node)"
-              class="node-circle"
-              :class="{ selected: selectedService === node.serviceName }"
-              :style="{ fill: node.errorRate >= 0.25 ? '#9f1239' : '#0f172a' }"
+              :style="{
+                fill: nodeColor(node),
+                stroke: nodeStroke(node, selectedService === node.serviceName),
+                strokeWidth: nodeStrokeWidth(selectedService === node.serviceName),
+              }"
+              class="transition-[stroke]"
             />
-            <text :x="node.x" :y="node.y - 2" class="node-label" text-anchor="middle">{{ node.serviceName }}</text>
-            <text :x="node.x" :y="node.y + 11" class="node-sub" text-anchor="middle">{{ node.requestCount }} req</text>
+            <text :x="node.x" :y="node.y - 2" class="pointer-events-none fill-slate-900 text-[11px] font-bold" text-anchor="middle">{{ node.serviceName }}</text>
+            <text :x="node.x" :y="node.y + 11" class="pointer-events-none fill-slate-500 text-[9px]" text-anchor="middle">{{ node.requestCount }} req</text>
           </g>
         </g>
       </svg>
     </div>
 
-    <div class="graph-inspector">
-      <p v-if="selectedService">
-        <strong>{{ selectedService }}</strong>
+    <div class="border-t border-slate-200 pt-2 text-xs text-slate-500">
+      <p v-if="selectedService" class="m-0 flex flex-wrap gap-1.5">
+        <strong class="text-slate-900">{{ selectedService }}</strong>
         <span>
           {{ nodeByService.get(selectedService)?.requestCount }} spans, error rate
           {{ Math.round((nodeByService.get(selectedService)?.errorRate || 0) * 100) }}%, avg
           {{ formatDurationNano(nodeByService.get(selectedService)?.averageDurationNano || 0) }}
         </span>
       </p>
-      <p v-else-if="selectedEdgeKey">
-        <strong>{{ selectedEdgeKey }}</strong>
+      <p v-else-if="selectedEdgeKey" class="m-0 flex flex-wrap gap-1.5">
+        <strong class="text-slate-900">{{ selectedEdgeKey }}</strong>
         <span>Dependency selected. Trace search filtered to the target service.</span>
       </p>
-      <p v-else>
+      <p v-else class="m-0 flex flex-wrap gap-1.5">
         <span>Select a node to filter traces by service, or select an edge to filter by downstream service.</span>
       </p>
     </div>
   </div>
 </template>
-
-<style>
-.service-graph {
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: rgba(8, 14, 24, 0.88);
-  padding: 0.7rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.graph-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.control-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.72rem;
-  color: var(--color-text-1);
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.8);
-  padding: 0.25rem 0.5rem;
-}
-
-.control-item input {
-  width: 110px;
-}
-
-.control-item strong {
-  font-size: 0.7rem;
-  color: var(--color-text-0);
-  min-width: 2.4rem;
-  text-align: right;
-}
-
-.graph-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-}
-
-.graph-summary span {
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  padding: 0.22rem 0.48rem;
-  background: rgba(15, 24, 39, 0.78);
-  color: var(--color-text-1);
-  font-size: 0.72rem;
-}
-
-.graph-shell {
-  overflow: auto;
-  border: 1px solid rgba(71, 85, 105, 0.45);
-  border-radius: 10px;
-  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.55), rgba(2, 6, 23, 0.9));
-}
-
-.graph-svg {
-  display: block;
-}
-
-.edge-path {
-  fill: none;
-  stroke-opacity: 0.84;
-  cursor: pointer;
-  transition: stroke-opacity 0.15s ease;
-}
-
-.edge-path:hover {
-  stroke-opacity: 1;
-}
-
-.edge-path.selected {
-  stroke-opacity: 1;
-  filter: drop-shadow(0 0 4px rgba(226, 232, 240, 0.45));
-}
-
-.node-group {
-  cursor: pointer;
-}
-
-.node-circle {
-  stroke: rgba(148, 163, 184, 0.7);
-  stroke-width: 1.5;
-  transition: transform 0.15s ease, stroke 0.15s ease;
-}
-
-.node-circle.selected {
-  stroke: #F59E0B;
-  stroke-width: 2.4;
-}
-
-.node-group:hover .node-circle {
-  stroke: rgba(226, 232, 240, 0.9);
-}
-
-.node-label {
-  pointer-events: none;
-  fill: #dbeafe;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.node-sub {
-  pointer-events: none;
-  fill: #94a3b8;
-  font-size: 9px;
-}
-
-.graph-inspector {
-  border-top: 1px solid rgba(71, 85, 105, 0.55);
-  padding-top: 0.45rem;
-  color: var(--color-text-1);
-  font-size: 0.75rem;
-}
-
-.graph-inspector p {
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.graph-inspector strong {
-  color: var(--color-text-0);
-}
-
-@media (max-width: 900px) {
-  .control-item {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .control-item input {
-    width: 120px;
-  }
-}
-</style>

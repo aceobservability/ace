@@ -40,7 +40,7 @@ describe('GaugeChart', () => {
     const wrapper = mount(GaugeChart, {
       props: { value: 75 },
     })
-    expect(wrapper.find('.gauge-chart').exists()).toBe(true)
+    expect(wrapper.find('.h-full.w-full').exists()).toBe(true)
   })
 
   it('passes value to ECharts', () => {
@@ -84,14 +84,14 @@ describe('GaugeChart', () => {
     const wrapper = mount(GaugeChart, {
       props: { value: 75, height: 300 },
     })
-    expect(wrapper.find('.gauge-chart').attributes('style')).toContain('height: 300px')
+    expect(wrapper.find('.h-full.w-full').attributes('style')).toContain('height: 300px')
   })
 
   it('applies default height when not provided', () => {
     const wrapper = mount(GaugeChart, {
       props: { value: 75 },
     })
-    expect(wrapper.find('.gauge-chart').attributes('style')).toContain('height: 100%')
+    expect(wrapper.find('.h-full.w-full').attributes('style')).toContain('height: 100%')
   })
 
   it('includes title when provided', () => {
@@ -146,7 +146,7 @@ describe('GaugeChart', () => {
     const option = JSON.parse(chart.attributes('data-option') || '{}')
 
     // Should use default color
-    expect(option.series[0].itemStyle.color).toBe('#38bdf8')
+    expect(option.series[0].itemStyle.color).toBe('#059669')
   })
 
   it('shows value above threshold in correct color', () => {
@@ -176,7 +176,7 @@ describe('GaugeChart', () => {
     const option = JSON.parse(chart.attributes('data-option') || '{}')
 
     // Value 30 is below all thresholds, so should be default green
-    expect(option.series[0].itemStyle.color).toBe('#34d399')
+    expect(option.series[0].itemStyle.color).toBe('#059669')
   })
 
   it('handles large values with K suffix', () => {

@@ -71,99 +71,43 @@ function getValue(seriesIndex: number, timestamp: number): number | undefined {
 
 <template>
   <div
-    class="table-panel"
+    class="h-full overflow-auto rounded-xl border border-slate-200 bg-white"
     :style="{ height: typeof height === 'number' ? `${height}px` : height }"
   >
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th class="time-column">Time</th>
-            <th v-for="(s, idx) in series" :key="idx" class="value-column">
-              {{ s.name }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="ts in timestamps" :key="ts">
-            <td class="time-column">{{ formatTimestamp(ts) }}</td>
-            <td
-              v-for="(_, idx) in series"
-              :key="idx"
-              class="value-column"
-            >
-              {{ formatValue(getValue(idx, ts)) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <table class="w-full text-left">
+      <thead class="sticky top-0 z-10 bg-slate-900 font-mono text-xs uppercase tracking-[0.07em] text-slate-300">
+        <tr>
+          <th class="min-w-[140px] px-4 py-3 font-semibold">Time</th>
+          <th
+            v-for="(s, idx) in series"
+            :key="idx"
+            class="min-w-[100px] px-4 py-3 text-right font-semibold"
+          >
+            {{ s.name }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          v-for="ts in timestamps"
+          :key="ts"
+          class="border-b border-slate-100 text-sm text-slate-600 hover:bg-slate-50"
+        >
+          <td class="min-w-[140px] px-4 py-3 text-slate-400">{{ formatTimestamp(ts) }}</td>
+          <td
+            v-for="(_, idx) in series"
+            :key="idx"
+            class="min-w-[100px] px-4 py-3 text-right tabular-nums text-slate-700"
+          >
+            {{ formatValue(getValue(idx, ts)) }}
+          </td>
+        </tr>
+        <tr v-if="timestamps.length === 0">
+          <td :colspan="series.length + 1" class="py-8 text-center text-sm text-slate-400">
+            No data available
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
-
-<style>
-.table-panel {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.table-container {
-  flex: 1;
-  overflow: auto;
-  border-radius: 6px;
-  border: 1px solid var(--color-border);
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8125rem;
-}
-
-thead {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-th {
-  background: var(--color-bg-2);
-  color: var(--color-text-0);
-  font-weight: 600;
-  text-align: left;
-  padding: 0.625rem 0.75rem;
-  border-bottom: 1px solid var(--color-border);
-  white-space: nowrap;
-}
-
-td {
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text-1);
-}
-
-tbody tr:hover {
-  background: var(--color-bg-hover);
-}
-
-tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.time-column {
-  min-width: 140px;
-  color: var(--color-text-2);
-}
-
-.value-column {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  min-width: 100px;
-}
-
-td.value-column {
-  color: var(--color-text-0);
-}
-</style>

@@ -17,6 +17,36 @@ vi.mock('../api/datasources', () => ({
   fetchDataSourceLabelValues: mockFetchDataSourceLabelValues,
 }))
 
+/** Find the "Add Filter" button */
+function findAddBtn(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find(b => b.text().includes('Add Filter'))!
+}
+
+/** Find the first filter label select (indexed field) */
+function findLabelSelect(wrapper: ReturnType<typeof mount>) {
+  // This is the first select among the filter row selects (with "Indexed field" option)
+  return wrapper.findAll('select').find(s =>
+    s.findAll('option').some(o => o.text() === 'Indexed field')
+  )!
+}
+
+/** Find the filter value select (with "Field value" option) */
+function findValueSelect(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('select').find(s =>
+    s.findAll('option').some(o => o.text() === 'Field value')
+  )!
+}
+
+/** Find the line filter value input (text input next to the operator select) */
+function findLineValueInput(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('input[type="text"]').find(i =>
+    i.attributes('placeholder')?.includes('Contains') ||
+    i.attributes('placeholder')?.includes('regex') ||
+    i.attributes('placeholder')?.includes('Phrase') ||
+    i.attributes('placeholder')?.includes('exact match')
+  )!
+}
+
 describe('LogQLQueryBuilder', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -32,13 +62,13 @@ describe('LogQLQueryBuilder', () => {
       },
     })
 
-    await wrapper.find('.btn-add').trigger('click')
-    await wrapper.find('.filter-label-select').setValue('job')
+    await findAddBtn(wrapper).trigger('click')
+    await findLabelSelect(wrapper).setValue('job')
     await flushPromises()
 
     expect(mockFetchDataSourceLabelValues).toHaveBeenCalledWith('ds-1', 'job')
 
-    await wrapper.find('.filter-value-select').setValue('api')
+    await findValueSelect(wrapper).setValue('api')
     await flushPromises()
 
     const updates = wrapper.emitted('update:modelValue') || []
@@ -54,12 +84,12 @@ describe('LogQLQueryBuilder', () => {
       },
     })
 
-    await wrapper.find('.btn-add').trigger('click')
-    await wrapper.find('.filter-label-select').setValue('job')
+    await findAddBtn(wrapper).trigger('click')
+    await findLabelSelect(wrapper).setValue('job')
     await flushPromises()
-    await wrapper.find('.filter-value-select').setValue('api')
+    await findValueSelect(wrapper).setValue('api')
 
-    await wrapper.find('.line-value-input').setValue('error')
+    await findLineValueInput(wrapper).setValue('error')
     await flushPromises()
 
     const updates = wrapper.emitted('update:modelValue') || []
@@ -76,10 +106,10 @@ describe('LogQLQueryBuilder', () => {
       },
     })
 
-    await wrapper.find('.btn-add').trigger('click')
-    await wrapper.find('.filter-label-select').setValue('service_name')
+    await findAddBtn(wrapper).trigger('click')
+    await findLabelSelect(wrapper).setValue('service_name')
     await flushPromises()
-    await wrapper.find('.filter-value-select').setValue('api')
+    await findValueSelect(wrapper).setValue('api')
     await flushPromises()
 
     const updates = wrapper.emitted('update:modelValue') || []
@@ -96,7 +126,7 @@ describe('LogQLQueryBuilder', () => {
       },
     })
 
-    await wrapper.find('.line-value-input').setValue('error')
+    await findLineValueInput(wrapper).setValue('error')
     await flushPromises()
 
     const updates = wrapper.emitted('update:modelValue') || []

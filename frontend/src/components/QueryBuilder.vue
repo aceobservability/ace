@@ -144,13 +144,13 @@ function getLabelValues(labelName: string): string[] {
 </script>
 
 <template>
-  <div class="query-builder" :class="{ disabled }">
+  <div class="flex flex-col gap-4" :class="{ 'opacity-60 pointer-events-none': disabled }">
     <!-- Mode Toggle -->
-    <div class="mode-toggle">
+    <div class="flex rounded-lg bg-slate-100 p-1 w-fit">
       <button
         type="button"
-        class="mode-btn"
-        :class="{ active: mode === 'builder' }"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-slate-900"
+        :class="{ 'bg-white text-slate-900 shadow-sm': mode === 'builder' }"
         @click="mode = 'builder'"
         :disabled="disabled || !builderAvailable"
         :title="!builderAvailable ? 'Query cannot be edited in builder mode' : ''"
@@ -160,8 +160,8 @@ function getLabelValues(labelName: string): string[] {
       </button>
       <button
         type="button"
-        class="mode-btn"
-        :class="{ active: mode === 'code' }"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-slate-900"
+        :class="{ 'bg-white text-slate-900 shadow-sm': mode === 'code' }"
         @click="mode = 'code'"
         :disabled="disabled"
       >
@@ -171,47 +171,47 @@ function getLabelValues(labelName: string): string[] {
     </div>
 
     <!-- Builder Mode -->
-    <div v-if="mode === 'builder'" class="builder-mode">
+    <div v-if="mode === 'builder'" class="flex flex-col gap-4">
       <!-- Metric Selector -->
-      <div class="builder-section">
-        <label class="section-label">Metric</label>
-        <div class="metric-selector">
-          <div class="search-input-wrapper">
-            <Search :size="14" class="search-icon" />
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-slate-900">Metric</label>
+        <div class="relative">
+          <div class="relative flex items-center">
+            <Search :size="14" class="absolute left-3 text-slate-400 pointer-events-none" />
             <input
               v-model="metricSearch"
               type="text"
-              class="search-input"
+              class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 pl-9 text-sm text-slate-900 transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               placeholder="Search metrics..."
               :disabled="disabled || loadingMetrics"
               @focus="showMetricDropdown = true"
               @blur="hideMetricDropdownDelayed"
             />
-            <span v-if="metric" class="selected-metric">{{ metric }}</span>
+            <span v-if="metric" class="absolute right-3 rounded bg-emerald-600 px-2 py-0.5 text-xs font-mono text-white">{{ metric }}</span>
           </div>
 
-          <div v-if="showMetricDropdown && filteredMetrics.length > 0" class="dropdown">
+          <div v-if="showMetricDropdown && filteredMetrics.length > 0" class="absolute top-[calc(100%+4px)] left-0 right-0 max-h-[250px] overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg z-[100]">
             <div
               v-for="m in filteredMetrics"
               :key="m"
-              class="dropdown-item"
-              :class="{ selected: m === metric }"
+              class="px-3 py-2 text-sm font-mono text-slate-900 cursor-pointer transition-colors duration-150 hover:bg-slate-50"
+              :class="{ 'bg-emerald-50 text-emerald-700': m === metric }"
               @mousedown.prevent="selectMetric(m)"
             >
               {{ m }}
             </div>
-            <div v-if="loadingMetrics" class="dropdown-loading">Loading...</div>
+            <div v-if="loadingMetrics" class="py-3 text-center text-slate-400 text-sm">Loading...</div>
           </div>
         </div>
       </div>
 
       <!-- Label Filters -->
-      <div class="builder-section">
-        <div class="section-header">
-          <label class="section-label">Label Filters</label>
+      <div class="flex flex-col gap-2">
+        <div class="flex justify-between items-center">
+          <label class="text-sm font-medium text-slate-900">Label Filters</label>
           <button
             type="button"
-            class="btn-add"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 hover:enabled:bg-slate-50 hover:enabled:text-slate-900"
             @click="addLabelFilter"
             :disabled="disabled"
           >
@@ -220,21 +220,21 @@ function getLabelValues(labelName: string): string[] {
           </button>
         </div>
 
-        <div v-if="labelFilters.length === 0" class="empty-filters">
+        <div v-if="labelFilters.length === 0" class="p-4 text-center text-slate-400 text-sm bg-slate-50 rounded-lg">
           No label filters. Click "Add Filter" to filter by labels.
         </div>
 
-        <div v-else class="filters-list">
+        <div v-else class="flex flex-col gap-2">
           <div
             v-for="filter in labelFilters"
             :key="filter.id"
-            class="filter-row"
+            class="flex gap-2 items-center"
           >
             <!-- Label select -->
             <select
               :value="filter.label"
               @change="handleLabelChange(filter, ($event.target as HTMLSelectElement).value)"
-              class="filter-select"
+              class="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer focus:outline-none focus:border-emerald-500"
               :disabled="disabled"
             >
               <option value="">Select label</option>
@@ -247,7 +247,7 @@ function getLabelValues(labelName: string): string[] {
             <select
               :value="filter.operator"
               @change="updateLabelFilter(filter.id, { operator: ($event.target as HTMLSelectElement).value as any })"
-              class="filter-select filter-operator"
+              class="w-[70px] flex-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-600 cursor-pointer focus:outline-none focus:border-emerald-500"
               :disabled="disabled"
             >
               <option v-for="op in LABEL_OPERATORS" :key="op.value" :value="op.value">
@@ -260,7 +260,7 @@ function getLabelValues(labelName: string): string[] {
               v-if="getLabelValues(filter.label).length > 0"
               :value="filter.value"
               @change="updateLabelFilter(filter.id, { value: ($event.target as HTMLSelectElement).value })"
-              class="filter-select filter-value"
+              class="flex-[1.5] min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer focus:outline-none focus:border-emerald-500"
               :disabled="disabled || loadingLabelValues === filter.label"
             >
               <option value="">Select value</option>
@@ -273,7 +273,7 @@ function getLabelValues(labelName: string): string[] {
               type="text"
               :value="filter.value"
               @input="updateLabelFilter(filter.id, { value: ($event.target as HTMLInputElement).value })"
-              class="filter-input"
+              class="flex-[1.5] min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500"
               placeholder="Value"
               :disabled="disabled"
             />
@@ -281,7 +281,7 @@ function getLabelValues(labelName: string): string[] {
             <!-- Remove button -->
             <button
               type="button"
-              class="btn-remove"
+              class="flex items-center justify-center w-7 h-7 bg-transparent border-none rounded text-slate-400 cursor-pointer transition-all duration-200 hover:enabled:bg-red-50 hover:enabled:text-red-500"
               @click="removeLabelFilter(filter.id)"
               :disabled="disabled"
             >
@@ -292,12 +292,12 @@ function getLabelValues(labelName: string): string[] {
       </div>
 
       <!-- Aggregation -->
-      <div class="builder-section">
-        <label class="section-label">Aggregation</label>
-        <div class="aggregation-row">
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-slate-900">Aggregation</label>
+        <div class="flex gap-4 items-center">
           <select
             v-model="aggregation"
-            class="aggregation-select"
+            class="flex-1 max-w-[200px] rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer focus:outline-none focus:border-emerald-500"
             :disabled="disabled"
           >
             <option v-for="agg in AGGREGATION_FUNCTIONS" :key="agg.value" :value="agg.value">
@@ -306,25 +306,25 @@ function getLabelValues(labelName: string): string[] {
           </select>
 
           <!-- Range input for rate/increase functions -->
-          <div v-if="aggregationRequiresRange" class="range-input-group">
-            <label>Range:</label>
+          <div v-if="aggregationRequiresRange" class="flex items-center gap-2">
+            <label class="text-sm text-slate-500">Range:</label>
             <input
               v-model="rangeInterval"
               type="text"
-              class="range-input"
+              class="w-20 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-900 focus:outline-none focus:border-emerald-500"
               placeholder="5m"
               :disabled="disabled"
             />
           </div>
 
           <!-- K value for topk/bottomk -->
-          <div v-if="aggregationRequiresK" class="k-input-group">
-            <label>K:</label>
+          <div v-if="aggregationRequiresK" class="flex items-center gap-2">
+            <label class="text-sm text-slate-500">K:</label>
             <input
               v-model.number="kValue"
               type="number"
               min="1"
-              class="k-input"
+              class="w-[60px] rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500"
               :disabled="disabled"
             />
           </div>
@@ -332,30 +332,31 @@ function getLabelValues(labelName: string): string[] {
       </div>
 
       <!-- Group By -->
-      <div v-if="aggregation" class="builder-section">
+      <div v-if="aggregation" class="flex flex-col gap-2">
         <button
           type="button"
-          class="section-toggle"
+          class="flex items-center gap-2 py-2 bg-transparent border-none cursor-pointer text-slate-900 w-full hover:text-emerald-600"
           @click="showGroupBy = !showGroupBy"
           :disabled="disabled"
         >
-          <span class="section-label">Group By</span>
-          <span v-if="groupByLabels.length > 0" class="group-count">{{ groupByLabels.length }}</span>
+          <span class="text-sm font-medium">Group By</span>
+          <span v-if="groupByLabels.length > 0" class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-emerald-600 rounded-full text-xs font-medium text-white">{{ groupByLabels.length }}</span>
           <component :is="showGroupBy ? ChevronUp : ChevronDown" :size="14" />
         </button>
 
-        <div v-if="showGroupBy" class="group-by-section">
-          <div class="group-by-list">
+        <div v-if="showGroupBy" class="p-3 bg-slate-50 rounded-lg">
+          <div class="flex flex-wrap gap-2">
             <label
               v-for="label in availableLabelsForGroupBy"
               :key="label"
-              class="group-by-item"
+              class="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-900 cursor-pointer transition-all duration-200 hover:border-emerald-500"
             >
               <input
                 type="checkbox"
                 :checked="groupByLabels.includes(label)"
                 @change="toggleGroupByLabel(label)"
                 :disabled="disabled"
+                class="accent-emerald-600"
               />
               <span>{{ label }}</span>
             </label>
@@ -364,18 +365,18 @@ function getLabelValues(labelName: string): string[] {
       </div>
 
       <!-- Preview -->
-      <div class="builder-section preview-section">
-        <label class="section-label">Generated PromQL</label>
-        <div class="preview-box">
-          <code v-if="generatedQuery">{{ generatedQuery }}</code>
-          <span v-else class="preview-placeholder">Select a metric to generate query</span>
+      <div class="flex flex-col gap-2 mt-2 pt-4 border-t border-slate-100">
+        <label class="text-sm font-medium text-slate-900">Generated PromQL</label>
+        <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 min-h-[48px]">
+          <code v-if="generatedQuery" class="font-mono text-sm text-emerald-600 break-all">{{ generatedQuery }}</code>
+          <span v-else class="text-slate-400 text-sm">Select a metric to generate query</span>
         </div>
       </div>
     </div>
 
     <!-- Code Mode -->
-    <div v-else class="code-mode">
-      <label class="section-label">PromQL Query</label>
+    <div v-else class="flex flex-col gap-4">
+      <label class="text-sm font-medium text-slate-900">PromQL Query</label>
       <MonacoQueryEditor
         v-model="codeQuery"
         :disabled="disabled"
@@ -385,448 +386,3 @@ function getLabelValues(labelName: string): string[] {
     </div>
   </div>
 </template>
-
-<style>
-.query-builder {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.query-builder.disabled {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.mode-toggle {
-  display: flex;
-  background: rgba(20, 33, 52, 0.8);
-  border-radius: 10px;
-  border: 1px solid var(--color-border);
-  padding: 2px;
-  width: fit-content;
-}
-
-.mode-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 1rem;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-text-1);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mode-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.mode-btn:hover:not(:disabled) {
-  color: var(--color-text-0);
-}
-
-.mode-btn.active {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(99, 102, 241, 0.14));
-  border: 1px solid rgba(245, 158, 11, 0.24);
-  color: var(--color-text-0);
-  box-shadow: 0 2px 10px rgba(2, 8, 23, 0.28);
-}
-
-.builder-mode,
-.code-mode {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.builder-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.section-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-text-0);
-}
-
-.section-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--color-text-0);
-  width: 100%;
-}
-
-.section-toggle:hover {
-  color: var(--color-accent);
-}
-
-.group-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  background: var(--color-accent);
-  border-radius: 10px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: white;
-}
-
-.metric-selector {
-  position: relative;
-}
-
-.search-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-icon {
-  position: absolute;
-  left: 0.75rem;
-  color: var(--color-text-2);
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  padding: 0.625rem 1rem 0.625rem 2.25rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-size: 0.875rem;
-  color: var(--color-text-0);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: var(--focus-ring);
-}
-
-.selected-metric {
-  position: absolute;
-  right: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  background: var(--color-accent);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-family: monospace;
-  color: white;
-}
-
-.dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  max-height: 250px;
-  overflow-y: auto;
-  background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 100;
-}
-
-.dropdown-item {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8125rem;
-  font-family: monospace;
-  color: var(--color-text-0);
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.dropdown-item:hover {
-  background: var(--color-bg-hover);
-}
-
-.dropdown-item.selected {
-  background: var(--color-accent);
-  color: white;
-}
-
-.dropdown-loading {
-  padding: 0.75rem;
-  text-align: center;
-  color: var(--color-text-2);
-  font-size: 0.8125rem;
-}
-
-.btn-add {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-text-1);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-add:hover:not(:disabled) {
-  background: var(--color-bg-hover);
-  color: var(--color-text-0);
-  border-color: var(--color-border-strong);
-}
-
-.empty-filters {
-  padding: 1rem;
-  text-align: center;
-  color: var(--color-text-2);
-  font-size: 0.8125rem;
-  background: var(--color-bg-2);
-  border-radius: 6px;
-}
-
-.filters-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.filter-row {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.filter-select,
-.filter-input {
-  padding: 0.5rem 0.75rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 0.8125rem;
-  color: var(--color-text-0);
-  transition: border-color 0.2s;
-}
-
-.filter-select:focus,
-.filter-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.filter-select {
-  flex: 1;
-  min-width: 0;
-  cursor: pointer;
-}
-
-.filter-operator {
-  flex: 0 0 70px;
-}
-
-.filter-value {
-  flex: 1.5;
-}
-
-.filter-input {
-  flex: 1.5;
-}
-
-.btn-remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: var(--color-text-2);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-remove:hover:not(:disabled) {
-  background: rgba(255, 107, 107, 0.1);
-  color: var(--color-danger);
-}
-
-.aggregation-row {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.aggregation-select {
-  flex: 1;
-  max-width: 200px;
-  padding: 0.5rem 0.75rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 0.8125rem;
-  color: var(--color-text-0);
-  cursor: pointer;
-}
-
-.aggregation-select:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.range-input-group,
-.k-input-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.range-input-group label,
-.k-input-group label {
-  font-size: 0.8125rem;
-  color: var(--color-text-1);
-}
-
-.range-input {
-  width: 80px;
-  padding: 0.5rem 0.75rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 0.8125rem;
-  font-family: monospace;
-  color: var(--color-text-0);
-}
-
-.range-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.k-input {
-  width: 60px;
-  padding: 0.5rem 0.75rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 0.8125rem;
-  color: var(--color-text-0);
-}
-
-.k-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.group-by-section {
-  padding: 0.75rem;
-  background: var(--color-bg-2);
-  border-radius: 6px;
-}
-
-.group-by-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.group-by-item {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.625rem;
-  background: var(--color-bg-1);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  color: var(--color-text-0);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.group-by-item:hover {
-  border-color: var(--color-accent);
-}
-
-.group-by-item input {
-  accent-color: var(--color-accent);
-}
-
-.preview-section {
-  margin-top: 0.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--color-border);
-}
-
-.preview-box {
-  padding: 0.75rem 1rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  min-height: 48px;
-}
-
-.preview-box code {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.8125rem;
-  color: var(--color-accent);
-  word-break: break-all;
-}
-
-.preview-placeholder {
-  color: var(--color-text-2);
-  font-size: 0.8125rem;
-}
-
-.code-textarea {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.8125rem;
-  color: var(--color-text-0);
-  resize: vertical;
-  min-height: 100px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.code-textarea::placeholder {
-  color: var(--color-text-2);
-}
-
-.code-textarea:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: var(--focus-ring);
-}
-
-.code-textarea:disabled {
-  background: var(--color-bg-0);
-  color: var(--color-text-2);
-  cursor: not-allowed;
-}
-</style>

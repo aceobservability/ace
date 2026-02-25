@@ -75,7 +75,7 @@ describe('DataSourceCreateView route behavior', () => {
       }),
     )
     expect(mockEditDatasource).not.toHaveBeenCalled()
-    expect(mockPush).toHaveBeenCalledWith('/app/datasources')
+    expect(mockPush).toHaveBeenCalledWith('/datasources')
   })
 
   it('uses edit mode when route includes datasource id', async () => {
@@ -112,6 +112,6 @@ describe('DataSourceCreateView route behavior', () => {
       }),
     )
     expect(mockAddDatasource).not.toHaveBeenCalled()
-    expect(mockPush).toHaveBeenCalledWith('/app/datasources')
+    expect(mockPush).toHaveBeenCalledWith('/datasources')
   })
 })

@@ -178,6 +178,27 @@ vi.mock('../composables/useProm', () => ({
 
 import { transformToChartData } from '../composables/useProm'
 
+/** Find the datasource trigger button (contains datasource name) */
+function findDatasourceTrigger(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find((b) => b.attributes('title')?.includes('Active datasource'))!
+}
+
+/** Find datasource dropdown options */
+function findDatasourceOptions(wrapper: ReturnType<typeof mount>) {
+  // Options are buttons inside the absolute-positioned dropdown
+  return wrapper.findAll('.absolute button')
+}
+
+/** Find the Run Query button */
+function findRunButton(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find((b) => b.text().includes('Run Query') || b.text().includes('Running'))!
+}
+
+/** Find error display (use rounded-xl to distinguish from the health badge which uses rounded-full) */
+function findError(wrapper: ReturnType<typeof mount>) {
+  return wrapper.find('.rounded-xl.text-rose-700')
+}
+
 describe('Explore', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -199,25 +220,28 @@ describe('Explore', () => {
     const wrapper = mount(Explore)
     await flushPromises()
 
-    expect(wrapper.find('.explore-header h1').text()).toBe('Explore')
-    expect(wrapper.find('.mode-badge').text()).toBe('Metrics')
-    expect(wrapper.find('.active-datasource-panel').exists()).toBe(true)
-    expect(wrapper.find('.active-datasource-name').text()).toContain('Prometheus Main')
-    expect(wrapper.find('.active-datasource-logo').attributes('alt')).toContain('Prometheus logo')
-    expect(wrapper.find('.source-health-badge').text()).toContain('Healthy')
-    expect(wrapper.find('.datasource-selector').exists()).toBe(true)
+    expect(wrapper.find('h1').text()).toBe('Explore')
+    expect(wrapper.text()).toContain('Metrics')
+    // Datasource trigger exists and shows name
+    const trigger = findDatasourceTrigger(wrapper)
+    expect(trigger).toBeDefined()
+    expect(wrapper.text()).toContain('Prometheus Main')
+    // Health badge shows
+    expect(wrapper.text()).toContain('Healthy')
     expect(wrapper.find('.mock-time-range-picker').exists()).toBe(true)
 
-    await wrapper.find('.datasource-trigger').trigger('click')
-    expect(wrapper.find('.datasource-dropdown').exists()).toBe(true)
-    expect(wrapper.find('.datasource-option').text()).toContain('Prometheus Main')
+    // Open datasource dropdown
+    await trigger.trigger('click')
+    const options = findDatasourceOptions(wrapper)
+    expect(options.length).toBeGreaterThan(0)
+    expect(options[0].text()).toContain('Prometheus Main')
 
     expect(mockFetchDatasources).toHaveBeenCalledWith('org-1')
   })
 
   it('disables Run Query button when query is empty', () => {
     const wrapper = mount(Explore)
-    const runButton = wrapper.find('.btn-run')
+    const runButton = findRunButton(wrapper)
 
     expect(runButton.attributes('disabled')).toBeDefined()
   })
@@ -226,7 +250,7 @@ describe('Explore', () => {
     const wrapper = mount(Explore)
     await wrapper.find('#promql-query-input').setValue('up')
 
-    const runButton = wrapper.find('.btn-run')
+    const runButton = findRunButton(wrapper)
     expect(runButton.attributes('disabled')).toBeUndefined()
   })
 
@@ -256,7 +280,7 @@ describe('Explore', () => {
     const wrapper = mount(Explore)
     await wrapper.find('#promql-query-input').setValue('up')
 
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(mockQueryDataSource).toHaveBeenCalledWith(
@@ -266,7 +290,7 @@ describe('Explore', () => {
       })
     )
     expect(wrapper.find('.mock-line-chart').exists()).toBe(true)
-    expect(wrapper.find('.result-count').text()).toContain('1 series')
+    expect(wrapper.text()).toContain('1 series')
   })
 
   it('shows error message when query response fails', async () => {
@@ -279,11 +303,11 @@ describe('Explore', () => {
     const wrapper = mount(Explore)
     await wrapper.find('#promql-query-input').setValue('invalid{')
 
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.query-error').exists()).toBe(true)
-    expect(wrapper.find('.query-error').text()).toContain('invalid query')
+    expect(findError(wrapper).exists()).toBe(true)
+    expect(findError(wrapper).text()).toContain('invalid query')
   })
 
   it('stores successful queries in session history', async () => {
@@ -301,7 +325,7 @@ describe('Explore', () => {
     const wrapper = mount(Explore)
     await wrapper.find('#promql-query-input').setValue('up')
 
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     const history = JSON.parse(sessionStorage.getItem('explore_query_history') || '[]')
@@ -340,15 +364,15 @@ describe('Explore', () => {
     const wrapper = mount(Explore)
     await flushPromises()
 
-    await wrapper.find('.datasource-trigger').trigger('click')
-    const options = wrapper.findAll('.datasource-option')
+    await findDatasourceTrigger(wrapper).trigger('click')
+    const options = findDatasourceOptions(wrapper)
     await options[1].trigger('click')
     await flushPromises()
 
     expect(wrapper.findComponent({ name: 'ClickHouseSQLEditor' }).exists()).toBe(true)
 
     await wrapper.find('#clickhouse-query').setValue('SELECT timestamp, value, metric FROM metrics LIMIT 20')
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(mockQueryDataSource).toHaveBeenLastCalledWith(
@@ -374,15 +398,15 @@ describe('Explore', () => {
     const wrapper = mount(Explore)
     await flushPromises()
 
-    await wrapper.find('.datasource-trigger').trigger('click')
-    const options = wrapper.findAll('.datasource-option')
+    await findDatasourceTrigger(wrapper).trigger('click')
+    const options = findDatasourceOptions(wrapper)
     await options[2].trigger('click')
     await flushPromises()
 
     expect(wrapper.findComponent({ name: 'CloudWatchQueryEditor' }).exists()).toBe(true)
 
     await wrapper.find('#cloudwatch-query').setValue('{"namespace":"AWS/EC2","metric_name":"CPUUtilization"}')
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(mockQueryDataSource).toHaveBeenLastCalledWith(
@@ -407,15 +431,15 @@ describe('Explore', () => {
     const wrapper = mount(Explore)
     await flushPromises()
 
-    await wrapper.find('.datasource-trigger').trigger('click')
-    const options = wrapper.findAll('.datasource-option')
+    await findDatasourceTrigger(wrapper).trigger('click')
+    const options = findDatasourceOptions(wrapper)
     await options[3].trigger('click')
     await flushPromises()
 
     expect(wrapper.findComponent({ name: 'ElasticsearchQueryEditor' }).exists()).toBe(true)
 
     await wrapper.find('#elasticsearch-query').setValue('service.name:"api"')
-    await wrapper.find('.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(mockQueryDataSource).toHaveBeenLastCalledWith(

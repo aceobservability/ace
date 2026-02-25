@@ -146,50 +146,50 @@ function formatInterval(seconds: number): string {
 function stateClass(state: string): string {
   switch (state) {
     case 'firing':
-      return 'state-firing'
+      return 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20'
     case 'pending':
-      return 'state-pending'
+      return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
     default:
-      return 'state-inactive'
+      return 'bg-slate-100 text-slate-600'
   }
 }
 
 function amStateClass(state: string): string {
   switch (state) {
     case 'active':
-      return 'state-am-active'
+      return 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20'
     case 'suppressed':
-      return 'state-am-silenced'
+      return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
     case 'unprocessed':
-      return 'state-am-inhibited'
+      return 'bg-slate-100 text-slate-600'
     default:
-      return 'state-inactive'
+      return 'bg-slate-100 text-slate-600'
   }
 }
 
 function severityClass(severity: string | undefined): string {
   switch (severity) {
     case 'critical':
-      return 'severity-critical'
+      return 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20'
     case 'warning':
-      return 'severity-warning'
+      return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
     case 'info':
-      return 'severity-info'
+      return 'bg-sky-50 text-sky-700 ring-1 ring-sky-600/20'
     default:
-      return 'severity-none'
+      return 'bg-slate-100 text-slate-600'
   }
 }
 
 function silenceStatusClass(state: string): string {
   switch (state) {
     case 'active':
-      return 'silence-active'
+      return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
     case 'pending':
-      return 'silence-pending'
+      return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
     case 'expired':
-      return 'silence-expired'
+      return 'bg-slate-100 text-slate-600'
     default:
-      return 'silence-expired'
+      return 'bg-slate-100 text-slate-600'
   }
 }
 
@@ -197,8 +197,7 @@ function truncateId(id: string): string {
   return id.length > 8 ? id.substring(0, 8) + '…' : id
 }
 
-// @ts-expect-error used in template indirectly
-function _formatMatchersText(matchers: AMMatcher[]): string {
+function formatMatchersText(matchers: AMMatcher[]): string {
   return matchers
     .map((m) => {
       const op = m.isEqual ? (m.isRegex ? '=~' : '=') : (m.isRegex ? '!~' : '!=')
@@ -419,7 +418,7 @@ watch([amFilterActive, amFilterSilenced, amFilterInhibited], () => {
 
 watch(alertingDatasources, (ds) => {
   if (ds.length > 0 && !selectedDatasourceId.value) {
-    selectedDatasourceId.value = ds[0]!.id
+    selectedDatasourceId.value = ds[0].id
   }
 })
 
@@ -444,19 +443,20 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="alerts-view">
-    <header class="page-header">
-      <div class="header-left">
-        <h1>
+  <div class="px-8 py-6 max-w-5xl mx-auto">
+    <!-- Page header -->
+    <header class="flex items-center justify-between gap-4 mb-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+      <div>
+        <h1 class="flex items-center gap-2 text-base font-bold font-mono uppercase tracking-wide text-slate-900 m-0">
           <BellRing :size="20" />
           Alerts
         </h1>
-        <p class="page-subtitle">Monitor active alerts and alerting rule groups</p>
+        <p class="text-sm text-slate-500 mt-1 mb-0">Monitor active alerts and alerting rule groups</p>
       </div>
-      <div class="header-actions">
+      <div class="flex items-center gap-2">
         <select
           v-model="selectedDatasourceId"
-          class="ds-picker"
+          class="px-3 py-2 pr-8 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.65rem_center] focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
           :disabled="alertingDatasources.length === 0"
         >
           <option value="" disabled>
@@ -471,17 +471,17 @@ onUnmounted(() => {
           </option>
         </select>
         <button
-          class="btn btn-secondary btn-sm"
+          class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="!selectedDatasourceId || loading"
           @click="loadData"
           title="Refresh"
         >
-          <Loader2 v-if="loading" :size="14" class="icon-spin" />
+          <Loader2 v-if="loading" :size="14" class="animate-spin" />
           <RefreshCw v-else :size="14" />
         </button>
         <button
-          class="btn btn-sm"
-          :class="autoRefresh ? 'btn-active' : 'btn-secondary'"
+          class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-medium cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
+          :class="autoRefresh ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'"
           :disabled="!selectedDatasourceId"
           @click="toggleAutoRefresh"
           title="Auto-refresh every 30s"
@@ -489,161 +489,172 @@ onUnmounted(() => {
           <Clock :size="14" />
           Auto
         </button>
-        <span v-if="lastRefreshed" class="last-refreshed">
+        <span v-if="lastRefreshed" class="flex items-center gap-2 text-xs text-slate-400 font-mono">
+          <span v-if="autoRefresh" class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
           {{ formattedLastRefreshed }}
         </span>
       </div>
     </header>
 
     <!-- No datasource selected -->
-    <div v-if="!selectedDatasourceId && alertingDatasources.length === 0" class="flex flex-col items-center justify-center p-12 text-center text-text-1">
-      <BellOff :size="48" class="empty-icon" />
-      <h3>No alerting datasources configured</h3>
-      <p>Add a VMAlert or AlertManager datasource in Data Sources settings to view alerts.</p>
+    <div v-if="!selectedDatasourceId && alertingDatasources.length === 0" class="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
+      <BellOff :size="48" class="text-slate-300" />
+      <h3 class="text-lg font-semibold text-slate-900 m-0">No alerting datasources configured</h3>
+      <p class="text-sm text-slate-500 m-0">Add a VMAlert or AlertManager datasource in Data Sources settings to view alerts.</p>
     </div>
 
     <!-- Error state -->
-    <div v-else-if="error" class="error-banner">
+    <div v-else-if="error" class="flex items-center gap-2 px-4 py-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm mb-4">
       <AlertCircle :size="16" />
       {{ error }}
     </div>
 
     <!-- Loading skeleton -->
-    <div v-else-if="loading && alerts.length === 0 && groups.length === 0 && amAlerts.length === 0 && amSilences.length === 0" class="flex flex-col items-center justify-center p-12 gap-4 text-text-1">
-      <div class="skeleton-row" v-for="i in 5" :key="i">
-        <div class="skeleton-bar skeleton-name"></div>
-        <div class="skeleton-bar skeleton-state"></div>
-        <div class="skeleton-bar skeleton-labels"></div>
-        <div class="skeleton-bar skeleton-time"></div>
+    <div v-else-if="loading && alerts.length === 0 && groups.length === 0 && amAlerts.length === 0 && amSilences.length === 0" class="flex flex-col gap-3 py-4">
+      <div v-for="i in 5" :key="i" class="flex gap-4 items-center">
+        <div class="h-3.5 rounded bg-slate-200 animate-pulse w-40"></div>
+        <div class="h-3.5 rounded bg-slate-200 animate-pulse w-15"></div>
+        <div class="h-3.5 rounded bg-slate-200 animate-pulse w-55"></div>
+        <div class="h-3.5 rounded bg-slate-200 animate-pulse w-32"></div>
       </div>
     </div>
 
     <!-- VMAlert Tabs + Content -->
     <template v-else-if="selectedDatasourceId && isVMAlert">
-      <div class="tabs">
+      <div class="flex gap-1 border-b border-slate-200 mb-6">
         <button
-          class="tab"
-          :class="{ active: activeTab === 'alerts' }"
+          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
+          :class="activeTab === 'alerts' ? 'text-emerald-600 border-emerald-600' : 'text-slate-500 border-transparent hover:text-slate-700'"
           @click="activeTab = 'alerts'"
         >
           Active Alerts
-          <span v-if="firingAlerts.length > 0" class="tab-badge tab-badge-firing">{{ firingAlerts.length }}</span>
+          <span v-if="firingAlerts.length > 0" class="ml-1.5 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-mono text-rose-600">{{ firingAlerts.length }}</span>
         </button>
         <button
-          class="tab"
-          :class="{ active: activeTab === 'groups' }"
+          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
+          :class="activeTab === 'groups' ? 'text-emerald-600 border-emerald-600' : 'text-slate-500 border-transparent hover:text-slate-700'"
           @click="activeTab = 'groups'"
         >
           Rule Groups
-          <span v-if="groups.length > 0" class="tab-badge">{{ groups.length }}</span>
+          <span v-if="groups.length > 0" class="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-500">{{ groups.length }}</span>
         </button>
       </div>
 
       <!-- Active Alerts tab -->
-      <div v-if="activeTab === 'alerts'" class="tab-content">
-        <div v-if="sortedAlerts.length === 0" class="empty-state compact">
-          <BellOff :size="36" class="empty-icon" />
-          <h3>No alerts firing</h3>
-          <p>All quiet — no active or pending alerts.</p>
+      <div v-if="activeTab === 'alerts'">
+        <div v-if="sortedAlerts.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
+          <BellOff :size="36" class="text-slate-300" />
+          <h3 class="text-lg font-semibold text-slate-900 m-0">No alerts firing</h3>
+          <p class="text-sm text-slate-500 m-0">All quiet -- no active or pending alerts.</p>
         </div>
 
-        <table v-else class="alerts-table">
-          <thead>
-            <tr>
-              <th>Alert Name</th>
-              <th>Labels</th>
-              <th>State</th>
-              <th>Active Since</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(alert, idx) in sortedAlerts" :key="idx">
-              <td class="alert-name">{{ alert.name }}</td>
-              <td class="alert-labels">
-                <span
-                  v-for="(value, key) in alert.labels"
-                  :key="String(key)"
-                  class="label-chip"
-                >
-                  {{ key }}={{ value }}
-                </span>
-              </td>
-              <td>
-                <span class="state-badge" :class="stateClass(alert.state)">
-                  {{ alert.state }}
-                </span>
-              </td>
-              <td class="alert-since">
-                {{ alert.activeAt || '—' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div v-else class="space-y-3">
+          <div
+            v-for="(alert, idx) in sortedAlerts"
+            :key="idx"
+            class="rounded-xl border border-slate-200 bg-white p-4 border-l-4"
+            :class="{
+              'border-l-rose-500': alert.state === 'firing',
+              'border-l-amber-500': alert.state === 'pending',
+              'border-l-slate-300': alert.state !== 'firing' && alert.state !== 'pending',
+            }"
+          >
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <span class="text-sm font-semibold text-slate-900">{{ alert.name }}</span>
+              <span class="rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="stateClass(alert.state)">
+                {{ alert.state }}
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-1.5 mb-2" v-if="alert.labels && Object.keys(alert.labels).length > 0">
+              <span
+                v-for="(value, key) in alert.labels"
+                :key="String(key)"
+                class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-600"
+              >
+                {{ key }}={{ value }}
+              </span>
+            </div>
+            <div class="text-xs font-mono text-slate-400">
+              {{ alert.activeAt || '—' }}
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Rule Groups tab -->
-      <div v-if="activeTab === 'groups'" class="tab-content">
-        <div v-if="groups.length === 0" class="empty-state compact">
-          <BellOff :size="36" class="empty-icon" />
-          <h3>No rule groups</h3>
-          <p>No alerting or recording rule groups found.</p>
+      <div v-if="activeTab === 'groups'">
+        <div v-if="groups.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
+          <BellOff :size="36" class="text-slate-300" />
+          <h3 class="text-lg font-semibold text-slate-900 m-0">No rule groups</h3>
+          <p class="text-sm text-slate-500 m-0">No alerting or recording rule groups found.</p>
         </div>
 
-        <div v-else class="rule-groups">
+        <div v-else class="space-y-3">
           <div
             v-for="group in groups"
             :key="group.name"
-            class="rule-group"
+            class="rounded-xl border border-slate-200 bg-white overflow-hidden"
           >
-            <button class="group-header" @click="toggleGroup(group.name)">
-              <component
-                :is="isGroupExpanded(group.name) ? ChevronDown : ChevronRight"
-                :size="16"
-              />
-              <span class="group-name">{{ group.name }}</span>
-              <span class="group-meta">
+            <button
+              class="flex items-center justify-between w-full px-4 py-3 bg-transparent border-none text-left cursor-pointer transition hover:bg-slate-50"
+              @click="toggleGroup(group.name)"
+            >
+              <div class="flex items-center gap-2">
+                <component
+                  :is="isGroupExpanded(group.name) ? ChevronDown : ChevronRight"
+                  :size="16"
+                  class="text-slate-400"
+                />
+                <span class="text-sm font-semibold text-slate-900">{{ group.name }}</span>
+              </div>
+              <span class="text-xs text-slate-400 font-mono">
                 {{ group.rules.length }} rule{{ group.rules.length !== 1 ? 's' : '' }}
                 · every {{ formatInterval(group.interval) }}
               </span>
             </button>
 
-            <div v-if="isGroupExpanded(group.name)" class="group-rules">
-              <div
-                v-for="(rule, rIdx) in group.rules"
-                :key="rIdx"
-                class="rule-card"
-              >
-                <div class="rule-header">
-                  <span class="rule-name">{{ rule.name }}</span>
-                  <span class="rule-type-badge" :class="rule.type === 'alerting' ? 'type-alerting' : 'type-recording'">
-                    {{ rule.type }}
-                  </span>
-                  <span v-if="rule.state" class="state-badge" :class="stateClass(rule.state)">
-                    {{ rule.state }}
-                  </span>
-                </div>
-                <div class="rule-expression">
-                  <code>{{ rule.query }}</code>
-                </div>
-                <div class="rule-details">
-                  <span v-if="rule.duration > 0" class="rule-detail">
-                    <strong>for:</strong> {{ formatDuration(rule.duration) }}
-                  </span>
-                  <span
-                    v-for="(value, key) in rule.labels"
-                    :key="String(key)"
-                    class="label-chip"
-                  >
-                    {{ key }}={{ value }}
-                  </span>
-                </div>
-                <div v-if="rule.annotations && Object.keys(rule.annotations).length > 0" class="rule-annotations">
-                  <div
-                    v-for="(value, key) in rule.annotations"
-                    :key="String(key)"
-                    class="annotation"
-                  >
-                    <strong>{{ key }}:</strong> {{ value }}
+            <div v-if="isGroupExpanded(group.name)" class="border-t border-slate-100 px-4 py-3">
+              <div class="divide-y divide-slate-100">
+                <div
+                  v-for="(rule, rIdx) in group.rules"
+                  :key="rIdx"
+                  class="py-3 first:pt-0 last:pb-0"
+                >
+                  <div class="flex items-center gap-2 mb-2 flex-wrap">
+                    <span class="text-sm font-semibold text-slate-900">{{ rule.name }}</span>
+                    <span
+                      class="rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide"
+                      :class="rule.type === 'alerting' ? 'bg-rose-50 text-rose-600 ring-1 ring-rose-600/20' : 'bg-sky-50 text-sky-600 ring-1 ring-sky-600/20'"
+                    >
+                      {{ rule.type }}
+                    </span>
+                    <span v-if="rule.state" class="rounded-full px-2 py-0.5 text-xs font-semibold" :class="stateClass(rule.state)">
+                      {{ rule.state }}
+                    </span>
+                  </div>
+                  <div class="bg-slate-50 rounded-lg px-3 py-2 mb-2 overflow-x-auto">
+                    <code class="text-xs font-mono text-slate-600 whitespace-pre-wrap break-all">{{ rule.query }}</code>
+                  </div>
+                  <div class="flex flex-wrap gap-1.5 items-center">
+                    <span v-if="rule.duration > 0" class="text-xs text-slate-500 mr-1">
+                      <strong>for:</strong> {{ formatDuration(rule.duration) }}
+                    </span>
+                    <span
+                      v-for="(value, key) in rule.labels"
+                      :key="String(key)"
+                      class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-600"
+                    >
+                      {{ key }}={{ value }}
+                    </span>
+                  </div>
+                  <div v-if="rule.annotations && Object.keys(rule.annotations).length > 0" class="mt-2 pt-2 border-t border-slate-100">
+                    <div
+                      v-for="(value, key) in rule.annotations"
+                      :key="String(key)"
+                      class="text-xs text-slate-500 leading-relaxed"
+                    >
+                      <strong class="text-slate-700">{{ key }}:</strong> {{ value }}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -655,178 +666,173 @@ onUnmounted(() => {
 
     <!-- AlertManager Tabs + Content -->
     <template v-else-if="selectedDatasourceId && isAlertManager">
-      <div class="tabs">
+      <div class="flex gap-1 border-b border-slate-200 mb-6">
         <button
-          class="tab"
-          :class="{ active: activeTab === 'am-alerts' }"
+          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
+          :class="activeTab === 'am-alerts' ? 'text-emerald-600 border-emerald-600' : 'text-slate-500 border-transparent hover:text-slate-700'"
           @click="activeTab = 'am-alerts'"
         >
           Active Alerts
-          <span v-if="amAlerts.length > 0" class="tab-badge tab-badge-firing">{{ amAlerts.length }}</span>
+          <span v-if="amAlerts.length > 0" class="ml-1.5 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-mono text-rose-600">{{ amAlerts.length }}</span>
         </button>
         <button
-          class="tab"
-          :class="{ active: activeTab === 'am-silences' }"
+          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
+          :class="activeTab === 'am-silences' ? 'text-emerald-600 border-emerald-600' : 'text-slate-500 border-transparent hover:text-slate-700'"
           @click="activeTab = 'am-silences'"
         >
           Silences
-          <span v-if="activeSilences.length > 0" class="tab-badge">{{ activeSilences.length }}</span>
+          <span v-if="activeSilences.length > 0" class="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-500">{{ activeSilences.length }}</span>
         </button>
         <button
-          class="tab"
-          :class="{ active: activeTab === 'am-receivers' }"
+          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
+          :class="activeTab === 'am-receivers' ? 'text-emerald-600 border-emerald-600' : 'text-slate-500 border-transparent hover:text-slate-700'"
           @click="activeTab = 'am-receivers'"
         >
           Receivers
-          <span v-if="amReceivers.length > 0" class="tab-badge">{{ amReceivers.length }}</span>
+          <span v-if="amReceivers.length > 0" class="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-500">{{ amReceivers.length }}</span>
         </button>
       </div>
 
       <!-- AM Active Alerts tab -->
-      <div v-if="activeTab === 'am-alerts'" class="tab-content">
-        <div class="am-filter-row">
-          <span class="filter-label">Show:</span>
+      <div v-if="activeTab === 'am-alerts'">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-xs text-slate-400 font-medium">Show:</span>
           <button
-            class="filter-toggle"
-            :class="{ 'filter-active': amFilterActive }"
+            class="px-2.5 py-1 border rounded-md text-xs cursor-pointer transition"
+            :class="amFilterActive ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'"
             @click="amFilterActive = !amFilterActive"
           >Active</button>
           <button
-            class="filter-toggle"
-            :class="{ 'filter-active': amFilterSilenced }"
+            class="px-2.5 py-1 border rounded-md text-xs cursor-pointer transition"
+            :class="amFilterSilenced ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'"
             @click="amFilterSilenced = !amFilterSilenced"
           >Silenced</button>
           <button
-            class="filter-toggle"
-            :class="{ 'filter-active': amFilterInhibited }"
+            class="px-2.5 py-1 border rounded-md text-xs cursor-pointer transition"
+            :class="amFilterInhibited ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'"
             @click="amFilterInhibited = !amFilterInhibited"
           >Inhibited</button>
         </div>
 
-        <div v-if="sortedAMAlerts.length === 0" class="empty-state compact">
-          <BellOff :size="36" class="empty-icon" />
-          <h3>No alerts</h3>
-          <p>No alerts matching current filters.</p>
+        <div v-if="sortedAMAlerts.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
+          <BellOff :size="36" class="text-slate-300" />
+          <h3 class="text-lg font-semibold text-slate-900 m-0">No alerts</h3>
+          <p class="text-sm text-slate-500 m-0">No alerts matching current filters.</p>
         </div>
 
-        <table v-else class="alerts-table">
-          <thead>
-            <tr>
-              <th>Alert Name</th>
-              <th>Severity</th>
-              <th>Instance</th>
-              <th>State</th>
-              <th>Active Since</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(alert, idx) in sortedAMAlerts" :key="idx">
-              <td class="alert-name">{{ alert.labels?.alertname || '—' }}</td>
-              <td>
-                <span
-                  class="severity-badge"
-                  :class="severityClass(alert.labels?.severity)"
-                >
+        <div v-else class="space-y-3">
+          <div
+            v-for="(alert, idx) in sortedAMAlerts"
+            :key="idx"
+            class="rounded-xl border border-slate-200 bg-white p-4 border-l-4"
+            :class="{
+              'border-l-rose-500': alert.status?.state === 'active',
+              'border-l-amber-500': alert.status?.state === 'suppressed',
+              'border-l-slate-300': alert.status?.state !== 'active' && alert.status?.state !== 'suppressed',
+            }"
+          >
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <span class="text-sm font-semibold text-slate-900">{{ alert.labels?.alertname || '—' }}</span>
+              <div class="flex items-center gap-2">
+                <span class="rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="severityClass(alert.labels?.severity)">
                   {{ alert.labels?.severity || 'none' }}
                 </span>
-              </td>
-              <td class="alert-instance">{{ alert.labels?.instance || '—' }}</td>
-              <td>
-                <span class="state-badge" :class="amStateClass(alert.status?.state)">
+                <span class="rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="amStateClass(alert.status?.state)">
                   {{ alert.status?.state || 'unknown' }}
                 </span>
-              </td>
-              <td class="alert-since">
-                {{ formatDateShort(alert.startsAt) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 text-xs text-slate-500 mb-1">
+              <span v-if="alert.labels?.instance" class="font-mono">{{ alert.labels.instance }}</span>
+            </div>
+            <div class="text-xs font-mono text-slate-400">
+              {{ formatDateShort(alert.startsAt) }}
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- AM Silences tab -->
-      <div v-if="activeTab === 'am-silences'" class="tab-content">
-        <div class="silences-header">
-          <h3 class="section-title">Silences</h3>
-          <button class="btn btn-primary btn-sm" @click="openSilenceModal">
+      <div v-if="activeTab === 'am-silences'">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-slate-900 m-0">Silences</h3>
+          <button
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition cursor-pointer"
+            @click="openSilenceModal"
+          >
             <Plus :size="14" />
             New Silence
           </button>
         </div>
 
-        <div v-if="amSilences.length === 0" class="empty-state compact">
-          <BellOff :size="36" class="empty-icon" />
-          <h3>No silences</h3>
-          <p>No silence rules configured.</p>
+        <div v-if="amSilences.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
+          <BellOff :size="36" class="text-slate-300" />
+          <h3 class="text-lg font-semibold text-slate-900 m-0">No silences</h3>
+          <p class="text-sm text-slate-500 m-0">No silence rules configured.</p>
         </div>
 
-        <table v-else class="alerts-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Matchers</th>
-              <th>Created By</th>
-              <th>Comment</th>
-              <th>Ends At</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="silence in amSilences" :key="silence.id">
-              <td class="silence-id" :title="silence.id">{{ truncateId(silence.id) }}</td>
-              <td class="silence-matchers">
-                <span
-                  v-for="(m, mIdx) in silence.matchers"
-                  :key="mIdx"
-                  class="label-chip"
-                >
-                  {{ m.name }}{{ m.isEqual ? (m.isRegex ? '=~' : '=') : (m.isRegex ? '!~' : '!=') }}"{{ m.value }}"
-                </span>
-              </td>
-              <td>{{ silence.createdBy }}</td>
-              <td class="silence-comment">{{ silence.comment }}</td>
-              <td class="alert-since">{{ formatDateShort(silence.endsAt) }}</td>
-              <td>
-                <span
-                  class="state-badge"
-                  :class="silenceStatusClass(silence.status.state)"
-                >
+        <div v-else class="space-y-3">
+          <div
+            v-for="silence in amSilences"
+            :key="silence.id"
+            class="rounded-xl border border-slate-200 bg-white p-4 border-l-4"
+            :class="{
+              'border-l-emerald-500': silence.status.state === 'active',
+              'border-l-amber-400': silence.status.state === 'pending',
+              'border-l-slate-200 opacity-60': silence.status.state === 'expired',
+            }"
+          >
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-xs font-mono text-slate-400 shrink-0" :title="silence.id">{{ truncateId(silence.id) }}</span>
+                <span class="rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="silenceStatusClass(silence.status.state)">
                   {{ silence.status.state }}
                 </span>
-              </td>
-              <td>
-                <button
-                  v-if="silence.status.state === 'active' || silence.status.state === 'pending'"
-                  class="btn btn-danger-outline btn-xs"
-                  title="Expire silence"
-                  @click="handleExpireSilence(silence.id)"
-                >
-                  <Trash2 :size="12" />
-                  Expire
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+              <button
+                v-if="silence.status.state === 'active' || silence.status.state === 'pending'"
+                class="inline-flex items-center gap-1 text-sm text-rose-600 hover:text-rose-700 cursor-pointer bg-transparent border-none transition shrink-0"
+                title="Expire silence"
+                @click="handleExpireSilence(silence.id)"
+              >
+                <Trash2 :size="12" />
+                Expire
+              </button>
+            </div>
+            <div class="flex flex-wrap gap-1.5 mb-2">
+              <span
+                v-for="(m, mIdx) in silence.matchers"
+                :key="mIdx"
+                class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-600"
+              >
+                {{ m.name }}{{ m.isEqual ? (m.isRegex ? '=~' : '=') : (m.isRegex ? '!~' : '!=') }}"{{ m.value }}"
+              </span>
+            </div>
+            <div class="flex items-center gap-3 text-xs text-slate-500">
+              <span>{{ silence.createdBy }}</span>
+              <span class="truncate max-w-[200px]">{{ silence.comment }}</span>
+              <span class="ml-auto font-mono text-slate-400 shrink-0">ends {{ formatDateShort(silence.endsAt) }}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- AM Receivers tab -->
-      <div v-if="activeTab === 'am-receivers'" class="tab-content">
-        <div v-if="amReceivers.length === 0" class="empty-state compact">
-          <Radio :size="36" class="empty-icon" />
-          <h3>No receivers</h3>
-          <p>No receivers configured in AlertManager.</p>
+      <div v-if="activeTab === 'am-receivers'">
+        <div v-if="amReceivers.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
+          <Radio :size="36" class="text-slate-300" />
+          <h3 class="text-lg font-semibold text-slate-900 m-0">No receivers</h3>
+          <p class="text-sm text-slate-500 m-0">No receivers configured in AlertManager.</p>
         </div>
 
-        <div v-else class="receivers-list">
+        <div v-else class="space-y-3">
           <div
             v-for="receiver in amReceivers"
             :key="receiver.name"
-            class="receiver-card"
+            class="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3"
           >
-            <Radio :size="16" class="receiver-icon" />
-            <span class="receiver-name">{{ receiver.name }}</span>
+            <Radio :size="16" class="text-slate-400 shrink-0" />
+            <span class="text-sm font-semibold text-slate-900">{{ receiver.name }}</span>
           </div>
         </div>
       </div>
@@ -834,31 +840,38 @@ onUnmounted(() => {
 
     <!-- Create Silence Modal -->
     <Teleport to="body">
-      <div v-if="showSilenceModal" class="modal-overlay" @click.self="closeSilenceModal">
-        <div class="modal">
-          <div class="modal-header">
-            <h2>Create Silence</h2>
-            <button class="btn-icon" @click="closeSilenceModal">
+      <div v-if="showSilenceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]" @click.self="closeSilenceModal">
+        <div class="bg-white border border-slate-200 rounded-xl w-full max-w-[560px] max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+            <h2 class="text-base font-bold text-slate-900 m-0">Create Silence</h2>
+            <button
+              class="flex items-center justify-center w-8 h-8 bg-transparent border-none rounded-md text-slate-400 cursor-pointer transition hover:bg-slate-100 hover:text-slate-700"
+              @click="closeSilenceModal"
+            >
               <X :size="18" />
             </button>
           </div>
 
-          <div class="modal-body">
-            <div class="form-group">
-              <label>Matchers <span class="required">*</span></label>
-              <div class="matchers-list">
+          <div class="px-5 py-5 flex flex-col gap-4">
+            <!-- Matchers -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium text-slate-700">Matchers <span class="text-rose-500">*</span></label>
+              <div class="flex flex-col gap-2 mb-2">
                 <div
                   v-for="(m, idx) in silenceMatchers"
                   :key="idx"
-                  class="matcher-row"
+                  class="flex items-center gap-2"
                 >
                   <input
                     v-model="m.name"
                     type="text"
                     placeholder="Label name"
-                    class="matcher-input"
+                    class="flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-mono text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
-                  <select v-model="m.isEqual" class="matcher-op">
+                  <select
+                    v-model="m.isEqual"
+                    class="w-13 px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-mono text-slate-900 text-center focus:outline-none focus:border-emerald-500"
+                  >
                     <option :value="true">{{ m.isRegex ? '=~' : '=' }}</option>
                     <option :value="false">{{ m.isRegex ? '!~' : '!=' }}</option>
                   </select>
@@ -866,14 +879,14 @@ onUnmounted(() => {
                     v-model="m.value"
                     type="text"
                     placeholder="Value"
-                    class="matcher-input"
+                    class="flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-mono text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
-                  <label class="matcher-checkbox" title="Regex match">
-                    <input type="checkbox" v-model="m.isRegex" />
+                  <label class="flex items-center gap-1 text-xs text-slate-500 whitespace-nowrap cursor-pointer" title="Regex match">
+                    <input type="checkbox" v-model="m.isRegex" class="w-3.5 h-3.5" />
                     Regex
                   </label>
                   <button
-                    class="btn-icon btn-icon-sm"
+                    class="flex items-center justify-center w-7 h-7 bg-transparent border-none rounded-md text-slate-400 cursor-pointer transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
                     :disabled="silenceMatchers.length <= 1"
                     @click="removeMatcher(idx)"
                     title="Remove matcher"
@@ -882,67 +895,82 @@ onUnmounted(() => {
                   </button>
                 </div>
               </div>
-              <button class="btn btn-secondary btn-xs" @click="addMatcher">
+              <button
+                class="text-sm text-emerald-600 hover:text-emerald-700 cursor-pointer bg-transparent border-none inline-flex items-center gap-1 self-start transition"
+                @click="addMatcher"
+              >
                 <Plus :size="12" />
                 Add Matcher
               </button>
             </div>
 
-            <div class="form-grid-2">
-              <div class="form-group">
-                <label for="silence-start">Start</label>
+            <!-- Start / End -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="flex flex-col gap-1.5">
+                <label for="silence-start" class="text-sm font-medium text-slate-700">Start</label>
                 <input
                   id="silence-start"
                   v-model="silenceStart"
                   type="datetime-local"
-                  class="form-input"
+                  class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
-              <div class="form-group">
-                <label for="silence-end">End</label>
+              <div class="flex flex-col gap-1.5">
+                <label for="silence-end" class="text-sm font-medium text-slate-700">End</label>
                 <input
                   id="silence-end"
                   v-model="silenceEnd"
                   type="datetime-local"
-                  class="form-input"
+                  class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="silence-created-by">Created By</label>
+            <!-- Created By -->
+            <div class="flex flex-col gap-1.5">
+              <label for="silence-created-by" class="text-sm font-medium text-slate-700">Created By</label>
               <input
                 id="silence-created-by"
                 v-model="silenceCreatedBy"
                 type="text"
                 placeholder="your-name@example.com"
-                class="form-input"
+                class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
-            <div class="form-group">
-              <label for="silence-comment">Comment <span class="required">*</span></label>
+            <!-- Comment -->
+            <div class="flex flex-col gap-1.5">
+              <label for="silence-comment" class="text-sm font-medium text-slate-700">Comment <span class="text-rose-500">*</span></label>
               <textarea
                 id="silence-comment"
                 v-model="silenceComment"
                 rows="3"
                 placeholder="Reason for silencing..."
-                class="form-input form-textarea"
+                class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 resize-y min-h-[68px] font-[inherit] focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               ></textarea>
             </div>
 
-            <div v-if="silenceError" class="error-banner modal-error">
+            <!-- Error -->
+            <div v-if="silenceError" class="flex items-center gap-2 px-4 py-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm">
               <AlertCircle :size="14" />
               {{ silenceError }}
             </div>
           </div>
 
-          <div class="modal-footer">
-            <button class="btn btn-secondary" @click="closeSilenceModal" :disabled="silenceSaving">
+          <div class="flex justify-end gap-2.5 px-5 py-4 border-t border-slate-200">
+            <button
+              class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="closeSilenceModal"
+              :disabled="silenceSaving"
+            >
               Cancel
             </button>
-            <button class="btn btn-primary" @click="handleCreateSilence" :disabled="silenceSaving">
-              <Loader2 v-if="silenceSaving" :size="14" class="icon-spin" />
+            <button
+              class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 border border-emerald-600 rounded-lg text-sm font-medium text-white cursor-pointer transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="handleCreateSilence"
+              :disabled="silenceSaving"
+            >
+              <Loader2 v-if="silenceSaving" :size="14" class="animate-spin" />
               {{ silenceSaving ? 'Creating...' : 'Create Silence' }}
             </button>
           </div>
@@ -951,896 +979,3 @@ onUnmounted(() => {
     </Teleport>
   </div>
 </template>
-
-<style>
-.alerts-view {
-  padding: 1.25rem 1.5rem;
-  max-width: 1120px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 1rem 1.15rem;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-surface-1);
-  box-shadow: var(--shadow-sm);
-}
-
-.header-left h1 {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.03rem;
-  font-weight: 700;
-  font-family: var(--font-family-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-0);
-  margin: 0;
-}
-
-.page-subtitle {
-  font-size: 0.875rem;
-  color: var(--color-text-1);
-  margin: 0.25rem 0 0;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.ds-picker {
-  padding: 0.5rem 2rem 0.5rem 0.75rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-0);
-  font-size: 0.82rem;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.65rem center;
-}
-
-.ds-picker:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: var(--focus-ring);
-}
-
-.last-refreshed {
-  font-size: 0.72rem;
-  color: var(--color-text-2);
-  font-family: var(--font-family-mono);
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 1rem;
-}
-
-.tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.7rem 1.1rem;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--color-text-1);
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tab:hover {
-  color: var(--color-text-0);
-}
-
-.tab.active {
-  color: var(--color-accent);
-  border-bottom-color: var(--color-accent);
-}
-
-.tab-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 0.35rem;
-  border-radius: 999px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  background: var(--color-bg-2);
-  color: var(--color-text-1);
-}
-
-.tab-badge-firing {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
-}
-
-/* AM Filter row */
-.am-filter-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.filter-label {
-  font-size: 0.78rem;
-  color: var(--color-text-2);
-  font-weight: 500;
-}
-
-.filter-toggle {
-  padding: 0.3rem 0.65rem;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-bg-2);
-  color: var(--color-text-1);
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.filter-toggle.filter-active {
-  background: rgba(56, 189, 248, 0.16);
-  border-color: rgba(56, 189, 248, 0.35);
-  color: var(--color-accent);
-}
-
-.filter-toggle:hover {
-  background: var(--color-bg-hover);
-}
-
-/* Alerts table */
-.alerts-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.84rem;
-}
-
-.alerts-table thead {
-  border-bottom: 1px solid var(--color-border);
-}
-
-.alerts-table th {
-  text-align: left;
-  padding: 0.6rem 0.8rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-2);
-}
-
-.alerts-table td {
-  padding: 0.65rem 0.8rem;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text-0);
-  vertical-align: top;
-}
-
-.alert-name {
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.alert-instance {
-  font-family: var(--font-family-mono);
-  font-size: 0.78rem;
-  color: var(--color-text-1);
-}
-
-.alert-labels {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.label-chip {
-  display: inline-flex;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-family: var(--font-family-mono);
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-1);
-  white-space: nowrap;
-}
-
-.alert-since {
-  font-family: var(--font-family-mono);
-  font-size: 0.78rem;
-  color: var(--color-text-1);
-  white-space: nowrap;
-}
-
-/* State badge */
-.state-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.18rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.state-firing {
-  background: rgba(239, 68, 68, 0.16);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-}
-
-.state-pending {
-  background: rgba(245, 158, 11, 0.16);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.35);
-}
-
-.state-inactive {
-  background: rgba(100, 116, 139, 0.16);
-  color: #94a3b8;
-  border: 1px solid rgba(100, 116, 139, 0.35);
-}
-
-/* AM state badges */
-.state-am-active {
-  background: rgba(239, 68, 68, 0.16);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-}
-
-.state-am-silenced {
-  background: rgba(245, 158, 11, 0.16);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.35);
-}
-
-.state-am-inhibited {
-  background: rgba(100, 116, 139, 0.16);
-  color: #94a3b8;
-  border: 1px solid rgba(100, 116, 139, 0.35);
-}
-
-/* Severity badges */
-.severity-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.18rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.severity-critical {
-  background: rgba(239, 68, 68, 0.16);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-}
-
-.severity-warning {
-  background: rgba(245, 158, 11, 0.16);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.35);
-}
-
-.severity-info {
-  background: rgba(56, 189, 248, 0.16);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.35);
-}
-
-.severity-none {
-  background: rgba(100, 116, 139, 0.16);
-  color: #94a3b8;
-  border: 1px solid rgba(100, 116, 139, 0.35);
-}
-
-/* Silence status badges */
-.silence-active {
-  background: rgba(89, 161, 79, 0.16);
-  color: #59a14f;
-  border: 1px solid rgba(89, 161, 79, 0.35);
-}
-
-.silence-pending {
-  background: rgba(245, 158, 11, 0.16);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.35);
-}
-
-.silence-expired {
-  background: rgba(100, 116, 139, 0.16);
-  color: #94a3b8;
-  border: 1px solid rgba(100, 116, 139, 0.35);
-}
-
-/* Silences */
-.silences-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.section-title {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--color-text-0);
-  margin: 0;
-}
-
-.silence-id {
-  font-family: var(--font-family-mono);
-  font-size: 0.75rem;
-  color: var(--color-text-2);
-}
-
-.silence-matchers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.silence-comment {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--color-text-1);
-  font-size: 0.82rem;
-}
-
-/* Receivers */
-.receivers-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.receiver-card {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-surface-1);
-}
-
-.receiver-icon {
-  color: var(--color-text-2);
-}
-
-.receiver-name {
-  font-weight: 500;
-  font-size: 0.88rem;
-  color: var(--color-text-0);
-}
-
-/* Rule Groups */
-.rule-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.rule-group {
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background: var(--color-surface-1);
-  overflow: hidden;
-}
-
-.group-header {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: transparent;
-  border: none;
-  color: var(--color-text-0);
-  cursor: pointer;
-  transition: background 0.2s;
-  text-align: left;
-}
-
-.group-header:hover {
-  background: var(--color-bg-hover);
-}
-
-.group-name {
-  font-weight: 600;
-  font-size: 0.88rem;
-}
-
-.group-meta {
-  font-size: 0.75rem;
-  color: var(--color-text-2);
-  margin-left: auto;
-}
-
-.group-rules {
-  border-top: 1px solid var(--color-border);
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.rule-card {
-  padding: 0.75rem 0.85rem;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-bg-2);
-}
-
-.rule-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.rule-name {
-  font-weight: 600;
-  font-size: 0.86rem;
-  color: var(--color-text-0);
-}
-
-.rule-type-badge {
-  display: inline-flex;
-  padding: 0.12rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.66rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.type-alerting {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.25);
-}
-
-.type-recording {
-  background: rgba(56, 189, 248, 0.12);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.25);
-}
-
-.rule-expression {
-  padding: 0.4rem 0.6rem;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 6px;
-  margin-bottom: 0.5rem;
-  overflow-x: auto;
-}
-
-.rule-expression code {
-  font-size: 0.76rem;
-  font-family: var(--font-family-mono);
-  color: var(--color-text-1);
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-.rule-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  align-items: center;
-}
-
-.rule-detail {
-  font-size: 0.75rem;
-  color: var(--color-text-1);
-  margin-right: 0.25rem;
-}
-
-.rule-annotations {
-  margin-top: 0.5rem;
-  padding-top: 0.4rem;
-  border-top: 1px solid var(--color-border);
-}
-
-.annotation {
-  font-size: 0.75rem;
-  color: var(--color-text-1);
-  line-height: 1.5;
-}
-
-.annotation strong {
-  color: var(--color-text-0);
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: var(--color-surface-1);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-text-0);
-}
-
-.modal-body {
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.65rem;
-  padding: 1rem 1.25rem;
-  border-top: 1px solid var(--color-border);
-}
-
-.modal-error {
-  margin: 0;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.form-group label {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--color-text-0);
-}
-
-.required {
-  color: var(--color-danger);
-}
-
-.form-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.8rem;
-}
-
-.form-input {
-  padding: 0.6rem 0.8rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-0);
-  font-size: 0.85rem;
-  transition: border-color 0.2s;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: var(--focus-ring);
-}
-
-.form-textarea {
-  resize: vertical;
-  font-family: inherit;
-  min-height: 68px;
-}
-
-.matchers-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.matcher-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.matcher-input {
-  flex: 1;
-  padding: 0.45rem 0.6rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text-0);
-  font-size: 0.82rem;
-  font-family: var(--font-family-mono);
-}
-
-.matcher-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-}
-
-.matcher-op {
-  width: 52px;
-  padding: 0.45rem 0.3rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text-0);
-  font-size: 0.78rem;
-  font-family: var(--font-family-mono);
-  text-align: center;
-}
-
-.matcher-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.72rem;
-  color: var(--color-text-1);
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.matcher-checkbox input {
-  width: 14px;
-  height: 14px;
-}
-
-/* Shared states */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  text-align: center;
-  gap: 1rem;
-}
-
-.empty-state.compact {
-  padding: 2.5rem 1.5rem;
-}
-
-.empty-icon {
-  color: var(--color-text-2);
-}
-
-.empty-state h3 {
-  margin: 0;
-  font-size: 1.125rem;
-  color: var(--color-text-0);
-}
-
-.empty-state p {
-  margin: 0;
-  color: var(--color-text-1);
-  font-size: 0.875rem;
-}
-
-.error-banner {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  border-radius: 8px;
-  color: var(--color-danger);
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
-}
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem 0;
-}
-
-.skeleton-row {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.skeleton-bar {
-  height: 14px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, var(--color-bg-2) 25%, rgba(56, 189, 248, 0.08) 50%, var(--color-bg-2) 75%);
-  background-size: 200% 100%;
-  animation: skeleton-pulse 1.5s ease-in-out infinite;
-}
-
-.skeleton-name { width: 160px; }
-.skeleton-state { width: 60px; }
-.skeleton-labels { width: 220px; }
-.skeleton-time { width: 130px; }
-
-@keyframes skeleton-pulse {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-sm {
-  padding: 0.4rem 0.6rem;
-  font-size: 0.78rem;
-}
-
-.btn-xs {
-  padding: 0.25rem 0.45rem;
-  font-size: 0.72rem;
-  border-radius: 6px;
-}
-
-.btn-secondary {
-  background: var(--color-bg-2);
-  border-color: var(--color-border);
-  color: var(--color-text-0);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--color-bg-hover);
-}
-
-.btn-primary {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--color-accent-hover);
-}
-
-.btn-active {
-  background: rgba(56, 189, 248, 0.16);
-  border-color: rgba(56, 189, 248, 0.35);
-  color: var(--color-accent);
-}
-
-.btn-active:hover:not(:disabled) {
-  background: rgba(56, 189, 248, 0.22);
-}
-
-.btn-danger-outline {
-  background: transparent;
-  border-color: rgba(239, 68, 68, 0.35);
-  color: #ef4444;
-}
-
-.btn-danger-outline:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.12);
-}
-
-.btn-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  color: var(--color-text-1);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-icon:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text-0);
-}
-
-.btn-icon-sm {
-  width: 26px;
-  height: 26px;
-}
-
-.icon-spin {
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 840px) {
-  .alerts-view {
-    padding: 0.9rem;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-actions {
-    flex-wrap: wrap;
-  }
-
-  .alerts-table {
-    font-size: 0.78rem;
-  }
-
-  .alerts-table th,
-  .alerts-table td {
-    padding: 0.5rem 0.5rem;
-  }
-
-  .form-grid-2 {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

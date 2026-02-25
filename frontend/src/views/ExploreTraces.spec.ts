@@ -150,6 +150,38 @@ vi.mock('../api/datasources', () => ({
   fetchDataSourceTraceServiceGraph: mockFetchDataSourceTraceServiceGraph,
 }))
 
+/** Find the datasource trigger button */
+function findDatasourceTrigger(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find((b) =>
+    b.attributes('title')?.includes('datasource') || b.text().includes('Tempo Main') || b.text().includes('Active Source')
+  )!
+}
+
+/** Find datasource dropdown options */
+function findDatasourceOptions(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('.absolute button')
+}
+
+/** Find the Search button */
+function findSearchButton(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find((b) => b.text().includes('Search Traces') || b.text().includes('Searching') || b.text().includes('Run Query'))!
+}
+
+/** Find trace result rows (buttons in the results sidebar that contain trace IDs) */
+function findTraceResultRows(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').filter((b) => b.find('code')?.exists() && b.find('.grid')?.exists())
+}
+
+/** Find error display */
+function findError(wrapper: ReturnType<typeof mount>) {
+  return wrapper.find('.text-rose-700')
+}
+
+/** Find service graph error */
+function findServiceGraphError(wrapper: ReturnType<typeof mount>) {
+  return wrapper.find('.text-rose-600')
+}
+
 describe('ExploreTraces', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -191,10 +223,9 @@ describe('ExploreTraces', () => {
     const wrapper = mount(ExploreTraces)
     await flushPromises()
 
-    expect(wrapper.find('.explore-header h1').text()).toBe('Explore')
-    expect(wrapper.find('.mode-badge').text()).toBe('Tracing')
-    expect(wrapper.find('.active-datasource-name').text()).toContain('Tempo Main')
-    expect(wrapper.find('.active-datasource-logo').attributes('alt')).toContain('Tempo logo')
+    expect(wrapper.find('h1').text()).toBe('Explore')
+    expect(wrapper.text()).toContain('Tracing')
+    expect(wrapper.text()).toContain('Tempo Main')
     expect(wrapper.find('.mock-time-range-picker').exists()).toBe(true)
     expect(mockFetchDatasources).toHaveBeenCalledWith('org-1')
     expect(mockFetchDataSourceTraceServices).toHaveBeenCalledWith('ds-trace-1')
@@ -217,7 +248,7 @@ describe('ExploreTraces', () => {
     const wrapper = mount(ExploreTraces)
     await wrapper.find('#trace-search-query').setValue('service=api')
 
-    await wrapper.find('.btn-search').trigger('click')
+    await findSearchButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(mockSearchDataSourceTraces).toHaveBeenCalledWith(
@@ -229,8 +260,9 @@ describe('ExploreTraces', () => {
         limit: 20,
       }),
     )
-    expect(wrapper.findAll('.trace-result-row')).toHaveLength(1)
-    expect(wrapper.find('.trace-result-row').text()).toContain('trace-abc')
+    const rows = findTraceResultRows(wrapper)
+    expect(rows).toHaveLength(1)
+    expect(rows[0].text()).toContain('trace-abc')
   })
 
   it('loads trace details and renders timeline after selecting a trace', async () => {
@@ -274,10 +306,10 @@ describe('ExploreTraces', () => {
     })
 
     const wrapper = mount(ExploreTraces)
-    await wrapper.find('.btn-search').trigger('click')
+    await findSearchButton(wrapper).trigger('click')
     await flushPromises()
 
-    await wrapper.find('.trace-result-row').trigger('click')
+    await findTraceResultRows(wrapper)[0].trigger('click')
     await flushPromises()
 
     expect(mockFetchDataSourceTrace).toHaveBeenCalledWith('ds-trace-1', 'trace-abc')
@@ -288,9 +320,10 @@ describe('ExploreTraces', () => {
     await wrapper.find('.mock-select-span').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.trace-span-details').exists()).toBe(true)
-    expect(wrapper.find('.trace-span-details').text()).toContain('Span details')
-    expect(wrapper.find('.trace-span-details').text()).toContain('GET /health')
+    // Span details panel should be rendered
+    expect(wrapper.find('aside[aria-label="Span details panel"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Span details')
+    expect(wrapper.text()).toContain('GET /health')
   })
 
   it('shows service graph fetch error without breaking trace view', async () => {
@@ -309,14 +342,14 @@ describe('ExploreTraces', () => {
     mockFetchDataSourceTraceServiceGraph.mockRejectedValue(new Error('graph fetch failed'))
 
     const wrapper = mount(ExploreTraces)
-    await wrapper.find('.btn-search').trigger('click')
+    await findSearchButton(wrapper).trigger('click')
     await flushPromises()
 
-    await wrapper.find('.trace-result-row').trigger('click')
+    await findTraceResultRows(wrapper)[0].trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.service-graph-error').exists()).toBe(true)
-    expect(wrapper.find('.service-graph-error').text()).toContain('graph fetch failed')
+    expect(findServiceGraphError(wrapper).exists()).toBe(true)
+    expect(findServiceGraphError(wrapper).text()).toContain('graph fetch failed')
     expect(wrapper.find('.mock-trace-timeline').exists()).toBe(true)
   })
 
@@ -352,10 +385,10 @@ describe('ExploreTraces', () => {
     })
 
     const wrapper = mount(ExploreTraces)
-    await wrapper.find('.btn-search').trigger('click')
+    await findSearchButton(wrapper).trigger('click')
     await flushPromises()
 
-    await wrapper.find('.trace-result-row').trigger('click')
+    await findTraceResultRows(wrapper)[0].trigger('click')
     await flushPromises()
 
     await wrapper.find('.mock-select-service').trigger('click')
@@ -371,11 +404,11 @@ describe('ExploreTraces', () => {
     mockSearchDataSourceTraces.mockRejectedValue(new Error('search failed'))
 
     const wrapper = mount(ExploreTraces)
-    await wrapper.find('.btn-search').trigger('click')
+    await findSearchButton(wrapper).trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.query-error').exists()).toBe(true)
-    expect(wrapper.find('.query-error').text()).toContain('search failed')
+    expect(findError(wrapper).exists()).toBe(true)
+    expect(findError(wrapper).text()).toContain('search failed')
   })
 
   it('auto-loads trace from dashboard navigation context', async () => {
@@ -424,17 +457,17 @@ describe('ExploreTraces', () => {
     })
 
     const wrapper = mount(ExploreTraces)
-    await wrapper.find('.btn-search').trigger('click')
+    await findSearchButton(wrapper).trigger('click')
     await flushPromises()
 
-    await wrapper.find('.trace-result-row').trigger('click')
+    await findTraceResultRows(wrapper)[0].trigger('click')
     await flushPromises()
 
     await wrapper.find('.mock-select-span').trigger('click')
     await flushPromises()
 
     const logsButton = wrapper
-      .findAll('.action-button')
+      .findAll('button')
       .find((button) => button.text() === 'View Logs')
     expect(logsButton).toBeTruthy()
 
@@ -444,7 +477,7 @@ describe('ExploreTraces', () => {
 
     await logsButton.trigger('click')
 
-    expect(mockRouterPush).toHaveBeenCalledWith('/app/explore/logs')
+    expect(mockRouterPush).toHaveBeenCalledWith('/explore/logs')
     expect(JSON.parse(localStorage.getItem('trace_logs_navigation') || '{}')).toMatchObject({
       traceId: 'trace-abc',
       serviceName: 'api',
@@ -481,17 +514,17 @@ describe('ExploreTraces', () => {
     })
 
     const wrapper = mount(ExploreTraces)
-    await wrapper.find('.btn-search').trigger('click')
+    await findSearchButton(wrapper).trigger('click')
     await flushPromises()
 
-    await wrapper.find('.trace-result-row').trigger('click')
+    await findTraceResultRows(wrapper)[0].trigger('click')
     await flushPromises()
 
     await wrapper.find('.mock-select-span').trigger('click')
     await flushPromises()
 
     const metricsButton = wrapper
-      .findAll('.action-button')
+      .findAll('button')
       .find((button) => button.text() === 'View Service Metrics')
     expect(metricsButton).toBeTruthy()
 
@@ -501,7 +534,7 @@ describe('ExploreTraces', () => {
 
     await metricsButton.trigger('click')
 
-    expect(mockRouterPush).toHaveBeenCalledWith('/app/explore/metrics')
+    expect(mockRouterPush).toHaveBeenCalledWith('/explore/metrics')
     expect(JSON.parse(localStorage.getItem('trace_metrics_navigation') || '{}')).toMatchObject({
       serviceName: 'api',
     })
@@ -545,15 +578,15 @@ describe('ExploreTraces', () => {
     const wrapper = mount(ExploreTraces)
     await flushPromises()
 
-    await wrapper.find('.datasource-trigger').trigger('click')
-    const options = wrapper.findAll('.datasource-option')
+    await findDatasourceTrigger(wrapper).trigger('click')
+    const options = findDatasourceOptions(wrapper)
     await options[1].trigger('click')
     await flushPromises()
 
     expect(wrapper.findComponent({ name: 'ClickHouseSQLEditor' }).exists()).toBe(true)
 
     await wrapper.find('#clickhouse-query').setValue('SELECT * FROM traces LIMIT 200')
-    await wrapper.find('.btn-search').trigger('click')
+    await findSearchButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(mockQueryDataSource).toHaveBeenLastCalledWith(

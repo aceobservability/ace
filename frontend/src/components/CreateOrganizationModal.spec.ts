@@ -21,7 +21,7 @@ describe('CreateOrganizationModal', () => {
 
     await flushPromises()
 
-    const dialog = wrapper.find('.modal.modal--centered')
+    const dialog = wrapper.find('[role="dialog"]')
     expect(dialog.exists()).toBe(true)
     expect(dialog.attributes('role')).toBe('dialog')
 

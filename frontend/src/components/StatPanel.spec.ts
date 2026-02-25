@@ -39,101 +39,103 @@ describe('StatPanel', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100 },
     })
-    expect(wrapper.find('.stat-panel').exists()).toBe(true)
+    // Root div uses Tailwind classes for layout
+    expect(wrapper.find('.flex.flex-col.items-center.justify-center').exists()).toBe(true)
   })
 
   it('displays the value', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 75 },
     })
-    expect(wrapper.find('.stat-value').text()).toContain('75')
+    expect(wrapper.find('.text-3xl').text()).toContain('75')
   })
 
   it('formats large values with K suffix', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 1250, decimals: 2 },
     })
-    expect(wrapper.find('.stat-value').text()).toBe('1.25K')
+    expect(wrapper.find('.text-3xl').text()).toBe('1.25K')
   })
 
   it('formats larger values with M suffix', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 1500000, decimals: 2 },
     })
-    expect(wrapper.find('.stat-value').text()).toBe('1.50M')
+    expect(wrapper.find('.text-3xl').text()).toBe('1.50M')
   })
 
   it('formats very large values with B suffix', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 2500000000, decimals: 2 },
     })
-    expect(wrapper.find('.stat-value').text()).toBe('2.50B')
+    expect(wrapper.find('.text-3xl').text()).toBe('2.50B')
   })
 
   it('includes unit in formatted value', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 75, unit: '%' },
     })
-    expect(wrapper.find('.stat-value').text()).toContain('%')
+    expect(wrapper.find('.text-3xl').text()).toContain('%')
   })
 
   it('respects decimals setting', () => {
     const wrapper = mount(StatPanel, {
       props: { value: Math.PI, decimals: 1 },
     })
-    expect(wrapper.find('.stat-value').text()).toBe('3.1')
+    expect(wrapper.find('.text-3xl').text()).toBe('3.1')
   })
 
   it('displays label when provided', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, label: 'CPU Usage' },
     })
-    expect(wrapper.find('.stat-label').exists()).toBe(true)
-    expect(wrapper.find('.stat-label').text()).toBe('CPU Usage')
+    expect(wrapper.find('.text-slate-500').exists()).toBe(true)
+    expect(wrapper.find('.text-slate-500').text()).toBe('CPU Usage')
   })
 
   it('does not display label when not provided', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100 },
     })
-    expect(wrapper.find('.stat-label').exists()).toBe(false)
+    // No label element rendered
+    expect(wrapper.find('.text-slate-500').exists()).toBe(false)
   })
 
   it('shows upward trend when value is higher than previous', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, previousValue: 80, showTrend: true },
     })
-    expect(wrapper.find('.stat-trend').exists()).toBe(true)
-    expect(wrapper.find('.trend-up').exists()).toBe(true)
+    expect(wrapper.find('.text-emerald-600').exists()).toBe(true)
   })
 
   it('shows downward trend when value is lower than previous', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 60, previousValue: 80, showTrend: true },
     })
-    expect(wrapper.find('.stat-trend').exists()).toBe(true)
-    expect(wrapper.find('.trend-down').exists()).toBe(true)
+    expect(wrapper.find('.text-rose-500').exists()).toBe(true)
   })
 
   it('does not show trend when showTrend is false', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, previousValue: 80, showTrend: false },
     })
-    expect(wrapper.find('.stat-trend').exists()).toBe(false)
+    expect(wrapper.find('.text-emerald-600').exists()).toBe(false)
+    expect(wrapper.find('.text-rose-500').exists()).toBe(false)
   })
 
   it('does not show trend when previousValue is not provided', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, showTrend: true },
     })
-    expect(wrapper.find('.stat-trend').exists()).toBe(false)
+    expect(wrapper.find('.text-emerald-600').exists()).toBe(false)
+    expect(wrapper.find('.text-rose-500').exists()).toBe(false)
   })
 
   it('displays trend percentage', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, previousValue: 80, showTrend: true },
     })
-    const trendValue = wrapper.find('.trend-value')
+    const trendValue = wrapper.find('.tabular-nums')
     expect(trendValue.exists()).toBe(true)
     expect(trendValue.text()).toContain('+25.0%')
   })
@@ -147,7 +149,7 @@ describe('StatPanel', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 15, data, showSparkline: true },
     })
-    expect(wrapper.find('.stat-sparkline').exists()).toBe(true)
+    expect(wrapper.find('.pointer-events-none').exists()).toBe(true)
   })
 
   it('does not show sparkline when showSparkline is false', () => {
@@ -158,14 +160,14 @@ describe('StatPanel', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 20, data, showSparkline: false },
     })
-    expect(wrapper.find('.stat-sparkline').exists()).toBe(false)
+    expect(wrapper.find('.pointer-events-none').exists()).toBe(false)
   })
 
   it('does not show sparkline when no data is provided', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, showSparkline: true },
     })
-    expect(wrapper.find('.stat-sparkline').exists()).toBe(false)
+    expect(wrapper.find('.pointer-events-none').exists()).toBe(false)
   })
 
   it('applies threshold color when value exceeds threshold', () => {
@@ -176,7 +178,7 @@ describe('StatPanel', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 90, thresholds },
     })
-    const statValue = wrapper.find('.stat-value')
+    const statValue = wrapper.find('.text-3xl')
     expect(statValue.attributes('style')).toContain('color: #ff6b6b')
   })
 
@@ -188,42 +190,42 @@ describe('StatPanel', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 30, thresholds },
     })
-    const statValue = wrapper.find('.stat-value')
-    expect(statValue.attributes('style')).toContain('color: #f5f5f5')
+    const statValue = wrapper.find('.text-3xl')
+    expect(statValue.attributes('style')).toContain('color: #0f172a')
   })
 
   it('applies custom height when provided', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, height: 200 },
     })
-    expect(wrapper.find('.stat-panel').attributes('style')).toContain('height: 200px')
+    expect(wrapper.element.getAttribute('style')).toContain('height: 200px')
   })
 
   it('applies default height when not provided', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100 },
     })
-    expect(wrapper.find('.stat-panel').attributes('style')).toContain('height: 100%')
+    expect(wrapper.element.getAttribute('style')).toContain('height: 100%')
   })
 
   it('handles zero value', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 0 },
     })
-    expect(wrapper.find('.stat-value').text()).toBe('0.00')
+    expect(wrapper.find('.text-3xl').text()).toBe('0.00')
   })
 
   it('handles negative values', () => {
     const wrapper = mount(StatPanel, {
       props: { value: -50 },
     })
-    expect(wrapper.find('.stat-value').text()).toContain('-50')
+    expect(wrapper.find('.text-3xl').text()).toContain('-50')
   })
 
   it('handles negative large values', () => {
     const wrapper = mount(StatPanel, {
       props: { value: -1500, decimals: 1 },
     })
-    expect(wrapper.find('.stat-value').text()).toBe('-1.5K')
+    expect(wrapper.find('.text-3xl').text()).toBe('-1.5K')
   })
 })

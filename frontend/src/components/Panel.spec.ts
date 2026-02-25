@@ -113,14 +113,13 @@ describe('Panel', () => {
     const wrapper = mount(Panel, {
       props: { panel: mockPanel },
     })
-    expect(wrapper.find('.panel-title').text()).toBe('Test Panel')
+    expect(wrapper.find('h3').text()).toBe('Test Panel')
   })
 
   it('displays placeholder when no query configured', () => {
     const wrapper = mount(Panel, {
       props: { panel: mockPanel },
     })
-    expect(wrapper.find('.panel-state').exists()).toBe(true)
     expect(wrapper.text()).toContain('No query configured')
   })
 
@@ -166,7 +165,6 @@ describe('Panel', () => {
       props: { panel: panelWithQuery },
     })
 
-    expect(wrapper.find('.panel-state').exists()).toBe(true)
     expect(wrapper.text()).toContain('Loading')
   })
 
@@ -182,7 +180,7 @@ describe('Panel', () => {
       props: { panel: panelWithQuery },
     })
 
-    expect(wrapper.find('.panel-error').exists()).toBe(true)
+    expect(wrapper.find('.text-rose-500').exists()).toBe(true)
     expect(wrapper.text()).toContain('Query failed')
   })
 
@@ -204,7 +202,6 @@ describe('Panel', () => {
       props: { panel: panelWithQuery },
     })
 
-    expect(wrapper.find('.chart-container').exists()).toBe(true)
     expect(wrapper.find('.mock-line-chart').exists()).toBe(true)
   })
 
@@ -220,7 +217,6 @@ describe('Panel', () => {
       props: { panel: panelWithQuery },
     })
 
-    expect(wrapper.find('.panel-no-data').exists()).toBe(true)
     expect(wrapper.text()).toContain('No data')
   })
 

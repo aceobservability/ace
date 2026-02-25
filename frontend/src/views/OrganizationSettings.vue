@@ -152,7 +152,7 @@ const activeSection = computed<SettingsSection>(() => {
 })
 
 function sectionPath(section: SettingsSection): string {
-  return `/app/settings/org/${orgId.value}/${section}`
+  return `/settings/org/${orgId.value}/${section}`
 }
 
 function navigateToSection(section: SettingsSection) {
@@ -417,7 +417,7 @@ async function handleDelete() {
   try {
     await deleteOrganization(orgId.value)
     await fetchOrganizations()
-    router.push('/app/dashboards')
+    router.push('/dashboards')
   } catch (e) {
     alert(e instanceof Error ? e.message : 'Failed to delete organization')
   } finally {
@@ -754,125 +754,350 @@ function goBack() {
 }
 </script>
 
-
 <template>
-  <div class="py-[1.35rem] px-6 max-w-[980px] mx-auto max-md:p-[0.9rem]">
-    <header class="flex items-center gap-4 mb-[1.2rem] p-4 border border-border rounded-[14px] bg-surface-1 shadow-sm max-md:items-start">
-      <button class="flex items-center justify-center w-10 h-10 bg-surface-2 border border-border rounded-[10px] text-text-1 cursor-pointer transition-all duration-200 hover:bg-bg-hover hover:text-text-0" @click="goBack">
-        <ArrowLeft :size="20" />
-      </button>
-      <div>
-        <h1 class="mb-1 text-[1.03rem] font-bold font-mono uppercase tracking-[0.04em]">Organization Settings</h1>
-        <p v-if="org" class="text-text-1 text-sm">{{ org.name }}</p>
-      </div>
-    </header>
+  <div class="px-8 py-6 max-w-4xl mx-auto">
+    <!-- Back link -->
+    <button class="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4 bg-transparent border-none cursor-pointer transition" @click="goBack">
+      <ArrowLeft :size="16" />
+      <span>Back</span>
+    </button>
 
-    <div v-if="loading" class="text-center p-8 text-text-1">Loading...</div>
-    <div v-else-if="error" class="text-center p-8 text-danger">{{ error }}</div>
-    <div v-else-if="org" class="grid grid-cols-[220px_minmax(0,1fr)] gap-4 items-start max-md:grid-cols-1">
-      <aside class="flex flex-col gap-[0.45rem] bg-surface-1 border border-border rounded-[14px] p-3 shadow-sm sticky top-4 max-md:static max-md:flex-row max-md:overflow-x-auto max-md:p-2 max-md:gap-[0.35rem]" data-testid="org-settings-sidebar">
-        <button v-for="section in settingsSections" :key="section.key"
-          class="sidebar-link w-full text-left border border-transparent rounded-[10px] text-text-1 py-[0.65rem] px-3 text-[0.85rem] font-semibold cursor-pointer transition-all duration-200 hover:text-text-0 max-md:w-auto max-md:min-w-[110px] max-md:text-center max-md:whitespace-nowrap"
-          :class="{ active: activeSection === section.key }"
+    <!-- Title -->
+    <h1 class="text-2xl font-bold text-slate-900 m-0">Organization Settings</h1>
+    <p v-if="org" class="text-sm text-slate-500 mt-1 mb-0">{{ org.name }}</p>
+
+    <div v-if="loading" class="text-center py-8 text-slate-500">Loading...</div>
+    <div v-else-if="error" class="text-center py-8 text-rose-600">{{ error }}</div>
+    <div v-else-if="org">
+      <!-- Tab bar -->
+      <nav class="flex gap-1 border-b border-slate-200 mt-6 mb-6" data-testid="org-settings-sidebar">
+        <button
+          v-for="section in settingsSections"
+          :key="section.key"
+          class="px-4 py-2.5 text-sm font-medium cursor-pointer bg-transparent border-b-2 transition"
+          :class="activeSection === section.key
+            ? 'text-emerald-600 border-emerald-600'
+            : 'text-slate-500 hover:text-slate-700 border-transparent'"
           :data-testid="`settings-section-${section.key}`"
-          @click="navigateToSection(section.key)">{{ section.label }}</button>
-      </aside>
+          @click="navigateToSection(section.key)"
+        >
+          {{ section.label }}
+        </button>
+      </nav>
 
       <div class="flex flex-col gap-4">
-      <section v-if="activeSection === 'general'" class="bg-surface-1 border border-border rounded-[14px] p-6 shadow-sm">
+      <!-- General Settings -->
+      <section v-if="activeSection === 'general'" class="rounded-xl border border-slate-200 bg-white p-6">
         <div class="flex justify-between items-center mb-4">
-          <h2 class="flex items-center gap-2 text-base font-semibold">General</h2>
-          <button v-if="isAdmin && !editMode" class="inline-flex items-center gap-2 py-[0.375rem] px-3 text-[0.8125rem] border border-accent rounded-[6px] bg-transparent text-text-accent cursor-pointer hover:bg-bg-hover" @click="startEdit"><Edit2 :size="16" />Edit</button>
+          <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-slate-900">General</h2>
+          <button v-if="isAdmin && !editMode" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer" @click="startEdit">
+            <Edit2 :size="16" />
+            Edit
+          </button>
         </div>
-        <div v-if="editMode" class="p-4 rounded-[10px] border border-border mb-4" style="background: rgba(20, 33, 52, 0.8)">
-          <div class="mb-4"><label class="block mb-[0.375rem] text-sm font-medium text-text-0">Organization Name</label><input v-model="editName" type="text" :disabled="editLoading" class="w-full py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" /></div>
-          <div class="mb-4"><label class="block mb-[0.375rem] text-sm font-medium text-text-0">URL Slug</label><input v-model="editSlug" type="text" :disabled="editLoading" class="w-full py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" /></div>
-          <div v-if="editError" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-danger text-sm mt-3" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3)">{{ editError }}</div>
+
+        <div v-if="editMode" class="rounded-lg border border-slate-200 bg-slate-50 p-4 mb-4">
+          <div class="mb-4">
+            <label class="block mb-1.5 text-sm font-medium text-slate-700">Organization Name</label>
+            <input v-model="editName" type="text" :disabled="editLoading" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50" />
+          </div>
+          <div class="mb-4">
+            <label class="block mb-1.5 text-sm font-medium text-slate-700">URL Slug</label>
+            <input v-model="editSlug" type="text" :disabled="editLoading" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50" />
+          </div>
+          <div v-if="editError" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600 mt-3">{{ editError }}</div>
           <div class="flex justify-end gap-3 mt-4">
-            <button class="inline-flex items-center gap-2 py-[0.625rem] px-4 border border-accent rounded-[6px] bg-transparent text-text-accent text-sm font-medium cursor-pointer" @click="cancelEdit" :disabled="editLoading">Cancel</button>
-            <button class="inline-flex items-center gap-2 py-[0.625rem] px-4 rounded-[6px] bg-accent text-[#1a0f00] text-sm font-medium cursor-pointer" @click="saveEdit" :disabled="editLoading">{{ editLoading ? 'Saving...' : 'Save Changes' }}</button>
+            <button class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="cancelEdit" :disabled="editLoading">Cancel</button>
+            <button class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="saveEdit" :disabled="editLoading">
+              {{ editLoading ? 'Saving...' : 'Save Changes' }}
+            </button>
           </div>
         </div>
-        <div v-else class="grid grid-cols-2 gap-4 max-md:grid-cols-1">
-          <div class="flex flex-col gap-1"><span class="text-xs font-medium text-text-1 uppercase tracking-[0.05em]">Name</span><span class="text-sm text-text-0">{{ org.name }}</span></div>
-          <div class="flex flex-col gap-1"><span class="text-xs font-medium text-text-1 uppercase tracking-[0.05em]">Slug</span><span class="text-sm text-text-0">{{ org.slug }}</span></div>
-          <div class="flex flex-col gap-1"><span class="text-xs font-medium text-text-1 uppercase tracking-[0.05em]">Your Role</span><span class="role-badge text-sm" :class="org.role">{{ org.role }}</span></div>
-          <div class="flex flex-col gap-1"><span class="text-xs font-medium text-text-1 uppercase tracking-[0.05em]">Created</span><span class="text-sm text-text-0">{{ new Date(org.created_at).toLocaleDateString() }}</span></div>
-        </div>
-      </section>
-
-      <section v-if="activeSection === 'members'" class="bg-surface-1 border border-border rounded-[14px] p-6 shadow-sm">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="flex items-center gap-2 text-base font-semibold"><Users :size="20" /> Members ({{ members.length }})</h2>
-          <button v-if="isAdmin" class="inline-flex items-center gap-2 py-[0.375rem] px-3 text-[0.8125rem] rounded-[6px] bg-accent text-[#1a0f00] cursor-pointer" @click="showInviteForm = !showInviteForm"><UserPlus :size="16" />Invite</button>
-        </div>
-        <div v-if="showInviteForm && isAdmin" class="p-4 rounded-[10px] border border-border mb-4" style="background: rgba(20, 33, 52, 0.8)">
-          <div class="flex gap-3 max-md:flex-col">
-            <input v-model="inviteEmail" type="email" placeholder="Email address" :disabled="inviteLoading" class="flex-1 py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" />
-            <select v-model="inviteRole" :disabled="inviteLoading" class="w-[120px] py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 max-md:w-full"><option value="viewer">Viewer</option><option value="editor">Editor</option><option value="admin">Admin</option></select>
-            <button class="inline-flex items-center gap-2 py-[0.625rem] px-4 rounded-[6px] bg-accent text-[#1a0f00] text-sm font-medium cursor-pointer" @click="handleInvite" :disabled="inviteLoading">{{ inviteLoading ? 'Sending...' : 'Send Invite' }}</button>
+        <div v-else class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Name</span>
+            <span class="text-sm text-slate-900">{{ org.name }}</span>
           </div>
-          <div v-if="inviteError" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-danger text-sm mt-3" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3)">{{ inviteError }}</div>
-          <div v-if="inviteSuccess" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-success text-sm mt-3 break-all" style="background: rgba(78, 205, 196, 0.1); border: 1px solid rgba(78, 205, 196, 0.3)">{{ inviteSuccess }}</div>
-        </div>
-        <div class="flex flex-col gap-2">
-          <div v-for="member in members" :key="member.id" class="flex items-center gap-3 p-3 rounded-[10px] border border-border" style="background: rgba(20, 33, 52, 0.75)">
-            <div class="w-9 h-9 flex items-center justify-center bg-accent rounded-full text-sm font-semibold text-white shrink-0">{{ (member.name || member.email).charAt(0).toUpperCase() }}</div>
-            <div class="flex-1 min-w-0"><span class="block text-sm font-medium text-text-0">{{ member.name || member.email }}</span><span class="block text-xs text-text-1 whitespace-nowrap overflow-hidden text-ellipsis">{{ member.email }}</span></div>
-            <div class="flex items-center gap-2">
-              <select v-if="isAdmin" :value="member.role" @change="handleRoleChange(member, ($event.target as HTMLSelectElement).value as MembershipRole)" class="w-auto py-[0.375rem] px-2 text-xs bg-bg-1 border border-border rounded-[6px] text-text-0"><option value="viewer">Viewer</option><option value="editor">Editor</option><option value="admin">Admin</option></select>
-              <span v-else class="role-badge" :class="member.role">{{ member.role }}</span>
-              <button v-if="isAdmin" class="flex items-center justify-center w-8 h-8 bg-transparent border-none rounded-[6px] text-text-1 cursor-pointer transition-all duration-200 hover:text-danger" style="--hover-bg: rgba(255, 107, 107, 0.1)" @click="handleRemoveMember(member)" title="Remove member"><Trash2 :size="16" /></button>
-            </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Slug</span>
+            <span class="text-sm text-slate-900">{{ org.slug }}</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Your Role</span>
+            <span
+              class="inline-block w-fit rounded px-2 py-0.5 text-xs font-medium capitalize"
+              :class="{
+                'bg-amber-50 text-amber-700': org.role === 'admin',
+                'bg-emerald-50 text-emerald-700': org.role === 'editor',
+                'bg-slate-100 text-slate-600': org.role === 'viewer',
+              }"
+            >{{ org.role }}</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Created</span>
+            <span class="text-sm text-slate-900">{{ new Date(org.created_at).toLocaleDateString() }}</span>
           </div>
         </div>
       </section>
 
-      <section v-if="activeSection === 'groups'" class="bg-surface-1 border border-border rounded-[14px] p-6 shadow-sm">
+      <!-- Members Section -->
+      <section v-if="activeSection === 'members'" class="rounded-xl border border-slate-200 bg-white p-6">
         <div class="flex justify-between items-center mb-4">
-          <h2 class="flex items-center gap-2 text-base font-semibold"><Users :size="20" /> Groups ({{ groups.length }})</h2>
-          <button v-if="isAdmin && !showCreateGroupForm" class="inline-flex items-center gap-2 py-[0.375rem] px-3 text-[0.8125rem] rounded-[6px] bg-accent text-[#1a0f00] cursor-pointer" data-testid="new-group-button" @click="startCreateGroup">New Group</button>
+          <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-slate-900"><Users :size="20" /> Members ({{ members.length }})</h2>
+          <button v-if="isAdmin" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer" @click="showInviteForm = !showInviteForm">
+            <UserPlus :size="16" />
+            Invite
+          </button>
         </div>
-        <div v-if="groupMessage" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-success text-sm mt-3 break-all" style="background: rgba(78, 205, 196, 0.1); border: 1px solid rgba(78, 205, 196, 0.3)">{{ groupMessage }}</div>
-        <div v-if="groupActionError" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-danger text-sm mt-3" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3)">{{ groupActionError }}</div>
-        <div v-if="showCreateGroupForm && isAdmin" class="p-4 rounded-[10px] border border-border mb-4" style="background: rgba(20, 33, 52, 0.8)">
-          <div class="mb-4"><label class="block mb-[0.375rem] text-sm font-medium text-text-0">Group Name</label><input v-model="createGroupName" type="text" data-testid="create-group-name" :disabled="createGroupLoading" class="w-full py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" /></div>
-          <div class="mb-4"><label class="block mb-[0.375rem] text-sm font-medium text-text-0">Description (optional)</label><input v-model="createGroupDescription" type="text" data-testid="create-group-description" :disabled="createGroupLoading" class="w-full py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" /></div>
-          <div class="flex justify-end gap-3 mt-4"><button class="inline-flex items-center gap-2 py-[0.625rem] px-4 border border-accent rounded-[6px] bg-transparent text-text-accent text-sm font-medium cursor-pointer" @click="cancelCreateGroup" :disabled="createGroupLoading">Cancel</button><button class="inline-flex items-center gap-2 py-[0.625rem] px-4 rounded-[6px] bg-accent text-[#1a0f00] text-sm font-medium cursor-pointer" data-testid="create-group-submit" @click="handleCreateGroup" :disabled="createGroupLoading">{{ createGroupLoading ? 'Creating...' : 'Create Group' }}</button></div>
+
+        <!-- Invite Form -->
+        <div v-if="showInviteForm && isAdmin" class="flex items-center gap-3 mb-6">
+          <input
+            v-model="inviteEmail"
+            type="email"
+            placeholder="Email address"
+            :disabled="inviteLoading"
+            class="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+          />
+          <select v-model="inviteRole" :disabled="inviteLoading" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50 w-28">
+            <option value="viewer">Viewer</option>
+            <option value="editor">Editor</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="handleInvite" :disabled="inviteLoading">
+            {{ inviteLoading ? 'Sending...' : 'Send Invite' }}
+          </button>
         </div>
-        <div v-if="groupsLoading" class="p-[0.85rem] border border-dashed border-border rounded-[8px] text-text-1 text-[0.8125rem]">Loading groups...</div>
-        <div v-else-if="groupsError" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-danger text-sm" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3)">{{ groupsError }}</div>
-        <div v-else-if="groups.length === 0" class="p-[0.85rem] border border-dashed border-border rounded-[8px] text-text-1 text-[0.8125rem]">No groups yet. {{ isAdmin ? 'Create one to organize access.' : '' }}</div>
+        <div v-if="inviteError" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600 mb-4">{{ inviteError }}</div>
+        <div v-if="inviteSuccess" class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700 mb-4 break-all">{{ inviteSuccess }}</div>
+
+        <!-- Members Table -->
+        <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-slate-900">
+                <th class="px-4 py-3 text-left text-xs font-mono uppercase tracking-[0.07em] text-slate-300">Member</th>
+                <th class="px-4 py-3 text-left text-xs font-mono uppercase tracking-[0.07em] text-slate-300">Email</th>
+                <th class="px-4 py-3 text-left text-xs font-mono uppercase tracking-[0.07em] text-slate-300">Role</th>
+                <th v-if="isAdmin" class="px-4 py-3 text-right text-xs font-mono uppercase tracking-[0.07em] text-slate-300">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="member in members" :key="member.id" class="border-b border-slate-100">
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 flex items-center justify-center rounded-full bg-emerald-600 text-white text-xs font-semibold shrink-0">
+                      {{ (member.name || member.email).charAt(0).toUpperCase() }}
+                    </div>
+                    <span class="text-sm font-medium text-slate-900">{{ member.name || member.email }}</span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-sm text-slate-500">{{ member.email }}</td>
+                <td class="px-4 py-3">
+                  <select
+                    v-if="isAdmin"
+                    :value="member.role"
+                    @change="handleRoleChange(member, ($event.target as HTMLSelectElement).value as MembershipRole)"
+                    class="rounded-lg border border-slate-200 text-sm px-2 py-1 bg-white text-slate-700 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <option value="viewer">Viewer</option>
+                    <option value="editor">Editor</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  <span
+                    v-else
+                    class="inline-block rounded px-2 py-0.5 text-xs font-medium capitalize"
+                    :class="{
+                      'bg-amber-50 text-amber-700': member.role === 'admin',
+                      'bg-emerald-50 text-emerald-700': member.role === 'editor',
+                      'bg-slate-100 text-slate-600': member.role === 'viewer',
+                    }"
+                  >{{ member.role }}</span>
+                </td>
+                <td v-if="isAdmin" class="px-4 py-3 text-right">
+                  <button
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-transparent border-none text-rose-500 hover:text-rose-600 hover:bg-rose-50 cursor-pointer transition"
+                    @click="handleRemoveMember(member)"
+                    title="Remove member"
+                  >
+                    <Trash2 :size="16" />
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Groups Section -->
+      <section v-if="activeSection === 'groups'" class="rounded-xl border border-slate-200 bg-white p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-slate-900"><Users :size="20" /> Groups ({{ groups.length }})</h2>
+          <button
+            v-if="isAdmin && !showCreateGroupForm"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer"
+            data-testid="new-group-button"
+            @click="startCreateGroup"
+          >
+            New Group
+          </button>
+        </div>
+
+        <div v-if="groupMessage" class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700 mb-4">{{ groupMessage }}</div>
+        <div v-if="groupActionError" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600 mb-4">{{ groupActionError }}</div>
+
+        <div v-if="showCreateGroupForm && isAdmin" class="rounded-lg border border-slate-200 bg-slate-50 p-4 mb-4">
+          <div class="mb-4">
+            <label class="block mb-1.5 text-sm font-medium text-slate-700">Group Name</label>
+            <input v-model="createGroupName" type="text" data-testid="create-group-name" :disabled="createGroupLoading" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50" />
+          </div>
+          <div class="mb-4">
+            <label class="block mb-1.5 text-sm font-medium text-slate-700">Description (optional)</label>
+            <input
+              v-model="createGroupDescription"
+              type="text"
+              data-testid="create-group-description"
+              :disabled="createGroupLoading"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+            />
+          </div>
+          <div class="flex justify-end gap-3 mt-4">
+            <button class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="cancelCreateGroup" :disabled="createGroupLoading">
+              Cancel
+            </button>
+            <button
+              class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="create-group-submit"
+              @click="handleCreateGroup"
+              :disabled="createGroupLoading"
+            >
+              {{ createGroupLoading ? 'Creating...' : 'Create Group' }}
+            </button>
+          </div>
+        </div>
+
+        <div v-if="groupsLoading" class="rounded-lg border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">Loading groups...</div>
+        <div v-else-if="groupsError" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600">{{ groupsError }}</div>
+        <div v-else-if="groups.length === 0" class="rounded-lg border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">
+          No groups yet. {{ isAdmin ? 'Create one to organize access.' : '' }}
+        </div>
         <div v-else class="flex flex-col gap-3">
-          <article v-for="group in groups" :key="group.id" class="border border-border rounded-[10px] p-[0.9rem]" :data-testid="`group-card-${group.id}`" style="background: rgba(20, 33, 52, 0.75)">
-            <div class="flex justify-between gap-3 items-start max-md:flex-col max-md:items-start">
-              <div class="min-w-0"><h3 class="text-[0.95rem]">{{ group.name }}</h3><p v-if="group.description" class="text-[0.8125rem] text-text-1 mt-1 mb-1">{{ group.description }}</p><p v-else class="text-[0.8125rem] text-text-1 mt-1 mb-1 opacity-70">No description</p><span class="text-xs text-text-1">{{ groupMemberCount(group.id) }} members</span></div>
-              <div class="flex gap-2 flex-wrap justify-end max-md:justify-start">
-                <button class="inline-flex items-center gap-2 py-[0.375rem] px-3 text-[0.8125rem] border border-accent rounded-[6px] bg-transparent text-text-accent cursor-pointer" :data-testid="`toggle-group-members-${group.id}`" @click="toggleGroupMembers(group.id)">{{ isGroupExpanded(group.id) ? 'Hide Members' : 'Show Members' }}</button>
+          <article v-for="group in groups" :key="group.id" class="rounded-xl border border-slate-200 bg-white p-4" :data-testid="`group-card-${group.id}`">
+            <div class="flex justify-between gap-3 items-start">
+              <div class="min-w-0">
+                <h3 class="m-0 text-sm font-semibold text-slate-900">{{ group.name }}</h3>
+                <p v-if="group.description" class="mt-1 mb-0 text-sm text-slate-500">{{ group.description }}</p>
+                <p v-else class="mt-1 mb-0 text-sm text-slate-400">No description</p>
+                <span class="text-xs text-slate-500">{{ groupMemberCount(group.id) }} members</span>
+              </div>
+              <div class="flex gap-2 flex-wrap justify-end">
+                <button
+                  class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  :data-testid="`toggle-group-members-${group.id}`"
+                  @click="toggleGroupMembers(group.id)"
+                >
+                  {{ isGroupExpanded(group.id) ? 'Hide Members' : 'Show Members' }}
+                </button>
                 <template v-if="isAdmin && editingGroupId !== group.id">
-                  <button class="inline-flex items-center gap-2 py-[0.375rem] px-3 text-[0.8125rem] border border-accent rounded-[6px] bg-transparent text-text-accent cursor-pointer" :data-testid="`rename-group-${group.id}`" @click="startEditGroup(group)">Rename</button>
-                  <button class="inline-flex items-center gap-2 py-[0.375rem] px-3 text-[0.8125rem] rounded-[6px] bg-danger text-white cursor-pointer disabled:opacity-50" :data-testid="`delete-group-${group.id}`" @click="handleDeleteGroup(group)" :disabled="groupMemberActionLoading[group.id]">Delete</button>
+                  <button
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
+                    :data-testid="`rename-group-${group.id}`"
+                    @click="startEditGroup(group)"
+                  >
+                    Rename
+                  </button>
+                  <button
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-rose-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    :data-testid="`delete-group-${group.id}`"
+                    @click="handleDeleteGroup(group)"
+                    :disabled="groupMemberActionLoading[group.id]"
+                  >
+                    Delete
+                  </button>
                 </template>
               </div>
             </div>
-            <div v-if="isAdmin && editingGroupId === group.id" class="p-4 rounded-[10px] border border-border mt-3" style="background: rgba(20, 33, 52, 0.8)">
-              <div class="mb-4"><label class="block mb-[0.375rem] text-sm font-medium text-text-0">Group Name</label><input v-model="editGroupName" type="text" data-testid="edit-group-name" :disabled="groupUpdateLoading" class="w-full py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" /></div>
-              <div class="mb-4"><label class="block mb-[0.375rem] text-sm font-medium text-text-0">Description (optional)</label><input v-model="editGroupDescription" type="text" data-testid="edit-group-description" :disabled="groupUpdateLoading" class="w-full py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" /></div>
-              <div class="flex justify-end gap-3 mt-4"><button class="inline-flex items-center gap-2 py-[0.625rem] px-4 border border-accent rounded-[6px] bg-transparent text-text-accent text-sm font-medium cursor-pointer" @click="cancelEditGroup" :disabled="groupUpdateLoading">Cancel</button><button class="inline-flex items-center gap-2 py-[0.625rem] px-4 rounded-[6px] bg-accent text-[#1a0f00] text-sm font-medium cursor-pointer" :data-testid="`save-group-${group.id}`" @click="handleUpdateGroup(group)" :disabled="groupUpdateLoading">{{ groupUpdateLoading ? 'Saving...' : 'Save Group' }}</button></div>
+
+            <div v-if="isAdmin && editingGroupId === group.id" class="rounded-lg border border-slate-200 bg-slate-50 p-4 mt-3">
+              <div class="mb-4">
+                <label class="block mb-1.5 text-sm font-medium text-slate-700">Group Name</label>
+                <input v-model="editGroupName" type="text" data-testid="edit-group-name" :disabled="groupUpdateLoading" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50" />
+              </div>
+              <div class="mb-4">
+                <label class="block mb-1.5 text-sm font-medium text-slate-700">Description (optional)</label>
+                <input
+                  v-model="editGroupDescription"
+                  type="text"
+                  data-testid="edit-group-description"
+                  :disabled="groupUpdateLoading"
+                  class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+                />
+              </div>
+              <div class="flex justify-end gap-3 mt-4">
+                <button class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="cancelEditGroup" :disabled="groupUpdateLoading">
+                  Cancel
+                </button>
+                <button
+                  class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  :data-testid="`save-group-${group.id}`"
+                  @click="handleUpdateGroup(group)"
+                  :disabled="groupUpdateLoading"
+                >
+                  {{ groupUpdateLoading ? 'Saving...' : 'Save Group' }}
+                </button>
+              </div>
             </div>
-            <div v-if="isGroupExpanded(group.id)" class="mt-3 border-t border-border pt-3">
-              <div v-if="groupMembersLoading[group.id]" class="p-[0.85rem] border border-dashed border-border rounded-[8px] text-text-1 text-[0.8125rem]">Loading group members...</div>
-              <div v-else-if="groupMembersError[group.id]" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-danger text-sm" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3)">{{ groupMembersError[group.id] }}</div>
+
+            <div v-if="isGroupExpanded(group.id)" class="mt-3 border-t border-slate-100 pt-3">
+              <div v-if="groupMembersLoading[group.id]" class="rounded-lg border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">Loading group members...</div>
+              <div v-else-if="groupMembersError[group.id]" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600">
+                {{ groupMembersError[group.id] }}
+              </div>
               <template v-else>
-                <div v-if="isAdmin" class="flex gap-3 mb-3 max-md:flex-col max-md:items-start">
-                  <select v-model="addMemberUserId[group.id]" :data-testid="`add-member-select-${group.id}`" :disabled="groupMemberActionLoading[group.id]" class="flex-1 py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 max-md:w-full"><option value="">Select member</option><option v-for="member in availableMembersForGroup(group.id)" :key="member.user_id" :value="member.user_id">{{ member.name || member.email }} ({{ member.email }})</option></select>
-                  <button class="inline-flex items-center gap-2 py-[0.625rem] px-4 rounded-[6px] bg-accent text-[#1a0f00] text-sm font-medium cursor-pointer disabled:opacity-50" :data-testid="`add-member-button-${group.id}`" @click="handleAddGroupMember(group.id)" :disabled="groupMemberActionLoading[group.id] || availableMembersForGroup(group.id).length === 0">Add to Group</button>
+                <div v-if="isAdmin" class="flex gap-3 mb-3">
+                  <select
+                    v-model="addMemberUserId[group.id]"
+                    :data-testid="`add-member-select-${group.id}`"
+                    :disabled="groupMemberActionLoading[group.id]"
+                    class="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+                  >
+                    <option value="">Select member</option>
+                    <option
+                      v-for="member in availableMembersForGroup(group.id)"
+                      :key="member.user_id"
+                      :value="member.user_id"
+                    >
+                      {{ member.name || member.email }} ({{ member.email }})
+                    </option>
+                  </select>
+                  <button
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    :data-testid="`add-member-button-${group.id}`"
+                    @click="handleAddGroupMember(group.id)"
+                    :disabled="groupMemberActionLoading[group.id] || availableMembersForGroup(group.id).length === 0"
+                  >
+                    Add to Group
+                  </button>
                 </div>
-                <div v-if="(groupMembersById[group.id] || []).length === 0" class="p-[0.85rem] border border-dashed border-border rounded-[8px] text-text-1 text-[0.8125rem]">No members in this group.</div>
+
+                <div v-if="(groupMembersById[group.id] || []).length === 0" class="rounded-lg border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">
+                  No members in this group.
+                </div>
                 <div v-else class="flex flex-col gap-2">
-                  <div v-for="membership in groupMembersById[group.id]" :key="membership.id" class="flex justify-between gap-3 items-center border border-border rounded-[8px] py-[0.6rem] px-3 max-md:flex-col max-md:items-start" style="background: rgba(11, 19, 30, 0.45)">
-                    <div class="flex flex-col min-w-0"><strong class="text-[0.85rem] text-text-0">{{ membership.name || membership.email }}</strong><span class="text-xs text-text-1 whitespace-nowrap overflow-hidden text-ellipsis">{{ membership.email }}</span></div>
-                    <button v-if="isAdmin" class="inline-flex items-center gap-2 py-[0.375rem] px-3 text-[0.8125rem] border border-accent rounded-[6px] bg-transparent text-text-accent cursor-pointer" :data-testid="`remove-member-${group.id}-${membership.user_id}`" @click="handleRemoveGroupMember(group.id, membership)" :disabled="groupMemberActionLoading[group.id]">Remove</button>
+                  <div v-for="membership in groupMembersById[group.id]" :key="membership.id" class="flex justify-between gap-3 items-center rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
+                    <div class="flex flex-col min-w-0">
+                      <strong class="text-sm text-slate-900">{{ membership.name || membership.email }}</strong>
+                      <span class="text-xs text-slate-500 truncate">{{ membership.email }}</span>
+                    </div>
+                    <button
+                      v-if="isAdmin"
+                      class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      :data-testid="`remove-member-${group.id}-${membership.user_id}`"
+                      @click="handleRemoveGroupMember(group.id, membership)"
+                      :disabled="groupMemberActionLoading[group.id]"
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
               </template>
@@ -881,99 +1106,290 @@ function goBack() {
         </div>
       </section>
 
-      <section v-if="activeSection === 'general'" class="bg-surface-1 border border-border rounded-[14px] p-6 shadow-sm">
+      <!-- SSO Section -->
+      <section v-if="activeSection === 'general'" class="rounded-xl border border-slate-200 bg-white p-6">
         <div class="flex justify-between items-center mb-4">
-          <h2 class="flex items-center gap-2 text-base font-semibold"><Shield :size="20" /> Single Sign-On</h2>
-          <div v-if="isAdmin" class="flex gap-2 items-center"><button class="inline-flex items-center gap-2 py-[0.375rem] px-3 text-[0.8125rem] rounded-[6px] bg-accent text-[#1a0f00] cursor-pointer" data-testid="add-authentication" @click="handleAddSso">Add Authentication</button></div>
+          <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-slate-900"><Shield :size="20" /> Single Sign-On</h2>
+          <div v-if="isAdmin" class="flex gap-2 items-center">
+            <button class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer" data-testid="add-authentication" @click="handleAddSso">
+              Add Authentication
+            </button>
+          </div>
         </div>
-        <p class="text-text-1 text-sm mb-3">Manage identity provider connections for this organization.</p>
-        <div v-if="!isAdmin" class="p-[0.85rem] border border-dashed border-border rounded-[8px] text-text-1 text-[0.8125rem]">Only organization admins can update SSO settings.</div>
-        <div v-if="ssoLoading" class="p-[0.85rem] border border-dashed border-border rounded-[8px] text-text-1 text-[0.8125rem]">Loading SSO settings...</div>
+        <p class="text-sm text-slate-500 mb-3 mt-0">Manage identity provider connections for this organization.</p>
+
+        <div v-if="!isAdmin" class="rounded-lg border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">Only organization admins can update SSO settings.</div>
+
+        <div v-if="ssoLoading" class="rounded-lg border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">Loading SSO settings...</div>
         <div v-else class="flex flex-col gap-3">
           <div class="flex flex-col gap-2">
-            <article class="sso-provider-row border border-border rounded-[10px] p-[0.9rem] flex flex-col gap-[0.65rem]" style="background: rgba(20, 33, 52, 0.75)" data-testid="sso-provider-password">
-              <div><h3 class="text-[0.95rem]">Email/Password</h3><p class="text-[0.8rem] text-text-1 mt-[0.35rem]">Built-in authentication method available for all organizations.</p></div>
-              <div class="flex items-center justify-between gap-3 flex-wrap"><span class="sso-status enabled">Enabled</span></div>
-            </article>
-            <article v-for="provider in configuredSsoProviders" :key="provider.key" class="border border-border rounded-[10px] p-[0.9rem] flex flex-col gap-[0.65rem]" style="background: rgba(20, 33, 52, 0.75)" :data-testid="`sso-provider-${provider.key}`">
-              <div><h3 class="text-[0.95rem]">{{ provider.name }}</h3><p class="text-[0.8rem] text-text-1 mt-[0.35rem]">{{ provider.configured ? 'Configured for this org.' : 'Not configured yet.' }}</p></div>
-              <div class="flex items-center justify-between gap-3 flex-wrap">
-                <span class="sso-status" :class="{ enabled: provider.enabled, configured: provider.configured }">{{ ssoStatus(provider) }}</span>
-                <button v-if="isAdmin" class="inline-flex items-center gap-2 py-[0.375rem] px-3 text-[0.8125rem] border border-accent rounded-[6px] bg-transparent text-text-accent cursor-pointer" :data-testid="`edit-sso-${provider.key}`" @click="openSsoProvider(provider.key)"><Edit2 :size="14" />Settings</button>
+            <article class="rounded-xl border border-slate-200 bg-white p-4 flex flex-col gap-2.5" data-testid="sso-provider-password">
+              <div>
+                <h3 class="m-0 text-sm font-semibold text-slate-900">Email/Password</h3>
+                <p class="mt-1 mb-0 text-xs text-slate-500">Built-in authentication method available for all organizations.</p>
               </div>
-              <div v-if="provider.key === 'google' && googleError && activeSsoProvider !== 'google'" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-danger text-sm" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3)">{{ googleError }}</div>
-              <div v-if="provider.key === 'microsoft' && microsoftError && activeSsoProvider !== 'microsoft'" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-danger text-sm" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3)">{{ microsoftError }}</div>
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <span class="inline-block rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs text-emerald-700">Enabled</span>
+              </div>
             </article>
-            <div v-if="configuredSsoProviders.length === 0" class="p-[0.85rem] border border-dashed border-border rounded-[8px] text-text-1 text-[0.8125rem]">No external authentication methods configured yet.</div>
-            <div v-if="googleError && activeSsoProvider !== 'google'" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-danger text-sm" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3)">{{ googleError }}</div>
-            <div v-if="microsoftError && activeSsoProvider !== 'microsoft'" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-danger text-sm" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3)">{{ microsoftError }}</div>
+
+            <article
+              v-for="provider in configuredSsoProviders"
+              :key="provider.key"
+              class="rounded-xl border border-slate-200 bg-white p-4 flex flex-col gap-2.5"
+              :data-testid="`sso-provider-${provider.key}`"
+            >
+              <div>
+                <h3 class="m-0 text-sm font-semibold text-slate-900">{{ provider.name }}</h3>
+                <p class="mt-1 mb-0 text-xs text-slate-500">
+                  {{ provider.configured ? 'Configured for this org.' : 'Not configured yet.' }}
+                </p>
+              </div>
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <span
+                  class="inline-block rounded-full px-2.5 py-0.5 text-xs border"
+                  :class="{
+                    'border-emerald-200 bg-emerald-50 text-emerald-700': provider.enabled,
+                    'border-amber-200 bg-amber-50 text-amber-700': provider.configured && !provider.enabled,
+                    'border-slate-200 bg-slate-50 text-slate-500': !provider.configured,
+                  }"
+                >
+                  {{ ssoStatus(provider) }}
+                </span>
+                <button
+                  v-if="isAdmin"
+                  class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
+                  :data-testid="`edit-sso-${provider.key}`"
+                  @click="openSsoProvider(provider.key)"
+                >
+                  <Edit2 :size="14" />
+                  Settings
+                </button>
+              </div>
+              <div
+                v-if="provider.key === 'google' && googleError && activeSsoProvider !== 'google'"
+                class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600"
+              >
+                {{ googleError }}
+              </div>
+              <div
+                v-if="provider.key === 'microsoft' && microsoftError && activeSsoProvider !== 'microsoft'"
+                class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600"
+              >
+                {{ microsoftError }}
+              </div>
+            </article>
+
+            <div v-if="configuredSsoProviders.length === 0" class="rounded-lg border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">
+              No external authentication methods configured yet.
+            </div>
+
+            <div v-if="googleError && activeSsoProvider !== 'google'" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600">
+              {{ googleError }}
+            </div>
+
+            <div v-if="microsoftError && activeSsoProvider !== 'microsoft'" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600">
+              {{ microsoftError }}
+            </div>
+          </div>
+
+        </div>
+
+        <div v-if="ssoNotice" class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700 mt-3 break-all">{{ ssoNotice }}</div>
+      </section>
+
+      <!-- Danger Zone -->
+      <section v-if="activeSection === 'general' && isAdmin" class="rounded-xl border border-rose-300 bg-white p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-rose-600"><Shield :size="20" /> Danger Zone</h2>
+        </div>
+        <div class="rounded-lg bg-rose-50 p-4">
+          <div class="flex justify-between items-center gap-4">
+            <div>
+              <strong class="block text-sm text-slate-900 mb-1">Delete Organization</strong>
+              <p class="m-0 text-xs text-slate-500">Permanently delete this organization and all its data. This action cannot be undone.</p>
+            </div>
+            <button class="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 cursor-pointer shrink-0" @click="showDeleteConfirm = true">Delete Organization</button>
           </div>
         </div>
-        <div v-if="ssoNotice" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-success text-sm mt-3" style="background: rgba(78, 205, 196, 0.1); border: 1px solid rgba(78, 205, 196, 0.3)">{{ ssoNotice }}</div>
-      </section>
-
-      <section v-if="activeSection === 'general' && isAdmin" class="bg-surface-1 border border-danger rounded-[14px] p-6 shadow-sm">
-        <div class="flex justify-between items-center mb-4"><h2 class="flex items-center gap-2 text-base font-semibold text-danger"><Shield :size="20" /> Danger Zone</h2></div>
-        <div class="p-4 rounded-[8px]" style="background: rgba(251, 113, 133, 0.08)">
-          <div class="flex justify-between items-center gap-4 max-md:flex-col max-md:items-start"><div><strong class="block text-sm text-text-0 mb-1">Delete Organization</strong><p class="text-xs text-text-1">Permanently delete this organization and all its data. This action cannot be undone.</p></div>
-            <button class="inline-flex items-center gap-2 py-[0.625rem] px-4 rounded-[6px] bg-danger text-white text-sm font-medium cursor-pointer" @click="showDeleteConfirm = true">Delete Organization</button></div>
-        </div>
       </section>
       </div>
     </div>
 
-    <div v-if="showDeleteConfirm" class="fixed inset-0 flex items-center justify-center z-[1000]" style="background: rgba(3, 10, 18, 0.76); backdrop-filter: blur(8px)" @click.self="showDeleteConfirm = false">
-      <div class="bg-surface-1 border border-border rounded-[14px] p-6 max-w-[400px]">
-        <h3 class="mb-3 text-[1.125rem] font-semibold">Delete Organization?</h3>
-        <p class="text-sm text-text-1 mb-6">This will permanently delete <strong>{{ org?.name }}</strong> and all its dashboards, panels, and settings. This action cannot be undone.</p>
-        <div class="flex justify-end gap-3"><button class="inline-flex items-center gap-2 py-[0.625rem] px-4 border border-accent rounded-[6px] bg-transparent text-text-accent text-sm font-medium cursor-pointer" @click="showDeleteConfirm = false" :disabled="deleteLoading">Cancel</button><button class="inline-flex items-center gap-2 py-[0.625rem] px-4 rounded-[6px] bg-danger text-white text-sm font-medium cursor-pointer" @click="handleDelete" :disabled="deleteLoading">{{ deleteLoading ? 'Deleting...' : 'Delete Organization' }}</button></div>
-      </div>
-    </div>
-
-    <div v-if="ssoDialogOpen" class="fixed inset-0 flex items-center justify-center z-[1000]" style="background: rgba(3, 10, 18, 0.76); backdrop-filter: blur(8px)" data-testid="sso-config-modal" @click.self="closeSsoDialog">
-      <div class="bg-surface-1 border border-border rounded-[14px] p-6 w-[min(640px,calc(100vw-2rem))] max-w-[640px] max-md:w-[calc(100vw-1rem)]">
-        <div class="flex justify-between items-start gap-4 mb-3">
-          <div><h3 v-if="ssoStep === 'picker'" class="mb-[0.35rem] text-base" data-testid="sso-provider-picker-title">Choose SSO provider</h3><h3 v-else class="mb-[0.35rem] text-base">{{ activeSsoLabel }} SSO Settings</h3><p class="text-text-1 text-sm" v-if="ssoStep === 'picker'">Select a provider to {{ ssoSelectionMode === 'add' ? 'add to this organization' : 'configure' }}.</p><p class="text-text-1 text-sm" v-else>Update credentials and enable status for this provider.</p></div>
-          <button class="inline-flex items-center gap-2 py-[0.375rem] px-3 text-[0.8125rem] border border-accent rounded-[6px] bg-transparent text-text-accent cursor-pointer" data-testid="close-sso-config" @click="closeSsoDialog">Close</button>
-        </div>
-        <div v-if="ssoStep === 'picker'" class="flex flex-col gap-3">
-          <button v-for="provider in selectableSsoProviders" :key="provider.key" type="button" class="sso-picker-option flex justify-between items-center gap-3 w-full border border-border rounded-[10px] py-[0.8rem] px-[0.9rem] cursor-pointer text-text-0 hover:border-accent" style="background: rgba(20, 33, 52, 0.75)" :data-testid="`sso-provider-option-${provider.key}`" @click="chooseSsoProvider(provider.key)">
-            <span class="text-[0.9rem] font-semibold">{{ provider.name }}</span>
-            <span class="sso-status" :class="{ enabled: provider.enabled, configured: provider.configured }">{{ ssoStatus(provider) }}</span>
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" @click.self="showDeleteConfirm = false">
+      <div class="rounded-xl border border-slate-200 bg-white p-6 max-w-sm w-full shadow-lg">
+        <h3 class="m-0 mb-3 text-lg font-semibold text-slate-900">Delete Organization?</h3>
+        <p class="m-0 mb-6 text-sm text-slate-500">
+          This will permanently delete <strong class="text-slate-700">{{ org?.name }}</strong> and all its dashboards, panels, and
+          settings. This action cannot be undone.
+        </p>
+        <div class="flex justify-end gap-3">
+          <button class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="showDeleteConfirm = false" :disabled="deleteLoading">
+            Cancel
+          </button>
+          <button class="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="handleDelete" :disabled="deleteLoading">
+            {{ deleteLoading ? 'Deleting...' : 'Delete Organization' }}
           </button>
         </div>
-        <div v-else class="border border-border rounded-[12px] p-4" style="background: rgba(11, 19, 30, 0.6)" data-testid="sso-config-panel">
-          <div v-if="activeSsoProvider === 'google'" data-testid="google-sso-card">
-            <div class="mb-4"><label class="block mb-[0.375rem] text-sm font-medium text-text-0">Client ID</label><input v-model="googleClientId" type="text" data-testid="google-client-id" :disabled="!isAdmin || googleSaving" class="w-full py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" /></div>
-            <div class="mb-4"><label class="block mb-[0.375rem] text-sm font-medium text-text-0">Client Secret</label><input v-model="googleClientSecret" type="password" data-testid="google-client-secret" placeholder="Enter to update" :disabled="!isAdmin || googleSaving" class="w-full py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" /></div>
-            <div class="mb-0"><label class="inline-flex items-center gap-2"><input v-model="googleEnabled" type="checkbox" data-testid="google-enabled" :disabled="!isAdmin || googleSaving" class="w-auto m-0" />Enable Google SSO</label></div>
-            <div v-if="googleError" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-danger text-sm mt-3" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3)">{{ googleError }}</div>
-            <div v-if="isAdmin" class="flex justify-end gap-3 mt-3"><button class="inline-flex items-center gap-2 py-[0.625rem] px-4 border border-accent rounded-[6px] bg-transparent text-text-accent text-sm font-medium cursor-pointer" data-testid="back-sso-provider-picker" @click="ssoStep = 'picker'">Back</button><button class="inline-flex items-center gap-2 py-[0.625rem] px-4 rounded-[6px] bg-accent text-[#1a0f00] text-sm font-medium cursor-pointer" data-testid="save-google-sso" :disabled="googleSaving" @click="handleSaveGoogleSSO">{{ googleSaving ? 'Saving...' : 'Save Google SSO' }}</button></div>
+      </div>
+    </div>
+
+    <div v-if="ssoDialogOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" data-testid="sso-config-modal" @click.self="closeSsoDialog">
+      <div class="rounded-xl border border-slate-200 bg-white p-6 w-full max-w-xl shadow-lg">
+        <div class="flex justify-between items-start gap-4 mb-3">
+          <div>
+            <h3 v-if="ssoStep === 'picker'" class="m-0 mb-1 text-base font-semibold text-slate-900" data-testid="sso-provider-picker-title">Choose SSO provider</h3>
+            <h3 v-else class="m-0 mb-1 text-base font-semibold text-slate-900">{{ activeSsoLabel }} SSO Settings</h3>
+            <p class="text-sm text-slate-500 m-0" v-if="ssoStep === 'picker'">
+              Select a provider to {{ ssoSelectionMode === 'add' ? 'add to this organization' : 'configure' }}.
+            </p>
+            <p class="text-sm text-slate-500 m-0" v-else>Update credentials and enable status for this provider.</p>
           </div>
+          <button class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer" data-testid="close-sso-config" @click="closeSsoDialog">
+            Close
+          </button>
+        </div>
+
+        <div v-if="ssoStep === 'picker'" class="flex flex-col gap-3">
+          <button
+            v-for="provider in selectableSsoProviders"
+            :key="provider.key"
+            type="button"
+            class="flex justify-between items-center gap-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left cursor-pointer transition hover:border-emerald-400 hover:bg-emerald-50"
+            :data-testid="`sso-provider-option-${provider.key}`"
+            @click="chooseSsoProvider(provider.key)"
+          >
+            <span class="text-sm font-semibold text-slate-900">{{ provider.name }}</span>
+            <span
+              class="inline-block rounded-full px-2.5 py-0.5 text-xs border"
+              :class="{
+                'border-emerald-200 bg-emerald-50 text-emerald-700': provider.enabled,
+                'border-amber-200 bg-amber-50 text-amber-700': provider.configured && !provider.enabled,
+                'border-slate-200 bg-slate-50 text-slate-500': !provider.configured,
+              }"
+            >
+              {{ ssoStatus(provider) }}
+            </span>
+          </button>
+        </div>
+
+        <div v-else class="rounded-xl border border-slate-200 bg-slate-50 p-4" data-testid="sso-config-panel">
+          <div v-if="activeSsoProvider === 'google'" data-testid="google-sso-card">
+            <div class="mb-4">
+              <label class="block mb-1.5 text-sm font-medium text-slate-700">Client ID</label>
+              <input
+                v-model="googleClientId"
+                type="text"
+                data-testid="google-client-id"
+                :disabled="!isAdmin || googleSaving"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block mb-1.5 text-sm font-medium text-slate-700">Client Secret</label>
+              <input
+                v-model="googleClientSecret"
+                type="password"
+                data-testid="google-client-secret"
+                placeholder="Enter to update"
+                :disabled="!isAdmin || googleSaving"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+              />
+            </div>
+            <div class="mb-0">
+              <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                <input
+                  v-model="googleEnabled"
+                  type="checkbox"
+                  data-testid="google-enabled"
+                  :disabled="!isAdmin || googleSaving"
+                  class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                Enable Google SSO
+              </label>
+            </div>
+
+            <div v-if="googleError" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600 mt-3">{{ googleError }}</div>
+
+            <div v-if="isAdmin" class="flex justify-end gap-3 mt-4">
+              <button class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer" data-testid="back-sso-provider-picker" @click="ssoStep = 'picker'">
+                Back
+              </button>
+              <button
+                class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="save-google-sso"
+                :disabled="googleSaving"
+                @click="handleSaveGoogleSSO"
+              >
+                {{ googleSaving ? 'Saving...' : 'Save Google SSO' }}
+              </button>
+            </div>
+          </div>
+
           <div v-else-if="activeSsoProvider === 'microsoft'" data-testid="microsoft-sso-card">
-            <div class="mb-4"><label class="block mb-[0.375rem] text-sm font-medium text-text-0">Tenant ID</label><input v-model="microsoftTenantId" type="text" data-testid="microsoft-tenant-id" :disabled="!isAdmin || microsoftSaving" class="w-full py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" /></div>
-            <div class="mb-4"><label class="block mb-[0.375rem] text-sm font-medium text-text-0">Client ID</label><input v-model="microsoftClientId" type="text" data-testid="microsoft-client-id" :disabled="!isAdmin || microsoftSaving" class="w-full py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" /></div>
-            <div class="mb-4"><label class="block mb-[0.375rem] text-sm font-medium text-text-0">Client Secret</label><input v-model="microsoftClientSecret" type="password" data-testid="microsoft-client-secret" placeholder="Enter to update" :disabled="!isAdmin || microsoftSaving" class="w-full py-[0.625rem] px-[0.875rem] bg-bg-1 border border-border rounded-[6px] text-sm text-text-0 focus:outline-none focus:border-accent" /></div>
-            <div class="mb-0"><label class="inline-flex items-center gap-2"><input v-model="microsoftEnabled" type="checkbox" data-testid="microsoft-enabled" :disabled="!isAdmin || microsoftSaving" class="w-auto m-0" />Enable Microsoft SSO</label></div>
-            <div v-if="microsoftError" class="py-[0.625rem] px-[0.875rem] rounded-[6px] text-danger text-sm mt-3" style="background: rgba(255, 107, 107, 0.1); border: 1px solid rgba(255, 107, 107, 0.3)">{{ microsoftError }}</div>
-            <div v-if="isAdmin" class="flex justify-end gap-3 mt-3"><button class="inline-flex items-center gap-2 py-[0.625rem] px-4 border border-accent rounded-[6px] bg-transparent text-text-accent text-sm font-medium cursor-pointer" data-testid="back-sso-provider-picker" @click="ssoStep = 'picker'">Back</button><button class="inline-flex items-center gap-2 py-[0.625rem] px-4 rounded-[6px] bg-accent text-[#1a0f00] text-sm font-medium cursor-pointer" data-testid="save-microsoft-sso" :disabled="microsoftSaving" @click="handleSaveMicrosoftSSO">{{ microsoftSaving ? 'Saving...' : 'Save Microsoft SSO' }}</button></div>
+            <div class="mb-4">
+              <label class="block mb-1.5 text-sm font-medium text-slate-700">Tenant ID</label>
+              <input
+                v-model="microsoftTenantId"
+                type="text"
+                data-testid="microsoft-tenant-id"
+                :disabled="!isAdmin || microsoftSaving"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block mb-1.5 text-sm font-medium text-slate-700">Client ID</label>
+              <input
+                v-model="microsoftClientId"
+                type="text"
+                data-testid="microsoft-client-id"
+                :disabled="!isAdmin || microsoftSaving"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block mb-1.5 text-sm font-medium text-slate-700">Client Secret</label>
+              <input
+                v-model="microsoftClientSecret"
+                type="password"
+                data-testid="microsoft-client-secret"
+                placeholder="Enter to update"
+                :disabled="!isAdmin || microsoftSaving"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+              />
+            </div>
+            <div class="mb-0">
+              <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                <input
+                  v-model="microsoftEnabled"
+                  type="checkbox"
+                  data-testid="microsoft-enabled"
+                  :disabled="!isAdmin || microsoftSaving"
+                  class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                Enable Microsoft SSO
+              </label>
+            </div>
+
+            <div v-if="microsoftError" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600 mt-3">{{ microsoftError }}</div>
+
+            <div v-if="isAdmin" class="flex justify-end gap-3 mt-4">
+              <button class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer" data-testid="back-sso-provider-picker" @click="ssoStep = 'picker'">
+                Back
+              </button>
+              <button
+                class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="save-microsoft-sso"
+                :disabled="microsoftSaving"
+                @click="handleSaveMicrosoftSSO"
+              >
+                {{ microsoftSaving ? 'Saving...' : 'Save Microsoft SSO' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style>
-/* Minimal CSS for complex state-dependent styling */
-.sidebar-link:hover { border-color: rgba(252, 211, 77, 0.22); background: rgba(31, 49, 73, 0.64); }
-.sidebar-link.active { color: #FCD34D; border-color: rgba(245, 158, 11, 0.34); background: linear-gradient(90deg, rgba(245, 158, 11, 0.18), rgba(99, 102, 241, 0.1)); }
-.role-badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; text-transform: capitalize; }
-.role-badge.admin { background: rgba(245, 158, 11, 0.18); color: var(--color-accent); }
-.role-badge.editor { background: rgba(78, 205, 196, 0.15); color: var(--color-success); }
-.role-badge.viewer { background: rgba(255, 159, 67, 0.15); color: var(--color-warning); }
-.sso-status { font-size: 0.75rem; border-radius: 999px; padding: 0.15rem 0.55rem; color: var(--color-text-1); border: 1px solid var(--color-border); }
-.sso-status.enabled { color: var(--color-success); border-color: rgba(78, 205, 196, 0.45); background: rgba(78, 205, 196, 0.1); }
-.sso-status.configured:not(.enabled) { color: var(--color-warning); border-color: rgba(255, 159, 67, 0.3); background: rgba(255, 159, 67, 0.1); }
-.sso-picker-option:hover { background: rgba(20, 33, 52, 0.92); }
-</style>

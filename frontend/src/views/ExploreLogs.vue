@@ -237,7 +237,7 @@ watch(
     const hasSelected = sources.some(ds => ds.id === selectedDatasourceId.value)
     if (!hasSelected) {
       const defaultDatasource = sources.find(ds => ds.is_default)
-      selectedDatasourceId.value = defaultDatasource?.id || sources[0]!.id
+      selectedDatasourceId.value = defaultDatasource?.id || sources[0].id
     }
   },
   { immediate: true },
@@ -753,7 +753,7 @@ const activeDatasourceHealthError = computed(() => {
 })
 
 function getTypeLogo(type_: DataSourceType): string {
-  return dataSourceTypeLogos[type_] ?? ''
+  return dataSourceTypeLogos[type_]
 }
 
 function toggleDatasourceMenu() {
@@ -869,23 +869,23 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
 </script>
 
 <template>
-  <div class="flex flex-col py-5 px-6 max-w-[1400px] mx-auto max-md:p-[0.9rem]">
-    <header class="flex justify-between items-center gap-4 mb-4 p-4 border border-border rounded-[14px] bg-surface-1 shadow-sm">
-      <div class="flex items-center gap-3">
-        <h1>Explore</h1>
-        <span class="mode-badge">Logs</span>
+  <div class="flex flex-col min-h-full px-8 py-6">
+    <header class="flex items-center justify-between mb-6">
+      <div class="flex items-center flex-wrap gap-3">
+        <h1 class="text-2xl font-bold text-slate-900 m-0">Explore</h1>
+        <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">Logs</span>
       </div>
     </header>
 
-    <div class="flex flex-col gap-4">
-      <div class="bg-surface-1 border border-border rounded-[14px] p-5 shadow-sm flex flex-col gap-4">
-        <div class="query-context-row">
-          <div class="datasource-row">
-            <label>Data Source</label>
-            <div ref="datasourceMenuRef" class="datasource-selector">
+    <div class="flex flex-col gap-6 flex-1">
+      <div class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4">
+        <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-end max-md:grid-cols-1">
+          <div class="flex flex-col gap-2.5">
+            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Data Source</label>
+            <div ref="datasourceMenuRef" class="relative">
               <button
                 type="button"
-                class="active-datasource-panel datasource-trigger"
+                class="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left cursor-pointer transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="loading || !hasLogsDatasources"
                 @click="toggleDatasourceMenu"
                 :title="activeDatasource ? `Active datasource: ${activeDatasource.name}` : 'No logs datasource configured'"
@@ -894,65 +894,69 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
                   <img
                     :src="getTypeLogo(activeDatasource.type)"
                     :alt="`${dataSourceTypeLabels[activeDatasource.type]} logo`"
-                    class="active-datasource-logo"
+                    class="h-7 w-7 shrink-0 object-contain"
                   />
-                  <div class="active-datasource-meta">
-                    <span class="active-datasource-label">Active Source</span>
-                    <strong class="active-datasource-name">{{ activeDatasource.name }}</strong>
-                    <span class="active-datasource-type">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
+                  <div class="flex flex-col min-w-0 gap-px">
+                    <span class="text-[0.68rem] uppercase tracking-wide text-slate-400">Active Source</span>
+                    <strong class="text-sm font-semibold text-slate-900 truncate">{{ activeDatasource.name }}</strong>
+                    <span class="font-mono text-xs uppercase tracking-[0.07em] text-slate-500">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
                   </div>
                   <span
-                    class="source-health-badge"
-                    :class="`health-${activeDatasourceHealth}`"
+                    class="ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs border"
+                    :class="{
+                      'border-slate-200 text-slate-500': activeDatasourceHealth === 'checking' || activeDatasourceHealth === 'unknown',
+                      'border-emerald-200 bg-emerald-50 text-emerald-700': activeDatasourceHealth === 'healthy',
+                      'border-rose-200 bg-rose-50 text-rose-700': activeDatasourceHealth === 'unhealthy',
+                    }"
                     :title="activeDatasourceHealthError || activeDatasourceHealthLabel"
                   >
-                    <Loader2 v-if="activeDatasourceHealth === 'checking'" :size="12" class="icon-spin" />
+                    <Loader2 v-if="activeDatasourceHealth === 'checking'" :size="12" class="animate-spin" />
                     <HeartPulse v-else-if="activeDatasourceHealth === 'healthy'" :size="12" />
                     <CircleAlert v-else-if="activeDatasourceHealth === 'unhealthy'" :size="12" />
                     <span>{{ activeDatasourceHealthLabel }}</span>
                   </span>
                 </template>
 
-                <span v-else class="active-datasource-empty">No logs datasource configured</span>
+                <span v-else class="text-sm text-slate-400">No logs datasource configured</span>
 
                 <component
                   :is="showDatasourceMenu ? ChevronUp : ChevronDown"
                   :size="16"
-                  class="datasource-chevron"
+                  class="ml-1 shrink-0 text-slate-400"
                 />
               </button>
 
-              <div v-if="showDatasourceMenu && hasLogsDatasources" class="datasource-dropdown">
+              <div v-if="showDatasourceMenu && hasLogsDatasources" class="absolute left-0 right-0 top-full mt-1.5 z-[110] max-h-[280px] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
                 <button
                   v-for="ds in logsDatasources"
                   :key="ds.id"
                   type="button"
-                  class="datasource-option"
-                  :class="{ selected: ds.id === selectedDatasourceId }"
+                  class="flex w-full items-center gap-2.5 border-none bg-transparent px-3 py-2.5 text-left text-slate-900 cursor-pointer hover:bg-slate-50"
+                  :class="{ 'bg-emerald-50': ds.id === selectedDatasourceId }"
                   @click="selectDatasource(ds.id)"
                 >
                   <img
                     :src="getTypeLogo(ds.type)"
                     :alt="`${dataSourceTypeLabels[ds.type]} logo`"
-                    class="datasource-option-logo"
+                    class="h-[18px] w-[18px] shrink-0 object-contain"
                   />
-                  <div class="datasource-option-meta">
-                    <strong>{{ ds.name }}</strong>
-                    <span>{{ dataSourceTypeLabels[ds.type] }}</span>
+                  <div class="flex min-w-0 flex-col gap-px">
+                    <strong class="text-sm font-semibold text-slate-900">{{ ds.name }}</strong>
+                    <span class="text-xs text-slate-500">{{ dataSourceTypeLabels[ds.type] }}</span>
                   </div>
-                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="datasource-option-check" />
+                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="ml-auto text-emerald-600" />
                 </button>
               </div>
             </div>
           </div>
 
-          <div class="query-time-controls">
-            <label>Query Range</label>
+          <div class="flex flex-col gap-2.5">
+            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Query Range</label>
             <TimeRangePicker stacked />
           </div>
         </div>
 
-        <div class="query-builder-wrapper">
+        <div class="flex flex-col gap-4">
           <ClickHouseSQLEditor
             v-if="isClickHouseDatasource"
             v-model="query"
@@ -985,10 +989,11 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
             @submit="runQuery"
           />
 
-          <div v-if="queryHistory.length > 0" class="history-container">
+          <!-- History button -->
+          <div v-if="queryHistory.length > 0" class="relative">
             <button
-              class="history-btn"
-              :class="{ active: showHistory }"
+              class="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 cursor-pointer"
+              :class="{ 'text-slate-700': showHistory }"
               @click="showHistory = !showHistory"
               title="Query history"
             >
@@ -996,28 +1001,29 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
               <span>History</span>
             </button>
 
-            <div v-if="showHistory" class="history-dropdown">
-              <div class="history-header">
+            <!-- Query history dropdown -->
+            <div v-if="showHistory" class="absolute left-0 top-full mt-1 z-10 w-80 max-h-[300px] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg max-md:w-full">
+              <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <span>Recent Queries</span>
-                <button class="clear-history-btn" @click="clearHistory" title="Clear history">
+                <button class="flex items-center justify-center h-6 w-6 rounded bg-transparent border-none text-slate-400 cursor-pointer transition hover:bg-slate-100 hover:text-rose-500" @click="clearHistory" title="Clear history">
                   <X :size="14" />
                 </button>
               </div>
               <button
                 v-for="(q, index) in queryHistory"
                 :key="index"
-                class="history-item"
+                class="block w-full border-none bg-transparent px-4 py-2.5 text-left cursor-pointer border-b border-slate-100 hover:bg-slate-50"
                 @click="selectHistoryQuery(q)"
               >
-                <code>{{ q }}</code>
+                <code class="block font-mono text-xs text-slate-600 truncate">{{ q }}</code>
               </button>
             </div>
           </div>
         </div>
 
-        <div class="query-actions">
+        <div class="flex items-center gap-4 flex-wrap">
           <button
-            class="btn btn-run"
+            class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             :disabled="loading || !query.trim() || !selectedDatasourceId || !hasLogsDatasources"
             @click="runQuery"
           >
@@ -1026,63 +1032,85 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
           </button>
 
           <button
-            class="btn btn-live"
-            :class="{ active: isLive }"
+            class="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+            :class="isLive
+              ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300'"
             :disabled="loading || !supportsLiveStreaming || (!isLive && (!query.trim() || !selectedDatasourceId || !hasLogsDatasources))"
             @click="toggleLive"
             :title="supportsLiveStreaming ? '' : 'Live streaming is only available for Loki and Victoria Logs datasources'"
           >
-            <Loader2 v-if="isLiveBusy" :size="16" class="icon-spin" />
+            <Loader2 v-if="isLiveBusy" :size="16" class="animate-spin" />
             <X v-else-if="isLive" :size="16" />
             <HeartPulse v-else :size="16" />
             <span>{{ isLive ? 'Stop Live' : 'Start Live' }}</span>
           </button>
 
-          <span class="hint">Ctrl+Enter to run</span>
-          <span v-if="liveStatusLabel" class="live-status" :class="`live-${liveState}`">{{ liveStatusLabel }}</span>
+          <span class="text-xs text-slate-400">Ctrl+Enter to run</span>
+
+          <span
+            v-if="liveStatusLabel"
+            class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs border"
+            :class="{
+              'border-emerald-200 bg-emerald-50 text-emerald-700': liveState === 'connected',
+              'border-slate-200 bg-slate-50 text-slate-500': liveState === 'connecting' || liveState === 'reconnecting',
+            }"
+          >{{ liveStatusLabel }}</span>
         </div>
 
-        <div v-if="error" class="query-error">
+        <!-- Error display -->
+        <div v-if="error" class="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
           <AlertCircle :size="16" />
           <span>{{ error }}</span>
         </div>
 
-        <div v-else-if="liveError && isLive" class="query-error live-query-error">
+        <div v-else-if="liveError && isLive" class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
           <AlertCircle :size="16" />
           <span>{{ liveError }}</span>
         </div>
       </div>
 
-      <div class="bg-surface-1 border border-border rounded-[14px] p-5 shadow-sm min-h-[300px]">
-        <div v-if="loading" class="flex flex-col items-center justify-center p-12 gap-4 text-text-1">
-          <div class="w-10 h-10 border-3 border-border border-t-accent rounded-full animate-[spin_0.8s_linear_infinite]"></div>
-          <span>Executing query...</span>
+      <!-- Results section -->
+      <div class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white overflow-hidden min-h-[400px]">
+        <div v-if="loading" class="flex flex-col items-center justify-center gap-4 py-12 text-slate-500 flex-1">
+          <div class="animate-spin h-8 w-8 rounded-full border-[3px] border-slate-200 border-t-emerald-600"></div>
+          <span class="text-sm">Executing query...</span>
         </div>
 
-        <div v-else-if="hasResults" class="flex flex-col gap-4">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-text-1">{{ logs.length }} {{ logs.length === 1 ? 'entry' : 'entries' }}</span>
-            <span v-if="liveStatusLabel" class="result-live-pill" :class="`live-${liveState}`">
-              <span class="live-dot"></span>
+        <div v-else-if="hasResults" class="flex flex-col flex-1 min-h-0">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+            <span class="text-sm text-slate-500">{{ logs.length }} {{ logs.length === 1 ? 'entry' : 'entries' }}</span>
+            <span
+              v-if="liveStatusLabel"
+              class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs border"
+              :class="{
+                'border-emerald-200 bg-emerald-50 text-emerald-700': liveState === 'connected',
+                'border-slate-200 bg-slate-50 text-slate-500': liveState === 'connecting' || liveState === 'reconnecting',
+              }"
+            >
+              <span
+                class="h-1.5 w-1.5 rounded-full bg-current"
+                :class="{ 'animate-pulse': liveState === 'connected' }"
+              ></span>
               {{ liveStatusLabel }}
             </span>
           </div>
-          <div class="log-viewer-container">
+          <div class="flex-1 min-h-0 p-4">
             <LogViewer :logs="newestFirstLogs" :highlighted-log-keys="highlightedLogKeyList" />
           </div>
         </div>
 
-        <div v-else-if="hasSuccessfulQuery && logs.length === 0" class="flex flex-col items-center justify-center p-12 text-center text-text-1">
-          <p>No logs returned for the selected time range.</p>
+        <div v-else-if="hasSuccessfulQuery && logs.length === 0" class="flex flex-col items-center justify-center py-12 text-center text-sm text-slate-500 flex-1">
+          <p class="m-0">No logs returned for the selected time range.</p>
         </div>
 
-        <div v-else-if="!hasLogsDatasources" class="flex flex-col items-center justify-center p-12 text-center text-text-1">
-          <p>No logs datasource configured.</p>
-          <p class="hint-text">Add a Loki, Victoria Logs, CloudWatch, or Elasticsearch datasource in Data Sources.</p>
+        <div v-else-if="!hasLogsDatasources" class="flex flex-col items-center justify-center py-12 text-center text-sm text-slate-500 flex-1">
+          <p class="m-0">No logs datasource configured.</p>
+          <p class="m-0 text-xs text-slate-400">Add a Loki, Victoria Logs, CloudWatch, or Elasticsearch datasource in Data Sources.</p>
         </div>
 
-        <div v-else class="flex flex-col items-center justify-center p-12 text-center text-text-1">
-          <p>
+        <div v-else class="flex flex-col items-center justify-center py-12 text-center text-sm text-slate-500 flex-1">
+          <p class="m-0">
             {{
               isClickHouseDatasource
                 ? 'Write a SQL query and click "Run Query" to inspect logs.'
@@ -1093,699 +1121,18 @@ watch(() => selectedDatasourceId.value, (datasourceId) => {
                     : 'Write a log query and click "Run Query" to inspect logs.'
             }}
           </p>
-          <p v-if="isClickHouseDatasource" class="hint-text">
-            Examples: <code>SELECT timestamp, message, level FROM logs WHERE timestamp &gt;= toDateTime({start})</code>
+          <p v-if="isClickHouseDatasource" class="m-0 text-xs text-slate-400">
+            Examples: <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">SELECT timestamp, message, level FROM logs WHERE timestamp &gt;= toDateTime({start})</code>
           </p>
-          <p v-else-if="isCloudWatchDatasource" class="hint-text">
-            Example: <code>fields @timestamp, @message | filter @message like /error/ | sort @timestamp desc | limit 200</code>
+          <p v-else-if="isCloudWatchDatasource" class="m-0 text-xs text-slate-400">
+            Example: <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">fields @timestamp, @message | filter @message like /error/ | sort @timestamp desc | limit 200</code>
           </p>
-          <p v-else-if="isElasticsearchDatasource" class="hint-text">
-            Examples: <code>service.name:"api" AND level:error</code>, <code>{"index":"logs-*","query":{"query_string":{"query":"error"}}}</code>
+          <p v-else-if="isElasticsearchDatasource" class="m-0 text-xs text-slate-400">
+            Examples: <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">service.name:"api" AND level:error</code>, <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">{"index":"logs-*","query":{"query_string":{"query":"error"}}}</code>
           </p>
-          <p v-else class="hint-text">Examples: <code>{job=~".+"}</code>, <code>{app="api"} |= "error"</code>, <code>*</code></p>
+          <p v-else class="m-0 text-xs text-slate-400">Examples: <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">{job=~".+"}</code>, <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">{app="api"} |= "error"</code>, <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-600">*</code></p>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style>
-.explore-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  padding: 1.25rem 1.8rem;
-}
-
-.explore-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding: 0.95rem 1.15rem;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-surface-1);
-  box-shadow: var(--shadow-sm);
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.explore-header h1 {
-  font-size: 1.08rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-family: var(--font-family-mono);
-  color: var(--color-text-0);
-  margin: 0;
-}
-
-.mode-badge {
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid rgba(245, 158, 11, 0.38);
-  background: rgba(245, 158, 11, 0.14);
-  color: #FCD34D;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.active-datasource-panel {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.75rem;
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-2);
-}
-
-.datasource-trigger {
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.2s, background-color 0.2s;
-}
-
-.datasource-trigger:hover:not(:disabled) {
-  border-color: var(--color-border-strong);
-  background: var(--color-bg-hover);
-}
-
-.datasource-trigger:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.active-datasource-logo {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.active-datasource-meta {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 0.1rem;
-}
-
-.active-datasource-label {
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text-2);
-}
-
-.active-datasource-name {
-  font-size: 0.86rem;
-  font-weight: 600;
-  color: var(--color-text-0);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.active-datasource-type {
-  font-size: 0.75rem;
-  color: var(--color-text-1);
-}
-
-.active-datasource-empty {
-  color: var(--color-text-2);
-  font-size: 0.85rem;
-}
-
-.source-health-badge {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-1);
-}
-
-.source-health-badge.health-checking {
-  border-color: rgba(148, 163, 184, 0.45);
-  color: var(--color-text-1);
-}
-
-.source-health-badge.health-healthy {
-  border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.12);
-  color: #7de9c5;
-}
-
-.source-health-badge.health-unhealthy {
-  border-color: rgba(244, 63, 94, 0.4);
-  background: rgba(244, 63, 94, 0.12);
-  color: #ff9db0;
-}
-
-.source-health-badge.health-unknown {
-  border-color: rgba(148, 163, 184, 0.45);
-  background: rgba(148, 163, 184, 0.1);
-}
-
-.icon-spin {
-  animation: spin 0.9s linear infinite;
-}
-
-.datasource-selector {
-  position: relative;
-}
-
-.datasource-chevron {
-  margin-left: 0.25rem;
-  color: var(--color-text-2);
-  flex-shrink: 0;
-}
-
-.datasource-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  z-index: 110;
-  max-height: 280px;
-  overflow-y: auto;
-}
-
-.datasource-option {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.6rem 0.75rem;
-  background: transparent;
-  border: none;
-  text-align: left;
-  color: var(--color-text-0);
-  cursor: pointer;
-}
-
-.datasource-option:hover {
-  background: var(--color-bg-hover);
-}
-
-.datasource-option.selected {
-  background: rgba(245, 158, 11, 0.14);
-}
-
-.datasource-option-logo {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.datasource-option-meta {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.datasource-option-meta strong {
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--color-text-0);
-}
-
-.datasource-option-meta span {
-  font-size: 0.75rem;
-  color: var(--color-text-1);
-}
-
-.datasource-option-check {
-  margin-left: auto;
-  color: var(--color-accent);
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.explore-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  flex: 1;
-}
-
-.query-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.2rem;
-  background: var(--color-surface-1);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
-}
-
-.query-context-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1rem;
-  align-items: end;
-}
-
-.datasource-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.datasource-row label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-text-1);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.query-time-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.query-time-controls label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-text-1);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.query-builder-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-
-.query-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-text-1);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.query-input {
-  width: 100%;
-}
-
-.history-container {
-  position: relative;
-}
-
-.history-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-1);
-  font-size: 0.8125rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.history-btn:hover,
-.history-btn.active {
-  background: var(--color-bg-hover);
-  color: var(--color-text-0);
-  border-color: var(--color-border-strong);
-}
-
-.history-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  width: 350px;
-  max-height: 300px;
-  overflow-y: auto;
-  background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: 100;
-}
-
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-text-1);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.clear-history-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: var(--color-text-2);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.clear-history-btn:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-danger);
-}
-
-.history-item {
-  display: block;
-  width: 100%;
-  padding: 0.625rem 1rem;
-  background: transparent;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.history-item:hover {
-  background: var(--color-bg-hover);
-}
-
-.history-item code {
-  display: block;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.8125rem;
-  color: var(--color-text-0);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.query-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.btn-run {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  background: var(--color-success);
-  border: 1px solid var(--color-success);
-  border-radius: 10px;
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.btn-run:hover:not(:disabled) {
-  background: #0ea67d;
-  border-color: #0ea67d;
-}
-
-.btn-run:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.1rem;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: 10px;
-  color: #FCD34D;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.btn-live:hover:not(:disabled) {
-  background: rgba(245, 158, 11, 0.2);
-  border-color: rgba(245, 158, 11, 0.5);
-}
-
-.btn-live.active {
-  background: rgba(16, 185, 129, 0.16);
-  border-color: rgba(16, 185, 129, 0.42);
-  color: #7de9c5;
-}
-
-.btn-live:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.hint {
-  font-size: 0.75rem;
-  color: var(--color-text-2);
-}
-
-.live-status {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  font-size: 0.72rem;
-  color: var(--color-text-1);
-}
-
-.live-status.live-connected {
-  border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.12);
-  color: #7de9c5;
-}
-
-.live-status.live-connecting,
-.live-status.live-reconnecting {
-  border-color: rgba(148, 163, 184, 0.45);
-  background: rgba(148, 163, 184, 0.12);
-}
-
-.query-error {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: rgba(251, 113, 133, 0.1);
-  border: 1px solid rgba(251, 113, 133, 0.3);
-  border-radius: 8px;
-  color: var(--color-danger);
-  font-size: 0.875rem;
-}
-
-.live-query-error {
-  background: rgba(250, 204, 21, 0.1);
-  border-color: rgba(250, 204, 21, 0.28);
-  color: #facc15;
-}
-
-.results-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: var(--color-surface-1);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  overflow: hidden;
-  min-height: 400px;
-  box-shadow: var(--shadow-sm);
-}
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 3rem;
-  color: var(--color-text-1);
-  flex: 1;
-}
-
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(50, 81, 115, 0.65);
-  border-top-color: var(--color-accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.results-container {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-.results-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--color-border);
-  background: rgba(20, 32, 50, 0.9);
-}
-
-.result-count {
-  font-size: 0.8125rem;
-  color: var(--color-text-1);
-}
-
-.result-live-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  font-size: 0.72rem;
-  color: var(--color-text-1);
-}
-
-.result-live-pill.live-connected {
-  border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.12);
-  color: #7de9c5;
-}
-
-.result-live-pill.live-connecting,
-.result-live-pill.live-reconnecting {
-  border-color: rgba(148, 163, 184, 0.45);
-  background: rgba(148, 163, 184, 0.12);
-}
-
-.live-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.9;
-}
-
-.result-live-pill.live-connected .live-dot {
-  animation: live-pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes live-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.45;
-  }
-  50% {
-    transform: scale(1.25);
-    opacity: 1;
-  }
-}
-
-.log-viewer-container {
-  flex: 1;
-  min-height: 0;
-  padding: 1rem;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 3rem;
-  text-align: center;
-  flex: 1;
-}
-
-.empty-state p {
-  margin: 0;
-  color: var(--color-text-1);
-  font-size: 0.9375rem;
-}
-
-.empty-state .hint-text {
-  font-size: 0.8125rem;
-  color: var(--color-text-2);
-}
-
-.empty-state code {
-  padding: 0.125rem 0.375rem;
-  background: var(--color-bg-2);
-  border-radius: 4px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.8125rem;
-  color: var(--color-text-accent);
-}
-
-@media (max-width: 900px) {
-  .explore-page {
-    padding: 0.9rem;
-  }
-
-  .explore-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.65rem;
-  }
-
-  .header-title {
-    justify-content: flex-start;
-  }
-
-  .active-datasource-panel {
-    width: 100%;
-  }
-
-  .query-context-row {
-    grid-template-columns: 1fr;
-  }
-
-  .history-dropdown {
-    width: 100%;
-  }
-}
-</style>

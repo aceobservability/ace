@@ -14,19 +14,19 @@ interface DetectedField {
   value: string
 }
 
-function getLevelClass(level?: string): string {
+function getLevelBadgeClasses(level?: string): string {
   switch (level) {
     case 'error':
-      return 'level-error'
+      return 'rounded-full bg-rose-50 px-2 py-0.5 text-rose-700 ring-1 ring-rose-600/20 font-semibold'
     case 'warning':
     case 'warn':
-      return 'level-warning'
+      return 'rounded-full bg-amber-50 px-2 py-0.5 text-amber-700 ring-1 ring-amber-600/20 font-semibold'
     case 'info':
-      return 'level-info'
+      return 'rounded-full bg-sky-50 px-2 py-0.5 text-sky-700 ring-1 ring-sky-600/20 font-semibold'
     case 'debug':
-      return 'level-debug'
+      return 'rounded-full bg-slate-100 px-2 py-0.5 text-slate-600'
     default:
-      return ''
+      return 'rounded-full bg-slate-100 px-2 py-0.5 text-slate-600'
   }
 }
 
@@ -39,7 +39,7 @@ function formatTimestamp(ts: string): string {
       minute: '2-digit',
       second: '2-digit',
       fractionalSecondDigits: 3,
-    } as Intl.DateTimeFormatOptions)
+    })
   } catch {
     return ts
   }
@@ -190,312 +190,82 @@ watch(displayLogs, () => {
 </script>
 
 <template>
-  <div class="log-viewer">
-    <div class="log-header">
-      <span class="log-count">{{ logs.length }} log entries</span>
+  <div class="flex flex-col h-full overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <!-- Header -->
+    <div class="flex items-center gap-4 bg-slate-900 px-4 py-2.5 font-mono text-xs uppercase tracking-[0.07em] text-slate-300">
+      <span class="shrink-0 w-44">Timestamp</span>
+      <span class="shrink-0 w-20">Level</span>
+      <span class="flex-1">Message</span>
     </div>
-    <div class="log-table-wrapper">
-      <table class="log-table">
-        <thead>
-          <tr>
-            <th class="col-time">Timestamp</th>
-            <th class="col-level">Level</th>
-            <th class="col-message">Message</th>
-          </tr>
-        </thead>
-        <tbody>
-          <template v-for="(log, i) in displayLogs" :key="i">
-            <tr
-              :class="['log-row', getLevelClass(log.level), { expanded: isExpanded(i), highlighted: isHighlighted(log) }]"
-              @click="toggleRow(i)"
+    <div class="shrink-0 text-xs font-mono py-1 px-4 bg-slate-900 border-b border-slate-700">
+      <span class="text-slate-400">{{ logs.length }} log entries</span>
+    </div>
+
+    <!-- Log rows -->
+    <div class="flex-1 overflow-auto">
+      <template v-for="(log, i) in displayLogs" :key="i">
+        <div
+          :class="[
+            'flex items-start gap-4 border-b border-slate-100 px-4 py-2 text-xs font-mono hover:bg-slate-50 cursor-pointer transition',
+            isExpanded(i) ? 'bg-slate-50' : '',
+            isHighlighted(log) ? 'animate-[row-highlight-fade_2.4s_ease-out]' : '',
+          ]"
+          @click="toggleRow(i)"
+        >
+          <!-- Timestamp -->
+          <span class="shrink-0 text-slate-400 w-44">{{ formatTimestamp(log.timestamp) }}</span>
+
+          <!-- Level badge -->
+          <span class="shrink-0 w-20">
+            <span
+              v-if="log.level"
+              :class="['inline-block text-[0.7rem] uppercase', getLevelBadgeClasses(log.level)]"
             >
-              <td class="col-time">
-                <span class="timestamp">{{ formatTimestamp(log.timestamp) }}</span>
-              </td>
-              <td class="col-level">
-                <span v-if="log.level" class="level-badge" :class="getLevelClass(log.level)">
-                  {{ log.level }}
-                </span>
-              </td>
-              <td class="col-message">
-                <div class="message-main">
-                  <span class="expand-indicator">{{ isExpanded(i) ? 'v' : '>' }}</span>
-                  <span class="log-line">{{ log.line }}</span>
-                </div>
-                <div v-if="log.labels && Object.keys(log.labels).length > 0" class="log-labels">
-                  <span
-                    v-for="(value, key) in log.labels"
-                    :key="String(key)"
-                    class="label-tag"
-                  >
-                    {{ key }}={{ value }}
-                  </span>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="isExpanded(i)" class="details-row">
-              <td colspan="3" class="details-cell">
-                <div class="details-title">Detected Fields</div>
-                <div v-if="detectedFieldsByRow[i]?.length" class="field-grid">
-                  <div
-                    v-for="field in detectedFieldsByRow[i]"
-                    :key="field.key"
-                    class="field-row"
-                  >
-                    <span class="field-key">{{ field.key }}</span>
-                    <span class="field-value">{{ field.value }}</span>
-                  </div>
-                </div>
-                <div v-else class="no-fields">No structured fields detected in this message.</div>
-              </td>
-            </tr>
-          </template>
-          <tr v-if="logs.length === 0">
-            <td colspan="3" class="empty-row">No log entries</td>
-          </tr>
-        </tbody>
-      </table>
+              {{ log.level }}
+            </span>
+          </span>
+
+          <!-- Message -->
+          <div class="flex-1 text-slate-700 break-all">
+            <div class="flex items-start gap-1.5">
+              <span class="shrink-0 text-slate-400 text-[0.72rem] leading-[1.35] mt-px">{{ isExpanded(i) ? 'v' : '>' }}</span>
+              <span class="whitespace-pre-wrap">{{ log.line }}</span>
+            </div>
+            <div v-if="log.labels && Object.keys(log.labels).length > 0" class="mt-1 flex flex-wrap gap-1">
+              <span
+                v-for="(value, key) in log.labels"
+                :key="String(key)"
+                class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 mr-1"
+              >
+                {{ key }}={{ value }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expanded detail row -->
+        <div v-if="isExpanded(i)" class="bg-slate-50 px-6 py-4 text-xs font-mono border-b border-slate-100">
+          <div class="text-[0.7rem] font-semibold uppercase tracking-[0.04em] text-slate-500 mb-2">
+            Detected Fields
+          </div>
+          <div v-if="detectedFieldsByRow[i]?.length" class="grid gap-1.5">
+            <div
+              v-for="field in detectedFieldsByRow[i]"
+              :key="field.key"
+              class="grid grid-cols-[minmax(120px,220px)_1fr] gap-2.5 max-sm:grid-cols-1 max-sm:gap-1"
+            >
+              <span class="text-slate-500 break-words">{{ field.key }}</span>
+              <span class="text-slate-800 whitespace-pre-wrap break-words">{{ field.value }}</span>
+            </div>
+          </div>
+          <div v-else class="text-slate-400">No structured fields detected in this message.</div>
+        </div>
+      </template>
+
+      <!-- Empty state -->
+      <div v-if="logs.length === 0" class="text-center text-slate-400 py-8 px-4 text-xs font-mono">
+        No log entries
+      </div>
     </div>
   </div>
 </template>
-
-<style>
-.log-viewer {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-.log-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  flex-shrink: 0;
-}
-
-.log-count {
-  font-size: 0.75rem;
-  color: var(--color-text-2);
-}
-
-.log-table-wrapper {
-  flex: 1;
-  overflow: auto;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-}
-
-.log-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8rem;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
-}
-
-.log-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.log-table th {
-  background: var(--color-bg-2);
-  padding: 0.5rem 0.75rem;
-  text-align: left;
-  font-weight: 600;
-  color: var(--color-text-1);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.log-table td {
-  padding: 0.375rem 0.75rem;
-  border-bottom: 1px solid var(--color-border);
-  vertical-align: top;
-}
-
-.log-table tr:hover td {
-  background: var(--color-bg-hover);
-}
-
-.log-row {
-  cursor: pointer;
-}
-
-.log-row.expanded td {
-  background: rgba(31, 49, 73, 0.45);
-}
-
-.log-row.highlighted td {
-  animation: row-highlight-fade 2.4s ease-out;
-  background: rgba(245, 158, 11, 0.14);
-}
-
-@keyframes row-highlight-fade {
-  0% {
-    background: rgba(245, 158, 11, 0.28);
-  }
-  100% {
-    background: transparent;
-  }
-}
-
-.col-time {
-  width: 110px;
-  white-space: nowrap;
-}
-
-.col-level {
-  width: 70px;
-}
-
-.col-message {
-  word-break: break-word;
-}
-
-.message-main {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.45rem;
-}
-
-.expand-indicator {
-  flex-shrink: 0;
-  color: var(--color-text-2);
-  font-size: 0.72rem;
-  line-height: 1.35;
-  margin-top: 0.1rem;
-}
-
-.timestamp {
-  color: var(--color-text-2);
-}
-
-.level-badge {
-  display: inline-block;
-  padding: 0.125rem 0.375rem;
-  border-radius: 3px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.level-error .level-badge {
-  background: rgba(255, 107, 107, 0.15);
-  color: #ff6b6b;
-}
-
-.level-warning .level-badge {
-  background: rgba(254, 202, 87, 0.15);
-  color: #feca57;
-}
-
-.level-info .level-badge {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--color-accent);
-}
-
-.level-debug .level-badge {
-  background: rgba(160, 160, 160, 0.15);
-  color: #a0a0a0;
-}
-
-tr.level-error td {
-  border-left: 2px solid #ff6b6b;
-  background: rgba(255, 107, 107, 0.07);
-}
-
-tr.level-error:hover td {
-  background: rgba(255, 107, 107, 0.1);
-}
-
-tr.level-warning td {
-  border-left: 2px solid #feca57;
-}
-
-.log-line {
-  color: var(--color-text-0);
-  white-space: pre-wrap;
-}
-
-.log-labels {
-  margin-top: 0.25rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-}
-
-.label-tag {
-  display: inline-block;
-  padding: 0.1rem 0.375rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 3px;
-  font-size: 0.7rem;
-  color: var(--color-text-1);
-}
-
-.details-row td {
-  border-top: 0;
-  background: rgba(12, 21, 33, 0.88);
-}
-
-.details-cell {
-  padding: 0.65rem 0.75rem 0.8rem;
-}
-
-.details-title {
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-2);
-  margin-bottom: 0.45rem;
-}
-
-.field-grid {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.field-row {
-  display: grid;
-  grid-template-columns: minmax(120px, 220px) 1fr;
-  gap: 0.6rem;
-}
-
-.field-key {
-  color: var(--color-accent);
-  font-size: 0.74rem;
-  word-break: break-word;
-}
-
-.field-value {
-  color: var(--color-text-1);
-  font-size: 0.74rem;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.no-fields {
-  color: var(--color-text-2);
-  font-size: 0.74rem;
-}
-
-@media (max-width: 680px) {
-  .field-row {
-    grid-template-columns: 1fr;
-    gap: 0.2rem;
-  }
-}
-
-.empty-row {
-  text-align: center;
-  color: var(--color-text-2);
-  padding: 2rem 1rem !important;
-}
-</style>

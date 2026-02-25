@@ -74,6 +74,6 @@ describe('DataSourceSettings', () => {
 
     await wrapper.get('button[title="Edit"]').trigger('click')
 
-    expect(mockPush).toHaveBeenCalledWith('/app/datasources/ds-1/edit')
+    expect(mockPush).toHaveBeenCalledWith('/datasources/ds-1/edit')
   })
 })

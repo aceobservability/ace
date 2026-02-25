@@ -157,7 +157,7 @@ describe('PanelEditModal', () => {
     const wrapper = mount(PanelEditModal, {
       props: { dashboardId }
     })
-    expect(wrapper.find('.modal-header h2').text()).toBe('Add Panel')
+    expect(wrapper.find('header h2').text()).toBe('Add Panel')
   })
 
   it('shows "Edit Panel" title when editing existing panel', () => {
@@ -175,7 +175,7 @@ describe('PanelEditModal', () => {
         }
       }
     })
-    expect(wrapper.find('.modal-header h2').text()).toBe('Edit Panel')
+    expect(wrapper.find('header h2').text()).toBe('Edit Panel')
   })
 
   it('emits close event when cancel is clicked', async () => {

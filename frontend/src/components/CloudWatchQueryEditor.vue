@@ -46,13 +46,14 @@ function handleQueryInput(event: Event) {
 </script>
 
 <template>
-  <div class="cloudwatch-query-editor" :class="{ disabled: props.disabled }">
-    <div v-if="props.showSignalSelector" class="signal-row">
-      <label for="cloudwatch-signal">Signal Type</label>
+  <div class="flex flex-col gap-3.5" :class="{ 'opacity-60 pointer-events-none': props.disabled }">
+    <div v-if="props.showSignalSelector" class="flex flex-col gap-1.5">
+      <label for="cloudwatch-signal" class="text-sm font-medium text-slate-900">Signal Type</label>
       <select
         id="cloudwatch-signal"
         :value="props.signal"
         :disabled="props.disabled"
+        class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
         @change="handleSignalChange"
       >
         <option value="metrics">Metrics</option>
@@ -60,8 +61,8 @@ function handleQueryInput(event: Event) {
       </select>
     </div>
 
-    <div class="query-row">
-      <label for="cloudwatch-query">Query</label>
+    <div class="flex flex-col gap-1.5">
+      <label for="cloudwatch-query" class="text-sm font-medium text-slate-900">Query</label>
       <textarea
         id="cloudwatch-query"
         :value="props.modelValue"
@@ -69,81 +70,11 @@ function handleQueryInput(event: Event) {
         :placeholder="placeholder"
         rows="7"
         spellcheck="false"
+        class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-3 text-sm font-mono text-slate-900 min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
         @input="handleQueryInput"
       />
     </div>
 
-    <p class="help-text">{{ helperText }}</p>
+    <p class="m-0 text-xs text-slate-400 leading-relaxed">{{ helperText }}</p>
   </div>
 </template>
-
-<style>
-.cloudwatch-query-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.cloudwatch-query-editor.disabled {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.signal-row,
-.query-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.signal-row label,
-.query-row label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-text-0);
-}
-
-.signal-row select,
-.query-row textarea {
-  width: 100%;
-  padding: 0.75rem 0.9rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font-size: 0.875rem;
-  color: var(--color-text-0);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.signal-row select:focus,
-.query-row textarea:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: var(--focus-ring);
-}
-
-.signal-row select:disabled,
-.query-row textarea:disabled {
-  background: var(--color-bg-0);
-  color: var(--color-text-2);
-  cursor: not-allowed;
-}
-
-.signal-row select {
-  cursor: pointer;
-}
-
-.query-row textarea {
-  min-height: 140px;
-  resize: vertical;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  line-height: 1.45;
-}
-
-.help-text {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--color-text-2);
-  line-height: 1.45;
-}
-</style>

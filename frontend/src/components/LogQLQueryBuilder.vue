@@ -298,12 +298,12 @@ watch(activeQuery, (newValue) => {
 </script>
 
 <template>
-  <div class="query-builder" :class="{ disabled: props.disabled }">
-    <div class="mode-toggle">
+  <div class="flex flex-col gap-4" :class="{ 'opacity-60 pointer-events-none': props.disabled }">
+    <div class="flex rounded-lg bg-slate-100 p-1 w-fit">
       <button
         type="button"
-        class="mode-btn"
-        :class="{ active: mode === 'builder' }"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-slate-900"
+        :class="{ 'bg-white text-slate-900 shadow-sm': mode === 'builder' }"
         :disabled="props.disabled || !builderAvailable"
         :title="!builderAvailable ? 'Query cannot be edited in builder mode' : ''"
         @click="mode = 'builder'"
@@ -313,8 +313,8 @@ watch(activeQuery, (newValue) => {
       </button>
       <button
         type="button"
-        class="mode-btn"
-        :class="{ active: mode === 'code' }"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-slate-900"
+        :class="{ 'bg-white text-slate-900 shadow-sm': mode === 'code' }"
         :disabled="props.disabled"
         @click="mode = 'code'"
       >
@@ -323,24 +323,29 @@ watch(activeQuery, (newValue) => {
       </button>
     </div>
 
-    <div v-if="mode === 'builder'" class="builder-mode">
-      <div class="builder-section">
-        <div class="section-header">
-          <label class="section-label">Stream Filters</label>
-          <button type="button" class="btn-add" :disabled="props.disabled" @click="addLabelFilter">
+    <div v-if="mode === 'builder'" class="flex flex-col gap-4">
+      <div class="flex flex-col gap-2">
+        <div class="flex justify-between items-center">
+          <label class="text-sm font-medium text-slate-900">Stream Filters</label>
+          <button
+            type="button"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 hover:enabled:bg-slate-50 hover:enabled:text-slate-900"
+            :disabled="props.disabled"
+            @click="addLabelFilter"
+          >
             <Plus :size="14" />
             <span>Add Filter</span>
           </button>
         </div>
 
-        <div v-if="labelFilters.length === 0" class="empty-filters">
+        <div v-if="labelFilters.length === 0" class="p-4 text-center text-slate-400 text-sm bg-slate-50 rounded-lg">
           No filters yet. Add a field filter to build your selector.
         </div>
 
-        <div v-else class="filters-list">
-          <div v-for="filter in labelFilters" :key="filter.id" class="filter-row">
+        <div v-else class="flex flex-col gap-2">
+          <div v-for="filter in labelFilters" :key="filter.id" class="flex items-center gap-2">
             <select
-              class="filter-select filter-label-select"
+              class="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer focus:outline-none focus:border-emerald-500"
               :value="filter.label"
               :disabled="props.disabled"
               @change="handleLabelChange(filter, ($event.target as HTMLSelectElement).value)"
@@ -352,7 +357,7 @@ watch(activeQuery, (newValue) => {
             </select>
 
             <select
-              class="filter-select filter-operator-select"
+              class="w-[120px] flex-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-600 cursor-pointer focus:outline-none focus:border-emerald-500"
               :value="filter.operator"
               :disabled="props.disabled"
               @change="updateLabelFilter(filter.id, { operator: ($event.target as HTMLSelectElement).value })"
@@ -364,7 +369,7 @@ watch(activeQuery, (newValue) => {
 
             <select
               v-if="getLabelValues(filter.label).length > 0"
-              class="filter-select filter-value-select"
+              class="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer focus:outline-none focus:border-emerald-500"
               :value="filter.value"
               :disabled="props.disabled || loadingLabelValues === filter.label"
               @change="updateLabelFilter(filter.id, { value: ($event.target as HTMLSelectElement).value })"
@@ -376,7 +381,7 @@ watch(activeQuery, (newValue) => {
             </select>
             <input
               v-else
-              class="filter-input filter-value-input"
+              class="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500"
               type="text"
               placeholder="Field value"
               :value="filter.value"
@@ -384,26 +389,35 @@ watch(activeQuery, (newValue) => {
               @input="updateLabelFilter(filter.id, { value: ($event.target as HTMLInputElement).value })"
             />
 
-            <button type="button" class="btn-remove" :disabled="props.disabled" @click="removeLabelFilter(filter.id)">
+            <button
+              type="button"
+              class="flex items-center justify-center w-7 h-7 bg-transparent border-none rounded text-slate-400 cursor-pointer transition-all duration-200 hover:enabled:bg-red-50 hover:enabled:text-red-500"
+              :disabled="props.disabled"
+              @click="removeLabelFilter(filter.id)"
+            >
               <X :size="14" />
             </button>
           </div>
 
-          <span v-if="loadingLabelValues" class="values-loading">Loading indexed values...</span>
+          <span v-if="loadingLabelValues" class="text-xs text-slate-400">Loading indexed values...</span>
         </div>
       </div>
 
-      <div class="builder-section">
-        <label class="section-label">{{ lineFilterLabel }}</label>
-        <div class="line-filter-row">
-          <select v-model="lineFilterOperator" class="filter-select line-operator-select" :disabled="props.disabled">
+      <div class="flex flex-col gap-2">
+        <label class="text-sm font-medium text-slate-900">{{ lineFilterLabel }}</label>
+        <div class="flex items-center gap-2">
+          <select
+            v-model="lineFilterOperator"
+            class="w-[120px] flex-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-600 cursor-pointer focus:outline-none focus:border-emerald-500"
+            :disabled="props.disabled"
+          >
             <option v-for="operator in textOperators" :key="operator.value" :value="operator.value">
               {{ operator.label }}
             </option>
           </select>
           <input
             v-model="lineFilterValue"
-            class="filter-input line-value-input"
+            class="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500"
             type="text"
             :placeholder="lineFilterPlaceholder"
             :disabled="props.disabled"
@@ -411,17 +425,17 @@ watch(activeQuery, (newValue) => {
         </div>
       </div>
 
-      <div class="builder-section preview-section">
-        <label class="section-label">{{ generatedQueryLabel }}</label>
-        <div class="preview-box">
-          <code v-if="generatedQuery">{{ generatedQuery }}</code>
-          <span v-else class="preview-placeholder">Add a field/value filter to generate a query</span>
+      <div class="flex flex-col gap-2 mt-2 pt-4 border-t border-slate-100">
+        <label class="text-sm font-medium text-slate-900">{{ generatedQueryLabel }}</label>
+        <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 min-h-[48px]">
+          <code v-if="generatedQuery" class="font-mono text-sm text-emerald-600 break-all">{{ generatedQuery }}</code>
+          <span v-else class="text-slate-400 text-sm">Add a field/value filter to generate a query</span>
         </div>
       </div>
     </div>
 
-    <div v-else class="code-mode">
-      <label class="section-label">{{ codeEditorLabel }}</label>
+    <div v-else class="flex flex-col gap-4">
+      <label class="text-sm font-medium text-slate-900">{{ codeEditorLabel }}</label>
       <MonacoQueryEditor
         v-model="codeQuery"
         :disabled="props.disabled"
@@ -434,201 +448,3 @@ watch(activeQuery, (newValue) => {
     </div>
   </div>
 </template>
-
-<style>
-.query-builder {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.query-builder.disabled {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-.mode-toggle {
-  display: flex;
-  background: rgba(20, 33, 52, 0.8);
-  border-radius: 10px;
-  border: 1px solid var(--color-border);
-  padding: 2px;
-  width: fit-content;
-}
-
-.mode-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 1rem;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-text-1);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mode-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.mode-btn.active {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(99, 102, 241, 0.14));
-  border: 1px solid rgba(245, 158, 11, 0.24);
-  color: var(--color-text-0);
-  box-shadow: 0 2px 10px rgba(2, 8, 23, 0.28);
-}
-
-.builder-mode,
-.code-mode {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.builder-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.section-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-text-0);
-}
-
-.btn-add {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-text-1);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-add:hover:not(:disabled) {
-  background: var(--color-bg-hover);
-  color: var(--color-text-0);
-  border-color: var(--color-border-strong);
-}
-
-.empty-filters {
-  padding: 1rem;
-  text-align: center;
-  color: var(--color-text-2);
-  font-size: 0.8125rem;
-  background: var(--color-bg-2);
-  border-radius: 6px;
-}
-
-.filters-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.filter-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.filter-select,
-.filter-input {
-  padding: 0.5rem 0.75rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  font-size: 0.8125rem;
-  color: var(--color-text-0);
-}
-
-.filter-select {
-  cursor: pointer;
-}
-
-.filter-label-select,
-.filter-value-select,
-.filter-value-input,
-.line-value-input {
-  flex: 1;
-  min-width: 0;
-}
-
-.filter-operator-select,
-.line-operator-select {
-  width: 120px;
-}
-
-.btn-remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: var(--color-text-2);
-  cursor: pointer;
-}
-
-.btn-remove:hover:not(:disabled) {
-  background: rgba(255, 107, 107, 0.1);
-  color: var(--color-danger);
-}
-
-.values-loading {
-  font-size: 0.75rem;
-  color: var(--color-text-2);
-}
-
-.line-filter-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.preview-section {
-  margin-top: 0.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--color-border);
-}
-
-.preview-box {
-  padding: 0.75rem 1rem;
-  background: var(--color-bg-2);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  min-height: 48px;
-}
-
-.preview-box code {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.8125rem;
-  color: var(--color-accent);
-  word-break: break-all;
-}
-
-.preview-placeholder {
-  color: var(--color-text-2);
-  font-size: 0.8125rem;
-}
-</style>

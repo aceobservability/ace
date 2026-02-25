@@ -53,7 +53,7 @@ describe('LineChart', () => {
     const wrapper = mount(LineChart, {
       props: { series: mockSeries },
     })
-    expect(wrapper.find('.line-chart').exists()).toBe(true)
+    expect(wrapper.find('.h-full.w-full').exists()).toBe(true)
   })
 
   it('passes series data to ECharts', () => {
@@ -132,14 +132,14 @@ describe('LineChart', () => {
     const wrapper = mount(LineChart, {
       props: { series: mockSeries, height: 400 },
     })
-    expect(wrapper.find('.line-chart').attributes('style')).toContain('height: 400px')
+    expect(wrapper.find('.h-full.w-full').attributes('style')).toContain('height: 400px')
   })
 
   it('applies default height when not provided', () => {
     const wrapper = mount(LineChart, {
       props: { series: mockSeries },
     })
-    expect(wrapper.find('.line-chart').attributes('style')).toContain('height: 100%')
+    expect(wrapper.find('.h-full.w-full').attributes('style')).toContain('height: 100%')
   })
 
   it('includes title when provided', () => {

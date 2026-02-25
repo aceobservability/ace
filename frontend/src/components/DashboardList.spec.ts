@@ -138,8 +138,8 @@ describe('DashboardList', () => {
 
     await wrapper.get('[data-testid="tree-node-folder-a"]').trigger('click')
 
-    expect(wrapper.find('.breadcrumbs').text()).toContain('Dashboards')
-    expect(wrapper.find('.breadcrumbs').text()).toContain('Operations')
+    expect(wrapper.text()).toContain('Dashboards')
+    expect(wrapper.text()).toContain('Operations')
     expect(wrapper.text()).not.toContain('in this folder')
   })
 
@@ -170,7 +170,7 @@ describe('DashboardList', () => {
 
     await wrapper.get('[data-testid="tree-dashboard-123e4567-e89b-12d3-a456-426614174000"]').trigger('click')
 
-    expect(mockPush).toHaveBeenCalledWith('/app/dashboards/123e4567-e89b-12d3-a456-426614174000')
+    expect(mockPush).toHaveBeenCalledWith('/dashboards/123e4567-e89b-12d3-a456-426614174000')
   })
 
   it('displays empty state when no dashboards and no folders', async () => {
@@ -200,7 +200,9 @@ describe('DashboardList', () => {
     const wrapper = mount(DashboardList)
     await flushPromises()
 
-    await wrapper.find('.page-header .btn-primary').trigger('click')
+    const newDashBtn = wrapper.findAll('button').find((b) => b.text().includes('New Dashboard'))
+    expect(newDashBtn).toBeDefined()
+    await newDashBtn!.trigger('click')
     expect(wrapper.findComponent({ name: 'CreateDashboardModal' }).exists()).toBe(true)
     expect(wrapper.findComponent({ name: 'CreateDashboardModal' }).props('initialMode')).toBe('create')
   })
@@ -295,7 +297,7 @@ describe('DashboardList', () => {
     const wrapper = mount(DashboardList)
     await flushPromises()
 
-    const cards = wrapper.findAll('.dashboard-card')
+    const cards = wrapper.findAll('[data-testid^="dashboard-card-"]')
     expect(cards.length).toBe(3)
   })
 

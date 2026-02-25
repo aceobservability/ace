@@ -47,43 +47,52 @@ function handleCreateOrg() {
 </script>
 
 <template>
-  <div class="org-dropdown" ref="dropdownRef">
-    <button class="org-trigger" @click="toggleDropdown" :class="{ expanded }">
-      <div class="org-avatar">
+  <div class="relative mx-2 my-3" ref="dropdownRef">
+    <button
+      @click="toggleDropdown"
+      :class="[
+        'mx-2 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-300 transition hover:border-slate-600 hover:bg-slate-800 w-full cursor-pointer',
+        !expanded && 'mx-auto !w-11 justify-center !px-0'
+      ]"
+    >
+      <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-xs font-semibold text-white">
         {{ currentOrg?.name?.charAt(0)?.toUpperCase() || '?' }}
       </div>
       <template v-if="expanded">
-        <span class="org-name">{{ currentOrg?.name || 'Select Org' }}</span>
-        <ChevronDown class="chevron" :class="{ open: dropdownOpen }" :size="16" />
+        <span class="flex-1 truncate text-left text-sm font-medium text-slate-300">{{ currentOrg?.name || 'Select Org' }}</span>
+        <ChevronDown
+          :size="16"
+          :class="['shrink-0 text-slate-400 transition-transform duration-200', dropdownOpen && 'rotate-180']"
+        />
       </template>
     </button>
 
     <Teleport to="body">
-      <div v-if="dropdownOpen" class="dropdown-menu" :style="getDropdownPosition()">
-        <div class="dropdown-header">Organizations</div>
+      <div v-if="dropdownOpen" class="absolute z-[60] w-64 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden animate-[fadeIn_0.15s_ease-out]" :style="getDropdownPosition()">
+        <div class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">Organizations</div>
 
-        <div class="org-list">
+        <div class="max-h-[200px] overflow-y-auto">
           <button
             v-for="org in organizations"
             :key="org.id"
-            class="org-item"
-            :class="{ active: currentOrg?.id === org.id }"
+            :class="[
+              'flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50 cursor-pointer border-none bg-transparent',
+              currentOrg?.id === org.id && 'bg-emerald-50 text-emerald-700'
+            ]"
             @click="handleSelectOrg(org.id)"
           >
-            <div class="org-item-avatar">
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-600">
               {{ org.name.charAt(0).toUpperCase() }}
             </div>
-            <div class="org-item-info">
-              <span class="org-item-name">{{ org.name }}</span>
-              <span class="org-item-role">{{ org.role }}</span>
+            <div class="flex-1 min-w-0 text-left">
+              <span class="block truncate text-sm font-medium text-slate-700">{{ org.name }}</span>
+              <span class="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-500 capitalize">{{ org.role }}</span>
             </div>
-            <Check v-if="currentOrg?.id === org.id" :size="16" class="check-icon" />
+            <Check v-if="currentOrg?.id === org.id" :size="16" class="shrink-0 text-emerald-600" />
           </button>
         </div>
 
-        <div class="dropdown-divider"></div>
-
-        <button class="dropdown-action" @click="handleCreateOrg">
+        <button class="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 cursor-pointer bg-transparent" @click="handleCreateOrg">
           <Plus :size="16" />
           <span>Create Organization</span>
         </button>
@@ -102,191 +111,3 @@ function getDropdownPosition() {
   }
 }
 </script>
-
-<style>
-.org-dropdown {
-  position: relative;
-  margin: 0.75rem 0.5rem;
-}
-
-.org-trigger {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.5rem;
-  background: rgba(20, 33, 52, 0.85);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.org-trigger:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-border-strong);
-}
-
-.org-trigger:not(.expanded) {
-  width: 40px;
-  padding: 0.5rem;
-  justify-content: center;
-}
-
-.org-avatar {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(145deg, var(--color-accent), var(--color-accent-secondary));
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: white;
-  flex-shrink: 0;
-}
-
-.org-name {
-  flex: 1;
-  text-align: left;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-0);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.chevron {
-  color: var(--color-text-1);
-  transition: transform 0.2s;
-  flex-shrink: 0;
-}
-
-.chevron.open {
-  transform: rotate(180deg);
-}
-
-.dropdown-menu {
-  width: 260px;
-  background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  animation: fadeIn 0.15s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.dropdown-header {
-  padding: 0.75rem 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-text-1);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.org-list {
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.org-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.625rem 1rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.org-item:hover {
-  background: var(--color-bg-hover);
-}
-
-.org-item.active {
-  background: rgba(245, 158, 11, 0.14);
-}
-
-.org-item-avatar {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(145deg, var(--color-accent), var(--color-accent-secondary));
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: white;
-  flex-shrink: 0;
-}
-
-.org-item-info {
-  flex: 1;
-  text-align: left;
-  min-width: 0;
-}
-
-.org-item-name {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-0);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.org-item-role {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--color-text-1);
-  text-transform: capitalize;
-}
-
-.check-icon {
-  color: var(--color-accent);
-  flex-shrink: 0;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: var(--color-border);
-  margin: 0.5rem 0;
-}
-
-.dropdown-action {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.625rem 1rem;
-  background: transparent;
-  border: none;
-  font-size: 0.875rem;
-  color: var(--color-text-1);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.dropdown-action:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text-0);
-}
-</style>

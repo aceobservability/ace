@@ -5,6 +5,7 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { PieChart as EChartsPieChart } from 'echarts/charts'
 import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import type { EChartsOption } from 'echarts'
 
 // Register ECharts components
 use([CanvasRenderer, EChartsPieChart, TitleComponent, TooltipComponent, LegendComponent])
@@ -42,16 +43,16 @@ interface PieFormatterParam {
 
 // Color palette matching the dashboard theme
 const pieColors = [
-  '#F59E0B',
+  '#059669',
   '#60A5FA',
-  '#f59e0b',
+  '#64748b',
   '#fb7185',
   '#22d3ee',
   '#a3e635',
-  '#f97316',
-  '#D97706',
+  '#f59e0b',
+  '#e11d48',
   '#14b8a6',
-  '#eab308',
+  '#8b5cf6',
 ]
 
 // Calculate total for percentage display
@@ -63,7 +64,7 @@ function getPercentage(value: number): string {
   return `${((value / total.value) * 100).toFixed(1)}%`
 }
 
-const chartOption = computed(() => {
+const chartOption = computed<EChartsOption>(() => {
   const radius = props.displayAs === 'donut' ? ['40%', '70%'] : [0, '70%']
 
   return {
@@ -73,7 +74,7 @@ const chartOption = computed(() => {
           text: props.title,
           left: 'center',
           textStyle: {
-            color: '#f5f5f5',
+            color: '#334155',
             fontSize: 13,
             fontWeight: 500,
           },
@@ -81,20 +82,20 @@ const chartOption = computed(() => {
       : undefined,
     tooltip: {
       trigger: 'item',
-      backgroundColor: '#1a1a1a',
-      borderColor: '#2a2a2a',
+      backgroundColor: '#fff',
+      borderColor: '#e2e8f0',
       borderWidth: 1,
       textStyle: {
-        color: '#f5f5f5',
+        color: '#334155',
         fontSize: 12,
       },
       formatter: (params: PieFormatterParam) => {
         const percent = getPercentage(params.value)
         return `<div style="display: flex; align-items: center; gap: 8px;">
-          <span style="display: inline-block; width: 10px; height: 10px; background: ${params.color || '#F59E0B'}; border-radius: 50%;"></span>
-          <span style="color: #a0a0a0;">${params.name}</span>
+          <span style="display: inline-block; width: 10px; height: 10px; background: ${params.color || '#059669'}; border-radius: 50%;"></span>
+          <span style="color: #64748b;">${params.name}</span>
         </div>
-        <div style="margin-top: 4px; font-weight: 600;">
+        <div style="margin-top: 4px; font-weight: 600; color: #334155;">
           ${params.value.toLocaleString()} (${percent})
         </div>`
       },
@@ -104,7 +105,7 @@ const chartOption = computed(() => {
       orient: 'horizontal',
       bottom: 0,
       textStyle: {
-        color: '#a0a0a0',
+        color: '#64748b',
         fontSize: 11,
       },
       itemWidth: 12,
@@ -118,13 +119,13 @@ const chartOption = computed(() => {
         avoidLabelOverlap: true,
         itemStyle: {
           borderRadius: 4,
-          borderColor: '#1a1a1a',
+          borderColor: '#fff',
           borderWidth: 2,
         },
         label: {
           show: props.showLabels,
           position: 'outside',
-          color: '#a0a0a0',
+          color: '#64748b',
           fontSize: 11,
           formatter: (params: PieFormatterParam) => {
             const percent = getPercentage(params.value)
@@ -134,20 +135,20 @@ const chartOption = computed(() => {
         labelLine: {
           show: props.showLabels,
           lineStyle: {
-            color: '#444444',
+            color: '#cbd5e1',
           },
         },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
             shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.5)',
+            shadowColor: 'rgba(0, 0, 0, 0.15)',
           },
           label: {
             show: true,
             fontSize: 12,
             fontWeight: 600,
-            color: '#f5f5f5',
+            color: '#334155',
           },
         },
         data: props.data.map((item, index) => ({
@@ -183,8 +184,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="w-full min-h-[200px]" :style="{ height: typeof height === 'number' ? `${height}px` : height }">
-    <VChart ref="chartRef" :option="chartOption" :autoresize="true" class="w-full h-full" />
+  <div class="h-full w-full" :style="{ height: typeof height === 'number' ? `${height}px` : height }">
+    <VChart ref="chartRef" :option="chartOption" :autoresize="true" class="h-full w-full" />
   </div>
 </template>
-

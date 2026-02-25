@@ -9,6 +9,10 @@ vi.mock('../composables/useProm', () => ({
   queryPrometheus: vi.fn()
 }))
 
+function findRunButton(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('button').find(b => b.text().includes('Run Query') || b.text().includes('Running...'))!
+}
+
 describe('QueryEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -22,7 +26,7 @@ describe('QueryEditor', () => {
     })
 
     expect(wrapper.find('textarea#promql-query').exists()).toBe(true)
-    expect(wrapper.find('button.btn-run').exists()).toBe(true)
+    expect(findRunButton(wrapper).exists()).toBe(true)
   })
 
   it('displays the current query value', () => {
@@ -57,7 +61,7 @@ describe('QueryEditor', () => {
     })
 
     const textarea = wrapper.find('textarea#promql-query')
-    const button = wrapper.find('button.btn-run')
+    const button = findRunButton(wrapper)
 
     expect((textarea.element as HTMLTextAreaElement).disabled).toBe(true)
     expect((button.element as HTMLButtonElement).disabled).toBe(true)
@@ -70,7 +74,7 @@ describe('QueryEditor', () => {
       }
     })
 
-    const button = wrapper.find('button.btn-run')
+    const button = findRunButton(wrapper)
     expect((button.element as HTMLButtonElement).disabled).toBe(true)
   })
 
@@ -81,7 +85,7 @@ describe('QueryEditor', () => {
       }
     })
 
-    const button = wrapper.find('button.btn-run')
+    const button = findRunButton(wrapper)
     expect((button.element as HTMLButtonElement).disabled).toBe(false)
   })
 
@@ -92,7 +96,7 @@ describe('QueryEditor', () => {
       }
     })
 
-    const button = wrapper.find('button.btn-run')
+    const button = findRunButton(wrapper)
     // The button should be disabled because query.trim() is empty
     expect((button.element as HTMLButtonElement).disabled).toBe(true)
   })
@@ -111,15 +115,15 @@ describe('QueryEditor', () => {
       }
     })
 
-    await wrapper.find('button.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('button.btn-run').text()).toBe('Running...')
+    expect(findRunButton(wrapper).text()).toBe('Running...')
 
     resolveQuery?.({ status: 'success', data: { resultType: 'matrix', result: [] } })
     await flushPromises()
 
-    expect(wrapper.find('button.btn-run').text()).toBe('Run Query')
+    expect(findRunButton(wrapper).text()).toBe('Run Query')
   })
 
   it('displays error when query fails', async () => {
@@ -134,11 +138,11 @@ describe('QueryEditor', () => {
       }
     })
 
-    await wrapper.find('button.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.query-error').exists()).toBe(true)
-    expect(wrapper.find('.query-error').text()).toBe('parse error at line 1')
+    expect(wrapper.find('.text-red-600').exists()).toBe(true)
+    expect(wrapper.find('.text-red-600').text()).toBe('parse error at line 1')
   })
 
   it('displays results preview on successful query', async () => {
@@ -161,12 +165,11 @@ describe('QueryEditor', () => {
       }
     })
 
-    await wrapper.find('button.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.query-preview').exists()).toBe(true)
-    expect(wrapper.find('.preview-header').text()).toContain('Query Results')
-    expect(wrapper.find('.result-count').text()).toBe('1 series')
+    expect(wrapper.text()).toContain('Query Results')
+    expect(wrapper.text()).toContain('1 series')
   })
 
   it('displays metric labels from query result', async () => {
@@ -189,10 +192,10 @@ describe('QueryEditor', () => {
       }
     })
 
-    await wrapper.find('button.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
-    const labels = wrapper.findAll('.label-tag')
+    const labels = wrapper.findAll('.font-mono.rounded-full')
     expect(labels.length).toBeGreaterThan(0)
 
     const labelTexts = labels.map(l => l.text())
@@ -225,12 +228,12 @@ describe('QueryEditor', () => {
       }
     })
 
-    await wrapper.find('button.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.preview-table').exists()).toBe(true)
+    expect(wrapper.find('table').exists()).toBe(true)
     expect(wrapper.findAll('tbody tr').length).toBe(2)
-    expect(wrapper.find('.result-count').text()).toBe('2 series')
+    expect(wrapper.text()).toContain('2 series')
   })
 
   it('shows no data message when result is empty', async () => {
@@ -248,11 +251,10 @@ describe('QueryEditor', () => {
       }
     })
 
-    await wrapper.find('button.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.no-data').exists()).toBe(true)
-    expect(wrapper.find('.no-data').text()).toContain('No data returned')
+    expect(wrapper.text()).toContain('No data returned')
   })
 
   it('clears results when query changes', async () => {
@@ -276,17 +278,17 @@ describe('QueryEditor', () => {
     })
 
     // Run initial query
-    await wrapper.find('button.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.query-preview').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Query Results')
 
     // Change the query
     await wrapper.setProps({ modelValue: 'process_cpu' })
     await flushPromises()
 
     // Results should be cleared
-    expect(wrapper.find('.query-preview').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Query Results')
   })
 
   it('handles network error gracefully', async () => {
@@ -298,11 +300,11 @@ describe('QueryEditor', () => {
       }
     })
 
-    await wrapper.find('button.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.query-error').exists()).toBe(true)
-    expect(wrapper.find('.query-error').text()).toBe('Network error')
+    expect(wrapper.find('.text-red-600').exists()).toBe(true)
+    expect(wrapper.find('.text-red-600').text()).toBe('Network error')
   })
 
   it('calls queryPrometheus with correct parameters', async () => {
@@ -317,7 +319,7 @@ describe('QueryEditor', () => {
       }
     })
 
-    await wrapper.find('button.btn-run').trigger('click')
+    await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
     expect(useProm.queryPrometheus).toHaveBeenCalledTimes(1)

@@ -100,7 +100,7 @@ describe('DashboardSettingsView', () => {
     await flushPromises()
 
     expect(wrapper.find('[data-testid="dashboard-settings-sidebar"]').exists()).toBe(true)
-    expect(wrapper.get('[data-testid="settings-section-general"]').classes()).toContain('active')
+    expect(wrapper.get('[data-testid="settings-section-general"]').classes()).toContain('text-emerald-600')
     expect(wrapper.text()).toContain('Dashboard Settings')
   })
 
@@ -109,7 +109,7 @@ describe('DashboardSettingsView', () => {
     await flushPromises()
 
     await wrapper.get('[data-testid="settings-section-yaml"]').trigger('click')
-    expect(mockPush).toHaveBeenCalledWith('/app/dashboards/dashboard-1/settings/yaml')
+    expect(mockPush).toHaveBeenCalledWith('/dashboards/dashboard-1/settings/yaml')
   })
 
   it('redirects invalid section routes to general', async () => {
@@ -118,7 +118,7 @@ describe('DashboardSettingsView', () => {
     mount(DashboardSettingsView)
     await flushPromises()
 
-    expect(mockReplace).toHaveBeenCalledWith('/app/dashboards/dashboard-1/settings/general')
+    expect(mockReplace).toHaveBeenCalledWith('/dashboards/dashboard-1/settings/general')
   })
 
   it('hides permissions section for viewers and redirects direct permissions route', async () => {
@@ -128,7 +128,7 @@ describe('DashboardSettingsView', () => {
     const wrapper = mount(DashboardSettingsView)
     await flushPromises()
 
-    expect(mockReplace).toHaveBeenCalledWith('/app/dashboards/dashboard-1/settings/general')
+    expect(mockReplace).toHaveBeenCalledWith('/dashboards/dashboard-1/settings/general')
     expect(wrapper.find('[data-testid="settings-section-permissions"]').exists()).toBe(false)
   })
 

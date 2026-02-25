@@ -114,7 +114,7 @@ const activeDatasource = computed(
 const isClickHouseDatasource = computed(() => activeDatasource.value?.type === 'clickhouse')
 
 function getTypeLogo(type_: DataSourceType): string {
-  return dataSourceTypeLogos[type_] ?? ''
+  return dataSourceTypeLogos[type_]
 }
 
 function toggleDatasourceMenu() {
@@ -242,7 +242,7 @@ function getTagValue(tags: Record<string, string> | undefined, keys: string[]): 
   for (const key of keys) {
     const normalizedKey = key.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
     if (normalizedKey in byNormalizedName) {
-      const value = byNormalizedName[normalizedKey]!.trim()
+      const value = byNormalizedName[normalizedKey].trim()
       if (value) {
         return value
       }
@@ -506,7 +506,7 @@ function openTraceLogs(payload: {
     // Ignore localStorage write issues; navigation still works.
   }
 
-  router.push('/app/explore/logs')
+  router.push('/explore/logs')
 }
 
 function openServiceMetrics(payload: {
@@ -528,7 +528,7 @@ function openServiceMetrics(payload: {
     // Ignore localStorage write issues; navigation still works.
   }
 
-  router.push('/app/explore/metrics')
+  router.push('/explore/metrics')
 }
 
 function consumeTraceNavigationContext() {
@@ -602,7 +602,7 @@ watch(
       }
 
       const defaultDatasource = sources.find((ds) => ds.is_default)
-      selectedDatasourceId.value = defaultDatasource?.id || sources[0]!.id
+      selectedDatasourceId.value = defaultDatasource?.id || sources[0].id
     }
   },
   { immediate: true },
@@ -676,23 +676,26 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col py-5 px-6 max-w-[1400px] mx-auto max-md:p-[0.9rem]">
-    <header class="flex justify-between items-center gap-4 mb-4 p-4 border border-border rounded-[14px] bg-surface-1 shadow-sm">
-      <div class="flex items-center gap-3">
-        <h1>Explore</h1>
-        <span class="mode-badge">Tracing</span>
+  <div class="flex flex-col min-h-full px-8 py-6 max-md:px-4 max-md:py-4">
+    <!-- Page header -->
+    <header class="flex items-center justify-between mb-6">
+      <div class="flex items-center flex-wrap gap-3">
+        <h1 class="text-2xl font-bold text-slate-900 m-0">Explore</h1>
+        <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">Tracing</span>
       </div>
     </header>
 
-    <div class="flex flex-col gap-4">
-      <div class="bg-surface-1 border border-border rounded-[14px] p-5 shadow-sm flex flex-col gap-4">
-        <div class="query-context-row">
-          <div class="datasource-row">
-            <label>Data Source</label>
-            <div ref="datasourceMenuRef" class="datasource-selector">
+    <div class="flex flex-col gap-6 flex-1">
+      <!-- Query / filter section -->
+      <div class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4">
+        <!-- Datasource + time range row -->
+        <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-end max-md:grid-cols-1">
+          <div class="flex flex-col gap-2.5">
+            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Data Source</label>
+            <div ref="datasourceMenuRef" class="relative">
               <button
                 type="button"
-                class="active-datasource-panel datasource-trigger"
+                class="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left cursor-pointer transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!hasTracingDatasources"
                 @click="toggleDatasourceMenu"
               >
@@ -700,65 +703,73 @@ onUnmounted(() => {
                   <img
                     :src="getTypeLogo(activeDatasource.type)"
                     :alt="`${dataSourceTypeLabels[activeDatasource.type]} logo`"
-                    class="active-datasource-logo"
+                    class="h-7 w-7 shrink-0 object-contain"
                   />
-                  <div class="active-datasource-meta">
-                    <span class="active-datasource-label">Active Source</span>
-                    <strong class="active-datasource-name">{{ activeDatasource.name }}</strong>
-                    <span class="active-datasource-type">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
+                  <div class="flex flex-col min-w-0 gap-px">
+                    <span class="text-[0.68rem] uppercase tracking-wide text-slate-400">Active Source</span>
+                    <strong class="text-sm font-semibold text-slate-900 truncate">{{ activeDatasource.name }}</strong>
+                    <span class="text-xs text-slate-500">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
                   </div>
                 </template>
-                <span v-else class="active-datasource-empty">No tracing datasource configured</span>
+                <span v-else class="text-sm text-slate-400">No tracing datasource configured</span>
                 <component
                   :is="showDatasourceMenu ? ChevronUp : ChevronDown"
                   :size="16"
-                  class="datasource-chevron"
+                  class="ml-auto shrink-0 text-slate-400"
                 />
               </button>
 
-              <div v-if="showDatasourceMenu && hasTracingDatasources" class="datasource-dropdown">
+              <div v-if="showDatasourceMenu && hasTracingDatasources" class="absolute left-0 right-0 top-full mt-1.5 z-[110] max-h-[280px] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg">
                 <button
                   v-for="ds in tracingDatasources"
                   :key="ds.id"
                   type="button"
-                  class="datasource-option"
-                  :class="{ selected: ds.id === selectedDatasourceId }"
+                  class="flex w-full items-center gap-2.5 border-none bg-transparent px-3 py-2.5 text-left text-slate-900 cursor-pointer hover:bg-slate-50"
+                  :class="{ 'bg-emerald-50': ds.id === selectedDatasourceId }"
                   @click="selectDatasource(ds.id)"
                 >
                   <img
                     :src="getTypeLogo(ds.type)"
                     :alt="`${dataSourceTypeLabels[ds.type]} logo`"
-                    class="datasource-option-logo"
+                    class="h-[18px] w-[18px] shrink-0 object-contain"
                   />
-                  <div class="datasource-option-meta">
-                    <strong>{{ ds.name }}</strong>
-                    <span>{{ dataSourceTypeLabels[ds.type] }}</span>
+                  <div class="flex min-w-0 flex-col gap-px">
+                    <strong class="text-sm font-semibold text-slate-900">{{ ds.name }}</strong>
+                    <span class="text-xs text-slate-500">{{ dataSourceTypeLabels[ds.type] }}</span>
                   </div>
-                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="datasource-option-check" />
+                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="ml-auto text-emerald-600" />
                 </button>
               </div>
             </div>
           </div>
 
-          <div class="query-time-controls">
-            <label>Search Range</label>
+          <div class="flex flex-col gap-2.5">
+            <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Search Range</label>
             <TimeRangePicker stacked />
           </div>
         </div>
 
-        <div class="search-filters-row">
+        <!-- Filters row (service / limit or ClickHouse editor) -->
+        <div class="flex flex-wrap gap-3">
           <template v-if="!isClickHouseDatasource">
-            <label class="filter-field">
-              <span>Service</span>
-              <select v-model="selectedService" :disabled="loadingServices || services.length === 0">
+            <label class="flex flex-col gap-2 min-w-[180px]">
+              <span class="text-xs font-medium text-slate-500">Service</span>
+              <select
+                v-model="selectedService"
+                :disabled="loadingServices || services.length === 0"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <option value="">All services</option>
                 <option v-for="service in services" :key="service" :value="service">{{ service }}</option>
               </select>
             </label>
 
-            <label class="filter-field limit-field">
-              <span>Limit</span>
-              <select v-model.number="limit">
+            <label class="flex flex-col gap-2 min-w-[110px]">
+              <span class="text-xs font-medium text-slate-500">Limit</span>
+              <select
+                v-model.number="limit"
+                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+              >
                 <option :value="10">10</option>
                 <option :value="20">20</option>
                 <option :value="50">50</option>
@@ -776,145 +787,159 @@ onUnmounted(() => {
           </template>
         </div>
 
-        <div v-if="!isClickHouseDatasource" class="search-query-row">
-          <label for="trace-search-query" class="query-label">Search Query</label>
+        <!-- Search query input (non-ClickHouse) -->
+        <div v-if="!isClickHouseDatasource" class="flex flex-col gap-2">
+          <label for="trace-search-query" class="text-xs font-medium text-slate-500">Search Query</label>
           <input
             id="trace-search-query"
             v-model="query"
             type="text"
-            class="query-input"
+            class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400"
             placeholder="service.name=api error=true"
           />
         </div>
 
-        <div class="query-actions">
+        <!-- Search button -->
+        <div class="flex items-center gap-4">
           <button
-            class="btn btn-search"
+            class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             :disabled="loadingSearch || !selectedDatasourceId || (isClickHouseDatasource && !query.trim())"
             @click="runSearch"
           >
-            <Loader2 v-if="loadingSearch" :size="16" class="icon-spin" />
+            <Loader2 v-if="loadingSearch" :size="16" class="animate-spin" />
             <Search v-else :size="16" />
             <span>{{ loadingSearch ? 'Searching...' : (isClickHouseDatasource ? 'Run Query' : 'Search Traces') }}</span>
           </button>
         </div>
 
-        <div v-if="!isClickHouseDatasource" class="trace-lookup-row">
-          <label for="trace-id-input">Open Trace ID</label>
-          <div class="trace-lookup-input-wrap">
+        <!-- Open Trace ID row (non-ClickHouse) -->
+        <div v-if="!isClickHouseDatasource" class="flex flex-col gap-2">
+          <label for="trace-id-input" class="text-xs font-medium text-slate-500">Open Trace ID</label>
+          <div class="flex gap-2.5 max-md:flex-col">
             <input
               id="trace-id-input"
               v-model="traceIdInput"
               type="text"
               placeholder="Paste trace id"
-              class="trace-id-input"
+              class="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400"
             />
             <button
-              class="btn btn-find-trace"
+              class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               :disabled="loadingTrace || !selectedDatasourceId || !traceIdInput.trim()"
               @click="lookupTraceById"
             >
-              <Loader2 v-if="loadingTrace" :size="15" class="icon-spin" />
+              <Loader2 v-if="loadingTrace" :size="15" class="animate-spin" />
               <Waypoints v-else :size="15" />
               <span>{{ loadingTrace ? 'Loading...' : 'Open Trace' }}</span>
             </button>
           </div>
         </div>
 
-        <div v-if="error" class="query-error">
+        <!-- Error -->
+        <div v-if="error" class="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
           <AlertCircle :size="16" />
           <span>{{ error }}</span>
         </div>
       </div>
 
-      <div class="bg-surface-1 border border-border rounded-[14px] p-5 shadow-sm min-h-[300px]">
-        <div v-if="!hasTracingDatasources" class="flex flex-col items-center justify-center p-12 text-center text-text-1">
-          <p>No tracing datasource configured.</p>
-          <p class="hint-text">Add a Tempo, VictoriaTraces, or ClickHouse datasource in Data Sources.</p>
+      <!-- Results section -->
+      <div class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white overflow-hidden min-h-[440px]">
+        <!-- No datasources -->
+        <div v-if="!hasTracingDatasources" class="flex flex-col items-center justify-center py-12 text-center text-sm text-slate-500 flex-1">
+          <p class="m-0">No tracing datasource configured.</p>
+          <p class="m-0 text-xs text-slate-400">Add a Tempo, VictoriaTraces, or ClickHouse datasource in Data Sources.</p>
         </div>
 
-        <div v-else-if="isClickHouseDatasource" class="clickhouse-results-layout">
-          <div v-if="loadingSearch" class="flex flex-col items-center justify-center p-12 gap-4 text-text-1">
-            <Loader2 :size="18" class="icon-spin" />
-            <span>Executing trace SQL...</span>
+        <!-- ClickHouse results layout -->
+        <div v-else-if="isClickHouseDatasource" class="flex flex-1 min-h-[420px]">
+          <div v-if="loadingSearch" class="flex flex-col items-center justify-center gap-4 py-12 text-slate-500 flex-1">
+            <Loader2 :size="18" class="animate-spin" />
+            <span class="text-sm">Executing trace SQL...</span>
           </div>
 
-          <div v-else-if="traceSummaries.length > 0" class="clickhouse-trace-list">
+          <div v-else-if="traceSummaries.length > 0" class="flex-1 min-h-0 p-3">
             <TraceListPanel :traces="traceSummaries" @open-trace="handleOpenTraceFromList" />
           </div>
 
-          <div v-else class="flex flex-col items-center justify-center p-12 text-center text-text-1">
-            <p>Run a ClickHouse SQL query to inspect traces.</p>
-            <p class="hint-text">Expected columns include span_id, operation_name, service_name, start_time_unix_nano, and duration_nano.</p>
+          <div v-else class="flex flex-col items-center justify-center py-12 text-center text-sm text-slate-500 flex-1">
+            <p class="m-0">Run a ClickHouse SQL query to inspect traces.</p>
+            <p class="m-0 text-xs text-slate-400">Expected columns include span_id, operation_name, service_name, start_time_unix_nano, and duration_nano.</p>
           </div>
         </div>
 
-        <div v-else class="trace-layout">
-          <aside class="trace-results-panel">
-            <div class="panel-header">
-              <h2>Matching traces</h2>
-              <span>{{ traceSummaries.length }} result{{ traceSummaries.length === 1 ? '' : 's' }}</span>
+        <!-- Standard trace layout: list + detail -->
+        <div v-else class="grid grid-cols-[320px_minmax(0,1fr)] min-h-[460px] flex-1 max-lg:grid-cols-1">
+          <!-- Trace results sidebar -->
+          <aside class="flex flex-col border-r border-slate-200 max-lg:border-r-0 max-lg:border-b max-lg:max-h-[320px]">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+              <h2 class="m-0 text-xs font-semibold uppercase tracking-wide text-slate-700">Matching traces</h2>
+              <span class="text-xs text-slate-400">{{ traceSummaries.length }} result{{ traceSummaries.length === 1 ? '' : 's' }}</span>
             </div>
 
-            <div v-if="loadingSearch" class="loading-state compact">
-              <Loader2 :size="16" class="icon-spin" />
-              <span>Searching traces...</span>
+            <div v-if="loadingSearch" class="flex items-center justify-center gap-2 py-5 text-slate-500">
+              <Loader2 :size="16" class="animate-spin" />
+              <span class="text-sm">Searching traces...</span>
             </div>
 
-            <div v-else-if="traceSummaries.length > 0" class="trace-result-list">
+            <div v-else-if="traceSummaries.length > 0" class="overflow-y-auto p-2 flex flex-col gap-1.5">
               <button
                 v-for="summary in traceSummaries"
                 :key="summary.traceId"
-                class="trace-result-row"
-                :class="{ active: selectedTraceId === summary.traceId }"
+                class="flex flex-col gap-1 text-left p-3 rounded-lg border cursor-pointer transition"
+                :class="selectedTraceId === summary.traceId
+                  ? 'border-emerald-300 bg-emerald-50'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'"
                 @click="loadTrace(summary.traceId)"
               >
-                <code class="trace-id">{{ summary.traceId }}</code>
-                <div class="trace-meta-grid">
+                <code class="text-xs font-mono text-emerald-700 break-all">{{ summary.traceId }}</code>
+                <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-slate-500">
                   <span>{{ summary.rootServiceName || 'unknown service' }}</span>
                   <span>{{ formatDurationNano(summary.durationNano) }}</span>
                   <span>{{ summary.spanCount }} spans</span>
-                  <span :class="{ error: summary.errorSpanCount > 0 }">{{ summary.errorSpanCount }} errors</span>
+                  <span :class="summary.errorSpanCount > 0 ? 'text-rose-600 font-medium' : ''">{{ summary.errorSpanCount }} errors</span>
                 </div>
-                <span class="trace-start">{{ formatStart(summary.startTimeUnixNano) }}</span>
+                <span class="text-[0.7rem] text-slate-400">{{ formatStart(summary.startTimeUnixNano) }}</span>
               </button>
             </div>
 
-            <div v-else class="empty-traces">
+            <div v-else class="flex flex-col items-center justify-center py-8 text-center text-sm text-slate-400 flex-1">
               Run a trace search or open a trace ID directly.
             </div>
           </aside>
 
-          <section class="timeline-panel">
-            <div class="panel-header">
-              <h2>Timeline waterfall</h2>
-              <span v-if="activeTrace">{{ activeTrace.spans.length }} spans</span>
+          <!-- Timeline / detail panel -->
+          <section class="flex flex-col">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+              <h2 class="m-0 text-xs font-semibold uppercase tracking-wide text-slate-700">Timeline waterfall</h2>
+              <span v-if="activeTrace" class="text-xs text-slate-400">{{ activeTrace.spans.length }} spans</span>
             </div>
 
-            <div v-if="loadingTrace" class="flex flex-col items-center justify-center p-12 gap-4 text-text-1">
-              <Loader2 :size="18" class="icon-spin" />
-              <span>Loading trace...</span>
+            <div v-if="loadingTrace" class="flex flex-col items-center justify-center gap-4 py-12 text-slate-500 flex-1">
+              <Loader2 :size="18" class="animate-spin" />
+              <span class="text-sm">Loading trace...</span>
             </div>
 
-            <div v-else-if="activeTrace" class="timeline-content">
-              <div class="trace-summary-bar">
-                <code>{{ activeTrace.traceId }}</code>
-                <span>{{ formatDurationNano(activeTrace.durationNano) }}</span>
-                <span>{{ activeTrace.services.length }} services</span>
+            <div v-else-if="activeTrace" class="flex flex-col gap-3.5 p-4">
+              <!-- Trace summary bar -->
+              <div class="flex items-center gap-3 flex-wrap rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <code class="text-xs font-mono text-emerald-700">{{ activeTrace.traceId }}</code>
+                <span class="text-xs text-slate-500">{{ formatDurationNano(activeTrace.durationNano) }}</span>
+                <span class="text-xs text-slate-500">{{ activeTrace.services.length }} services</span>
               </div>
 
-              <div class="service-graph-panel">
-                <div class="service-graph-header">
-                  <h3>Service dependency graph</h3>
-                  <span v-if="activeServiceGraph">{{ activeServiceGraph.edges.length }} edges</span>
+              <!-- Service graph panel -->
+              <div class="rounded-xl border border-slate-200 bg-white p-4 flex flex-col gap-2.5">
+                <div class="flex items-center justify-between">
+                  <h3 class="m-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Service dependency graph</h3>
+                  <span v-if="activeServiceGraph" class="text-xs text-slate-400">{{ activeServiceGraph.edges.length }} edges</span>
                 </div>
 
-                <div v-if="loadingServiceGraph" class="loading-state compact">
-                  <Loader2 :size="16" class="icon-spin" />
-                  <span>Loading service graph...</span>
+                <div v-if="loadingServiceGraph" class="flex items-center justify-center gap-2 py-5 text-slate-500">
+                  <Loader2 :size="16" class="animate-spin" />
+                  <span class="text-sm">Loading service graph...</span>
                 </div>
 
-                <div v-else-if="serviceGraphError" class="service-graph-error">
+                <div v-else-if="serviceGraphError" class="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">
                   <AlertCircle :size="14" />
                   <span>{{ serviceGraphError }}</span>
                 </div>
@@ -926,13 +951,14 @@ onUnmounted(() => {
                   @select-edge="handleSelectEdgeFromGraph"
                 />
 
-                <div v-else class="service-graph-empty">
+                <div v-else class="flex items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-400">
                   Not enough trace data to render service dependencies.
                 </div>
               </div>
 
-              <div class="trace-detail-layout">
-                <div class="timeline-main-pane">
+              <!-- Trace detail: timeline + span details -->
+              <div class="grid grid-cols-[minmax(0,1fr)_340px] gap-3.5 items-start max-md:grid-cols-1">
+                <div class="min-w-0">
                   <TraceTimeline
                     :trace="activeTrace"
                     :selected-span-id="selectedSpan?.spanId || null"
@@ -949,16 +975,16 @@ onUnmounted(() => {
                   @open-service-metrics="openServiceMetrics"
                 />
 
-                <aside v-else class="span-selection-placeholder">
-                  <h3>Span details</h3>
-                  <p>Select a span in the timeline to inspect attributes, logs, and relationships.</p>
+                <aside v-else class="flex flex-col gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
+                  <h3 class="m-0 text-xs font-semibold uppercase tracking-wide text-slate-400">Span details</h3>
+                  <p class="m-0 text-sm text-slate-500">Select a span in the timeline to inspect attributes, logs, and relationships.</p>
                 </aside>
               </div>
             </div>
 
-            <div v-else class="flex flex-col items-center justify-center p-12 text-center text-text-1">
-              <p>Select a trace result to view the waterfall timeline.</p>
-              <p class="hint-text">You can search by service/time range or open a known trace ID.</p>
+            <div v-else class="flex flex-col items-center justify-center py-12 text-center text-sm text-slate-500 flex-1">
+              <p class="m-0">Select a trace result to view the waterfall timeline.</p>
+              <p class="m-0 text-xs text-slate-400">You can search by service/time range or open a known trace ID.</p>
             </div>
           </section>
         </div>
@@ -966,621 +992,3 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
-
-<style>
-.explore-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  padding: 1.25rem 1.8rem;
-}
-
-.explore-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding: 0.95rem 1.15rem;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-surface-1);
-  box-shadow: var(--shadow-sm);
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.explore-header h1 {
-  font-size: 1.08rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-family: var(--font-family-mono);
-  color: var(--color-text-0);
-  margin: 0;
-}
-
-.mode-badge {
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid rgba(217, 119, 6, 0.38);
-  background: rgba(217, 119, 6, 0.14);
-  color: #FCD34D;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.explore-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  flex: 1;
-}
-
-.query-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1.2rem;
-  background: var(--color-surface-1);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
-}
-
-.query-context-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1rem;
-  align-items: end;
-}
-
-.datasource-row,
-.query-time-controls,
-.search-query-row,
-.trace-lookup-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.datasource-row label,
-.query-time-controls label,
-.search-query-row .query-label,
-.trace-lookup-row label,
-.filter-field span {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--color-text-1);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.active-datasource-panel {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.75rem;
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-2);
-}
-
-.datasource-selector {
-  position: relative;
-}
-
-.datasource-trigger {
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.2s, background-color 0.2s;
-}
-
-.datasource-trigger:hover:not(:disabled) {
-  border-color: var(--color-border-strong);
-  background: var(--color-bg-hover);
-}
-
-.datasource-trigger:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.active-datasource-logo {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.active-datasource-meta {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 0.1rem;
-}
-
-.active-datasource-label {
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text-2);
-}
-
-.active-datasource-name {
-  font-size: 0.86rem;
-  font-weight: 600;
-  color: var(--color-text-0);
-}
-
-.active-datasource-type {
-  font-size: 0.75rem;
-  color: var(--color-text-1);
-}
-
-.active-datasource-empty {
-  color: var(--color-text-2);
-  font-size: 0.85rem;
-}
-
-.datasource-chevron {
-  margin-left: auto;
-  color: var(--color-text-2);
-  flex-shrink: 0;
-}
-
-.datasource-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  background: rgba(11, 21, 33, 0.98);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  z-index: 110;
-  max-height: 280px;
-  overflow-y: auto;
-}
-
-.datasource-option {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.6rem 0.75rem;
-  background: transparent;
-  border: none;
-  text-align: left;
-  color: var(--color-text-0);
-  cursor: pointer;
-}
-
-.datasource-option:hover {
-  background: var(--color-bg-hover);
-}
-
-.datasource-option.selected {
-  background: rgba(245, 158, 11, 0.14);
-}
-
-.datasource-option-logo {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.datasource-option-meta {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.datasource-option-meta strong {
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--color-text-0);
-}
-
-.datasource-option-meta span {
-  font-size: 0.75rem;
-  color: var(--color-text-1);
-}
-
-.datasource-option-check {
-  margin-left: auto;
-  color: var(--color-accent);
-}
-
-.search-filters-row {
-  display: flex;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-
-.filter-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-width: 180px;
-}
-
-.limit-field {
-  min-width: 110px;
-}
-
-.filter-field select,
-.query-input,
-.trace-id-input {
-  border: 1px solid var(--color-border);
-  background: rgba(12, 21, 34, 0.85);
-  color: var(--color-text-0);
-  border-radius: 10px;
-  font-size: 0.86rem;
-  padding: 0.62rem 0.72rem;
-}
-
-.trace-lookup-input-wrap {
-  display: flex;
-  gap: 0.6rem;
-}
-
-.trace-id-input {
-  flex: 1;
-}
-
-.query-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  padding: 0.62rem 1.1rem;
-}
-
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.btn-search {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: #051625;
-}
-
-.btn-find-trace {
-  background: rgba(245, 158, 11, 0.16);
-  border-color: rgba(245, 158, 11, 0.28);
-  color: #ccefff;
-}
-
-.query-error {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: rgba(251, 113, 133, 0.1);
-  border: 1px solid rgba(251, 113, 133, 0.3);
-  border-radius: 8px;
-  color: var(--color-danger);
-  font-size: 0.875rem;
-}
-
-.results-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: var(--color-surface-1);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  min-height: 440px;
-  box-shadow: var(--shadow-sm);
-}
-
-.trace-layout {
-  display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
-  min-height: 460px;
-  flex: 1;
-}
-
-.clickhouse-results-layout {
-  display: flex;
-  flex: 1;
-  min-height: 420px;
-}
-
-.clickhouse-trace-list {
-  flex: 1;
-  min-height: 0;
-  padding: 0.8rem;
-}
-
-.trace-results-panel {
-  border-right: 1px solid var(--color-border);
-  display: flex;
-  flex-direction: column;
-}
-
-.timeline-panel {
-  display: flex;
-  flex-direction: column;
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--color-border);
-  background: rgba(15, 24, 39, 0.85);
-}
-
-.panel-header h2 {
-  margin: 0;
-  font-size: 0.86rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-0);
-}
-
-.panel-header span {
-  font-size: 0.74rem;
-  color: var(--color-text-2);
-}
-
-.trace-result-list {
-  overflow-y: auto;
-  padding: 0.45rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.trace-result-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  text-align: left;
-  padding: 0.7rem;
-  border-radius: 10px;
-  border: 1px solid var(--color-border);
-  background: rgba(14, 22, 36, 0.8);
-  color: var(--color-text-0);
-  cursor: pointer;
-}
-
-.trace-result-row:hover {
-  border-color: rgba(245, 158, 11, 0.42);
-  background: rgba(18, 29, 45, 0.9);
-}
-
-.trace-result-row.active {
-  border-color: rgba(245, 158, 11, 0.52);
-  background: rgba(245, 158, 11, 0.12);
-}
-
-.trace-id {
-  font-size: 0.75rem;
-  color: #bae6fd;
-  word-break: break-all;
-  font-family: var(--font-family-mono);
-}
-
-.trace-meta-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.25rem 0.5rem;
-  font-size: 0.74rem;
-  color: var(--color-text-1);
-}
-
-.trace-meta-grid .error {
-  color: #fb7185;
-}
-
-.trace-start {
-  font-size: 0.7rem;
-  color: var(--color-text-2);
-}
-
-.timeline-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  padding: 0.9rem;
-}
-
-.trace-detail-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 0.85rem;
-  align-items: start;
-}
-
-.timeline-main-pane {
-  min-width: 0;
-}
-
-.span-selection-placeholder {
-  border: 1px dashed rgba(71, 85, 105, 0.55);
-  border-radius: 12px;
-  background: rgba(12, 21, 33, 0.75);
-  padding: 0.85rem;
-  color: var(--color-text-1);
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.span-selection-placeholder h3 {
-  margin: 0;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--color-text-2);
-}
-
-.span-selection-placeholder p {
-  margin: 0;
-  font-size: 0.8rem;
-}
-
-.trace-summary-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 0.55rem 0.65rem;
-  background: rgba(12, 20, 32, 0.82);
-}
-
-.trace-summary-bar code {
-  font-size: 0.76rem;
-  color: #bae6fd;
-  font-family: var(--font-family-mono);
-}
-
-.trace-summary-bar span {
-  font-size: 0.74rem;
-  color: var(--color-text-1);
-}
-
-.service-graph-panel {
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: rgba(10, 18, 30, 0.7);
-  padding: 0.7rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.service-graph-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.service-graph-header h3 {
-  margin: 0;
-  font-size: 0.76rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-text-2);
-}
-
-.service-graph-header span {
-  font-size: 0.72rem;
-  color: var(--color-text-1);
-}
-
-.service-graph-error,
-.service-graph-empty {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 10px;
-  border: 1px dashed rgba(71, 85, 105, 0.55);
-  background: rgba(12, 21, 33, 0.65);
-  padding: 0.7rem;
-  font-size: 0.8rem;
-  color: var(--color-text-1);
-}
-
-.service-graph-error {
-  border-color: rgba(251, 113, 133, 0.34);
-  color: #fda4af;
-}
-
-.loading-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  color: var(--color-text-1);
-  padding: 2rem;
-  flex: 1;
-}
-
-.loading-state.compact {
-  padding: 1.2rem;
-}
-
-.empty-state,
-.empty-traces {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 2rem;
-  text-align: center;
-  color: var(--color-text-1);
-  flex: 1;
-}
-
-.hint-text {
-  font-size: 0.8rem;
-  color: var(--color-text-2);
-}
-
-.icon-spin {
-  animation: spin 0.9s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 1100px) {
-  .trace-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .trace-results-panel {
-    border-right: none;
-    border-bottom: 1px solid var(--color-border);
-    max-height: 320px;
-  }
-}
-
-@media (max-width: 900px) {
-  .explore-page {
-    padding: 0.9rem;
-  }
-
-  .trace-detail-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .query-context-row {
-    grid-template-columns: 1fr;
-  }
-
-  .trace-lookup-input-wrap {
-    flex-direction: column;
-  }
-}
-</style>

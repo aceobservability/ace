@@ -24,7 +24,7 @@ async function handleSubmit() {
     } else {
       await register(email.value, password.value, name.value || undefined)
     }
-    router.push('/app/dashboards')
+    router.push('/dashboards')
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'An error occurred'
   } finally {
@@ -39,49 +39,46 @@ function switchMode() {
 </script>
 
 <template>
-  <div class="login-page min-h-screen flex items-center justify-center bg-transparent p-6 relative overflow-hidden">
-    <div class="w-full max-w-[440px] border border-border rounded-[18px] p-[38px] relative z-1 shadow-md backdrop-blur-[8px]" style="background: linear-gradient(180deg, rgba(16, 27, 43, 0.94), rgba(13, 22, 36, 0.92))">
-      <div class="text-center mb-8">
-        <div class="flex items-center justify-center gap-3 mb-6">
-          <div class="w-10 h-10 rounded-[12px] flex items-center justify-center text-white" style="background: linear-gradient(140deg, var(--color-accent), var(--color-accent-secondary)); box-shadow: 0 10px 22px rgba(217, 119, 6, 0.3)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6">
-              <path d="M3 3v18h18" />
-              <path d="M18 9l-5 5-4-4-3 3" />
-            </svg>
+  <div class="flex min-h-screen items-center justify-center bg-slate-950 px-4">
+    <div class="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-8">
+      <div class="mb-8 text-center">
+        <div class="mb-6 flex flex-col items-center justify-center">
+          <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 font-mono text-sm font-bold text-white">
+            A
           </div>
-          <span class="text-[22px] font-bold font-mono tracking-[0.04em] uppercase text-accent">Ace</span>
+          <span class="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-slate-400">Ace</span>
         </div>
-        <h1 class="text-[23px] font-semibold text-text-0 mb-2">{{ mode === 'login' ? 'Welcome back' : 'Create account' }}</h1>
-        <p class="text-text-1 text-[13px]">
+        <h1 class="text-2xl font-bold text-slate-100 text-center">{{ mode === 'login' ? 'Welcome back' : 'Create account' }}</h1>
+        <p class="text-sm text-slate-400 text-center mt-2">
           {{ mode === 'login' ? 'Sign in to your account to continue' : 'Get started with your new account' }}
         </p>
       </div>
 
       <form class="flex flex-col gap-5" @submit.prevent="handleSubmit">
-        <div v-if="error" class="flex items-center gap-2 px-4 py-3 rounded-[8px] text-danger text-sm" style="background: rgba(251, 113, 133, 0.1); border: 1px solid var(--color-danger)">
-          <AlertCircle :size="16" />
+        <div v-if="error" class="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-400">
+          <AlertCircle :size="16" class="shrink-0" />
           <span>{{ error }}</span>
         </div>
 
-        <div v-if="mode === 'register'" class="flex flex-col gap-2">
-          <label for="name" class="text-sm font-medium text-text-0">Name</label>
+        <div v-if="mode === 'register'" class="flex flex-col">
+          <label for="name" class="block text-sm font-medium text-slate-300 mb-1.5">Name</label>
           <div class="relative flex items-center">
-            <User :size="18" class="absolute left-3.5 text-text-2 pointer-events-none" />
+            <User :size="18" class="absolute left-3.5 text-slate-500 pointer-events-none" />
             <input
               id="name"
               v-model="name"
               type="text"
               placeholder="Your name (optional)"
               :disabled="loading"
-              class="w-full py-3 pr-3.5 pl-11 bg-bg-2 border border-border rounded-[10px] text-text-0 text-sm transition-colors duration-200 placeholder:text-text-2 focus:outline-none focus:border-accent disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-slate-700 bg-slate-800 pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
         </div>
 
-        <div class="flex flex-col gap-2">
-          <label for="email" class="text-sm font-medium text-text-0">Email</label>
+        <div class="flex flex-col">
+          <label for="email" class="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
           <div class="relative flex items-center">
-            <Mail :size="18" class="absolute left-3.5 text-text-2 pointer-events-none" />
+            <Mail :size="18" class="absolute left-3.5 text-slate-500 pointer-events-none" />
             <input
               id="email"
               v-model="email"
@@ -89,15 +86,15 @@ function switchMode() {
               placeholder="you@example.com"
               required
               :disabled="loading"
-              class="w-full py-3 pr-3.5 pl-11 bg-bg-2 border border-border rounded-[10px] text-text-0 text-sm transition-colors duration-200 placeholder:text-text-2 focus:outline-none focus:border-accent disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-slate-700 bg-slate-800 pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
         </div>
 
-        <div class="flex flex-col gap-2">
-          <label for="password" class="text-sm font-medium text-text-0">Password</label>
+        <div class="flex flex-col">
+          <label for="password" class="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
           <div class="relative flex items-center">
-            <Lock :size="18" class="absolute left-3.5 text-text-2 pointer-events-none" />
+            <Lock :size="18" class="absolute left-3.5 text-slate-500 pointer-events-none" />
             <input
               id="password"
               v-model="password"
@@ -105,17 +102,17 @@ function switchMode() {
               placeholder="Enter your password"
               required
               :disabled="loading"
-              class="w-full py-3 pr-3.5 pl-11 bg-bg-2 border border-border rounded-[10px] text-text-0 text-sm transition-colors duration-200 placeholder:text-text-2 focus:outline-none focus:border-accent disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-slate-700 bg-slate-800 pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
-          <p v-if="mode === 'register'" class="text-xs text-text-2">
+          <p v-if="mode === 'register'" class="text-xs text-slate-500 mt-1">
             Min 8 characters with uppercase, lowercase, and number
           </p>
         </div>
 
-        <button type="submit" class="flex items-center justify-center gap-2 py-3.5 px-5 bg-accent text-[#1a0f00] border-none rounded-[10px] text-sm font-semibold cursor-pointer transition-all duration-200 hover:not-disabled:bg-accent-hover hover:not-disabled:-translate-y-px disabled:opacity-70 disabled:cursor-not-allowed" style="box-shadow: 0 10px 24px rgba(217, 119, 6, 0.24)" :disabled="loading">
+        <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed" :disabled="loading">
           <template v-if="loading">
-            <span class="w-4 h-4 border-2 border-[rgba(26,15,0,0.3)] border-t-[#1a0f00] rounded-full animate-[spin_0.8s_linear_infinite]"></span>
+            <span class="animate-spin h-4 w-4 rounded-full border-2 border-white/30 border-t-white"></span>
             {{ mode === 'login' ? 'Signing in...' : 'Creating account...' }}
           </template>
           <template v-else>
@@ -127,9 +124,9 @@ function switchMode() {
       </form>
 
       <div class="mt-6 text-center">
-        <p class="text-text-1 text-[13px]">
+        <p class="text-sm text-slate-400">
           {{ mode === 'login' ? "Don't have an account?" : 'Already have an account?' }}
-          <button type="button" class="bg-none border-none text-accent text-[13px] font-medium cursor-pointer p-0 ml-1 hover:underline" @click="switchMode">
+          <button type="button" class="ml-1 text-sm text-emerald-400 hover:text-emerald-300 cursor-pointer bg-transparent border-none p-0 font-medium" @click="switchMode">
             {{ mode === 'login' ? 'Create one' : 'Sign in' }}
           </button>
         </p>
@@ -137,28 +134,3 @@ function switchMode() {
     </div>
   </div>
 </template>
-
-<style>
-.login-page::before,
-.login-page::after {
-  content: '';
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(70px);
-  pointer-events: none;
-}
-.login-page::before {
-  width: 340px;
-  height: 340px;
-  background: rgba(245, 158, 11, 0.28);
-  top: -110px;
-  left: -100px;
-}
-.login-page::after {
-  width: 360px;
-  height: 360px;
-  background: rgba(99, 102, 241, 0.2);
-  right: -120px;
-  bottom: -160px;
-}
-</style>

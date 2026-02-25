@@ -10,7 +10,7 @@ describe('LogViewer', () => {
       },
     })
 
-    expect(wrapper.find('.empty-row').exists()).toBe(true)
+    expect(wrapper.find('.text-center.text-slate-400').exists()).toBe(true)
     expect(wrapper.text()).toContain('No log entries')
   })
 
@@ -28,9 +28,9 @@ describe('LogViewer', () => {
       },
     })
 
-    await wrapper.find('.log-row').trigger('click')
+    await wrapper.find('.cursor-pointer').trigger('click')
 
-    expect(wrapper.find('.details-row').exists()).toBe(true)
+    expect(wrapper.find('.bg-slate-50.px-6').exists()).toBe(true)
     expect(wrapper.text()).toContain('Detected Fields')
     expect(wrapper.text()).toContain('message')
     expect(wrapper.text()).toContain('request failed')
@@ -52,12 +52,12 @@ describe('LogViewer', () => {
       },
     })
 
-    const row = wrapper.find('.log-row')
+    const row = wrapper.find('.cursor-pointer')
     await row.trigger('click')
-    expect(wrapper.find('.details-row').exists()).toBe(true)
+    expect(wrapper.find('.bg-slate-50.px-6').exists()).toBe(true)
 
     await row.trigger('click')
-    expect(wrapper.find('.details-row').exists()).toBe(false)
+    expect(wrapper.find('.bg-slate-50.px-6').exists()).toBe(false)
   })
 
   it('detects key-value fields in plain text logs', async () => {
@@ -74,7 +74,7 @@ describe('LogViewer', () => {
       },
     })
 
-    await wrapper.find('.log-row').trigger('click')
+    await wrapper.find('.cursor-pointer').trigger('click')
 
     expect(wrapper.text()).toContain('service')
     expect(wrapper.text()).toContain('worker')
@@ -97,6 +97,8 @@ describe('LogViewer', () => {
       },
     })
 
-    expect(wrapper.find('.log-row').classes()).toContain('highlighted')
+    // Highlighted logs use a row-highlight-fade animation class
+    const row = wrapper.find('.cursor-pointer')
+    expect(row.classes().some(c => c.includes('animate-'))).toBe(true)
   })
 })
