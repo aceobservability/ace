@@ -323,19 +323,19 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="modal-overlay" @click.self="emit('close')">
-    <div class="modal">
-      <header class="modal-header">
-        <h2>{{ isEditing ? 'Edit Panel' : 'Add Panel' }}</h2>
-        <button class="btn-close" @click="emit('close')">
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" @click.self="emit('close')">
+    <div class="w-full max-w-4xl rounded-xl border border-slate-200 bg-white shadow-lg max-h-[90vh] overflow-y-auto">
+      <header class="flex items-center justify-between border-b border-slate-100 px-6 py-4 sticky top-0 bg-white z-10">
+        <h2 class="text-lg font-semibold text-slate-900">{{ isEditing ? 'Edit Panel' : 'Add Panel' }}</h2>
+        <button class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer" @click="emit('close')">
           <X :size="20" />
         </button>
       </header>
 
-      <form @submit.prevent="handleSubmit">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="title">Title <span class="required">*</span></label>
+      <form class="px-6 py-4" @submit.prevent="handleSubmit">
+        <div class="grid grid-cols-[1fr_auto] gap-4">
+          <div class="mb-5">
+            <label for="title" class="block mb-2 text-sm font-medium text-slate-700">Title <span class="text-red-500">*</span></label>
             <input
               id="title"
               v-model="title"
@@ -343,12 +343,13 @@ async function handleSubmit() {
               placeholder="Panel title"
               :disabled="loading"
               autocomplete="off"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
             />
           </div>
 
-          <div class="form-group form-group-small">
-            <label for="type">Panel Type</label>
-            <select id="type" v-model="panelType" :disabled="loading">
+          <div class="mb-5 min-w-[160px]">
+            <label for="type" class="block mb-2 text-sm font-medium text-slate-700">Panel Type</label>
+            <select id="type" v-model="panelType" :disabled="loading" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed">
               <option value="line_chart">Line Chart</option>
               <option value="bar_chart">Bar Chart</option>
               <option value="pie">Pie Chart</option>
@@ -362,9 +363,9 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <div v-if="datasources.length > 0" class="form-group">
-          <label for="datasource">Data Source</label>
-          <select id="datasource" v-model="selectedDatasourceId" :disabled="loading">
+        <div v-if="datasources.length > 0" class="mb-5">
+          <label for="datasource" class="block mb-2 text-sm font-medium text-slate-700">Data Source</label>
+          <select id="datasource" v-model="selectedDatasourceId" :disabled="loading" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed">
             <option v-if="!isTracePanelType" value="">Default (Prometheus)</option>
             <option v-else value="">Select tracing datasource</option>
             <option v-for="ds in availableDatasources" :key="ds.id" :value="ds.id">
@@ -373,8 +374,8 @@ async function handleSubmit() {
           </select>
         </div>
 
-        <div class="form-group query-builder-group">
-          <label>
+        <div class="mb-5 border-t border-slate-100 pt-5">
+          <label class="block mb-2 text-sm font-medium text-slate-700">
             {{
               isClickHouseDatasource
                 ? 'SQL Query'
@@ -412,24 +413,23 @@ async function handleSubmit() {
           />
         </div>
 
-        <div v-if="isTracePanelType" class="trace-config">
-          <div class="config-header">
-            <h4>Trace Panel Options</h4>
-          </div>
+        <div v-if="isTracePanelType" class="border-t border-slate-100 pt-5 mb-5">
+          <h4 class="text-sm font-semibold text-slate-900 mb-3">Trace Panel Options</h4>
 
-          <div class="form-row form-row-2">
-            <div class="form-group">
-              <label for="trace-service-filter">Service Filter (optional)</label>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="mb-3">
+              <label for="trace-service-filter" class="block mb-2 text-sm font-medium text-slate-700">Service Filter (optional)</label>
               <input
                 id="trace-service-filter"
                 v-model="traceService"
                 type="text"
                 placeholder="api-service"
                 :disabled="loading"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
-            <div class="form-group">
-              <label for="trace-limit">Max traces</label>
+            <div class="mb-3">
+              <label for="trace-limit" class="block mb-2 text-sm font-medium text-slate-700">Max traces</label>
               <input
                 id="trace-limit"
                 v-model.number="traceLimit"
@@ -437,48 +437,50 @@ async function handleSubmit() {
                 min="1"
                 max="200"
                 :disabled="loading"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
           </div>
         </div>
 
         <!-- Gauge Configuration -->
-        <div v-if="isGaugeType" class="gauge-config">
-          <div class="config-header">
-            <h4>Gauge Options</h4>
-          </div>
+        <div v-if="isGaugeType" class="border-t border-slate-100 pt-5 mb-5">
+          <h4 class="text-sm font-semibold text-slate-900 mb-3">Gauge Options</h4>
 
-          <div class="form-row form-row-4">
-            <div class="form-group">
-              <label for="gauge-min">Min</label>
+          <div class="grid grid-cols-4 gap-3">
+            <div class="mb-3">
+              <label for="gauge-min" class="block mb-2 text-sm font-medium text-slate-700">Min</label>
               <input
                 id="gauge-min"
                 v-model.number="gaugeMin"
                 type="number"
                 :disabled="loading"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
-            <div class="form-group">
-              <label for="gauge-max">Max</label>
+            <div class="mb-3">
+              <label for="gauge-max" class="block mb-2 text-sm font-medium text-slate-700">Max</label>
               <input
                 id="gauge-max"
                 v-model.number="gaugeMax"
                 type="number"
                 :disabled="loading"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
-            <div class="form-group">
-              <label for="gauge-unit">Unit</label>
+            <div class="mb-3">
+              <label for="gauge-unit" class="block mb-2 text-sm font-medium text-slate-700">Unit</label>
               <input
                 id="gauge-unit"
                 v-model="gaugeUnit"
                 type="text"
                 placeholder="%"
                 :disabled="loading"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
-            <div class="form-group">
-              <label for="gauge-decimals">Decimals</label>
+            <div class="mb-3">
+              <label for="gauge-decimals" class="block mb-2 text-sm font-medium text-slate-700">Decimals</label>
               <input
                 id="gauge-decimals"
                 v-model.number="gaugeDecimals"
@@ -486,36 +488,37 @@ async function handleSubmit() {
                 min="0"
                 max="10"
                 :disabled="loading"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
-          <div class="thresholds-section">
-            <div class="thresholds-header">
-              <label>Thresholds</label>
-              <button type="button" class="btn btn-sm" @click="addThreshold" :disabled="loading">
+          <div class="mt-4">
+            <div class="flex justify-between items-center mb-2">
+              <label class="text-sm font-medium text-slate-700">Thresholds</label>
+              <button type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="addThreshold" :disabled="loading">
                 <Plus :size="14" />
                 Add
               </button>
             </div>
-            <div class="thresholds-list">
-              <div v-for="(threshold, index) in gaugeThresholds" :key="index" class="threshold-row">
+            <div class="flex flex-col gap-2">
+              <div v-for="(threshold, index) in gaugeThresholds" :key="index" class="flex items-center gap-2">
                 <input
                   v-model.number="threshold.value"
                   type="number"
                   placeholder="Value"
                   :disabled="loading"
-                  class="threshold-value"
+                  class="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
                 />
                 <input
                   v-model="threshold.color"
                   type="color"
                   :disabled="loading"
-                  class="threshold-color"
+                  class="w-10 h-9 p-0.5 bg-white border border-slate-200 rounded-lg cursor-pointer"
                 />
                 <button
                   type="button"
-                  class="btn-icon btn-icon-danger"
+                  class="flex items-center justify-center h-8 w-8 rounded-lg bg-transparent border-none text-slate-400 cursor-pointer transition hover:bg-red-50 hover:text-red-500"
                   @click="removeThreshold(index)"
                   :disabled="loading"
                   title="Remove threshold"
@@ -523,7 +526,7 @@ async function handleSubmit() {
                   <Trash2 :size="14" />
                 </button>
               </div>
-              <p v-if="gaugeThresholds.length === 0" class="thresholds-empty">
+              <p v-if="gaugeThresholds.length === 0" class="text-xs text-slate-400 m-0 p-2 text-center">
                 No thresholds configured. Values below any threshold will show green.
               </p>
             </div>
@@ -531,65 +534,64 @@ async function handleSubmit() {
         </div>
 
         <!-- Pie Chart Configuration -->
-        <div v-if="isPieType" class="pie-config">
-          <div class="config-header">
-            <h4>Pie Chart Options</h4>
-          </div>
+        <div v-if="isPieType" class="border-t border-slate-100 pt-5 mb-5">
+          <h4 class="text-sm font-semibold text-slate-900 mb-3">Pie Chart Options</h4>
 
-          <div class="form-row form-row-3">
-            <div class="form-group">
-              <label for="pie-display">Display Style</label>
-              <select id="pie-display" v-model="pieDisplayAs" :disabled="loading">
+          <div class="grid grid-cols-3 gap-3">
+            <div class="mb-3">
+              <label for="pie-display" class="block mb-2 text-sm font-medium text-slate-700">Display Style</label>
+              <select id="pie-display" v-model="pieDisplayAs" :disabled="loading" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed">
                 <option value="pie">Pie</option>
                 <option value="donut">Donut</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="pie-legend">Show Legend</label>
-              <div class="checkbox-wrapper">
+            <div class="mb-3">
+              <label for="pie-legend" class="block mb-2 text-sm font-medium text-slate-700">Show Legend</label>
+              <div class="flex items-center gap-2">
                 <input
                   id="pie-legend"
                   v-model="pieShowLegend"
                   type="checkbox"
                   :disabled="loading"
+                  class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
                 />
-                <label for="pie-legend">Display legend</label>
+                <label for="pie-legend" class="text-sm text-slate-700">Display legend</label>
               </div>
             </div>
-            <div class="form-group">
-              <label for="pie-labels">Show Labels</label>
-              <div class="checkbox-wrapper">
+            <div class="mb-3">
+              <label for="pie-labels" class="block mb-2 text-sm font-medium text-slate-700">Show Labels</label>
+              <div class="flex items-center gap-2">
                 <input
                   id="pie-labels"
                   v-model="pieShowLabels"
                   type="checkbox"
                   :disabled="loading"
+                  class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
                 />
-                <label for="pie-labels">Display value labels</label>
+                <label for="pie-labels" class="text-sm text-slate-700">Display value labels</label>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Stat Panel Configuration -->
-        <div v-if="isStatType" class="stat-config">
-          <div class="config-header">
-            <h4>Stat Panel Options</h4>
-          </div>
+        <div v-if="isStatType" class="border-t border-slate-100 pt-5 mb-5">
+          <h4 class="text-sm font-semibold text-slate-900 mb-3">Stat Panel Options</h4>
 
-          <div class="form-row form-row-2">
-            <div class="form-group">
-              <label for="stat-unit">Unit</label>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="mb-3">
+              <label for="stat-unit" class="block mb-2 text-sm font-medium text-slate-700">Unit</label>
               <input
                 id="stat-unit"
                 v-model="statUnit"
                 type="text"
                 placeholder="%"
                 :disabled="loading"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
-            <div class="form-group">
-              <label for="stat-decimals">Decimals</label>
+            <div class="mb-3">
+              <label for="stat-decimals" class="block mb-2 text-sm font-medium text-slate-700">Decimals</label>
               <input
                 id="stat-decimals"
                 v-model.number="statDecimals"
@@ -597,59 +599,62 @@ async function handleSubmit() {
                 min="0"
                 max="10"
                 :disabled="loading"
+                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
-          <div class="form-row form-row-2">
-            <div class="form-group">
-              <label>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
                 <input
                   type="checkbox"
                   v-model="statShowTrend"
                   :disabled="loading"
+                  class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
                 />
                 Show Trend Indicator
               </label>
             </div>
-            <div class="form-group">
-              <label>
+            <div>
+              <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
                 <input
                   type="checkbox"
                   v-model="statShowSparkline"
                   :disabled="loading"
+                  class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
                 />
                 Show Sparkline
               </label>
             </div>
           </div>
 
-          <div class="thresholds-section">
-            <div class="thresholds-header">
-              <label>Thresholds (Optional)</label>
-              <button type="button" class="btn btn-sm" @click="addStatThreshold" :disabled="loading">
+          <div class="mt-4">
+            <div class="flex justify-between items-center mb-2">
+              <label class="text-sm font-medium text-slate-700">Thresholds (Optional)</label>
+              <button type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="addStatThreshold" :disabled="loading">
                 <Plus :size="14" />
                 Add
               </button>
             </div>
-            <div class="thresholds-list">
-              <div v-for="(threshold, index) in statThresholds" :key="index" class="threshold-row">
+            <div class="flex flex-col gap-2">
+              <div v-for="(threshold, index) in statThresholds" :key="index" class="flex items-center gap-2">
                 <input
                   v-model.number="threshold.value"
                   type="number"
                   placeholder="Value"
                   :disabled="loading"
-                  class="threshold-value"
+                  class="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
                 />
                 <input
                   v-model="threshold.color"
                   type="color"
                   :disabled="loading"
-                  class="threshold-color"
+                  class="w-10 h-9 p-0.5 bg-white border border-slate-200 rounded-lg cursor-pointer"
                 />
                 <button
                   type="button"
-                  class="btn-icon btn-icon-danger"
+                  class="flex items-center justify-center h-8 w-8 rounded-lg bg-transparent border-none text-slate-400 cursor-pointer transition hover:bg-red-50 hover:text-red-500"
                   @click="removeStatThreshold(index)"
                   :disabled="loading"
                   title="Remove threshold"
@@ -657,20 +662,20 @@ async function handleSubmit() {
                   <Trash2 :size="14" />
                 </button>
               </div>
-              <p v-if="statThresholds.length === 0" class="thresholds-empty">
+              <p v-if="statThresholds.length === 0" class="text-xs text-slate-400 m-0 p-2 text-center">
                 No thresholds configured.
               </p>
             </div>
           </div>
         </div>
 
-        <div v-if="error" class="error-message">{{ error }}</div>
+        <div v-if="error" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 mb-5">{{ error }}</div>
 
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" @click="emit('close')" :disabled="loading">
+        <div class="flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
+          <button type="button" class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="emit('close')" :disabled="loading">
             Cancel
           </button>
-          <button type="submit" class="btn btn-primary" :disabled="loading">
+          <button type="submit" class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" :disabled="loading">
             {{ loading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Add Panel') }}
           </button>
         </div>
@@ -678,352 +683,3 @@ async function handleSubmit() {
     </div>
   </div>
 </template>
-
-<style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.modal {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  width: 100%;
-  max-width: 640px;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border-primary);
-  position: sticky;
-  top: 0;
-  background: var(--bg-secondary);
-  z-index: 1;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.btn-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-close:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-form {
-  padding: 1.5rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 1rem;
-}
-
-.form-group {
-  margin-bottom: 1.25rem;
-}
-
-.form-group-small {
-  min-width: 160px;
-}
-
-.query-builder-group {
-  border-top: 1px solid var(--border-primary);
-  padding-top: 1.25rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.required {
-  color: var(--accent-danger);
-}
-
-.form-group input,
-.form-group textarea,
-.form-group select {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-  color: var(--text-tertiary);
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: var(--focus-ring);
-}
-
-.form-group input:disabled,
-.form-group textarea:disabled,
-.form-group select:disabled {
-  background: var(--bg-primary);
-  color: var(--text-tertiary);
-  cursor: not-allowed;
-}
-
-.form-group select {
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  padding-right: 2.5rem;
-}
-
-.error-message {
-  padding: 0.75rem 1rem;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  border-radius: 6px;
-  color: var(--accent-danger);
-  font-size: 0.875rem;
-  margin-bottom: 1.25rem;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.625rem 1.25rem;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: transparent;
-  border-color: #F59E0B;
-  color: #FCD34D;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--bg-hover);
-  border-color: var(--border-secondary);
-}
-
-.btn-primary {
-  background: var(--accent-primary);
-  color: #1a0f00;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-primary-hover);
-}
-
-/* Gauge configuration styles */
-.trace-config,
-.gauge-config {
-  border-top: 1px solid var(--border-primary);
-  padding-top: 1.25rem;
-  margin-bottom: 1.25rem;
-}
-
-.config-header h4 {
-  margin: 0 0 1rem 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.form-row-4 {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
-}
-
-.form-row-4 .form-group {
-  margin-bottom: 0.75rem;
-}
-
-.thresholds-section {
-  margin-top: 1rem;
-}
-
-.thresholds-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.thresholds-header label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.btn-sm {
-  padding: 0.375rem 0.625rem;
-  font-size: 0.75rem;
-  gap: 0.25rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  color: var(--text-primary);
-}
-
-.btn-sm:hover:not(:disabled) {
-  background: var(--bg-hover);
-}
-
-.thresholds-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.threshold-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.threshold-value {
-  flex: 1;
-  padding: 0.5rem 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-}
-
-.threshold-value:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-}
-
-.threshold-color {
-  width: 40px;
-  height: 36px;
-  padding: 2px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.threshold-color::-webkit-color-swatch-wrapper {
-  padding: 2px;
-}
-
-.threshold-color::-webkit-color-swatch {
-  border: none;
-  border-radius: 4px;
-}
-
-.btn-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-icon:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.btn-icon-danger:hover {
-  background: rgba(255, 107, 107, 0.15);
-  color: var(--accent-danger);
-}
-
-.thresholds-empty {
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  margin: 0;
-  padding: 0.5rem;
-  text-align: center;
-}
-</style>
