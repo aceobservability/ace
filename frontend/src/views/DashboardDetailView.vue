@@ -363,56 +363,72 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="dashboard-detail">
-    <header class="page-header">
-      <div class="header-left">
-        <button class="btn-back" @click="goBack" title="Back to Dashboards">
+  <div class="mx-auto max-w-[1600px] px-6 py-5">
+    <header class="relative z-20 mb-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-6 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-4">
+        <button
+          class="flex h-[38px] w-[38px] items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+          @click="goBack"
+          title="Back to Dashboards"
+        >
           <ArrowLeft :size="20" />
         </button>
-        <div class="header-title" v-if="dashboard">
-          <h1>{{ dashboard.title }}</h1>
-          <p v-if="dashboard.description" class="header-description">
+        <div v-if="dashboard">
+          <h1 class="mb-0.5 font-mono text-lg font-semibold uppercase tracking-wide text-slate-900">{{ dashboard.title }}</h1>
+          <p v-if="dashboard.description" class="text-sm text-slate-500">
             {{ dashboard.description }}
           </p>
         </div>
       </div>
-      <div class="header-right">
-        <TimeRangePicker />
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-2">
+          <TimeRangePicker />
+        </div>
         <button
           v-if="dashboard"
-          class="btn btn-secondary"
+          class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-700"
           data-testid="dashboard-settings-button"
           @click="openDashboardSettings"
         >
           <Settings :size="16" />
           <span>Settings</span>
         </button>
-        <button class="btn btn-primary" @click="openAddPanel" :disabled="loading">
+        <button
+          class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+          @click="openAddPanel"
+          :disabled="loading"
+        >
           <Plus :size="18" />
           <span>Add Panel</span>
         </button>
       </div>
     </header>
 
-    <div v-if="loading" class="state-container">
-      <div class="loading-spinner"></div>
+    <div v-if="loading" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-20 text-center text-slate-500">
+      <div class="mb-4 h-10 w-10 animate-spin rounded-full border-3 border-slate-200 border-t-emerald-600"></div>
       <p>Loading dashboard...</p>
     </div>
 
-    <div v-else-if="error" class="state-container error">
+    <div v-else-if="error" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-sm text-rose-700">
       <AlertCircle :size="48" />
-      <p>{{ error }}</p>
-      <button class="btn btn-secondary" @click="goBack">Back to Dashboards</button>
+      <p class="mb-4 mt-4">{{ error }}</p>
+      <button
+        class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-700"
+        @click="goBack"
+      >Back to Dashboards</button>
     </div>
 
     <template v-else>
-      <div v-if="panels.length === 0" class="state-container empty">
-        <div class="empty-icon">
+      <div v-if="panels.length === 0" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-8 py-16 text-center text-slate-500">
+        <div class="mb-4 flex h-[120px] w-[120px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-400">
           <LayoutGrid :size="64" />
         </div>
-        <h2>No panels yet</h2>
-        <p>Add your first panel to start visualizing data</p>
-        <button class="btn btn-primary" @click="openAddPanel">
+        <h2 class="mb-2 mt-4 text-slate-900">No panels yet</h2>
+        <p class="mb-6">Add your first panel to start visualizing data</p>
+        <button
+          class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+          @click="openAddPanel"
+        >
           <Plus :size="18" />
           <span>Add Panel</span>
         </button>
@@ -432,7 +448,7 @@ onUnmounted(() => {
         :breakpoints="{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }"
         :cols="{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }"
         @layout-updated="onLayoutUpdated"
-        class="grid-layout"
+        class="relative z-[1] min-h-[400px] pb-2"
       >
         <GridItem
           v-for="item in layout"
@@ -465,295 +481,35 @@ onUnmounted(() => {
       @saved="onPanelSaved"
     />
 
-    <div v-if="showDeleteConfirm" class="modal-overlay" @click.self="cancelDelete">
-      <div class="modal delete-modal">
-        <div class="modal-icon">
+    <div
+      v-if="showDeleteConfirm"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+      @click.self="cancelDelete"
+    >
+      <div class="w-full max-w-[400px] rounded-xl border border-slate-200 bg-white p-8 text-center shadow-lg animate-slide-up">
+        <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-600">
           <Trash2 :size="24" />
         </div>
-        <h2>Delete Panel</h2>
-        <p>Are you sure you want to delete "{{ deletingPanel?.title }}"?</p>
-        <p class="warning">This action cannot be undone.</p>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" @click="cancelDelete">Cancel</button>
-          <button class="btn btn-danger" @click="handleDeletePanel">Delete</button>
+        <h2 class="mb-2 text-slate-900">Delete Panel</h2>
+        <p class="mb-1 text-slate-500">Are you sure you want to delete "{{ deletingPanel?.title }}"?</p>
+        <p class="text-sm text-rose-600">This action cannot be undone.</p>
+        <div class="mt-6 flex justify-center gap-3">
+          <button
+            class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-700"
+            @click="cancelDelete"
+          >Cancel</button>
+          <button
+            class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-rose-700"
+            @click="handleDeletePanel"
+          >Delete</button>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-.dashboard-detail {
-  padding: 1.35rem 1.8rem;
-  max-width: 1600px;
-  margin: 0 auto;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
-  z-index: 20;
-  margin-bottom: 1.15rem;
-  padding: 1rem 1.2rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 14px;
-  background: var(--surface-1);
-  backdrop-filter: blur(8px);
-  box-shadow: var(--shadow-sm);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.btn-back {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-primary);
-  border-radius: 10px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-back:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-secondary);
-  color: var(--text-primary);
-}
-
-.header-title h1 {
-  margin-bottom: 0.25rem;
-  font-family: var(--font-mono);
-  font-size: 1.05rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.header-description {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.success-message {
-  margin: 0 0 1rem;
-  padding: 0.65rem 0.85rem;
-  border-radius: 8px;
-  border: 1px solid rgba(78, 205, 196, 0.3);
-  background: rgba(78, 205, 196, 0.1);
-  color: var(--accent-success);
-  font-size: 0.82rem;
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  font-size: 0.84rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #F59E0B;
-  border-color: rgba(245, 158, 11, 0.4);
-  color: #1a0f00;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.btn-secondary {
-  background: transparent;
-  border-color: #F59E0B;
-  color: #FCD34D;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--bg-hover);
-  border-color: var(--border-secondary);
-}
-
-.btn-danger {
-  background: var(--accent-danger);
-  color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: var(--accent-danger-hover);
-}
-
-/* State Containers */
-.state-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  text-align: center;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: 14px;
-  background: var(--surface-1);
-  min-height: 320px;
-}
-
-.state-container.error {
-  color: var(--accent-danger);
-}
-
-.state-container h2 {
-  margin: 1rem 0 0.5rem;
-  color: var(--text-primary);
-}
-
-.state-container p {
-  margin-bottom: 1.5rem;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(50, 81, 115, 0.65);
-  border-top-color: var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.empty-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(160deg, rgba(245, 158, 11, 0.14), rgba(99, 102, 241, 0.08));
-  border: 1px solid var(--border-primary);
-  border-radius: 16px;
-  color: var(--text-tertiary);
-  margin-bottom: 1rem;
-}
-
-/* Grid Layout */
-.grid-layout {
-  position: relative;
-  z-index: 1;
-  min-height: 400px;
-  padding-bottom: 0.7rem;
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(3, 10, 18, 0.76);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.modal {
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
-  border-radius: 14px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 400px;
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.delete-modal {
-  text-align: center;
-}
-
-.modal-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: rgba(251, 113, 133, 0.15);
-  border-radius: 50%;
-  color: var(--accent-danger);
-  margin-bottom: 1rem;
-}
-
-.delete-modal h2 {
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-}
-
-.delete-modal p {
-  color: var(--text-secondary);
-  margin-bottom: 0.5rem;
-}
-
-.warning {
-  color: var(--accent-danger);
-  font-size: 0.875rem;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: center;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-}
-</style>
-
 <style>
-/* vue-grid-layout global styles */
+/* vue-grid-layout global overrides */
 .vue-grid-layout {
   background: transparent;
 }
@@ -763,8 +519,8 @@ onUnmounted(() => {
 }
 
 .vue-grid-item.vue-grid-placeholder {
-  background: rgba(245, 158, 11, 0.18);
-  border: 2px dashed var(--accent-primary);
+  background: oklch(92.4% .12 165 / 0.18);
+  border: 2px dashed #059669;
   border-radius: 8px;
 }
 
@@ -775,7 +531,7 @@ onUnmounted(() => {
   bottom: 0;
   right: 0;
   cursor: se-resize;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 6' fill='%239eb0ca'%3E%3Cpolygon points='6 0 0 6 6 6'/%3E%3C/svg%3E") no-repeat;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 6' fill='%2394a3b8'%3E%3Cpolygon points='6 0 0 6 6 6'/%3E%3C/svg%3E") no-repeat;
   background-position: bottom right;
   padding: 0 3px 3px 0;
   background-repeat: no-repeat;
@@ -791,22 +547,5 @@ onUnmounted(() => {
 
 .vue-grid-item.vue-resizable-resizing {
   z-index: 100;
-}
-
-@media (max-width: 900px) {
-  .dashboard-detail {
-    padding: 0.9rem;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.85rem;
-  }
-
-  .header-right {
-    justify-content: space-between;
-    flex-wrap: wrap;
-  }
 }
 </style>
