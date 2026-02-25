@@ -26,98 +26,36 @@ function openPrivacySettings() {
 </script>
 
 <template>
-  <div v-if="visible" class="consent-banner" data-testid="cookie-consent-banner">
-    <div class="consent-copy">
-      <strong>Analytics preferences</strong>
-      <p>
+  <div
+    v-if="visible"
+    class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-slate-200 bg-white px-6 py-4 shadow-lg flex items-center gap-4 max-w-lg max-md:flex-col max-md:items-stretch"
+    data-testid="cookie-consent-banner"
+  >
+    <div class="min-w-0">
+      <strong class="block text-sm text-slate-900">Analytics preferences</strong>
+      <p class="mt-1 text-sm text-slate-600">
         Ace can use privacy-focused analytics and optional session recording to improve product quality.
       </p>
     </div>
-    <div class="consent-actions">
-      <button class="btn-link" @click="openPrivacySettings">Privacy settings</button>
-      <button class="btn-secondary" @click="declineAnalytics">Decline</button>
-      <button class="btn-primary" @click="acceptAnalytics">Allow analytics</button>
+    <div class="inline-flex items-center gap-2 flex-wrap justify-end max-md:justify-start">
+      <button
+        class="text-emerald-600 hover:text-emerald-700 underline text-sm px-4 py-2 rounded-lg transition"
+        @click="openPrivacySettings"
+      >
+        Privacy settings
+      </button>
+      <button
+        class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition"
+        @click="declineAnalytics"
+      >
+        Decline
+      </button>
+      <button
+        class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+        @click="acceptAnalytics"
+      >
+        Allow analytics
+      </button>
     </div>
   </div>
 </template>
-
-<style scoped>
-.consent-banner {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  left: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid rgba(252, 211, 77, 0.34);
-  border-radius: 12px;
-  background: rgba(11, 20, 31, 0.96);
-  box-shadow: var(--shadow-md);
-  z-index: 250;
-}
-
-.consent-copy {
-  min-width: 0;
-}
-
-.consent-copy strong {
-  display: block;
-  color: var(--text-primary);
-  font-size: 0.9rem;
-}
-
-.consent-copy p {
-  margin: 0.25rem 0 0;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-}
-
-.consent-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.btn-link,
-.btn-secondary,
-.btn-primary {
-  border-radius: 9px;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid transparent;
-  font-size: 0.78rem;
-  cursor: pointer;
-}
-
-.btn-link {
-  background: transparent;
-  color: var(--accent-primary);
-}
-
-.btn-secondary {
-  background: transparent;
-  border-color: #F59E0B;
-  color: #FCD34D;
-}
-
-.btn-primary {
-  background: #F59E0B;
-  border-color: rgba(245, 158, 11, 0.44);
-  color: #1a0f00;
-}
-
-@media (max-width: 900px) {
-  .consent-banner {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .consent-actions {
-    justify-content: flex-start;
-  }
-}
-</style>
