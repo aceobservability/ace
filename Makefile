@@ -1,4 +1,4 @@
-.PHONY: help backend seed frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-logs
+.PHONY: help backend seed frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs
 
 EMAIL ?= admin@admin.com
 PASSWORD ?= Admin1234
@@ -128,6 +128,9 @@ compose-up:
 
 compose-down:
 	docker compose -f $(COMPOSE_FILE) --profile victoria --profile lgtm --profile elk --profile clickhouse down
+
+compose-reset:
+	docker compose -f $(COMPOSE_FILE) --profile victoria --profile lgtm --profile elk --profile clickhouse down -v
 
 compose-logs:
 	docker compose -f $(COMPOSE_FILE) logs -f

@@ -207,7 +207,7 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 		`ALTER TABLE datasources DROP CONSTRAINT IF EXISTS datasources_type_check`,
 		`ALTER TABLE datasources
 			ADD CONSTRAINT datasources_type_check
-			CHECK (type IN ('prometheus', 'loki', 'victorialogs', 'victoriametrics', 'tempo', 'victoriatraces', 'clickhouse', 'cloudwatch', 'elasticsearch'))`,
+			CHECK (type IN ('prometheus', 'loki', 'victorialogs', 'victoriametrics', 'tempo', 'victoriatraces', 'clickhouse', 'cloudwatch', 'elasticsearch', 'vmalert', 'alertmanager'))`,
 	}
 
 	for _, migration := range migrations {
