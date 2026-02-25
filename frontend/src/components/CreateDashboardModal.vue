@@ -252,21 +252,21 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="modal-overlay" @click.self="emit('close')">
-    <div class="modal">
-      <header class="modal-header">
-        <h2>Create Dashboard</h2>
-        <button class="btn-close" @click="emit('close')">
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="emit('close')">
+    <div class="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-lg">
+      <header class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+        <h2 class="text-lg font-semibold text-slate-900">Create Dashboard</h2>
+        <button class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer" @click="emit('close')">
           <X :size="20" />
         </button>
       </header>
 
-      <form @submit.prevent="handleSubmit">
-        <div class="mode-toggle" role="tablist" aria-label="Creation mode">
+      <form @submit.prevent="handleSubmit" class="px-6 py-4">
+        <div class="flex gap-1 rounded-lg bg-slate-100 p-1 mb-4" role="tablist" aria-label="Creation mode">
           <button
             type="button"
-            class="mode-option"
-            :class="{ active: mode === 'create' }"
+            class="rounded-md px-4 py-2 text-sm font-medium transition cursor-pointer"
+            :class="mode === 'create' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'"
             :disabled="loading"
             @click="setMode('create')"
           >
@@ -274,8 +274,8 @@ async function handleSubmit() {
           </button>
           <button
             type="button"
-            class="mode-option"
-            :class="{ active: mode === 'import' }"
+            class="rounded-md px-4 py-2 text-sm font-medium transition cursor-pointer"
+            :class="mode === 'import' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'"
             :disabled="loading"
             @click="setMode('import')"
           >
@@ -283,8 +283,8 @@ async function handleSubmit() {
           </button>
           <button
             type="button"
-            class="mode-option"
-            :class="{ active: mode === 'grafana' }"
+            class="rounded-md px-4 py-2 text-sm font-medium transition cursor-pointer"
+            :class="mode === 'grafana' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'"
             :disabled="loading"
             @click="setMode('grafana')"
           >
@@ -293,8 +293,8 @@ async function handleSubmit() {
         </div>
 
         <div v-if="mode === 'create'">
-          <div class="form-group">
-            <label for="title">Title <span class="required">*</span></label>
+          <div class="mb-5">
+            <label for="title" class="block mb-2 text-sm font-medium text-slate-700">Title <span class="text-red-500">*</span></label>
             <input
               id="title"
               v-model="title"
@@ -302,57 +302,61 @@ async function handleSubmit() {
               placeholder="My Dashboard"
               :disabled="loading"
               autocomplete="off"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
             />
           </div>
 
-          <div class="form-group">
-            <label for="description">Description</label>
+          <div class="mb-5">
+            <label for="description" class="block mb-2 text-sm font-medium text-slate-700">Description</label>
             <textarea
               id="description"
               v-model="description"
               placeholder="Dashboard description (optional)"
               rows="3"
               :disabled="loading"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed resize-vertical min-h-[80px]"
             ></textarea>
           </div>
         </div>
 
         <div v-else-if="mode === 'import'">
-          <div class="form-group">
-            <label for="yaml-file">YAML file <span class="required">*</span></label>
+          <div class="mb-5">
+            <label for="yaml-file" class="block mb-2 text-sm font-medium text-slate-700">YAML file <span class="text-red-500">*</span></label>
             <input
               id="yaml-file"
               type="file"
               accept=".yaml,.yml"
               :disabled="loading"
               @change="handleYamlFileChange"
+              class="w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200 file:cursor-pointer file:transition"
             />
-            <p class="field-hint">Upload an exported dashboard YAML to import it into this organization.</p>
+            <p class="mt-2 text-xs text-slate-400">Upload an exported dashboard YAML to import it into this organization.</p>
           </div>
 
-          <div v-if="importPreview" class="import-preview" data-testid="yaml-preview">
-            <p><strong>Preview:</strong> {{ importPreview.title }}</p>
-            <p v-if="importPreview.description">{{ importPreview.description }}</p>
-            <p>{{ importPreview.panelCount }} panel{{ importPreview.panelCount === 1 ? '' : 's' }}</p>
-            <p v-if="yamlFileName" class="file-name">File: {{ yamlFileName }}</p>
+          <div v-if="importPreview" class="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-3" data-testid="yaml-preview">
+            <p class="text-[0.8125rem] text-slate-600"><strong>Preview:</strong> {{ importPreview.title }}</p>
+            <p v-if="importPreview.description" class="mt-1 text-[0.8125rem] text-slate-600">{{ importPreview.description }}</p>
+            <p class="mt-1 text-[0.8125rem] text-slate-600">{{ importPreview.panelCount }} panel{{ importPreview.panelCount === 1 ? '' : 's' }}</p>
+            <p v-if="yamlFileName" class="mt-1 text-[0.8125rem] text-slate-400">File: {{ yamlFileName }}</p>
           </div>
         </div>
 
         <div v-else>
-          <div class="form-group">
-            <label for="grafana-file">Grafana JSON file</label>
+          <div class="mb-5">
+            <label for="grafana-file" class="block mb-2 text-sm font-medium text-slate-700">Grafana JSON file</label>
             <input
               id="grafana-file"
               type="file"
               accept=".json,application/json"
               :disabled="loading || convertingGrafana"
               @change="handleGrafanaFileChange"
+              class="w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200 file:cursor-pointer file:transition"
             />
-            <p class="field-hint">Upload a Grafana dashboard JSON file or paste JSON below.</p>
+            <p class="mt-2 text-xs text-slate-400">Upload a Grafana dashboard JSON file or paste JSON below.</p>
           </div>
 
-          <div class="form-group">
-            <label for="grafana-source">Grafana JSON <span class="required">*</span></label>
+          <div class="mb-5">
+            <label for="grafana-source" class="block mb-2 text-sm font-medium text-slate-700">Grafana JSON <span class="text-red-500">*</span></label>
             <textarea
               id="grafana-source"
               v-model="grafanaSource"
@@ -360,13 +364,14 @@ async function handleSubmit() {
               :disabled="loading || convertingGrafana"
               placeholder="Paste Grafana dashboard JSON here"
               data-testid="grafana-source"
+              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed resize-vertical min-h-[80px]"
             ></textarea>
-            <p v-if="grafanaFileName" class="field-hint">File: {{ grafanaFileName }}</p>
+            <p v-if="grafanaFileName" class="mt-2 text-xs text-slate-400">File: {{ grafanaFileName }}</p>
           </div>
 
           <button
             type="button"
-            class="btn btn-secondary btn-convert"
+            class="mb-3 rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             :disabled="!canConvertGrafana"
             data-testid="grafana-convert"
             @click="convertGrafana"
@@ -374,25 +379,25 @@ async function handleSubmit() {
             {{ convertingGrafana ? 'Converting...' : 'Convert to Ace YAML' }}
           </button>
 
-          <ul v-if="grafanaWarnings.length" class="warning-list" data-testid="grafana-warnings">
+          <ul v-if="grafanaWarnings.length" class="mb-4 pl-5 text-yellow-400 text-[0.8rem] list-disc" data-testid="grafana-warnings">
             <li v-for="warning in grafanaWarnings" :key="warning">{{ warning }}</li>
           </ul>
 
-          <div v-if="importPreview" class="import-preview" data-testid="yaml-preview">
-            <p><strong>Preview:</strong> {{ importPreview.title }}</p>
-            <p v-if="importPreview.description">{{ importPreview.description }}</p>
-            <p>{{ importPreview.panelCount }} panel{{ importPreview.panelCount === 1 ? '' : 's' }}</p>
-            <p class="file-name">Converted from Grafana JSON</p>
+          <div v-if="importPreview" class="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-3" data-testid="yaml-preview">
+            <p class="text-[0.8125rem] text-slate-600"><strong>Preview:</strong> {{ importPreview.title }}</p>
+            <p v-if="importPreview.description" class="mt-1 text-[0.8125rem] text-slate-600">{{ importPreview.description }}</p>
+            <p class="mt-1 text-[0.8125rem] text-slate-600">{{ importPreview.panelCount }} panel{{ importPreview.panelCount === 1 ? '' : 's' }}</p>
+            <p class="mt-1 text-[0.8125rem] text-slate-400">Converted from Grafana JSON</p>
           </div>
         </div>
 
-        <div v-if="error" class="error-message">{{ error }}</div>
+        <div v-if="error" class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{{ error }}</div>
 
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" @click="emit('close')" :disabled="loading">
+        <div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
+          <button type="button" class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" @click="emit('close')" :disabled="loading">
             Cancel
           </button>
-          <button type="submit" class="btn btn-primary" :disabled="loading">
+          <button type="submit" class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" :disabled="loading">
             {{ submitLabel }}
           </button>
         </div>
@@ -400,259 +405,3 @@ async function handleSubmit() {
     </div>
   </div>
 </template>
-
-<style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  animation: fadeIn 0.2s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.modal {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  width: 100%;
-  max-width: 480px;
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.btn-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-close:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-form {
-  padding: 1.5rem;
-}
-
-.form-group {
-  margin-bottom: 1.25rem;
-}
-
-.mode-toggle {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-}
-
-.mode-option {
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-primary);
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mode-option.active {
-  border-color: var(--accent-primary);
-  background: rgba(245, 158, 11, 0.12);
-  color: var(--text-primary);
-}
-
-.mode-option:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.required {
-  color: var(--accent-danger);
-}
-
-.form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  font-size: 0.875rem;
-  color: var(--text-primary);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-  color: var(--text-tertiary);
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: var(--focus-ring);
-}
-
-.form-group input:disabled,
-.form-group textarea:disabled {
-  background: var(--bg-primary);
-  color: var(--text-tertiary);
-  cursor: not-allowed;
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.field-hint {
-  margin-top: 0.5rem;
-  color: var(--text-tertiary);
-  font-size: 0.75rem;
-}
-
-.import-preview {
-  margin-bottom: 1.25rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  background: var(--bg-tertiary);
-}
-
-.import-preview p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.8125rem;
-}
-
-.import-preview p + p {
-  margin-top: 0.35rem;
-}
-
-.file-name {
-  color: var(--text-tertiary);
-}
-
-.btn-convert {
-  margin-bottom: 0.75rem;
-}
-
-.warning-list {
-  margin: 0 0 1rem;
-  padding-left: 1.25rem;
-  color: #facc15;
-  font-size: 0.8rem;
-}
-
-.error-message {
-  padding: 0.75rem 1rem;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  border-radius: 6px;
-  color: var(--accent-danger);
-  font-size: 0.875rem;
-  margin-bottom: 1.25rem;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.625rem 1.25rem;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: transparent;
-  border-color: #F59E0B;
-  color: #FCD34D;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--bg-hover);
-  border-color: var(--border-secondary);
-}
-
-.btn-primary {
-  background: var(--accent-primary);
-  color: #1a0f00;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-primary-hover);
-}
-</style>
