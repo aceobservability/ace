@@ -475,39 +475,52 @@ function handleOpenTrace(traceId: string) {
 </script>
 
 <template>
-  <div class="panel">
-    <div class="panel-header">
-      <h3 class="panel-title">{{ panel.title }}</h3>
-      <div class="panel-actions">
-        <button class="panel-action-btn" @click="$emit('edit', panel)" title="Edit panel">
+  <div class="flex h-full flex-col rounded-xl border border-slate-200 bg-white overflow-hidden">
+    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-2">
+      <h3 class="text-sm font-semibold text-slate-900 truncate">{{ panel.title }}</h3>
+      <div class="flex gap-1">
+        <button
+          class="flex items-center justify-center h-7 w-7 rounded-lg border-0 bg-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+          @click="$emit('edit', panel)"
+          title="Edit panel"
+        >
           <Pencil :size="16" />
         </button>
-        <button class="panel-action-btn" @click="$emit('delete', panel)" title="Delete panel">
+        <button
+          class="flex items-center justify-center h-7 w-7 rounded-lg border-0 bg-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+          @click="$emit('delete', panel)"
+          title="Delete panel"
+        >
           <Trash2 :size="16" />
         </button>
       </div>
     </div>
-    <div class="panel-body">
-      <div v-if="!hasQuery" class="panel-state panel-no-query">
-        <BarChart3 :size="48" class="icon-muted" />
-        <p class="text-muted">No query configured</p>
-        <button class="btn-primary" @click="$emit('edit', panel)">Configure Panel</button>
+    <div class="flex-1 overflow-hidden p-2 flex flex-col min-h-0">
+      <div v-if="!hasQuery" class="flex-1 flex flex-col items-center justify-center gap-3 text-slate-400">
+        <BarChart3 :size="48" class="text-slate-300" />
+        <p class="text-sm text-slate-500 m-0">No query configured</p>
+        <button
+          class="px-4 py-2 bg-emerald-600 text-white border-0 rounded-lg text-sm font-medium cursor-pointer hover:-translate-y-px transition"
+          @click="$emit('edit', panel)"
+        >
+          Configure Panel
+        </button>
       </div>
-      <div v-else-if="loading" class="panel-state">
-        <div class="spinner"></div>
-        <p class="text-muted">Loading data...</p>
+      <div v-else-if="loading" class="flex-1 flex flex-col items-center justify-center gap-3">
+        <div class="h-8 w-8 rounded-full border-[3px] border-slate-200 border-t-emerald-600 animate-spin"></div>
+        <p class="text-sm text-slate-500 m-0">Loading data...</p>
       </div>
-      <div v-else-if="error" class="panel-state panel-error">
-        <AlertCircle :size="48" class="icon-error" />
-        <p class="error-text">{{ error }}</p>
+      <div v-else-if="error" class="flex-1 flex flex-col items-center justify-center gap-3">
+        <AlertCircle :size="48" class="text-rose-500" />
+        <p class="text-xs text-rose-500 p-2 m-0">{{ error }}</p>
       </div>
-      <div v-else-if="isLineChart && chartSeries.length > 0" class="chart-container">
+      <div v-else-if="isLineChart && chartSeries.length > 0" class="flex-1 min-h-0">
         <LineChart :series="chartSeries" />
       </div>
-      <div v-else-if="isBarChart && chartSeries.length > 0" class="chart-container">
+      <div v-else-if="isBarChart && chartSeries.length > 0" class="flex-1 min-h-0">
         <BarChart :series="chartSeries" />
       </div>
-      <div v-else-if="isGaugeChart && chartSeries.length > 0" class="chart-container">
+      <div v-else-if="isGaugeChart && chartSeries.length > 0" class="flex-1 min-h-0">
         <GaugeChart
           :value="gaugeValue"
           :min="gaugeConfig.min"
@@ -517,7 +530,7 @@ function handleOpenTrace(traceId: string) {
           :thresholds="gaugeConfig.thresholds"
         />
       </div>
-      <div v-else-if="isPieChart && pieData.length > 0" class="chart-container">
+      <div v-else-if="isPieChart && pieData.length > 0" class="flex-1 min-h-0">
         <PieChart
           :data="pieData"
           :display-as="pieConfig.displayAs"
@@ -525,7 +538,7 @@ function handleOpenTrace(traceId: string) {
           :show-labels="pieConfig.showLabels"
         />
       </div>
-      <div v-else-if="isStatPanel && statData.length > 0" class="chart-container">
+      <div v-else-if="isStatPanel && statData.length > 0" class="flex-1 min-h-0">
         <StatPanel
           :value="statValue"
           :previous-value="statPreviousValue"
@@ -538,173 +551,25 @@ function handleOpenTrace(traceId: string) {
           :show-sparkline="statConfig.showSparkline"
         />
       </div>
-      <div v-else-if="isTablePanel && chartSeries.length > 0" class="chart-container">
+      <div v-else-if="isTablePanel && chartSeries.length > 0" class="flex-1 min-h-0">
         <TablePanel :series="chartSeries" />
       </div>
-      <div v-else-if="isLogPanel && logEntries.length > 0" class="chart-container">
+      <div v-else-if="isLogPanel && logEntries.length > 0" class="flex-1 min-h-0">
         <LogViewer :logs="logEntries" />
       </div>
-      <div v-else-if="isTraceListPanel && traceSummaries.length > 0" class="chart-container">
+      <div v-else-if="isTraceListPanel && traceSummaries.length > 0" class="flex-1 min-h-0">
         <TraceListPanel :traces="traceSummaries" @open-trace="handleOpenTrace" />
       </div>
-      <div v-else-if="isTraceHeatmapPanel && traceSummaries.length > 0" class="chart-container">
+      <div v-else-if="isTraceHeatmapPanel && traceSummaries.length > 0" class="flex-1 min-h-0">
         <TraceHeatmapPanel :traces="traceSummaries" @open-trace="handleOpenTrace" />
       </div>
       <div
         v-else-if="chartSeries.length === 0 && logEntries.length === 0 && traceSummaries.length === 0"
-        class="panel-state panel-no-data"
+        class="flex-1 flex flex-col items-center justify-center gap-3 text-slate-400"
       >
-        <AlertCircle :size="48" class="icon-warning" />
-        <p class="text-muted">No data available</p>
+        <AlertCircle :size="48" class="text-amber-400" />
+        <p class="text-sm text-slate-500 m-0">No data available</p>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.panel {
-  background: linear-gradient(180deg, rgba(16, 27, 42, 0.94), rgba(13, 23, 36, 0.92));
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: var(--shadow-sm);
-}
-
-.panel:hover {
-  border-color: rgba(245, 158, 11, 0.34);
-  box-shadow: var(--shadow-md);
-}
-
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 14px;
-  border-bottom: 1px solid var(--border-primary);
-  background: rgba(21, 34, 52, 0.9);
-}
-
-.panel-title {
-  font-size: 12px;
-  font-weight: 600;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.panel-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.panel-action-btn {
-  padding: 5px;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.panel-action-btn:hover {
-  background: rgba(31, 49, 73, 0.8);
-  border-color: rgba(252, 211, 77, 0.2);
-  color: var(--text-primary);
-}
-
-.panel-body {
-  flex: 1;
-  padding: 14px;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.chart-container {
-  flex: 1;
-  min-height: 0;
-}
-
-.panel-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-
-.panel-no-query,
-.panel-no-data {
-  color: var(--text-tertiary);
-}
-
-.panel-error {
-  color: var(--accent-danger);
-}
-
-.icon-muted {
-  color: var(--text-tertiary);
-}
-
-.icon-warning {
-  color: var(--accent-warning);
-}
-
-.icon-error {
-  color: var(--accent-danger);
-}
-
-.text-muted {
-  color: var(--text-secondary);
-  font-size: 14px;
-  margin: 0;
-}
-
-.error-text {
-  color: var(--accent-danger);
-  font-size: 14px;
-  margin: 0;
-}
-
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(50, 81, 115, 0.65);
-  border-top-color: var(--accent-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.btn-primary {
-  padding: 8px 16px;
-  background: #F59E0B;
-  color: #1a0f00;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-}
-</style>
