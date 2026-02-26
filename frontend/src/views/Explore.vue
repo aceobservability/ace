@@ -13,6 +13,7 @@ import {
 } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { queryDataSource } from '../api/datasources'
+import alertmanagerLogo from '../assets/datasources/alertmanager-logo.svg'
 import clickhouseLogo from '../assets/datasources/clickhouse-logo.svg'
 import cloudwatchLogo from '../assets/datasources/cloudwatch-logo.svg'
 import elasticsearchLogo from '../assets/datasources/elasticsearch-logo.svg'
@@ -22,6 +23,7 @@ import tempoLogo from '../assets/datasources/tempo-logo.svg'
 import victoriaLogsLogo from '../assets/datasources/victorialogs-logo.svg'
 import victoriaMetricsLogo from '../assets/datasources/victoriametrics-logo.svg'
 import victoriaTracesLogo from '../assets/datasources/victoriatraces-logo.svg'
+import vmalertLogo from '../assets/datasources/vmalert-logo.svg'
 import ClickHouseSQLEditor from '../components/ClickHouseSQLEditor.vue'
 import CloudWatchQueryEditor from '../components/CloudWatchQueryEditor.vue'
 import ElasticsearchQueryEditor from '../components/ElasticsearchQueryEditor.vue'
@@ -50,6 +52,8 @@ const dataSourceTypeLogos: Partial<Record<DataSourceType, string>> = {
   clickhouse: clickhouseLogo,
   cloudwatch: cloudwatchLogo,
   elasticsearch: elasticsearchLogo,
+  vmalert: vmalertLogo,
+  alertmanager: alertmanagerLogo,
 }
 
 type DatasourceHealthStatus = 'unknown' | 'checking' | 'healthy' | 'unhealthy'

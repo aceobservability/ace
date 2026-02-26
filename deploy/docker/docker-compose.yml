@@ -62,7 +62,6 @@ services:
     profiles: [victoria]
     ports:
       - "${VICTORIATRACES_PORT:-10428}:10428"
-      - "${VICTORIATRACES_OTLP_GRPC_PORT:-4317}:4317"
     volumes:
       - victoriatraces_data:/victoria-traces-data
 
@@ -216,6 +215,216 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+
+  # ─── OpenTelemetry Collectors (one per stack) ───────────────────────────────
+
+  otel-collector-victoria:
+    image: otel/opentelemetry-collector-contrib:${OTEL_COLLECTOR_VERSION:-0.120.0}
+    profiles: [victoria]
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+    volumes:
+      - ./config/victoria/otel-collector.yml:/etc/otelcol-contrib/config.yaml:ro
+    depends_on:
+      - victoriametrics
+      - victorialogs
+      - victoriatraces
+
+  otel-collector-lgtm:
+    image: otel/opentelemetry-collector-contrib:${OTEL_COLLECTOR_VERSION:-0.120.0}
+    profiles: [lgtm]
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+    volumes:
+      - ./config/lgtm/otel-collector.yml:/etc/otelcol-contrib/config.yaml:ro
+    depends_on:
+      - mimir
+      - loki
+      - tempo
+
+  otel-collector-elk:
+    image: otel/opentelemetry-collector-contrib:${OTEL_COLLECTOR_VERSION:-0.120.0}
+    profiles: [elk]
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+    volumes:
+      - ./config/elk/otel-collector.yml:/etc/otelcol-contrib/config.yaml:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  otel-collector-clickhouse:
+    image: otel/opentelemetry-collector-contrib:${OTEL_COLLECTOR_VERSION:-0.120.0}
+    profiles: [clickhouse]
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+    volumes:
+      - ./config/clickhouse/otel-collector.yml:/etc/otelcol-contrib/config.yaml:ro
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  # ─── Telemetry generators (on-demand via gen-* profiles) ───────────────────
+
+  telemetrygen-traces-victoria:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-victoria]
+    command:
+      - traces
+      - --otlp-endpoint=otel-collector-victoria:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-victoria
+    depends_on:
+      - otel-collector-victoria
+
+  telemetrygen-metrics-victoria:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-victoria]
+    command:
+      - metrics
+      - --otlp-endpoint=otel-collector-victoria:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-victoria
+    depends_on:
+      - otel-collector-victoria
+
+  telemetrygen-logs-victoria:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-victoria]
+    command:
+      - logs
+      - --otlp-endpoint=otel-collector-victoria:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-victoria
+    depends_on:
+      - otel-collector-victoria
+
+  telemetrygen-traces-lgtm:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-lgtm]
+    command:
+      - traces
+      - --otlp-endpoint=otel-collector-lgtm:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-lgtm
+    depends_on:
+      - otel-collector-lgtm
+
+  telemetrygen-metrics-lgtm:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-lgtm]
+    command:
+      - metrics
+      - --otlp-endpoint=otel-collector-lgtm:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-lgtm
+    depends_on:
+      - otel-collector-lgtm
+
+  telemetrygen-logs-lgtm:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-lgtm]
+    command:
+      - logs
+      - --otlp-endpoint=otel-collector-lgtm:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-lgtm
+    depends_on:
+      - otel-collector-lgtm
+
+  telemetrygen-traces-elk:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-elk]
+    command:
+      - traces
+      - --otlp-endpoint=otel-collector-elk:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-elk
+    depends_on:
+      - otel-collector-elk
+
+  telemetrygen-metrics-elk:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-elk]
+    command:
+      - metrics
+      - --otlp-endpoint=otel-collector-elk:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-elk
+    depends_on:
+      - otel-collector-elk
+
+  telemetrygen-logs-elk:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-elk]
+    command:
+      - logs
+      - --otlp-endpoint=otel-collector-elk:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-elk
+    depends_on:
+      - otel-collector-elk
+
+  telemetrygen-traces-clickhouse:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-clickhouse]
+    command:
+      - traces
+      - --otlp-endpoint=otel-collector-clickhouse:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-clickhouse
+    depends_on:
+      - otel-collector-clickhouse
+
+  telemetrygen-metrics-clickhouse:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-clickhouse]
+    command:
+      - metrics
+      - --otlp-endpoint=otel-collector-clickhouse:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-clickhouse
+    depends_on:
+      - otel-collector-clickhouse
+
+  telemetrygen-logs-clickhouse:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:${TELEMETRYGEN_VERSION:-latest}
+    profiles: [gen-clickhouse]
+    command:
+      - logs
+      - --otlp-endpoint=otel-collector-clickhouse:4317
+      - --otlp-insecure
+      - --rate=5
+      - --duration=inf
+      - --service=synthetic-clickhouse
+    depends_on:
+      - otel-collector-clickhouse
 
 # ─── Named volumes ────────────────────────────────────────────────────────────
 

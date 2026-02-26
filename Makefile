@@ -1,4 +1,4 @@
-.PHONY: help backend seed frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs
+.PHONY: help backend seed frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs telemetrygen
 
 EMAIL ?= admin@admin.com
 PASSWORD ?= Admin1234
@@ -16,6 +16,7 @@ help:
 	@printf "  make compose-up [PROFILES=...]  Start Docker Compose infra (core + profiles)\n"
 	@printf "  make compose-down              Tear down all Docker Compose services\n"
 	@printf "  make compose-logs              Follow Docker Compose logs\n"
+	@printf "  make telemetrygen PROFILES=... Start OTLP telemetry generators for a profile\n"
 	@printf "  make tilt-up   Start Tilt with local Helm infra + app services\n"
 	@printf "  make tilt-down Stop Tilt and tear down deployed resources\n"
 	@printf "  make frontend  Start Vite frontend dev server\n"
@@ -127,13 +128,16 @@ compose-up:
 	docker compose -f $(COMPOSE_FILE) $(if $(PROFILES),$(foreach p,$(subst $(comma), ,$(PROFILES)),--profile $(p)),) up -d
 
 compose-down:
-	docker compose -f $(COMPOSE_FILE) --profile victoria --profile lgtm --profile elk --profile clickhouse down
+	docker compose -f $(COMPOSE_FILE) --profile victoria --profile lgtm --profile elk --profile clickhouse --profile gen-victoria --profile gen-lgtm --profile gen-elk --profile gen-clickhouse down
 
 compose-reset:
-	docker compose -f $(COMPOSE_FILE) --profile victoria --profile lgtm --profile elk --profile clickhouse down -v
+	docker compose -f $(COMPOSE_FILE) --profile victoria --profile lgtm --profile elk --profile clickhouse --profile gen-victoria --profile gen-lgtm --profile gen-elk --profile gen-clickhouse down -v
 
 compose-logs:
 	docker compose -f $(COMPOSE_FILE) logs -f
+
+telemetrygen:
+	docker compose -f $(COMPOSE_FILE) $(if $(PROFILES),$(foreach p,$(subst $(comma), ,$(PROFILES)),--profile $(p) --profile gen-$(p)),$(error PROFILES required, e.g. make telemetrygen PROFILES=victoria)) up -d
 
 check:
 	@set +e; \

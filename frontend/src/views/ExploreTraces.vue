@@ -4,6 +4,8 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  CircleAlert,
+  HeartPulse,
   Loader2,
   Search,
   Waypoints,
@@ -17,6 +19,7 @@ import {
   queryDataSource,
   searchDataSourceTraces,
 } from '../api/datasources'
+import alertmanagerLogo from '../assets/datasources/alertmanager-logo.svg'
 import clickhouseLogo from '../assets/datasources/clickhouse-logo.svg'
 import cloudwatchLogo from '../assets/datasources/cloudwatch-logo.svg'
 import elasticsearchLogo from '../assets/datasources/elasticsearch-logo.svg'
@@ -26,6 +29,7 @@ import tempoLogo from '../assets/datasources/tempo-logo.svg'
 import victoriaLogsLogo from '../assets/datasources/victorialogs-logo.svg'
 import victoriaMetricsLogo from '../assets/datasources/victoriametrics-logo.svg'
 import victoriaTracesLogo from '../assets/datasources/victoriatraces-logo.svg'
+import vmalertLogo from '../assets/datasources/vmalert-logo.svg'
 import ClickHouseSQLEditor from '../components/ClickHouseSQLEditor.vue'
 import TimeRangePicker from '../components/TimeRangePicker.vue'
 import TraceListPanel from '../components/TraceListPanel.vue'
@@ -86,11 +90,18 @@ const dataSourceTypeLogos: Partial<Record<DataSourceType, string>> = {
   clickhouse: clickhouseLogo,
   cloudwatch: cloudwatchLogo,
   elasticsearch: elasticsearchLogo,
+  vmalert: vmalertLogo,
+  alertmanager: alertmanagerLogo,
 }
+
+type DatasourceHealthStatus = 'unknown' | 'checking' | 'healthy' | 'unhealthy'
 
 const selectedDatasourceId = ref('')
 const showDatasourceMenu = ref(false)
 const datasourceMenuRef = ref<HTMLElement | null>(null)
+const datasourceHealth = ref<Record<string, DatasourceHealthStatus>>({})
+const datasourceHealthErrors = ref<Record<string, string>>({})
+
 
 const query = ref('')
 const selectedService = ref('')
@@ -121,6 +132,27 @@ const activeDatasource = computed(
 )
 const isClickHouseDatasource = computed(() => activeDatasource.value?.type === 'clickhouse')
 
+const activeDatasourceHealth = computed<DatasourceHealthStatus>(() => {
+  if (!activeDatasource.value) {
+    return 'unknown'
+  }
+
+  return datasourceHealth.value[activeDatasource.value.id] || 'unknown'
+})
+const activeDatasourceHealthLabel = computed(() => {
+  if (activeDatasourceHealth.value === 'healthy') return 'Healthy'
+  if (activeDatasourceHealth.value === 'unhealthy') return 'Unhealthy'
+  if (activeDatasourceHealth.value === 'checking') return 'Checking...'
+  return 'Unknown'
+})
+const activeDatasourceHealthError = computed(() => {
+  if (!activeDatasource.value) {
+    return ''
+  }
+
+  return datasourceHealthErrors.value[activeDatasource.value.id] || ''
+})
+
 function getTypeLogo(type_: DataSourceType): string {
   return dataSourceTypeLogos[type_]
 }
@@ -141,6 +173,38 @@ function handleDocumentClick(event: MouseEvent) {
   const target = event.target as Node
   if (!datasourceMenuRef.value?.contains(target)) {
     showDatasourceMenu.value = false
+  }
+}
+
+async function checkDatasourceHealth(datasourceId: string, type_: DataSourceType) {
+  datasourceHealth.value[datasourceId] = 'checking'
+  delete datasourceHealthErrors.value[datasourceId]
+
+  try {
+    if (type_ === 'clickhouse') {
+      const end = Math.floor(Date.now() / 1000)
+      const start = end - 15 * 60
+      const healthResult = await queryDataSource(datasourceId, {
+        query: "SELECT now() AS timestamp, 'up' AS status LIMIT 1",
+        signal: 'traces',
+        start,
+        end,
+        step: 15,
+        limit: 1,
+      })
+
+      if (healthResult.status === 'error') {
+        throw new Error(healthResult.error || 'Health check failed')
+      }
+    } else {
+      await fetchDataSourceTraceServices(datasourceId)
+    }
+
+    datasourceHealth.value[datasourceId] = 'healthy'
+  } catch (e) {
+    datasourceHealth.value[datasourceId] = 'unhealthy'
+    datasourceHealthErrors.value[datasourceId] =
+      e instanceof Error ? e.message : 'Health check failed'
   }
 }
 
@@ -637,6 +701,20 @@ watch(
 )
 
 watch(
+  activeDatasource,
+  (datasource) => {
+    if (!datasource) {
+      return
+    }
+
+    if ((datasourceHealth.value[datasource.id] || 'unknown') === 'unknown') {
+      checkDatasourceHealth(datasource.id, datasource.type)
+    }
+  },
+  { immediate: true },
+)
+
+watch(
   selectedDatasourceId,
   async () => {
     traceSummaries.value = []
@@ -729,12 +807,26 @@ onUnmounted(() => {
                     <strong class="text-sm font-semibold text-slate-900 truncate">{{ activeDatasource.name }}</strong>
                     <span class="text-xs text-slate-500">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
                   </div>
+                  <span
+                    class="ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs border"
+                    :class="{
+                      'border-slate-200 text-slate-500': activeDatasourceHealth === 'checking' || activeDatasourceHealth === 'unknown',
+                      'border-emerald-200 bg-emerald-50 text-emerald-700': activeDatasourceHealth === 'healthy',
+                      'border-rose-200 bg-rose-50 text-rose-700': activeDatasourceHealth === 'unhealthy',
+                    }"
+                    :title="activeDatasourceHealthError || activeDatasourceHealthLabel"
+                  >
+                    <Loader2 v-if="activeDatasourceHealth === 'checking'" :size="12" class="animate-spin" />
+                    <HeartPulse v-else-if="activeDatasourceHealth === 'healthy'" :size="12" />
+                    <CircleAlert v-else-if="activeDatasourceHealth === 'unhealthy'" :size="12" />
+                    <span>{{ activeDatasourceHealthLabel }}</span>
+                  </span>
                 </template>
                 <span v-else class="text-sm text-slate-400">No tracing datasource configured</span>
                 <component
                   :is="showDatasourceMenu ? ChevronUp : ChevronDown"
                   :size="16"
-                  class="ml-auto shrink-0 text-slate-400"
+                  class="ml-1 shrink-0 text-slate-400"
                 />
               </button>
 
