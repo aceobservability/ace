@@ -77,10 +77,23 @@ services:
       - "--datasource.url=http://victoriametrics:8428"
       - "--remoteRead.url=http://victoriametrics:8428"
       - "--remoteWrite.url=http://victoriametrics:8428"
-      - "--notifier.url=http://victoriametrics:8428"
+      - "--notifier.url=http://alertmanager:9093"
       - "--rule=/etc/vmalert/rules.yml"
     depends_on:
       - victoriametrics
+      - alertmanager
+
+  alertmanager:
+    image: prom/alertmanager:${ALERTMANAGER_VERSION:-v0.27.0}
+    profiles: [victoria]
+    ports:
+      - "${ALERTMANAGER_PORT:-9093}:9093"
+    volumes:
+      - ./config/victoria/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
 
   # ─── LGTM stack ──────────────────────────────────────────────────────────
 
@@ -212,6 +225,7 @@ volumes:
   victoriametrics_data:
   victorialogs_data:
   victoriatraces_data:
+  alertmanager_data:
   grafana_data:
   loki_data:
   tempo_data:

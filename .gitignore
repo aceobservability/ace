@@ -43,6 +43,9 @@ coverage/
 tmp/
 temp/
 
+# Local data (JWT keys, caches)
+.data/
+
 # Docker volumes (local data)
 postgres_data/
 prometheus_data/

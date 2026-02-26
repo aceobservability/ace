@@ -89,7 +89,7 @@ func (c *VMAlertClient) GetAlerts(ctx context.Context) (*VMAlertAlertsResponse, 
 
 // GetGroups fetches rule groups from VMAlert.
 func (c *VMAlertClient) GetGroups(ctx context.Context) (*VMAlertGroupsResponse, error) {
-	return doVMAlertRequest[VMAlertGroupsResponse](ctx, c, "/api/v1/groups")
+	return doVMAlertRequest[VMAlertGroupsResponse](ctx, c, "/api/v1/rules")
 }
 
 // GetRules fetches rules from VMAlert.

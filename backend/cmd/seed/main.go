@@ -36,6 +36,7 @@ var orgs = []org{
 			{Name: "Victoria Logs", Type: "victorialogs", URL: "http://localhost:9428"},
 			{Name: "VictoriaTraces", Type: "victoriatraces", URL: "http://localhost:10428"},
 			{Name: "VMAlert", Type: "vmalert", URL: "http://localhost:8880"},
+			{Name: "AlertManager", Type: "alertmanager", URL: "http://localhost:9093"},
 		},
 	},
 	{

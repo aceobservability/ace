@@ -6,7 +6,9 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -41,8 +43,8 @@ func NewJWTManager() (*JWTManager, error) {
 		return NewJWTManagerFromPEM(privateKeyPEM, publicKeyPEM)
 	}
 
-	// Generate new keys if not provided
-	return GenerateJWTManager()
+	// Try loading cached keys from the data directory, generate and cache if missing.
+	return loadOrGenerateJWTManager()
 }
 
 // NewJWTManagerFromPEM creates a JWTManager from PEM-encoded keys
@@ -89,6 +91,53 @@ func GenerateJWTManager() (*JWTManager, error) {
 		privateKey: privateKey,
 		publicKey:  &privateKey.PublicKey,
 	}, nil
+}
+
+// loadOrGenerateJWTManager loads cached RSA keys from disk or generates and
+// caches a new pair. This keeps sessions stable across backend restarts during
+// local development.
+func loadOrGenerateJWTManager() (*JWTManager, error) {
+	dir := os.Getenv("DATA_DIR")
+	if dir == "" {
+		dir = ".data"
+	}
+	privPath := filepath.Join(dir, "jwt.key")
+	pubPath := filepath.Join(dir, "jwt.pub")
+
+	privPEM, privErr := os.ReadFile(privPath)
+	pubPEM, pubErr := os.ReadFile(pubPath)
+
+	if privErr == nil && pubErr == nil {
+		return NewJWTManagerFromPEM(string(privPEM), string(pubPEM))
+	}
+
+	mgr, err := GenerateJWTManager()
+	if err != nil {
+		return nil, err
+	}
+
+	if mkErr := os.MkdirAll(dir, 0o700); mkErr != nil {
+		log.Printf("warning: could not create data dir %s: %v (JWT keys will not persist)", dir, mkErr)
+		return mgr, nil
+	}
+
+	pubStr, err := mgr.GetPublicKeyPEM()
+	if err != nil {
+		log.Printf("warning: could not encode public key: %v (JWT keys will not persist)", err)
+		return mgr, nil
+	}
+
+	if err := os.WriteFile(privPath, []byte(mgr.GetPrivateKeyPEM()), 0o600); err != nil {
+		log.Printf("warning: could not write %s: %v (JWT keys will not persist)", privPath, err)
+		return mgr, nil
+	}
+	if err := os.WriteFile(pubPath, []byte(pubStr), 0o644); err != nil {
+		log.Printf("warning: could not write %s: %v (JWT keys will not persist)", pubPath, err)
+		return mgr, nil
+	}
+
+	log.Printf("generated and cached JWT keys in %s", dir)
+	return mgr, nil
 }
 
 // GenerateAccessToken creates a new JWT access token
