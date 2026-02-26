@@ -25,6 +25,9 @@ export async function listOrganizations(): Promise<Organization[]> {
     headers: getAuthHeaders(),
   })
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Session expired, please log in again')
+    }
     throw new Error('Failed to fetch organizations')
   }
   return response.json()
@@ -35,10 +38,17 @@ export async function getOrganization(id: string): Promise<Organization> {
     headers: getAuthHeaders(),
   })
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Session expired, please log in again')
+    }
     if (response.status === 403) {
       throw new Error('Not a member of this organization')
     }
-    throw new Error('Organization not found')
+    if (response.status === 404) {
+      throw new Error('Organization not found')
+    }
+    const body = await response.json().catch(() => ({}))
+    throw new Error(body.error || 'Failed to load organization')
   }
   return response.json()
 }
@@ -139,6 +149,9 @@ export async function listMembers(orgId: string): Promise<Member[]> {
     headers: getAuthHeaders(),
   })
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Session expired, please log in again')
+    }
     if (response.status === 403) {
       throw new Error('Not a member of this organization')
     }
