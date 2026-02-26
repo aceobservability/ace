@@ -133,6 +133,7 @@ func main() {
 	mux.HandleFunc("GET /api/orgs/{id}/members", auth.RequireAuth(jwtManager, orgHandler.ListMembers))
 	mux.HandleFunc("PUT /api/orgs/{id}/members/{userId}/role", auth.RequireAuth(jwtManager, orgHandler.UpdateMemberRole))
 	mux.HandleFunc("DELETE /api/orgs/{id}/members/{userId}", auth.RequireAuth(jwtManager, orgHandler.RemoveMember))
+	mux.HandleFunc("PUT /api/orgs/{id}/branding", auth.RequireAuth(jwtManager, orgHandler.UpdateBranding))
 
 	// User group routes
 	groupHandler := handlers.NewGroupHandler(pool)

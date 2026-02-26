@@ -5,6 +5,7 @@ import type {
   Invitation,
   Member,
   Organization,
+  UpdateBrandingRequest,
   UpdateMemberRoleRequest,
   UpdateOrganizationRequest,
 } from '../types/organization'
@@ -204,4 +205,26 @@ export async function removeMember(orgId: string, userId: string): Promise<void>
     org_id: orgId,
     user_id: userId,
   })
+}
+
+export async function updateOrgBranding(
+  orgId: string,
+  data: UpdateBrandingRequest,
+): Promise<Organization> {
+  const response = await fetch(`${API_BASE}/api/orgs/${orgId}/branding`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    if (response.status === 403) {
+      throw new Error('Admin access required')
+    }
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.error || 'Failed to update branding')
+  }
+  trackEvent('organization_branding_updated', {
+    org_id: orgId,
+  })
+  return response.json()
 }

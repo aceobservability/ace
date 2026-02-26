@@ -3,8 +3,10 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -61,6 +63,14 @@ type UpdateMemberRoleRequest struct {
 }
 
 var slugRegex = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{1,98}[a-z0-9]$`)
+var hexColorRegex = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
+
+// UpdateBrandingRequest represents branding update request
+type UpdateBrandingRequest struct {
+	PrimaryColor *string `json:"primary_color"`
+	LogoDataURI  *string `json:"logo_data_uri"`
+	AppTitle     *string `json:"app_title"`
+}
 
 // Create creates a new organization
 func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -153,7 +163,8 @@ func (h *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	rows, err := h.pool.Query(ctx,
-		`SELECT o.id, o.name, o.slug, o.created_at, o.updated_at, om.role
+		`SELECT o.id, o.name, o.slug, o.created_at, o.updated_at, om.role,
+		        o.branding_primary_color, o.branding_logo_data, o.branding_logo_mime, o.branding_app_title
 		 FROM organizations o
 		 JOIN organization_memberships om ON o.id = om.organization_id
 		 WHERE om.user_id = $1
@@ -174,9 +185,14 @@ func (h *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 	orgs := []OrgWithRole{}
 	for rows.Next() {
 		var org OrgWithRole
-		if err := rows.Scan(&org.ID, &org.Name, &org.Slug, &org.CreatedAt, &org.UpdatedAt, &org.Role); err != nil {
+		var logoData, logoMime *string
+		if err := rows.Scan(&org.ID, &org.Name, &org.Slug, &org.CreatedAt, &org.UpdatedAt, &org.Role,
+			&org.Branding.PrimaryColor, &logoData, &logoMime, &org.Branding.AppTitle); err != nil {
 			http.Error(w, `{"error":"failed to scan organization"}`, http.StatusInternalServerError)
 			return
+		}
+		if logoData != nil {
+			org.Branding.LogoDataURI = logoData
 		}
 		orgs = append(orgs, org)
 	}
@@ -219,10 +235,14 @@ func (h *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	// Get organization
 	var org models.Organization
+	var logoData, logoMime *string
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, name, slug, created_at, updated_at FROM organizations WHERE id = $1`,
+		`SELECT id, name, slug, created_at, updated_at,
+		        branding_primary_color, branding_logo_data, branding_logo_mime, branding_app_title
+		 FROM organizations WHERE id = $1`,
 		orgID,
-	).Scan(&org.ID, &org.Name, &org.Slug, &org.CreatedAt, &org.UpdatedAt)
+	).Scan(&org.ID, &org.Name, &org.Slug, &org.CreatedAt, &org.UpdatedAt,
+		&org.Branding.PrimaryColor, &logoData, &logoMime, &org.Branding.AppTitle)
 	if err == pgx.ErrNoRows {
 		http.Error(w, `{"error":"organization not found"}`, http.StatusNotFound)
 		return
@@ -230,6 +250,9 @@ func (h *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, `{"error":"failed to get organization"}`, http.StatusInternalServerError)
 		return
+	}
+	if logoData != nil {
+		org.Branding.LogoDataURI = logoData
 	}
 
 	type OrgWithRole struct {
@@ -773,6 +796,97 @@ func (h *OrganizationHandler) RemoveMember(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "member removed"})
+}
+
+// UpdateBranding updates organization branding (admin only)
+func (h *OrganizationHandler) UpdateBranding(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	orgID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, `{"error":"invalid organization id"}`, http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if !h.isOrgAdmin(ctx, orgID, userID) {
+		http.Error(w, `{"error":"admin access required"}`, http.StatusForbidden)
+		return
+	}
+
+	var req UpdateBrandingRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	// Validate primary_color
+	if req.PrimaryColor != nil && *req.PrimaryColor != "" && !hexColorRegex.MatchString(*req.PrimaryColor) {
+		http.Error(w, `{"error":"primary_color must be a hex color like #6366f1"}`, http.StatusBadRequest)
+		return
+	}
+
+	// Validate logo_data_uri
+	var logoData, logoMime *string
+	if req.LogoDataURI != nil && *req.LogoDataURI != "" {
+		if !strings.HasPrefix(*req.LogoDataURI, "data:image/") {
+			http.Error(w, `{"error":"logo_data_uri must be a data:image/ URI"}`, http.StatusBadRequest)
+			return
+		}
+		if len(*req.LogoDataURI) > 512000 {
+			http.Error(w, `{"error":"logo_data_uri exceeds 500KB limit"}`, http.StatusBadRequest)
+			return
+		}
+		// Extract MIME type from data URI (e.g. "data:image/png;base64,..." -> "image/png")
+		mime := strings.TrimPrefix(*req.LogoDataURI, "data:")
+		if idx := strings.Index(mime, ";"); idx > 0 {
+			mime = mime[:idx]
+		}
+		logoData = req.LogoDataURI
+		logoMime = &mime
+	}
+
+	// Validate app_title
+	if req.AppTitle != nil && len(*req.AppTitle) > 100 {
+		http.Error(w, `{"error":"app_title must be 100 characters or fewer"}`, http.StatusBadRequest)
+		return
+	}
+
+	// Normalize empty strings to nil for DB storage
+	var primaryColor, appTitle *string
+	if req.PrimaryColor != nil && *req.PrimaryColor != "" {
+		primaryColor = req.PrimaryColor
+	}
+	if req.AppTitle != nil && *req.AppTitle != "" {
+		appTitle = req.AppTitle
+	}
+
+	_, err = h.pool.Exec(ctx,
+		`UPDATE organizations SET branding_primary_color=$1, branding_logo_data=$2,
+		        branding_logo_mime=$3, branding_app_title=$4, updated_at=NOW()
+		 WHERE id=$5`,
+		primaryColor, logoData, logoMime, appTitle, orgID,
+	)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error":"failed to update branding: %v"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	// Return updated branding
+	branding := models.OrgBranding{
+		PrimaryColor: primaryColor,
+		LogoDataURI:  logoData,
+		AppTitle:     appTitle,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(branding)
 }
 
 // isOrgAdmin checks if a user is an admin of the organization

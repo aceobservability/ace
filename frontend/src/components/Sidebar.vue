@@ -28,6 +28,9 @@ const { fetchOrganizations, clearOrganizations, currentOrg } = useOrganization()
 const { logout, user } = useAuth()
 const { mode, cycle } = useTheme()
 
+const logoSrc = computed(() => currentOrg.value?.branding?.logo_data_uri || null)
+const appTitle = computed(() => currentOrg.value?.branding?.app_title || 'Ace')
+
 const isExpanded = ref(typeof window !== 'undefined' ? window.innerWidth > 1100 : true)
 const isHoverExpanded = ref(false)
 const showCreateOrgModal = ref(false)
@@ -166,8 +169,17 @@ defineExpose({ isExpanded })
       ]"
     >
       <div class="flex items-center gap-2.5">
-        <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 font-mono text-xs font-bold text-white">A</span>
-        <span v-if="isVisuallyExpanded" class="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-slate-200">Ace</span>
+        <img
+          v-if="logoSrc"
+          :src="logoSrc"
+          :alt="appTitle"
+          class="h-8 w-8 shrink-0 rounded-lg object-contain"
+        />
+        <span
+          v-else
+          class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 font-mono text-xs font-bold text-white"
+        >A</span>
+        <span v-if="isVisuallyExpanded" class="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-slate-200">{{ appTitle }}</span>
       </div>
       <button
         :class="[

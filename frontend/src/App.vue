@@ -4,9 +4,11 @@ import { useRoute } from 'vue-router'
 import CookieConsentBanner from './components/CookieConsentBanner.vue'
 import Sidebar from './components/Sidebar.vue'
 import { useAuth } from './composables/useAuth'
+import { useOrgBranding } from './composables/useOrgBranding'
 
 const route = useRoute()
 const { isAuthenticated } = useAuth()
+useOrgBranding()
 
 const sidebarRef = ref<InstanceType<typeof Sidebar> | null>(null)
 

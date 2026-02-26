@@ -29,6 +29,7 @@ import {
 import { useOrganization } from '../composables/useOrganization'
 import type { Member, MembershipRole, Organization } from '../types/organization'
 import type { UserGroup, UserGroupMembership } from '../types/rbac'
+import OrgBrandingSettings from './OrgBrandingSettings.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -134,16 +135,17 @@ const activeSsoLabel = computed(() => {
 
 const isAdmin = computed(() => org.value?.role === 'admin')
 
-type SettingsSection = 'general' | 'members' | 'groups'
+type SettingsSection = 'general' | 'members' | 'groups' | 'branding'
 
 const settingsSections: Array<{ key: SettingsSection; label: string }> = [
   { key: 'general', label: 'General' },
   { key: 'members', label: 'Members' },
   { key: 'groups', label: 'Groups' },
+  { key: 'branding', label: 'Branding' },
 ]
 
 function isSettingsSection(value: string | undefined): value is SettingsSection {
-  return value === 'general' || value === 'members' || value === 'groups'
+  return value === 'general' || value === 'members' || value === 'groups' || value === 'branding'
 }
 
 const activeSection = computed<SettingsSection>(() => {
@@ -1105,6 +1107,9 @@ function goBack() {
           </article>
         </div>
       </section>
+
+      <!-- Branding Section -->
+      <OrgBrandingSettings v-if="activeSection === 'branding'" :org-id="orgId" />
 
       <!-- SSO Section -->
       <section v-if="activeSection === 'general'" class="rounded-xl border border-slate-200 bg-white p-6">
