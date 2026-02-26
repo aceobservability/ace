@@ -20,6 +20,8 @@ export interface DataSource {
   is_default: boolean
   auth_type: string
   auth_config?: Record<string, unknown>
+  trace_id_field: string
+  linked_trace_datasource_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -31,6 +33,8 @@ export interface CreateDataSourceRequest {
   is_default?: boolean
   auth_type?: string
   auth_config?: Record<string, unknown>
+  trace_id_field?: string
+  linked_trace_datasource_id?: string | null
 }
 
 export interface UpdateDataSourceRequest {
@@ -40,6 +44,14 @@ export interface UpdateDataSourceRequest {
   is_default?: boolean
   auth_type?: string
   auth_config?: Record<string, unknown>
+  trace_id_field?: string
+  linked_trace_datasource_id?: string | null
+}
+
+export interface TraceDatasource {
+  id: string
+  name: string
+  type: string
 }
 
 export interface DataSourceQueryRequest {

@@ -1125,7 +1125,12 @@ watch(
             </span>
           </div>
           <div class="flex-1 min-h-0 p-4">
-            <LogViewer :logs="newestFirstLogs" :highlighted-log-keys="highlightedLogKeyList" />
+            <LogViewer
+              :logs="newestFirstLogs"
+              :highlighted-log-keys="highlightedLogKeyList"
+              :trace-id-field="activeDatasource?.trace_id_field || 'trace_id'"
+              :linked-trace-datasource-id="activeDatasource?.linked_trace_datasource_id || null"
+            />
           </div>
         </div>
 

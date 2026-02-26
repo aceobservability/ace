@@ -91,13 +91,18 @@ func (h *DataSourceHandler) Create(w http.ResponseWriter, r *http.Request) {
 		isDefault = *req.IsDefault
 	}
 
+	traceIDField := "trace_id"
+	if req.TraceIDField != nil && *req.TraceIDField != "" {
+		traceIDField = *req.TraceIDField
+	}
+
 	var ds models.DataSource
 	err = h.pool.QueryRow(ctx,
-		`INSERT INTO datasources (organization_id, name, type, url, is_default, auth_type, auth_config)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
-		 RETURNING id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at`,
-		orgID, req.Name, req.Type, req.URL, isDefault, authType, req.AuthConfig,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+		`INSERT INTO datasources (organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		 RETURNING id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at`,
+		orgID, req.Name, req.Type, req.URL, isDefault, authType, req.AuthConfig, traceIDField, req.LinkedTraceDatasourceID,
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error":"failed to create datasource: %s"}`, err.Error()), http.StatusInternalServerError)
@@ -146,7 +151,7 @@ func (h *DataSourceHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := h.pool.Query(ctx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources
 		 WHERE organization_id = $1
 		 ORDER BY name ASC`, orgID)
@@ -159,7 +164,7 @@ func (h *DataSourceHandler) List(w http.ResponseWriter, r *http.Request) {
 	datasources := []models.DataSource{}
 	for rows.Next() {
 		var ds models.DataSource
-		if err := rows.Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt); err != nil {
+		if err := rows.Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt); err != nil {
 			http.Error(w, `{"error":"failed to scan datasource"}`, http.StatusInternalServerError)
 			return
 		}
@@ -189,9 +194,9 @@ func (h *DataSourceHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	var ds models.DataSource
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources WHERE id = $1`, id,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
 		return
@@ -262,11 +267,13 @@ func (h *DataSourceHandler) Update(w http.ResponseWriter, r *http.Request) {
 		     is_default = COALESCE($4, is_default),
 		     auth_type = COALESCE($5, auth_type),
 		     auth_config = COALESCE($6, auth_config),
+		     trace_id_field = COALESCE($7, trace_id_field),
+		     linked_trace_datasource_id = COALESCE($8, linked_trace_datasource_id),
 		     updated_at = NOW()
-		 WHERE id = $7
-		 RETURNING id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at`,
-		req.Name, req.Type, req.URL, req.IsDefault, req.AuthType, req.AuthConfig, id,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+		 WHERE id = $9
+		 RETURNING id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at`,
+		req.Name, req.Type, req.URL, req.IsDefault, req.AuthType, req.AuthConfig, req.TraceIDField, req.LinkedTraceDatasourceID, id,
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"failed to update datasource"}`, http.StatusInternalServerError)
 		return
@@ -346,6 +353,59 @@ func (h *DataSourceHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// ListTraceDatasources returns tracing datasources in the same org for linking
+func (h *DataSourceHandler) ListTraceDatasources(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	orgID, err := uuid.Parse(r.PathValue("orgId"))
+	if err != nil {
+		http.Error(w, `{"error":"invalid organization id"}`, http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	_, err = h.checkOrgMembership(ctx, userID, orgID)
+	if err != nil {
+		http.Error(w, `{"error":"not a member of this organization"}`, http.StatusForbidden)
+		return
+	}
+
+	type traceDatasource struct {
+		ID   uuid.UUID `json:"id"`
+		Name string    `json:"name"`
+		Type string    `json:"type"`
+	}
+
+	rows, err := h.pool.Query(ctx,
+		`SELECT id, name, type FROM datasources
+		 WHERE organization_id = $1 AND type IN ('tempo', 'victoriatraces')
+		 ORDER BY name ASC`, orgID)
+	if err != nil {
+		http.Error(w, `{"error":"failed to fetch trace datasources"}`, http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	results := []traceDatasource{}
+	for rows.Next() {
+		var td traceDatasource
+		if err := rows.Scan(&td.ID, &td.Name, &td.Type); err != nil {
+			http.Error(w, `{"error":"failed to scan trace datasource"}`, http.StatusInternalServerError)
+			return
+		}
+		results = append(results, td)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}
+
 // Query executes a query against a datasource
 func (h *DataSourceHandler) Query(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
@@ -366,9 +426,9 @@ func (h *DataSourceHandler) Query(w http.ResponseWriter, r *http.Request) {
 	// Fetch datasource
 	var ds models.DataSource
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources WHERE id = $1`, id,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
 		return
@@ -673,9 +733,9 @@ func (h *DataSourceHandler) TestConnection(w http.ResponseWriter, r *http.Reques
 
 	var ds models.DataSource
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources WHERE id = $1`, id,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
 		return
@@ -752,9 +812,9 @@ func (h *DataSourceHandler) GetTrace(w http.ResponseWriter, r *http.Request) {
 
 	var ds models.DataSource
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources WHERE id = $1`, id,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
 		return
@@ -824,9 +884,9 @@ func (h *DataSourceHandler) TraceServiceGraph(w http.ResponseWriter, r *http.Req
 
 	var ds models.DataSource
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources WHERE id = $1`, id,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
 		return
@@ -898,9 +958,9 @@ func (h *DataSourceHandler) SearchTraces(w http.ResponseWriter, r *http.Request)
 
 	var ds models.DataSource
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources WHERE id = $1`, id,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
 		return
@@ -964,9 +1024,9 @@ func (h *DataSourceHandler) TraceServices(w http.ResponseWriter, r *http.Request
 
 	var ds models.DataSource
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources WHERE id = $1`, id,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
 		return
@@ -1054,9 +1114,9 @@ func (h *DataSourceHandler) Stream(w http.ResponseWriter, r *http.Request) {
 
 	var ds models.DataSource
 	err = h.pool.QueryRow(dbCtx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources WHERE id = $1`, id,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
 		return
@@ -1199,9 +1259,9 @@ func (h *DataSourceHandler) Labels(w http.ResponseWriter, r *http.Request) {
 
 	var ds models.DataSource
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources WHERE id = $1`, id,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
 		return
@@ -1286,9 +1346,9 @@ func (h *DataSourceHandler) LabelValues(w http.ResponseWriter, r *http.Request) 
 
 	var ds models.DataSource
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources WHERE id = $1`, id,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
 		return
@@ -1381,9 +1441,9 @@ func (h *DataSourceHandler) QueryByParams(w http.ResponseWriter, r *http.Request
 
 	var ds models.DataSource
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, created_at, updated_at
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
 		 FROM datasources WHERE id = $1`, dsID,
-	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.CreatedAt, &ds.UpdatedAt)
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "datasource not found"})

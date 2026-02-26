@@ -24,34 +24,40 @@ const (
 )
 
 type DataSource struct {
-	ID             uuid.UUID       `json:"id"`
-	OrganizationID uuid.UUID       `json:"organization_id"`
-	Name           string          `json:"name"`
-	Type           DataSourceType  `json:"type"`
-	URL            string          `json:"url"`
-	IsDefault      bool            `json:"is_default"`
-	AuthType       string          `json:"auth_type"`
-	AuthConfig     json.RawMessage `json:"auth_config,omitempty"`
-	CreatedAt      time.Time       `json:"created_at"`
-	UpdatedAt      time.Time       `json:"updated_at"`
+	ID                        uuid.UUID       `json:"id"`
+	OrganizationID            uuid.UUID       `json:"organization_id"`
+	Name                      string          `json:"name"`
+	Type                      DataSourceType  `json:"type"`
+	URL                       string          `json:"url"`
+	IsDefault                 bool            `json:"is_default"`
+	AuthType                  string          `json:"auth_type"`
+	AuthConfig                json.RawMessage `json:"auth_config,omitempty"`
+	TraceIDField              string          `json:"trace_id_field"`
+	LinkedTraceDatasourceID   *uuid.UUID      `json:"linked_trace_datasource_id,omitempty"`
+	CreatedAt                 time.Time       `json:"created_at"`
+	UpdatedAt                 time.Time       `json:"updated_at"`
 }
 
 type CreateDataSourceRequest struct {
-	Name       string          `json:"name"`
-	Type       DataSourceType  `json:"type"`
-	URL        string          `json:"url"`
-	IsDefault  *bool           `json:"is_default,omitempty"`
-	AuthType   *string         `json:"auth_type,omitempty"`
-	AuthConfig json.RawMessage `json:"auth_config,omitempty"`
+	Name                      string          `json:"name"`
+	Type                      DataSourceType  `json:"type"`
+	URL                       string          `json:"url"`
+	IsDefault                 *bool           `json:"is_default,omitempty"`
+	AuthType                  *string         `json:"auth_type,omitempty"`
+	AuthConfig                json.RawMessage `json:"auth_config,omitempty"`
+	TraceIDField              *string         `json:"trace_id_field,omitempty"`
+	LinkedTraceDatasourceID   *uuid.UUID      `json:"linked_trace_datasource_id,omitempty"`
 }
 
 type UpdateDataSourceRequest struct {
-	Name       *string         `json:"name,omitempty"`
-	Type       *DataSourceType `json:"type,omitempty"`
-	URL        *string         `json:"url,omitempty"`
-	IsDefault  *bool           `json:"is_default,omitempty"`
-	AuthType   *string         `json:"auth_type,omitempty"`
-	AuthConfig json.RawMessage `json:"auth_config,omitempty"`
+	Name                      *string         `json:"name,omitempty"`
+	Type                      *DataSourceType `json:"type,omitempty"`
+	URL                       *string         `json:"url,omitempty"`
+	IsDefault                 *bool           `json:"is_default,omitempty"`
+	AuthType                  *string         `json:"auth_type,omitempty"`
+	AuthConfig                json.RawMessage `json:"auth_config,omitempty"`
+	TraceIDField              *string         `json:"trace_id_field,omitempty"`
+	LinkedTraceDatasourceID   *uuid.UUID      `json:"linked_trace_datasource_id,omitempty"`
 }
 
 func (t DataSourceType) Valid() bool {

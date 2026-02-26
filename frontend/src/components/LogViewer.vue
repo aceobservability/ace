@@ -1,16 +1,52 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import type { LogEntry } from '../types/datasource'
+
+const router = useRouter()
 
 const props = withDefaults(
   defineProps<{
     logs: LogEntry[]
     highlightedLogKeys?: string[]
+    traceIdField?: string
+    linkedTraceDatasourceId?: string | null
   }>(),
   {
     highlightedLogKeys: () => [],
+    traceIdField: 'trace_id',
+    linkedTraceDatasourceId: null,
   },
 )
+
+function extractTraceId(entry: LogEntry): string | null {
+  const field = props.traceIdField || 'trace_id'
+
+  if (entry.labels && entry.labels[field]) {
+    return entry.labels[field]
+  }
+
+  try {
+    const parsed = JSON.parse(entry.line)
+    if (parsed[field]) return String(parsed[field])
+  } catch {}
+
+  const regex = new RegExp(`(?:${field}[=:]["']?)([a-f0-9]{16,64})`, 'i')
+  const match = entry.line.match(regex)
+  if (match) return match[1]
+
+  return null
+}
+
+function navigateToTrace(traceId: string) {
+  router.push({
+    name: 'explore-traces',
+    query: {
+      datasourceId: props.linkedTraceDatasourceId,
+      traceId: traceId,
+    },
+  })
+}
 
 interface DetectedField {
   key: string
@@ -224,6 +260,19 @@ watch(displayLogs, () => {
             >
               {{ log.level }}
             </span>
+          </span>
+
+          <!-- Trace ID badge -->
+          <span class="shrink-0 w-40">
+            <button
+              v-if="linkedTraceDatasourceId && extractTraceId(log)"
+              class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/30 transition-colors cursor-pointer border border-emerald-500/30"
+              @click.stop="navigateToTrace(extractTraceId(log)!)"
+              :title="`View trace ${extractTraceId(log)}`"
+            >
+              <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              {{ extractTraceId(log)?.slice(0, 16) }}…
+            </button>
           </span>
 
           <!-- Message -->

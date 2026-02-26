@@ -11,7 +11,7 @@ import {
   Waypoints,
 } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
   fetchDataSourceTrace,
   fetchDataSourceTraceServiceGraph,
@@ -75,6 +75,7 @@ const TRACE_METRICS_NAVIGATION_CONTEXT_KEY = 'trace_metrics_navigation'
 const TRACE_NAVIGATION_MAX_AGE_MS = 5 * 60 * 1000
 const TRACE_TO_X_PADDING_MS = 5 * 60 * 1000
 
+const route = useRoute()
 const router = useRouter()
 const { timeRange, isCustomRange, onRefresh } = useTimeRange()
 const { currentOrg } = useOrganization()
@@ -744,6 +745,16 @@ async function handleOpenTraceFromList(traceId: string) {
 }
 
 onMounted(() => {
+  const queryTraceId = route.query.traceId
+  const queryDatasourceId = route.query.datasourceId
+  if (queryTraceId && typeof queryTraceId === 'string') {
+    pendingTraceId.value = queryTraceId
+    traceIdInput.value = queryTraceId
+  }
+  if (queryDatasourceId && typeof queryDatasourceId === 'string') {
+    pendingTraceDatasourceId.value = queryDatasourceId
+  }
+
   consumeTraceNavigationContext()
   void tryLoadPendingTrace()
   document.addEventListener('click', handleDocumentClick)

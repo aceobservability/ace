@@ -7,6 +7,7 @@ import type {
   DataSourceQueryResult,
   LogEntry,
   Trace,
+  TraceDatasource,
   TraceSearchRequest,
   TraceServiceGraph,
   TraceSummary,
@@ -482,6 +483,21 @@ interface LabelsResponse {
   status: 'success' | 'error'
   data?: string[]
   error?: string
+}
+
+export async function fetchTraceDatasources(orgId: string, datasourceId: string): Promise<TraceDatasource[]> {
+  const response = await fetch(
+    `${API_BASE}/api/orgs/${orgId}/datasources/${datasourceId}/trace-datasources`,
+    {
+      headers: getAuthHeaders(),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch trace datasources')
+  }
+
+  return response.json()
 }
 
 export async function fetchDataSourceLabels(id: string): Promise<string[]> {

@@ -9,11 +9,11 @@ import {
 } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getDataSource, testDataSourceDraftConnection } from '../api/datasources'
+import { fetchTraceDatasources, getDataSource, testDataSourceDraftConnection } from '../api/datasources'
 import { useDatasource } from '../composables/useDatasource'
 import { useOrganization } from '../composables/useOrganization'
-import type { CreateDataSourceRequest, DataSource, DataSourceType } from '../types/datasource'
-import { dataSourceTypeLabels, isAlertingType, isTracingType } from '../types/datasource'
+import type { CreateDataSourceRequest, DataSource, DataSourceType, TraceDatasource } from '../types/datasource'
+import { dataSourceTypeLabels, isAlertingType, isLogsType, isTracingType } from '../types/datasource'
 
 const route = useRoute()
 const router = useRouter()
@@ -41,6 +41,9 @@ const formElasticsearchIndex = ref('')
 const formElasticsearchTimestampField = ref('')
 const formElasticsearchMessageField = ref('')
 const formElasticsearchLevelField = ref('')
+const formTraceIdField = ref('trace_id')
+const formLinkedTraceDatasourceId = ref<string | null>(null)
+const traceDatasources = ref<TraceDatasource[]>([])
 
 const saveLoading = ref(false)
 const testLoading = ref(false)
@@ -73,6 +76,7 @@ const isClickHouseType = computed(() => formType.value === 'clickhouse')
 const isCloudWatchType = computed(() => formType.value === 'cloudwatch')
 const isElasticsearchType = computed(() => formType.value === 'elasticsearch')
 const isVMAlertType = computed(() => formType.value === 'vmalert')
+const showLogCorrelation = computed(() => isLogsType(formType.value) && !isClickHouseType.value)
 const showAuthSettings = computed(
   () =>
     (isTracingType(formType.value) ||
@@ -130,6 +134,8 @@ function resetAuthForm() {
   formElasticsearchTimestampField.value = ''
   formElasticsearchMessageField.value = ''
   formElasticsearchLevelField.value = ''
+  formTraceIdField.value = 'trace_id'
+  formLinkedTraceDatasourceId.value = null
 }
 
 function resetCreateForm() {
@@ -226,6 +232,8 @@ function hydrateForm(ds: DataSource) {
   formUrl.value = ds.url
   formIsDefault.value = ds.is_default
   hydrateAuthForm(ds)
+  formTraceIdField.value = ds.trace_id_field || 'trace_id'
+  formLinkedTraceDatasourceId.value = ds.linked_trace_datasource_id || null
   loadedDatasourceOrgId.value = ds.organization_id
   formError.value = null
   loadError.value = null
@@ -254,6 +262,20 @@ async function loadDatasourceForEdit() {
     loadError.value = e instanceof Error ? e.message : 'Failed to load datasource'
   } finally {
     pageLoading.value = false
+  }
+}
+
+async function loadTraceDatasources() {
+  const orgId = activeOrgId()
+  if (!orgId || !showLogCorrelation.value) {
+    traceDatasources.value = []
+    return
+  }
+
+  try {
+    traceDatasources.value = await fetchTraceDatasources(orgId, datasourceId.value || 'new')
+  } catch {
+    traceDatasources.value = []
   }
 }
 
@@ -397,7 +419,7 @@ function buildCreatePayload(requireName: boolean): CreateDataSourceRequest {
 
   const finalAuthConfig = Object.keys(authConfig).length > 0 ? authConfig : undefined
 
-  return {
+  const payload: CreateDataSourceRequest = {
     name: trimmedName || `Untitled ${dataSourceTypeLabels[formType.value]}`,
     type: formType.value,
     url: submitURL,
@@ -405,6 +427,13 @@ function buildCreatePayload(requireName: boolean): CreateDataSourceRequest {
     auth_type: authPayload.auth_type,
     auth_config: finalAuthConfig,
   }
+
+  if (showLogCorrelation.value) {
+    payload.trace_id_field = formTraceIdField.value.trim() || 'trace_id'
+    payload.linked_trace_datasource_id = formLinkedTraceDatasourceId.value || null
+  }
+
+  return payload
 }
 
 async function handleTestConnection() {
@@ -511,10 +540,23 @@ watch(formType, () => {
   }
 })
 
+watch(showLogCorrelation, (show) => {
+  if (show) {
+    loadTraceDatasources()
+  } else {
+    traceDatasources.value = []
+    formTraceIdField.value = 'trace_id'
+    formLinkedTraceDatasourceId.value = null
+  }
+})
+
 resetCreateForm()
 
 onMounted(() => {
   loadDatasourceForEdit()
+  if (showLogCorrelation.value) {
+    loadTraceDatasources()
+  }
 })
 
 watch(
@@ -756,6 +798,37 @@ watch(
             autocomplete="off"
             class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
           />
+        </div>
+      </section>
+
+      <section v-if="showLogCorrelation" class="rounded-xl border border-slate-200 bg-white p-6">
+        <h2 class="text-sm font-semibold text-slate-900 mb-3 mt-0">Log Correlation</h2>
+        <div class="mb-4">
+          <label for="ds-trace-id-field" class="block text-sm font-medium text-slate-700 mb-1.5">Trace ID Field</label>
+          <input
+            id="ds-trace-id-field"
+            v-model="formTraceIdField"
+            type="text"
+            placeholder="trace_id"
+            :disabled="saveLoading"
+            autocomplete="off"
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+          />
+          <p class="text-xs text-slate-400 mt-1 m-0">The log field name that contains distributed trace IDs. Default: trace_id</p>
+        </div>
+        <div class="mb-0">
+          <label for="ds-linked-trace-ds" class="block text-sm font-medium text-slate-700 mb-1.5">Linked Tracing Datasource (optional)</label>
+          <select
+            id="ds-linked-trace-ds"
+            :value="formLinkedTraceDatasourceId || ''"
+            :disabled="saveLoading"
+            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
+            @change="formLinkedTraceDatasourceId = ($event.target as HTMLSelectElement).value || null"
+          >
+            <option value="">None — disable trace linking</option>
+            <option v-for="td in traceDatasources" :key="td.id" :value="td.id">{{ td.name }} ({{ td.type }})</option>
+          </select>
+          <p class="text-xs text-slate-400 mt-1 m-0">When a user clicks a trace ID in logs, they'll be taken to this tracing datasource.</p>
         </div>
       </section>
 

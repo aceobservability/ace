@@ -188,6 +188,7 @@ func main() {
 	mux.HandleFunc("POST /api/orgs/{orgId}/datasources/test", auth.RequireAuth(jwtManager, dsHandler.TestConnectionDraft))
 	mux.HandleFunc("POST /api/orgs/{orgId}/datasources", auth.RequireAuth(jwtManager, dsHandler.Create))
 	mux.HandleFunc("GET /api/orgs/{orgId}/datasources", auth.RequireAuth(jwtManager, dsHandler.List))
+	mux.HandleFunc("GET /api/orgs/{orgId}/datasources/{dsId}/trace-datasources", auth.RequireAuth(jwtManager, dsHandler.ListTraceDatasources))
 	mux.HandleFunc("GET /api/datasources/{id}", auth.RequireAuth(jwtManager, dsHandler.Get))
 	mux.HandleFunc("PUT /api/datasources/{id}", auth.RequireAuth(jwtManager, dsHandler.Update))
 	mux.HandleFunc("DELETE /api/datasources/{id}", auth.RequireAuth(jwtManager, dsHandler.Delete))

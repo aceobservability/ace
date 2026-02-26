@@ -1,8 +1,11 @@
-.PHONY: help backend seed frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs telemetrygen
+.PHONY: help backend seed seed-correlated frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs telemetrygen
 
 EMAIL ?= admin@admin.com
 PASSWORD ?= Admin1234
 PROFILES ?=
+LOKI_URL ?= http://localhost:3100
+TEMPO_URL ?= http://localhost:3200
+COUNT ?= 20
 COMPOSE_FILE := deploy/docker/docker-compose.yml
 
 comma := ,
@@ -80,6 +83,21 @@ seed:
 		exit 1; \
 	fi; \
 	cd backend && "$$GO_BIN" run ./cmd/seed -email "$(EMAIL)" -password "$(PASSWORD)"
+
+seed-correlated:
+	@set -e; \
+	GO_BIN=""; \
+	if [ -x "$$HOME/.go-sdk/go1.25.7/bin/go" ]; then \
+		GO_BIN="$$HOME/.go-sdk/go1.25.7/bin/go"; \
+	elif command -v go >/dev/null 2>&1; then \
+		GO_BIN="$$(command -v go)"; \
+	fi; \
+	if [ -z "$$GO_BIN" ]; then \
+		printf "Go is not installed.\n"; \
+		printf "Install Go 1.25+ and retry make seed-correlated.\n"; \
+		exit 1; \
+	fi; \
+	cd backend && "$$GO_BIN" run ./cmd/seed-correlated --loki-url $(LOKI_URL) --tempo-url $(TEMPO_URL) --count $(COUNT)
 
 tilt-up:
 	@tilt up
