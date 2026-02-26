@@ -224,6 +224,17 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 			UNIQUE(user_id)
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_user_github_connections_user_id ON user_github_connections(user_id)`,
+		// Org branding columns (007_org_branding.sql)
+		`ALTER TABLE organizations
+			ADD COLUMN IF NOT EXISTS branding_primary_color VARCHAR(7),
+			ADD COLUMN IF NOT EXISTS branding_logo_data TEXT,
+			ADD COLUMN IF NOT EXISTS branding_logo_mime VARCHAR(50),
+			ADD COLUMN IF NOT EXISTS branding_app_title VARCHAR(100)`,
+		// Log-trace correlation columns (008_log_trace_correlation.sql)
+		`ALTER TABLE datasources
+			ADD COLUMN IF NOT EXISTS trace_id_field VARCHAR(255) DEFAULT 'trace_id',
+			ADD COLUMN IF NOT EXISTS linked_trace_datasource_id UUID REFERENCES datasources(id) ON DELETE SET NULL`,
+		`CREATE INDEX IF NOT EXISTS idx_datasources_linked_trace ON datasources(linked_trace_datasource_id)`,
 	}
 
 	for _, migration := range migrations {
