@@ -2,6 +2,7 @@
 import { Loader2, Send, Sparkles, Trash2, Unplug, X } from 'lucide-vue-next'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { type CopilotMessage, useCopilot } from '../composables/useCopilot'
+import { useOrganization } from '../composables/useOrganization'
 
 const props = defineProps<{
   datasourceType: string
@@ -24,6 +25,8 @@ const {
   disconnect,
   sendMessage,
 } = useCopilot()
+
+const { currentOrgId } = useOrganization()
 
 const messages = ref<CopilotMessage[]>([])
 const inputText = ref('')
@@ -135,7 +138,8 @@ async function handleDisconnect() {
       </div>
       <button
         class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 cursor-pointer border-none transition hover:bg-amber-600"
-        @click="connect"
+        :disabled="!currentOrgId"
+        @click="currentOrgId && connect(currentOrgId)"
       >
         Connect GitHub Copilot
       </button>

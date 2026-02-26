@@ -11,21 +11,21 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/janhoon/dash/backend/internal/auth"
 )
 
 type GitHubCopilotHandler struct {
-	pool         *pgxpool.Pool
-	jwtManager   *auth.JWTManager
-	baseURL      string
-	clientID     string
-	clientSecret string
+	pool       *pgxpool.Pool
+	jwtManager *auth.JWTManager
+	baseURL    string
 }
 
 func NewGitHubCopilotHandler(pool *pgxpool.Pool, jwtManager *auth.JWTManager) *GitHubCopilotHandler {
@@ -34,12 +34,45 @@ func NewGitHubCopilotHandler(pool *pgxpool.Pool, jwtManager *auth.JWTManager) *G
 		baseURL = "http://localhost:8080"
 	}
 	return &GitHubCopilotHandler{
-		pool:         pool,
-		jwtManager:   jwtManager,
-		baseURL:      baseURL,
-		clientID:     os.Getenv("GITHUB_CLIENT_ID"),
-		clientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
+		pool:       pool,
+		jwtManager: jwtManager,
+		baseURL:    baseURL,
 	}
+}
+
+// GitHubAppConfigRequest represents the request body for configuring a GitHub OAuth App per org.
+type GitHubAppConfigRequest struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	Enabled      *bool  `json:"enabled,omitempty"`
+}
+
+// GitHubAppConfigResponse represents the response for GitHub App config.
+type GitHubAppConfigResponse struct {
+	ClientID  string    `json:"client_id"`
+	Enabled   bool      `json:"enabled"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// getOAuthConfig looks up org-specific GitHub OAuth credentials from the sso_configs table.
+func (h *GitHubCopilotHandler) getOAuthConfig(ctx context.Context, orgID uuid.UUID) (clientID string, clientSecret string, err error) {
+	var enabled bool
+	err = h.pool.QueryRow(ctx,
+		`SELECT client_id, client_secret, enabled FROM sso_configs
+		 WHERE organization_id = $1 AND provider = 'github_copilot'`,
+		orgID,
+	).Scan(&clientID, &clientSecret, &enabled)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", "", fmt.Errorf("github copilot not configured for this organization")
+		}
+		return "", "", err
+	}
+	if !enabled {
+		return "", "", fmt.Errorf("github copilot is not enabled for this organization")
+	}
+	return clientID, clientSecret, nil
 }
 
 type gitHubUser struct {
@@ -213,13 +246,24 @@ func decryptToken(encoded string) (string, error) {
 
 // Login initiates the GitHub OAuth flow for connecting Copilot.
 func (h *GitHubCopilotHandler) Login(w http.ResponseWriter, r *http.Request) {
-	if h.clientID == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotImplemented)
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"error":          "GitHub OAuth not configured",
-			"setup_required": true,
-		})
+	orgIDStr := r.URL.Query().Get("org")
+	if orgIDStr == "" {
+		http.Error(w, `{"error":"org parameter is required"}`, http.StatusBadRequest)
+		return
+	}
+
+	orgID, err := uuid.Parse(orgIDStr)
+	if err != nil {
+		http.Error(w, `{"error":"invalid org parameter"}`, http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	clientID, _, err := h.getOAuthConfig(ctx, orgID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
 		return
 	}
 
@@ -229,9 +273,11 @@ func (h *GitHubCopilotHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Encode state + orgID into cookie
+	stateData := fmt.Sprintf("%s:%s", state, orgID.String())
 	http.SetCookie(w, &http.Cookie{
 		Name:     "github_oauth_state",
-		Value:    state,
+		Value:    base64.URLEncoding.EncodeToString([]byte(stateData)),
 		Path:     "/",
 		MaxAge:   600, // 10 minutes
 		HttpOnly: true,
@@ -239,16 +285,13 @@ func (h *GitHubCopilotHandler) Login(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	redirectURI := h.baseURL + "/api/auth/github/callback"
-	url := fmt.Sprintf(
-		"https://github.com/login/oauth/authorize?client_id=%s&scope=%s&state=%s&redirect_uri=%s",
-		h.clientID,
-		"read:user+copilot",
-		state,
-		redirectURI,
+	redirectURL := fmt.Sprintf(
+		"https://github.com/login/oauth/authorize?client_id=%s&scope=read:user+copilot&state=%s&redirect_uri=%s",
+		clientID, state,
+		url.QueryEscape(h.baseURL+"/api/auth/github/callback"),
 	)
 
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }
 
 // Callback handles the GitHub OAuth callback.
@@ -258,16 +301,40 @@ func (h *GitHubCopilotHandler) Callback(w http.ResponseWriter, r *http.Request) 
 		frontendURL = "http://localhost:5173"
 	}
 
-	// Verify state
+	// Verify state cookie
 	stateCookie, err := r.Cookie("github_oauth_state")
 	if err != nil {
 		http.Error(w, `{"error":"missing state cookie"}`, http.StatusBadRequest)
 		return
 	}
 
+	// Decode state data: <randomState>:<orgID>
+	stateDataBytes, err := base64.URLEncoding.DecodeString(stateCookie.Value)
+	if err != nil {
+		http.Error(w, `{"error":"invalid state cookie"}`, http.StatusBadRequest)
+		return
+	}
+
+	stateData := string(stateDataBytes)
+	var expectedState, orgIDStr string
+	if idx := strings.Index(stateData, ":"); idx > 0 && idx < len(stateData)-1 {
+		expectedState = stateData[:idx]
+		orgIDStr = stateData[idx+1:]
+	}
+	if expectedState == "" || orgIDStr == "" {
+		http.Error(w, `{"error":"invalid state format"}`, http.StatusBadRequest)
+		return
+	}
+
 	state := r.URL.Query().Get("state")
-	if state != stateCookie.Value {
+	if state != expectedState {
 		http.Error(w, `{"error":"state mismatch"}`, http.StatusBadRequest)
+		return
+	}
+
+	orgID, err := uuid.Parse(orgIDStr)
+	if err != nil {
+		http.Error(w, `{"error":"invalid org in state"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -338,8 +405,15 @@ func (h *GitHubCopilotHandler) Callback(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
+	// Look up org-specific credentials
+	clientID, clientSecret, err := h.getOAuthConfig(ctx, orgID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
+		return
+	}
+
 	// Exchange code for access token
-	ghToken, scopes, err := h.exchangeCode(ctx, code)
+	ghToken, scopes, err := h.exchangeCode(ctx, code, clientID, clientSecret)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error":"failed to exchange code: %s"}`, err.Error()), http.StatusInternalServerError)
 		return
@@ -567,8 +641,8 @@ func (h *GitHubCopilotHandler) Chat(w http.ResponseWriter, r *http.Request) {
 }
 
 // exchangeCode exchanges an authorization code for a GitHub access token.
-func (h *GitHubCopilotHandler) exchangeCode(ctx context.Context, code string) (string, string, error) {
-	body := fmt.Sprintf("client_id=%s&client_secret=%s&code=%s", h.clientID, h.clientSecret, code)
+func (h *GitHubCopilotHandler) exchangeCode(ctx context.Context, code, clientID, clientSecret string) (string, string, error) {
+	body := fmt.Sprintf("client_id=%s&client_secret=%s&code=%s", clientID, clientSecret, code)
 	req, err := http.NewRequestWithContext(ctx, "POST", "https://github.com/login/oauth/access_token", strings.NewReader(body))
 	if err != nil {
 		return "", "", err
@@ -593,6 +667,131 @@ func (h *GitHubCopilotHandler) exchangeCode(ctx context.Context, code string) (s
 	}
 
 	return tokenResp.AccessToken, tokenResp.Scope, nil
+}
+
+// ConfigureGitHubApp creates or updates GitHub OAuth App configuration for an organization.
+func (h *GitHubCopilotHandler) ConfigureGitHubApp(w http.ResponseWriter, r *http.Request) {
+	orgID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, `{"error":"invalid organization id"}`, http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := auth.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	// Check if user is admin of org
+	var role string
+	err = h.pool.QueryRow(ctx,
+		`SELECT role FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
+		userID, orgID,
+	).Scan(&role)
+	if err == pgx.ErrNoRows {
+		http.Error(w, `{"error":"not a member of this organization"}`, http.StatusForbidden)
+		return
+	}
+	if err != nil {
+		http.Error(w, `{"error":"failed to check membership"}`, http.StatusInternalServerError)
+		return
+	}
+	if role != "admin" {
+		http.Error(w, `{"error":"admin access required"}`, http.StatusForbidden)
+		return
+	}
+
+	var req GitHubAppConfigRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	if req.ClientID == "" || req.ClientSecret == "" {
+		http.Error(w, `{"error":"client_id and client_secret are required"}`, http.StatusBadRequest)
+		return
+	}
+
+	enabled := true
+	if req.Enabled != nil {
+		enabled = *req.Enabled
+	}
+
+	var config GitHubAppConfigResponse
+	err = h.pool.QueryRow(ctx,
+		`INSERT INTO sso_configs (organization_id, provider, client_id, client_secret, enabled)
+		 VALUES ($1, 'github_copilot', $2, $3, $4)
+		 ON CONFLICT (organization_id, provider) DO UPDATE
+		 SET client_id = $2, client_secret = $3, enabled = $4, updated_at = NOW()
+		 RETURNING client_id, enabled, created_at, updated_at`,
+		orgID, req.ClientID, req.ClientSecret, enabled,
+	).Scan(&config.ClientID, &config.Enabled, &config.CreatedAt, &config.UpdatedAt)
+	if err != nil {
+		http.Error(w, `{"error":"failed to save GitHub App config"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(config)
+}
+
+// GetGitHubApp returns the GitHub OAuth App configuration for an organization.
+func (h *GitHubCopilotHandler) GetGitHubApp(w http.ResponseWriter, r *http.Request) {
+	orgID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, `{"error":"invalid organization id"}`, http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := auth.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	// Check if user is admin of org
+	var role string
+	err = h.pool.QueryRow(ctx,
+		`SELECT role FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
+		userID, orgID,
+	).Scan(&role)
+	if err == pgx.ErrNoRows {
+		http.Error(w, `{"error":"not a member of this organization"}`, http.StatusForbidden)
+		return
+	}
+	if err != nil {
+		http.Error(w, `{"error":"failed to check membership"}`, http.StatusInternalServerError)
+		return
+	}
+	if role != "admin" {
+		http.Error(w, `{"error":"admin access required"}`, http.StatusForbidden)
+		return
+	}
+
+	var config GitHubAppConfigResponse
+	err = h.pool.QueryRow(ctx,
+		`SELECT client_id, enabled, created_at, updated_at FROM sso_configs
+		 WHERE organization_id = $1 AND provider = 'github_copilot'`,
+		orgID,
+	).Scan(&config.ClientID, &config.Enabled, &config.CreatedAt, &config.UpdatedAt)
+	if err == pgx.ErrNoRows {
+		http.Error(w, `{"error":"github copilot not configured"}`, http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		http.Error(w, `{"error":"failed to get GitHub App config"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(config)
 }
 
 // fetchGitHubUser fetches the authenticated GitHub user.

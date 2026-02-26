@@ -226,6 +226,8 @@ func main() {
 	mux.HandleFunc("GET /api/auth/github/connection", auth.RequireAuth(jwtManager, githubCopilotHandler.GetConnection))
 	mux.HandleFunc("DELETE /api/auth/github/connection", auth.RequireAuth(jwtManager, githubCopilotHandler.Disconnect))
 	mux.HandleFunc("POST /api/copilot/chat", auth.RequireAuth(jwtManager, githubCopilotHandler.Chat))
+	mux.HandleFunc("POST /api/orgs/{id}/github-app", auth.RequireAuth(jwtManager, githubCopilotHandler.ConfigureGitHubApp))
+	mux.HandleFunc("GET /api/orgs/{id}/github-app", auth.RequireAuth(jwtManager, githubCopilotHandler.GetGitHubApp))
 
 	// Grafana conversion route
 	grafanaConverterHandler := handlers.NewGrafanaConverterHandler()

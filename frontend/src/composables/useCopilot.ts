@@ -44,8 +44,8 @@ export function useCopilot() {
     }
   }
 
-  function connect() {
-    window.location.href = `${API_BASE}/api/auth/github/login`
+  function connect(orgId: string) {
+    window.location.href = `${API_BASE}/api/auth/github/login?org=${orgId}`
   }
 
   async function disconnect() {

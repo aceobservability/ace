@@ -29,6 +29,7 @@ import {
 import { useOrganization } from '../composables/useOrganization'
 import type { Member, MembershipRole, Organization } from '../types/organization'
 import type { UserGroup, UserGroupMembership } from '../types/rbac'
+import GitHubAppSettings from '../components/GitHubAppSettings.vue'
 import OrgBrandingSettings from './OrgBrandingSettings.vue'
 
 const route = useRoute()
@@ -135,17 +136,18 @@ const activeSsoLabel = computed(() => {
 
 const isAdmin = computed(() => org.value?.role === 'admin')
 
-type SettingsSection = 'general' | 'members' | 'groups' | 'branding'
+type SettingsSection = 'general' | 'members' | 'groups' | 'branding' | 'integrations'
 
 const settingsSections: Array<{ key: SettingsSection; label: string }> = [
   { key: 'general', label: 'General' },
   { key: 'members', label: 'Members' },
   { key: 'groups', label: 'Groups' },
   { key: 'branding', label: 'Branding' },
+  { key: 'integrations', label: 'Integrations' },
 ]
 
 function isSettingsSection(value: string | undefined): value is SettingsSection {
-  return value === 'general' || value === 'members' || value === 'groups' || value === 'branding'
+  return value === 'general' || value === 'members' || value === 'groups' || value === 'branding' || value === 'integrations'
 }
 
 const activeSection = computed<SettingsSection>(() => {
@@ -1110,6 +1112,9 @@ function goBack() {
 
       <!-- Branding Section -->
       <OrgBrandingSettings v-if="activeSection === 'branding'" :org-id="orgId" />
+
+      <!-- Integrations Section -->
+      <GitHubAppSettings v-if="activeSection === 'integrations'" :org-id="orgId" :is-admin="isAdmin" />
 
       <!-- SSO Section -->
       <section v-if="activeSection === 'general'" class="rounded-xl border border-slate-200 bg-white p-6">

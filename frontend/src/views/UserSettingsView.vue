@@ -3,6 +3,7 @@ import { Check, Github, Loader2, Unplug } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCopilot } from '../composables/useCopilot'
+import { useOrganization } from '../composables/useOrganization'
 
 const route = useRoute()
 const {
@@ -13,6 +14,8 @@ const {
   connect,
   disconnect,
 } = useCopilot()
+
+const { currentOrgId } = useOrganization()
 
 const loading = ref(true)
 const showSuccessToast = ref(false)
@@ -88,8 +91,9 @@ async function handleDisconnect() {
             <div class="shrink-0">
               <button
                 v-if="!loading && !isConnected"
-                class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white cursor-pointer border-none transition hover:bg-slate-800"
-                @click="connect"
+                class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white cursor-pointer border-none transition hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="!currentOrgId"
+                @click="currentOrgId && connect(currentOrgId)"
               >
                 <Github :size="14" />
                 Connect
