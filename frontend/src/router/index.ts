@@ -1,9 +1,4 @@
-import {
-  createRouter,
-  createWebHistory,
-  type RouteLocationNormalizedLoaded,
-  type RouteRecordRaw,
-} from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalizedLoaded, type RouteRecordRaw } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 
 const defaultDescription =
@@ -13,7 +8,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     redirect: {
-      path: '/dashboards',
+      path: '/app/dashboards',
     },
   },
   {
@@ -29,188 +24,156 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/app',
     redirect: {
-      path: '/dashboards',
+      path: '/app/dashboards',
     },
   },
   {
-    path: '/dashboards',
+    path: '/app/dashboards',
     name: 'dashboards',
     component: () => import('../views/DashboardsView.vue'),
-    alias: '/app/dashboards',
+    alias: '/dashboards',
     meta: {
-      layout: 'app',
+      appLayout: 'app',
       title: 'Dashboards | Ace',
       description: 'Browse and organize dashboards in Ace.',
     },
   },
   {
-    path: '/dashboards/:id',
+    path: '/app/dashboards/:id',
     name: 'dashboard-detail',
     component: () => import('../views/DashboardDetailView.vue'),
-    alias: '/app/dashboards/:id',
+    alias: '/dashboards/:id',
     meta: {
-      layout: 'app',
+      appLayout: 'app',
       title: 'Dashboard | Ace',
       description: 'Inspect, configure, and monitor dashboard panels in Ace.',
     },
   },
   {
-    path: '/dashboards/:id/settings',
-    redirect: (to) => ({
-      path: `/dashboards/${to.params.id}/settings/general`,
-      query: to.query,
-    }),
-  },
-  {
     path: '/app/dashboards/:id/settings',
-    redirect: (to) => ({
-      path: `/dashboards/${to.params.id}/settings/general`,
+    redirect: to => ({
+      path: `/app/dashboards/${to.params.id}/settings/general`,
       query: to.query,
     }),
   },
   {
-    path: '/dashboards/:id/settings/:section',
+    path: '/dashboards/:id/settings',
+    redirect: to => ({
+      path: `/app/dashboards/${to.params.id}/settings/general`,
+      query: to.query,
+    }),
+  },
+  {
+    path: '/app/dashboards/:id/settings/:section',
     name: 'dashboard-settings',
     component: () => import('../views/DashboardSettingsView.vue'),
-    alias: '/app/dashboards/:id/settings/:section',
+    alias: '/dashboards/:id/settings/:section',
     meta: {
-      layout: 'app',
+      appLayout: 'app',
       title: 'Dashboard Settings | Ace',
       description: 'Configure dashboard settings, YAML, and permissions.',
     },
   },
   {
-    path: '/alerts',
-    name: 'alerts',
-    component: () => import('../views/AlertsView.vue'),
-    alias: '/app/alerts',
-    meta: {
-      layout: 'app',
-      title: 'Alerts | Ace',
-      description: 'Monitor active alerts and alerting rule groups from VMAlert datasources.',
-    },
-  },
-  {
     path: '/app/explore',
     redirect: {
-      path: '/explore/metrics',
+      path: '/app/explore/metrics',
     },
   },
   {
     path: '/explore',
     redirect: {
-      path: '/explore/metrics',
+      path: '/app/explore/metrics',
     },
   },
   {
-    path: '/explore/metrics',
+    path: '/app/explore/metrics',
     name: 'explore-metrics',
     component: () => import('../views/Explore.vue'),
-    alias: '/app/explore/metrics',
+    alias: '/explore/metrics',
     meta: {
-      layout: 'app',
+      appLayout: 'app',
       title: 'Explore Metrics | Ace',
       description: 'Query and visualize metrics from connected datasources.',
     },
   },
   {
-    path: '/explore/logs',
+    path: '/app/explore/logs',
     name: 'explore-logs',
     component: () => import('../views/ExploreLogs.vue'),
-    alias: '/app/explore/logs',
+    alias: '/explore/logs',
     meta: {
-      layout: 'app',
+      appLayout: 'app',
       title: 'Explore Logs | Ace',
       description: 'Search and analyze logs with Ace Explore.',
     },
   },
   {
-    path: '/explore/traces',
+    path: '/app/explore/traces',
     name: 'explore-traces',
     component: () => import('../views/ExploreTraces.vue'),
-    alias: '/app/explore/traces',
+    alias: '/explore/traces',
     meta: {
-      layout: 'app',
+      appLayout: 'app',
       title: 'Explore Traces | Ace',
       description: 'Investigate trace timelines, spans, and service dependencies.',
     },
   },
   {
-    path: '/settings/org/:id',
-    redirect: (to) => ({
-      path: `/settings/org/${to.params.id}/general`,
-      query: to.query,
-    }),
-  },
-  {
     path: '/app/settings/org/:id',
-    redirect: (to) => ({
-      path: `/settings/org/${to.params.id}/general`,
+    redirect: to => ({
+      path: `/app/settings/org/${to.params.id}/general`,
       query: to.query,
     }),
   },
   {
-    path: '/settings/org/:id/:section',
+    path: '/settings/org/:id',
+    redirect: to => ({
+      path: `/app/settings/org/${to.params.id}/general`,
+      query: to.query,
+    }),
+  },
+  {
+    path: '/app/settings/org/:id/:section',
     name: 'org-settings',
     component: () => import('../views/OrganizationSettings.vue'),
-    alias: '/app/settings/org/:id/:section',
+    alias: '/settings/org/:id/:section',
     meta: {
-      layout: 'app',
+      appLayout: 'app',
       title: 'Organization Settings | Ace',
       description: 'Manage organization profile, members, groups, and authentication providers.',
     },
   },
+  { path: '/app/datasources', redirect: '/app/settings' },
   {
-    path: '/datasources',
-    name: 'datasources',
-    component: () => import('../views/DataSourceSettings.vue'),
-    alias: '/app/datasources',
-    meta: {
-      layout: 'app',
-      title: 'Data Sources | Ace',
-      description: 'Configure and test datasources for metrics, logs, and traces.',
-    },
-  },
-  {
-    path: '/datasources/new',
+    path: '/app/datasources/new',
     name: 'datasource-create',
     component: () => import('../views/DataSourceCreateView.vue'),
-    alias: '/app/datasources/new',
+    alias: '/datasources/new',
     meta: {
-      layout: 'app',
+      appLayout: 'app',
       title: 'Add Data Source | Dash',
       description: 'Configure and test a datasource before saving it to your organization.',
     },
   },
   {
-    path: '/datasources/:id/edit',
+    path: '/app/datasources/:id/edit',
     name: 'datasource-edit',
     component: () => import('../views/DataSourceCreateView.vue'),
-    alias: '/app/datasources/:id/edit',
+    alias: '/datasources/:id/edit',
     meta: {
-      layout: 'app',
+      appLayout: 'app',
       title: 'Edit Data Source | Dash',
       description: 'Update and validate datasource settings before saving changes.',
     },
   },
   {
-    path: '/settings/user',
-    name: 'user-settings',
-    component: () => import('../views/UserSettingsView.vue'),
-    alias: '/app/settings/user',
-    meta: {
-      layout: 'app',
-      title: 'User Settings | Ace',
-      description: 'Manage your profile, integrations, and connected services.',
-    },
-  },
-  {
-    path: '/settings/privacy',
+    path: '/app/settings/privacy',
     name: 'privacy-settings',
     component: () => import('../views/PrivacySettingsView.vue'),
-    alias: '/app/settings/privacy',
+    alias: '/settings/privacy',
     meta: {
-      layout: 'app',
+      appLayout: 'app',
       title: 'Privacy Settings | Ace',
       description: 'Manage analytics, consent, session recording, and feature flag preferences.',
     },
@@ -218,7 +181,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/convert/grafana',
     redirect: {
-      path: '/dashboards',
+      path: '/app/dashboards',
       query: {
         newDashboardMode: 'grafana',
       },
@@ -254,8 +217,7 @@ function upsertCanonical(url: string) {
 
 function applySeoMetadata(to: RouteLocationNormalizedLoaded) {
   const title = typeof to.meta.title === 'string' ? to.meta.title : 'Ace'
-  const description =
-    typeof to.meta.description === 'string' ? to.meta.description : defaultDescription
+  const description = typeof to.meta.description === 'string' ? to.meta.description : defaultDescription
   const url = `${window.location.origin}${to.fullPath}`
 
   document.title = title
@@ -281,7 +243,7 @@ router.beforeEach(async (to, _from, next) => {
   if (to.meta.public) {
     // If authenticated and going to login, redirect to dashboards
     if (isAuthenticated.value && to.name === 'login') {
-      next('/dashboards')
+      next('/app/dashboards')
       return
     }
     next()

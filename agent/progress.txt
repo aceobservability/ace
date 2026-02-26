@@ -1,0 +1,7 @@
+## 2026-02-26
+- Ticket #428 completed: Move datasources from sidebar to Organisation Settings
+- Added 'datasources' tab to OrganizationSettings.vue (SettingsSection type + settingsSections array + section template)
+- Created DataSourceSettingsPanel.vue component (list, add, edit, delete, test)
+- Removed datasources entry from Sidebar.vue
+- Updated router: /app/datasources redirects to /app/settings
+- Validation: pnpm type-check + pnpm build passed
