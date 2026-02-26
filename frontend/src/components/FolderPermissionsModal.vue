@@ -168,27 +168,27 @@ onMounted(loadData)
 
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="closeModal">
-    <div class="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-lg max-h-[80vh] overflow-y-auto" data-testid="folder-permissions-modal">
+    <div class="w-full max-w-lg rounded-xl border border-border bg-surface-raised shadow-lg max-h-[80vh] overflow-y-auto" data-testid="folder-permissions-modal">
       <header class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
         <div>
-          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900"><Shield :size="18" /> Folder Permissions</h2>
+          <h2 class="flex items-center gap-2 text-lg font-semibold text-text-primary"><Shield :size="18" /> Folder Permissions</h2>
           <p class="mt-1 text-sm text-slate-500">{{ props.folder.name }}</p>
         </div>
-        <button class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-400 hover:text-slate-600 cursor-pointer transition" @click="closeModal" aria-label="Close permissions editor">
+        <button class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-border bg-surface-raised text-slate-400 hover:text-slate-600 cursor-pointer transition" @click="closeModal" aria-label="Close permissions editor">
           <X :size="18" />
         </button>
       </header>
 
-      <div v-if="loading" class="px-6 py-4 text-sm text-slate-500 border border-dashed border-slate-200 rounded-lg m-6">Loading permissions...</div>
+      <div v-if="loading" class="px-6 py-4 text-sm text-slate-500 border border-dashed border-border rounded-lg m-6">Loading permissions...</div>
       <div v-else-if="error" class="mx-6 mt-4 px-3 py-2 border border-rose-200 rounded-lg bg-rose-50 text-sm text-rose-600">{{ error }}</div>
       <div v-else class="px-6 py-4 flex flex-col gap-3">
-        <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <div class="flex items-center gap-3 rounded-lg border border-border bg-surface-overlay p-3">
           <div class="grid grid-cols-[130px_minmax(0,1fr)_120px] max-md:grid-cols-1 gap-2 flex-1 mb-0">
-            <select v-model="newPrincipalType" data-testid="principal-type-select" :disabled="saving" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
+            <select v-model="newPrincipalType" data-testid="principal-type-select" :disabled="saving" class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
               <option value="user">User</option>
               <option value="group">Group</option>
             </select>
-            <select v-model="newPrincipalId" data-testid="principal-select" :disabled="saving || principalOptions.length === 0" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
+            <select v-model="newPrincipalId" data-testid="principal-select" :disabled="saving || principalOptions.length === 0" class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
               <option value="">Select {{ newPrincipalType }}</option>
               <option
                 v-for="option in principalOptions"
@@ -198,7 +198,7 @@ onMounted(loadData)
                 {{ option.label }}
               </option>
             </select>
-            <select v-model="newPermission" data-testid="permission-select" :disabled="saving" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
+            <select v-model="newPermission" data-testid="permission-select" :disabled="saving" class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
               <option value="view">View</option>
               <option value="edit">Edit</option>
               <option value="admin">Admin</option>
@@ -209,10 +209,10 @@ onMounted(loadData)
           </button>
         </div>
 
-        <div v-if="entries.length === 0" class="px-4 py-3 text-sm text-slate-500 border border-dashed border-slate-200 rounded-lg">
+        <div v-if="entries.length === 0" class="px-4 py-3 text-sm text-slate-500 border border-dashed border-border rounded-lg">
           No explicit ACL entries. Organization role defaults apply.
         </div>
-        <div v-else class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <div v-else class="rounded-xl border border-border bg-surface-raised overflow-hidden">
           <div class="bg-slate-900 text-xs font-mono uppercase tracking-[0.07em] text-slate-300 grid grid-cols-[1fr_auto] px-4 py-3">
             <span>Principal</span>
             <span>Actions</span>
@@ -224,7 +224,7 @@ onMounted(loadData)
             :data-testid="`permission-entry-${index}`"
           >
             <div class="flex flex-col min-w-0">
-              <strong class="text-sm text-slate-900 truncate">{{ principalLabel(entry) }}</strong>
+              <strong class="text-sm text-text-primary truncate">{{ principalLabel(entry) }}</strong>
               <span class="mt-1 w-fit px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs uppercase tracking-wide">{{ entry.principal_type }}</span>
             </div>
             <div class="flex items-center gap-2 max-md:flex-col max-md:w-full max-md:items-start">
@@ -233,7 +233,7 @@ onMounted(loadData)
                 :data-testid="`entry-permission-${index}`"
                 :disabled="saving"
                 @change="updateEntryPermission(index, ($event.target as HTMLSelectElement).value as ResourcePermissionLevel)"
-                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500 max-md:w-full"
+                class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500 max-md:w-full"
               >
                 <option value="view">View</option>
                 <option value="edit">Edit</option>
@@ -255,7 +255,7 @@ onMounted(loadData)
         <div v-if="successMessage" class="px-3 py-2 border border-emerald-200 rounded-lg bg-emerald-50 text-sm text-emerald-600">{{ successMessage }}</div>
 
         <div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
-          <button class="inline-flex items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer transition disabled:opacity-60 disabled:cursor-not-allowed" @click="closeModal" :disabled="saving">Close</button>
+          <button class="inline-flex items-center justify-center gap-1 rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm font-medium text-slate-700 hover:bg-surface-overlay cursor-pointer transition disabled:opacity-60 disabled:cursor-not-allowed" @click="closeModal" :disabled="saving">Close</button>
           <button class="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 cursor-pointer transition disabled:opacity-60 disabled:cursor-not-allowed" data-testid="save-folder-permissions" @click="savePermissions" :disabled="saving">
             {{ saving ? 'Saving...' : 'Save Permissions' }}
           </button>

@@ -58,12 +58,12 @@ function handleQueryInput(event: Event) {
 <template>
   <div class="flex flex-col gap-3.5" :class="{ 'opacity-60 pointer-events-none': props.disabled }">
     <div class="flex flex-col gap-1.5">
-      <label for="clickhouse-signal" class="text-sm font-medium text-slate-900">Signal Type</label>
+      <label for="clickhouse-signal" class="text-sm font-medium text-text-primary">Signal Type</label>
       <select
         id="clickhouse-signal"
         :value="props.signal"
         :disabled="props.disabled"
-        class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+        class="w-full rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed"
         @change="handleSignalChange"
       >
         <option value="logs">Logs</option>
@@ -73,7 +73,7 @@ function handleQueryInput(event: Event) {
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label for="clickhouse-query" class="text-sm font-medium text-slate-900">SQL</label>
+      <label for="clickhouse-query" class="text-sm font-medium text-text-primary">SQL</label>
       <textarea
         id="clickhouse-query"
         :value="props.modelValue"
@@ -81,17 +81,17 @@ function handleQueryInput(event: Event) {
         :placeholder="placeholder"
         rows="7"
         spellcheck="false"
-        class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-3 text-sm font-mono text-slate-900 min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+        class="w-full rounded-lg border border-border bg-surface-raised px-3.5 py-3 text-sm font-mono text-text-primary min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed"
         @input="handleQueryInput"
       />
     </div>
 
-    <div class="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3">
-      <p class="m-0 text-xs text-slate-500">Expected columns for {{ props.signal }} queries:</p>
+    <div class="rounded-lg border border-border bg-surface-overlay px-3.5 py-3">
+      <p class="m-0 text-xs text-text-muted">Expected columns for {{ props.signal }} queries:</p>
       <p class="mt-2 mb-0 flex flex-wrap gap-1.5">
-        <code v-for="column in expectedColumns" :key="column" class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{{ column }}</code>
+        <code v-for="column in expectedColumns" :key="column" class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-xs text-text-secondary font-mono">{{ column }}</code>
       </p>
-      <p class="mt-2.5 mb-0 text-xs text-slate-400 leading-relaxed">Time placeholders supported: <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{start}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{end}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{step}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{start_ms}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{end_ms}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{start_ns}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-200/50 text-xs text-slate-600 font-mono">{end_ns}</code>.</p>
+      <p class="mt-2.5 mb-0 text-xs text-slate-400 leading-relaxed">Time placeholders supported: <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-xs text-text-secondary font-mono">{start}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-xs text-text-secondary font-mono">{end}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-xs text-text-secondary font-mono">{step}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-xs text-text-secondary font-mono">{start_ms}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-xs text-text-secondary font-mono">{end_ms}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-xs text-text-secondary font-mono">{start_ns}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/25 text-xs text-text-secondary font-mono">{end_ns}</code>.</p>
     </div>
   </div>
 </template>

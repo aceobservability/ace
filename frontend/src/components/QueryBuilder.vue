@@ -147,11 +147,11 @@ function getLabelValues(labelName: string): string[] {
 <template>
   <div class="flex flex-col gap-4" :class="{ 'opacity-60 pointer-events-none': disabled }">
     <!-- Mode Toggle -->
-    <div class="flex rounded-lg bg-slate-100 p-1 w-fit">
+    <div class="flex rounded-lg bg-surface-overlay p-1 w-fit">
       <button
         type="button"
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-slate-900"
-        :class="{ 'bg-white text-slate-900 shadow-sm': mode === 'builder' }"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-text-primary"
+        :class="{ 'bg-surface-raised text-text-primary shadow-sm': mode === 'builder' }"
         @click="mode = 'builder'"
         :disabled="disabled || !builderAvailable"
         :title="!builderAvailable ? 'Query cannot be edited in builder mode' : ''"
@@ -161,8 +161,8 @@ function getLabelValues(labelName: string): string[] {
       </button>
       <button
         type="button"
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-slate-900"
-        :class="{ 'bg-white text-slate-900 shadow-sm': mode === 'code' }"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-text-primary"
+        :class="{ 'bg-surface-raised text-text-primary shadow-sm': mode === 'code' }"
         @click="mode = 'code'"
         :disabled="disabled"
       >
@@ -175,14 +175,14 @@ function getLabelValues(labelName: string): string[] {
     <div v-if="mode === 'builder'" class="flex flex-col gap-4">
       <!-- Metric Selector -->
       <div class="flex flex-col gap-2">
-        <label class="text-sm font-medium text-slate-900">Metric</label>
+        <label class="text-sm font-medium text-text-primary">Metric</label>
         <div class="relative">
           <div class="relative flex items-center">
             <Search :size="14" class="absolute left-3 text-slate-400 pointer-events-none" />
             <input
               v-model="metricSearch"
               type="text"
-              class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 pl-9 text-sm text-slate-900 transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+              class="w-full rounded-lg border border-border bg-surface-overlay px-3 py-2 pl-9 text-sm text-text-primary transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               placeholder="Search metrics..."
               :disabled="disabled || loadingMetrics"
               @focus="showMetricDropdown = true"
@@ -191,12 +191,12 @@ function getLabelValues(labelName: string): string[] {
             <span v-if="metric" class="absolute right-3 rounded bg-emerald-600 px-2 py-0.5 text-xs font-mono text-white">{{ metric }}</span>
           </div>
 
-          <div v-if="showMetricDropdown && filteredMetrics.length > 0" class="absolute top-[calc(100%+4px)] left-0 right-0 max-h-[250px] overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg z-[100]">
+          <div v-if="showMetricDropdown && filteredMetrics.length > 0" class="absolute top-[calc(100%+4px)] left-0 right-0 max-h-[250px] overflow-y-auto bg-surface-raised border border-border rounded-lg shadow-lg z-[100]">
             <div
               v-for="m in filteredMetrics"
               :key="m"
-              class="px-3 py-2 text-sm font-mono text-slate-900 cursor-pointer transition-colors duration-150 hover:bg-slate-50"
-              :class="{ 'bg-emerald-50 text-emerald-700': m === metric }"
+              class="px-3 py-2 text-sm font-mono text-text-primary cursor-pointer transition-colors duration-150 hover:bg-surface-overlay"
+              :class="{ 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400': m === metric }"
               @mousedown.prevent="selectMetric(m)"
             >
               {{ m }}
@@ -209,10 +209,10 @@ function getLabelValues(labelName: string): string[] {
       <!-- Label Filters -->
       <div class="flex flex-col gap-2">
         <div class="flex justify-between items-center">
-          <label class="text-sm font-medium text-slate-900">Label Filters</label>
+          <label class="text-sm font-medium text-text-primary">Label Filters</label>
           <button
             type="button"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 hover:enabled:bg-slate-50 hover:enabled:text-slate-900"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 hover:enabled:bg-surface-overlay hover:enabled:text-text-primary"
             @click="addLabelFilter"
             :disabled="disabled"
           >
@@ -221,7 +221,7 @@ function getLabelValues(labelName: string): string[] {
           </button>
         </div>
 
-        <div v-if="labelFilters.length === 0" class="p-4 text-center text-slate-400 text-sm bg-slate-50 rounded-lg">
+        <div v-if="labelFilters.length === 0" class="p-4 text-center text-slate-400 text-sm bg-surface-overlay rounded-lg">
           No label filters. Click "Add Filter" to filter by labels.
         </div>
 
@@ -235,7 +235,7 @@ function getLabelValues(labelName: string): string[] {
             <select
               :value="filter.label"
               @change="handleLabelChange(filter, ($event.target as HTMLSelectElement).value)"
-              class="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer focus:outline-none focus:border-emerald-500"
+              class="flex-1 min-w-0 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer focus:outline-none focus:border-emerald-500"
               :disabled="disabled"
             >
               <option value="">Select label</option>
@@ -248,7 +248,7 @@ function getLabelValues(labelName: string): string[] {
             <select
               :value="filter.operator"
               @change="updateLabelFilter(filter.id, { operator: ($event.target as HTMLSelectElement).value as any })"
-              class="w-[70px] flex-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-600 cursor-pointer focus:outline-none focus:border-emerald-500"
+              class="w-[70px] flex-none rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm font-mono text-text-secondary cursor-pointer focus:outline-none focus:border-emerald-500"
               :disabled="disabled"
             >
               <option v-for="op in LABEL_OPERATORS" :key="op.value" :value="op.value">
@@ -261,7 +261,7 @@ function getLabelValues(labelName: string): string[] {
               v-if="getLabelValues(filter.label).length > 0"
               :value="filter.value"
               @change="updateLabelFilter(filter.id, { value: ($event.target as HTMLSelectElement).value })"
-              class="flex-[1.5] min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer focus:outline-none focus:border-emerald-500"
+              class="flex-[1.5] min-w-0 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer focus:outline-none focus:border-emerald-500"
               :disabled="disabled || loadingLabelValues === filter.label"
             >
               <option value="">Select value</option>
@@ -274,7 +274,7 @@ function getLabelValues(labelName: string): string[] {
               type="text"
               :value="filter.value"
               @input="updateLabelFilter(filter.id, { value: ($event.target as HTMLInputElement).value })"
-              class="flex-[1.5] min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500"
+              class="flex-[1.5] min-w-0 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-emerald-500"
               placeholder="Value"
               :disabled="disabled"
             />
@@ -294,11 +294,11 @@ function getLabelValues(labelName: string): string[] {
 
       <!-- Aggregation -->
       <div class="flex flex-col gap-2">
-        <label class="text-sm font-medium text-slate-900">Aggregation</label>
+        <label class="text-sm font-medium text-text-primary">Aggregation</label>
         <div class="flex gap-4 items-center">
           <select
             v-model="aggregation"
-            class="flex-1 max-w-[200px] rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer focus:outline-none focus:border-emerald-500"
+            class="flex-1 max-w-[200px] rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer focus:outline-none focus:border-emerald-500"
             :disabled="disabled"
           >
             <option v-for="agg in AGGREGATION_FUNCTIONS" :key="agg.value" :value="agg.value">
@@ -308,11 +308,11 @@ function getLabelValues(labelName: string): string[] {
 
           <!-- Range input for rate/increase functions -->
           <div v-if="aggregationRequiresRange" class="flex items-center gap-2">
-            <label class="text-sm text-slate-500">Range:</label>
+            <label class="text-sm text-text-muted">Range:</label>
             <input
               v-model="rangeInterval"
               type="text"
-              class="w-20 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-900 focus:outline-none focus:border-emerald-500"
+              class="w-20 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm font-mono text-text-primary focus:outline-none focus:border-emerald-500"
               placeholder="5m"
               :disabled="disabled"
             />
@@ -320,12 +320,12 @@ function getLabelValues(labelName: string): string[] {
 
           <!-- K value for topk/bottomk -->
           <div v-if="aggregationRequiresK" class="flex items-center gap-2">
-            <label class="text-sm text-slate-500">K:</label>
+            <label class="text-sm text-text-muted">K:</label>
             <input
               v-model.number="kValue"
               type="number"
               min="1"
-              class="w-[60px] rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500"
+              class="w-[60px] rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-emerald-500"
               :disabled="disabled"
             />
           </div>
@@ -336,7 +336,7 @@ function getLabelValues(labelName: string): string[] {
       <div v-if="aggregation" class="flex flex-col gap-2">
         <button
           type="button"
-          class="flex items-center gap-2 py-2 bg-transparent border-none cursor-pointer text-slate-900 w-full hover:text-emerald-600"
+          class="flex items-center gap-2 py-2 bg-transparent border-none cursor-pointer text-text-primary w-full hover:text-emerald-600"
           @click="showGroupBy = !showGroupBy"
           :disabled="disabled"
         >
@@ -345,12 +345,12 @@ function getLabelValues(labelName: string): string[] {
           <component :is="showGroupBy ? ChevronUp : ChevronDown" :size="14" />
         </button>
 
-        <div v-if="showGroupBy" class="p-3 bg-slate-50 rounded-lg">
+        <div v-if="showGroupBy" class="p-3 bg-surface-overlay rounded-lg">
           <div class="flex flex-wrap gap-2">
             <label
               v-for="label in availableLabelsForGroupBy"
               :key="label"
-              class="flex items-center gap-1.5 px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs text-slate-900 cursor-pointer transition-all duration-200 hover:border-emerald-500"
+              class="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface-raised border border-border rounded text-xs text-text-primary cursor-pointer transition-all duration-200 hover:border-emerald-500"
             >
               <input
                 type="checkbox"
@@ -366,9 +366,9 @@ function getLabelValues(labelName: string): string[] {
       </div>
 
       <!-- Preview -->
-      <div class="flex flex-col gap-2 mt-2 pt-4 border-t border-slate-100">
-        <label class="text-sm font-medium text-slate-900">Generated PromQL</label>
-        <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 min-h-[48px]">
+      <div class="flex flex-col gap-2 mt-2 pt-4 border-t border-border">
+        <label class="text-sm font-medium text-text-primary">Generated PromQL</label>
+        <div class="rounded-lg border border-border bg-surface-overlay px-4 py-3 min-h-[48px]">
           <code v-if="generatedQuery" class="font-mono text-sm text-emerald-600 break-all">{{ generatedQuery }}</code>
           <span v-else class="text-slate-400 text-sm">Select a metric to generate query</span>
         </div>
@@ -377,7 +377,7 @@ function getLabelValues(labelName: string): string[] {
 
     <!-- Code Mode -->
     <div v-else class="flex flex-col gap-4">
-      <label class="text-sm font-medium text-slate-900">PromQL Query</label>
+      <label class="text-sm font-medium text-text-primary">PromQL Query</label>
       <MonacoQueryEditor
         v-model="codeQuery"
         :disabled="disabled"

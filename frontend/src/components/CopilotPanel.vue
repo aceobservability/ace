@@ -99,10 +99,10 @@ function formatMessage(content: string): string {
   // Replace code blocks with styled pre/code
   return content.replace(
     /```(\w*)\n?([\s\S]*?)```/g,
-    '<pre class="rounded-lg bg-slate-950 p-3 my-2 overflow-x-auto"><code class="text-xs font-mono text-emerald-400 whitespace-pre-wrap">$2</code></pre>',
+    '<pre class="rounded-lg bg-slate-900 p-3 my-2 overflow-x-auto"><code class="text-xs font-mono text-emerald-400 whitespace-pre-wrap">$2</code></pre>',
   ).replace(
     /`([^`]+)`/g,
-    '<code class="rounded bg-slate-950 px-1.5 py-0.5 text-xs font-mono text-emerald-400">$1</code>',
+    '<code class="rounded bg-slate-900 px-1.5 py-0.5 text-xs font-mono text-emerald-400">$1</code>',
   ).replace(/\n/g, '<br />')
 }
 
@@ -113,15 +113,15 @@ async function handleDisconnect() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full w-80 shrink-0 bg-slate-900 border-l border-slate-700">
+  <div class="flex flex-col h-full w-80 shrink-0 bg-surface-raised border-l border-border">
     <!-- Header -->
-    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-border">
       <div class="flex items-center gap-2">
-        <Sparkles :size="16" class="text-amber-400" />
-        <span class="text-sm font-semibold text-slate-200">Copilot</span>
+        <Sparkles :size="16" class="text-emerald-500" />
+        <span class="text-sm font-semibold text-text-primary">Copilot</span>
       </div>
       <button
-        class="flex items-center justify-center h-6 w-6 rounded bg-transparent border-none text-slate-400 cursor-pointer hover:text-slate-200 hover:bg-slate-800"
+        class="flex items-center justify-center h-6 w-6 rounded bg-transparent border-none text-text-muted cursor-pointer hover:text-text-primary hover:bg-surface-overlay"
         @click="emit('close')"
         title="Close panel"
       >
@@ -131,13 +131,13 @@ async function handleDisconnect() {
 
     <!-- Not connected state -->
     <div v-if="!isConnected" class="flex flex-col items-center justify-center gap-4 p-6 text-center flex-1">
-      <Sparkles :size="32" class="text-amber-400" />
+      <Sparkles :size="32" class="text-emerald-500" />
       <div class="flex flex-col gap-2">
-        <h3 class="text-sm font-semibold text-slate-200 m-0">GitHub Copilot</h3>
-        <p class="text-xs text-slate-400 m-0">Connect your GitHub account to get AI-assisted query writing powered by your Copilot subscription.</p>
+        <h3 class="text-sm font-semibold text-text-primary m-0">GitHub Copilot</h3>
+        <p class="text-xs text-text-secondary m-0">Connect your GitHub account to get AI-assisted query writing powered by your Copilot subscription.</p>
       </div>
       <button
-        class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 cursor-pointer border-none transition hover:bg-amber-600"
+        class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white cursor-pointer border-none transition hover:bg-emerald-700"
         :disabled="!currentOrgId"
         @click="currentOrgId && connect(currentOrgId)"
       >
@@ -147,23 +147,23 @@ async function handleDisconnect() {
 
     <!-- Connected but no subscription -->
     <div v-else-if="!hasCopilot" class="flex flex-col items-center justify-center gap-4 p-6 text-center flex-1">
-      <Sparkles :size="32" class="text-slate-500" />
+      <Sparkles :size="32" class="text-text-muted" />
       <div class="flex flex-col gap-2">
-        <h3 class="text-sm font-semibold text-slate-200 m-0">No Copilot Subscription</h3>
-        <p class="text-xs text-slate-400 m-0">
-          Connected as <strong class="text-slate-300">{{ githubUsername }}</strong>, but no active Copilot subscription was detected.
+        <h3 class="text-sm font-semibold text-text-primary m-0">No Copilot Subscription</h3>
+        <p class="text-xs text-text-secondary m-0">
+          Connected as <strong class="text-text-primary">{{ githubUsername }}</strong>, but no active Copilot subscription was detected.
         </p>
         <a
           href="https://github.com/features/copilot"
           target="_blank"
           rel="noopener noreferrer"
-          class="text-xs text-amber-400 hover:text-amber-300"
+          class="text-xs text-emerald-500 hover:text-emerald-600"
         >
           Learn about GitHub Copilot
         </a>
       </div>
       <button
-        class="inline-flex items-center gap-1 text-xs text-slate-500 cursor-pointer border-none bg-transparent hover:text-slate-300"
+        class="inline-flex items-center gap-1 text-xs text-text-muted cursor-pointer border-none bg-transparent hover:text-text-primary"
         @click="handleDisconnect"
       >
         <Unplug :size="12" />
@@ -176,25 +176,25 @@ async function handleDisconnect() {
       <!-- Messages -->
       <div ref="messagesContainer" class="flex flex-col gap-3 flex-1 overflow-y-auto p-4">
         <div v-if="messages.length === 0" class="flex flex-col items-center justify-center gap-2 text-center py-8 flex-1">
-          <Sparkles :size="24" class="text-amber-400/50" />
-          <p class="text-xs text-slate-500 m-0">Ask Copilot to help write {{ datasourceType }} queries</p>
+          <Sparkles :size="24" class="text-emerald-500/50" />
+          <p class="text-xs text-text-muted m-0">Ask Copilot to help write {{ datasourceType }} queries</p>
         </div>
 
         <div v-for="(msg, index) in messages" :key="index" class="flex flex-col gap-1">
           <!-- User message -->
           <div v-if="msg.role === 'user'" class="self-end max-w-[85%]">
-            <div class="rounded-xl bg-slate-700 px-3 py-2 text-sm text-slate-100">
+            <div class="rounded-xl bg-emerald-600 px-3 py-2 text-sm text-white">
               {{ msg.content }}
             </div>
           </div>
 
           <!-- Assistant message -->
           <div v-else class="self-start max-w-[95%]">
-            <div class="rounded-xl bg-slate-800 px-3 py-2 text-sm text-slate-200">
+            <div class="rounded-xl bg-surface-overlay px-3 py-2 text-sm text-text-primary">
               <div v-html="formatMessage(msg.content)" />
               <button
                 v-if="hasCodeBlock(msg.content) && !isLoading"
-                class="mt-2 inline-flex items-center gap-1 rounded bg-amber-500 px-2 py-1 text-xs font-semibold text-slate-950 cursor-pointer border-none transition hover:bg-amber-600"
+                class="mt-2 inline-flex items-center gap-1 rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white cursor-pointer border-none transition hover:bg-emerald-700"
                 @click="handleInsertQuery(msg.content)"
               >
                 Insert query
@@ -205,23 +205,23 @@ async function handleDisconnect() {
 
         <!-- Loading indicator -->
         <div v-if="isLoading && messages.length > 0 && messages[messages.length - 1]?.content === ''" class="self-start">
-          <div class="rounded-xl bg-slate-800 px-3 py-2">
-            <Loader2 :size="14" class="animate-spin text-amber-400" />
+          <div class="rounded-xl bg-surface-overlay px-3 py-2">
+            <Loader2 :size="14" class="animate-spin text-emerald-500" />
           </div>
         </div>
       </div>
 
       <!-- Error -->
-      <div v-if="error" class="px-4 py-2 text-xs text-rose-400 bg-rose-500/10 border-t border-rose-500/20">
+      <div v-if="error" class="px-4 py-2 text-xs text-rose-500 bg-rose-500/10 border-t border-rose-500/20">
         {{ error }}
       </div>
 
       <!-- Input area -->
-      <div class="flex flex-col gap-2 border-t border-slate-700 p-3">
+      <div class="flex flex-col gap-2 border-t border-border p-3">
         <div class="flex gap-2">
           <textarea
             v-model="inputText"
-            class="flex-1 resize-none rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-amber-500 min-h-[38px] max-h-[120px]"
+            class="flex-1 resize-none rounded-lg bg-surface-overlay border border-border px-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-emerald-500 min-h-[38px] max-h-[120px]"
             placeholder="Ask about queries..."
             rows="1"
             @keydown="handleKeydown"
@@ -229,7 +229,7 @@ async function handleDisconnect() {
           />
           <button
             class="flex items-center justify-center h-[38px] w-[38px] shrink-0 rounded-lg border-none cursor-pointer transition"
-            :class="inputText.trim() && !isLoading ? 'bg-amber-500 text-slate-950 hover:bg-amber-600' : 'bg-slate-800 text-slate-500 cursor-not-allowed'"
+            :class="inputText.trim() && !isLoading ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-surface-overlay text-text-muted cursor-not-allowed'"
             :disabled="!inputText.trim() || isLoading"
             @click="handleSend"
             title="Send message"
@@ -241,7 +241,7 @@ async function handleDisconnect() {
         <div class="flex items-center justify-between">
           <button
             v-if="messages.length > 0"
-            class="inline-flex items-center gap-1 text-xs text-slate-500 cursor-pointer border-none bg-transparent hover:text-slate-300"
+            class="inline-flex items-center gap-1 text-xs text-text-muted cursor-pointer border-none bg-transparent hover:text-text-primary"
             @click="clearChat"
           >
             <Trash2 :size="12" />
@@ -249,7 +249,7 @@ async function handleDisconnect() {
           </button>
           <span v-else />
           <button
-            class="inline-flex items-center gap-1 text-xs text-slate-500 cursor-pointer border-none bg-transparent hover:text-slate-300"
+            class="inline-flex items-center gap-1 text-xs text-text-muted cursor-pointer border-none bg-transparent hover:text-text-primary"
             @click="handleDisconnect"
           >
             <Unplug :size="12" />

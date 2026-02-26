@@ -40,13 +40,13 @@ async function handleDisconnect() {
 <template>
   <div class="flex flex-col min-h-full px-8 py-6">
     <header class="mb-6">
-      <h1 class="text-2xl font-bold text-slate-900 m-0">User Settings</h1>
+      <h1 class="text-2xl font-bold text-text-primary m-0">User Settings</h1>
     </header>
 
     <!-- Success toast -->
     <div
       v-if="showSuccessToast"
-      class="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+      class="mb-4 flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400"
     >
       <Check :size="16" />
       GitHub Copilot connected successfully!
@@ -54,22 +54,22 @@ async function handleDisconnect() {
 
     <div class="flex flex-col gap-6 max-w-2xl">
       <!-- Integrations section -->
-      <section class="rounded-xl border border-slate-200 bg-white">
-        <div class="border-b border-slate-200 px-6 py-4">
-          <h2 class="text-lg font-semibold text-slate-900 m-0">Integrations</h2>
-          <p class="text-sm text-slate-500 m-0 mt-1">Connect external services to enhance your experience.</p>
+      <section class="rounded-xl border border-border bg-surface-raised">
+        <div class="border-b border-border px-6 py-4">
+          <h2 class="text-lg font-semibold text-text-primary m-0">Integrations</h2>
+          <p class="text-sm text-text-muted m-0 mt-1">Connect external services to enhance your experience.</p>
         </div>
 
         <div class="p-6">
           <!-- GitHub Copilot card -->
-          <div class="flex items-start gap-4 rounded-xl border border-slate-200 p-4">
+          <div class="flex items-start gap-4 rounded-xl border border-border p-4">
             <div class="flex items-center justify-center h-10 w-10 shrink-0 rounded-lg bg-slate-900">
               <Github :size="20" class="text-white" />
             </div>
 
             <div class="flex flex-col gap-1 flex-1 min-w-0">
-              <h3 class="text-sm font-semibold text-slate-900 m-0">GitHub Copilot</h3>
-              <p class="text-xs text-slate-500 m-0">
+              <h3 class="text-sm font-semibold text-text-primary m-0">GitHub Copilot</h3>
+              <p class="text-xs text-text-muted m-0">
                 Use your GitHub Copilot subscription to get AI-assisted query writing in Explore views.
               </p>
 
@@ -79,7 +79,7 @@ async function handleDisconnect() {
               </div>
 
               <div v-else-if="isConnected" class="flex items-center gap-3 mt-2">
-                <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                   <Check :size="12" />
                   Connected as {{ githubUsername }}
                 </span>
@@ -101,7 +101,7 @@ async function handleDisconnect() {
 
               <button
                 v-else-if="!loading && isConnected"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 cursor-pointer transition hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600"
+                class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-xs font-medium text-text-secondary cursor-pointer transition hover:bg-rose-500/10 hover:border-rose-500/25 hover:text-rose-500"
                 @click="handleDisconnect"
               >
                 <Unplug :size="12" />

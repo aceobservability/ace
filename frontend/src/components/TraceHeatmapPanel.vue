@@ -166,10 +166,10 @@ function openTrace(traceId: string) {
 </script>
 
 <template>
-  <div class="flex h-full flex-col gap-2.5 rounded-xl border border-slate-200 bg-white p-4">
+  <div class="flex h-full flex-col gap-2.5 rounded-xl border border-border bg-surface-raised p-4">
     <div class="grid min-h-[150px] grid-cols-[auto_1fr] gap-2">
       <div class="grid grid-rows-[repeat(8,1fr)] gap-[3px]">
-        <span v-for="row in heatmapRows" :key="row.label" class="flex items-center justify-end whitespace-nowrap text-[0.65rem] text-slate-400">{{ row.label }}</span>
+        <span v-for="row in heatmapRows" :key="row.label" class="flex items-center justify-end whitespace-nowrap text-[0.65rem] text-text-muted">{{ row.label }}</span>
       </div>
       <div class="grid grid-rows-[repeat(8,1fr)] gap-[3px]">
         <div v-for="row in heatmapRows" :key="row.label" class="grid grid-cols-[repeat(12,1fr)] gap-[3px]">
@@ -184,17 +184,17 @@ function openTrace(traceId: string) {
       </div>
     </div>
 
-    <div class="ml-[calc(3.9rem+0.45rem)] flex justify-between text-[0.65rem] text-slate-400">
+    <div class="ml-[calc(3.9rem+0.45rem)] flex justify-between text-[0.65rem] text-text-muted">
       <span v-for="(label, index) in timeLabels" :key="`${label}-${index}`">{{ label }}</span>
     </div>
 
-    <div class="border-t border-slate-100 pt-2">
-      <h4 class="m-0 mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Recent traces</h4>
+    <div class="border-t border-border pt-2">
+      <h4 class="m-0 mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Recent traces</h4>
       <ul class="m-0 grid list-none grid-cols-2 gap-x-2.5 gap-y-1.5 p-0">
         <li v-for="trace in recentTraces" :key="trace.traceId">
-          <button type="button" class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-none bg-emerald-50 px-2.5 py-1.5 transition hover:bg-emerald-100" @click="openTrace(trace.traceId)">
-            <span class="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-slate-900">{{ trace.traceId }}</span>
-            <span class="text-xs text-slate-500">{{ formatDuration(trace.durationNano) }}</span>
+          <button type="button" class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-none bg-emerald-500/10 px-2.5 py-1.5 transition hover:bg-emerald-500/15" @click="openTrace(trace.traceId)">
+            <span class="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-text-primary">{{ trace.traceId }}</span>
+            <span class="text-xs text-text-muted">{{ formatDuration(trace.durationNano) }}</span>
           </button>
         </li>
       </ul>

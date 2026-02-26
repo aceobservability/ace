@@ -142,50 +142,50 @@ function formatInterval(seconds: number): string {
 function stateClass(state: string): string {
   switch (state) {
     case 'firing':
-      return 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20'
+      return 'bg-rose-500/10 text-rose-500 ring-1 ring-rose-600/20'
     case 'pending':
       return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
     default:
-      return 'bg-slate-100 text-slate-600'
+      return 'bg-surface-overlay text-text-secondary'
   }
 }
 
 function amStateClass(state: string): string {
   switch (state) {
     case 'active':
-      return 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20'
+      return 'bg-rose-500/10 text-rose-500 ring-1 ring-rose-600/20'
     case 'suppressed':
       return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
     case 'unprocessed':
-      return 'bg-slate-100 text-slate-600'
+      return 'bg-surface-overlay text-text-secondary'
     default:
-      return 'bg-slate-100 text-slate-600'
+      return 'bg-surface-overlay text-text-secondary'
   }
 }
 
 function severityClass(severity: string | undefined): string {
   switch (severity) {
     case 'critical':
-      return 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20'
+      return 'bg-rose-500/10 text-rose-500 ring-1 ring-rose-600/20'
     case 'warning':
       return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
     case 'info':
-      return 'bg-sky-50 text-sky-700 ring-1 ring-sky-600/20'
+      return 'bg-sky-500/10 text-sky-700 ring-1 ring-sky-600/20'
     default:
-      return 'bg-slate-100 text-slate-600'
+      return 'bg-surface-overlay text-text-secondary'
   }
 }
 
 function silenceStatusClass(state: string): string {
   switch (state) {
     case 'active':
-      return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20'
+      return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-600/20'
     case 'pending':
       return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
     case 'expired':
-      return 'bg-slate-100 text-slate-600'
+      return 'bg-surface-overlay text-text-secondary'
     default:
-      return 'bg-slate-100 text-slate-600'
+      return 'bg-surface-overlay text-text-secondary'
   }
 }
 
@@ -441,18 +441,18 @@ onUnmounted(() => {
 <template>
   <div class="px-8 py-6 max-w-5xl mx-auto">
     <!-- Page header -->
-    <header class="flex items-center justify-between gap-4 mb-6 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+    <header class="flex items-center justify-between gap-4 mb-6 rounded-xl border border-border bg-surface-raised px-5 py-4 shadow-sm">
       <div>
-        <h1 class="flex items-center gap-2 text-base font-bold font-mono uppercase tracking-wide text-slate-900 m-0">
+        <h1 class="flex items-center gap-2 text-base font-bold font-mono uppercase tracking-wide text-text-primary m-0">
           <BellRing :size="20" />
           Alerts
         </h1>
-        <p class="text-sm text-slate-500 mt-1 mb-0">Monitor active alerts and alerting rule groups</p>
+        <p class="text-sm text-text-muted mt-1 mb-0">Monitor active alerts and alerting rule groups</p>
       </div>
       <div class="flex items-center gap-2">
         <select
           v-model="selectedDatasourceId"
-          class="px-3 py-2 pr-8 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-sm appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.65rem_center] focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+          class="px-3 py-2 pr-8 bg-surface-overlay border border-border rounded-lg text-text-primary text-sm appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.65rem_center] focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
           :disabled="alertingDatasources.length === 0"
         >
           <option value="" disabled>
@@ -467,7 +467,7 @@ onUnmounted(() => {
           </option>
         </select>
         <button
-          class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 bg-surface-overlay border border-border rounded-lg text-sm font-medium text-text-secondary cursor-pointer transition hover:bg-surface-overlay disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="!selectedDatasourceId || loading"
           @click="loadData"
           title="Refresh"
@@ -477,7 +477,7 @@ onUnmounted(() => {
         </button>
         <button
           class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-medium cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
-          :class="autoRefresh ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100'"
+          :class="autoRefresh ? 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400' : 'bg-surface-overlay border border-border text-text-primary hover:bg-surface-overlay'"
           :disabled="!selectedDatasourceId"
           @click="toggleAutoRefresh"
           title="Auto-refresh every 30s"
@@ -485,7 +485,7 @@ onUnmounted(() => {
           <Clock :size="14" />
           Auto
         </button>
-        <span v-if="lastRefreshed" class="flex items-center gap-2 text-xs text-slate-400 font-mono">
+        <span v-if="lastRefreshed" class="flex items-center gap-2 text-xs text-text-muted font-mono">
           <span v-if="autoRefresh" class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
           {{ formattedLastRefreshed }}
         </span>
@@ -494,13 +494,13 @@ onUnmounted(() => {
 
     <!-- No datasource selected -->
     <div v-if="!selectedDatasourceId && alertingDatasources.length === 0" class="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
-      <BellOff :size="48" class="text-slate-300" />
-      <h3 class="text-lg font-semibold text-slate-900 m-0">No alerting datasources configured</h3>
-      <p class="text-sm text-slate-500 m-0">Add a VMAlert or AlertManager datasource in Data Sources settings to view alerts.</p>
+      <BellOff :size="48" class="text-text-muted" />
+      <h3 class="text-lg font-semibold text-text-primary m-0">No alerting datasources configured</h3>
+      <p class="text-sm text-text-muted m-0">Add a VMAlert or AlertManager datasource in Data Sources settings to view alerts.</p>
     </div>
 
     <!-- Error state -->
-    <div v-else-if="error" class="flex items-center gap-2 px-4 py-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm mb-4">
+    <div v-else-if="error" class="flex items-center gap-2 px-4 py-3 bg-rose-500/10 border border-rose-500/25 rounded-lg text-rose-500 text-sm mb-4">
       <AlertCircle :size="16" />
       {{ error }}
     </div>
@@ -508,55 +508,55 @@ onUnmounted(() => {
     <!-- Loading skeleton -->
     <div v-else-if="loading && alerts.length === 0 && groups.length === 0 && amAlerts.length === 0 && amSilences.length === 0" class="flex flex-col gap-3 py-4">
       <div v-for="i in 5" :key="i" class="flex gap-4 items-center">
-        <div class="h-3.5 rounded bg-slate-200 animate-pulse w-40"></div>
-        <div class="h-3.5 rounded bg-slate-200 animate-pulse w-15"></div>
-        <div class="h-3.5 rounded bg-slate-200 animate-pulse w-55"></div>
-        <div class="h-3.5 rounded bg-slate-200 animate-pulse w-32"></div>
+        <div class="h-3.5 rounded bg-surface-overlay animate-pulse w-40"></div>
+        <div class="h-3.5 rounded bg-surface-overlay animate-pulse w-15"></div>
+        <div class="h-3.5 rounded bg-surface-overlay animate-pulse w-55"></div>
+        <div class="h-3.5 rounded bg-surface-overlay animate-pulse w-32"></div>
       </div>
     </div>
 
     <!-- VMAlert Tabs + Content -->
     <template v-else-if="selectedDatasourceId && isVMAlert">
-      <div class="flex gap-1 border-b border-slate-200 mb-6">
+      <div class="flex gap-1 border-b border-border mb-6">
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'alerts' ? 'text-emerald-600 border-emerald-600' : 'text-slate-500 border-transparent hover:text-slate-700'"
+          :class="activeTab === 'alerts' ? 'text-emerald-600 border-emerald-600' : 'text-text-muted border-transparent hover:text-text-primary'"
           @click="activeTab = 'alerts'"
         >
           Active Alerts
-          <span v-if="firingAlerts.length > 0" class="ml-1.5 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-mono text-rose-600">{{ firingAlerts.length }}</span>
+          <span v-if="firingAlerts.length > 0" class="ml-1.5 rounded-full bg-rose-500/10 px-2 py-0.5 text-xs font-mono text-rose-500">{{ firingAlerts.length }}</span>
         </button>
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'groups' ? 'text-emerald-600 border-emerald-600' : 'text-slate-500 border-transparent hover:text-slate-700'"
+          :class="activeTab === 'groups' ? 'text-emerald-600 border-emerald-600' : 'text-text-muted border-transparent hover:text-text-primary'"
           @click="activeTab = 'groups'"
         >
           Rule Groups
-          <span v-if="groups.length > 0" class="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-500">{{ groups.length }}</span>
+          <span v-if="groups.length > 0" class="ml-1.5 rounded-full bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-muted">{{ groups.length }}</span>
         </button>
       </div>
 
       <!-- Active Alerts tab -->
       <div v-if="activeTab === 'alerts'">
         <div v-if="sortedAlerts.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
-          <BellOff :size="36" class="text-slate-300" />
-          <h3 class="text-lg font-semibold text-slate-900 m-0">No alerts firing</h3>
-          <p class="text-sm text-slate-500 m-0">All quiet -- no active or pending alerts.</p>
+          <BellOff :size="36" class="text-text-muted" />
+          <h3 class="text-lg font-semibold text-text-primary m-0">No alerts firing</h3>
+          <p class="text-sm text-text-muted m-0">All quiet -- no active or pending alerts.</p>
         </div>
 
         <div v-else class="space-y-3">
           <div
             v-for="(alert, idx) in sortedAlerts"
             :key="idx"
-            class="rounded-xl border border-slate-200 bg-white p-4 border-l-4"
+            class="rounded-xl border border-border bg-surface-raised p-4 border-l-4"
             :class="{
               'border-l-rose-500': alert.state === 'firing',
               'border-l-amber-500': alert.state === 'pending',
-              'border-l-slate-300': alert.state !== 'firing' && alert.state !== 'pending',
+              'border-l-border-strong': alert.state !== 'firing' && alert.state !== 'pending',
             }"
           >
             <div class="flex items-start justify-between gap-3 mb-2">
-              <span class="text-sm font-semibold text-slate-900">{{ alert.name }}</span>
+              <span class="text-sm font-semibold text-text-primary">{{ alert.name }}</span>
               <span class="rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="stateClass(alert.state)">
                 {{ alert.state }}
               </span>
@@ -565,12 +565,12 @@ onUnmounted(() => {
               <span
                 v-for="(value, key) in alert.labels"
                 :key="String(key)"
-                class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-600"
+                class="inline-flex rounded-full bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-secondary"
               >
                 {{ key }}={{ value }}
               </span>
             </div>
-            <div class="text-xs font-mono text-slate-400">
+            <div class="text-xs font-mono text-text-muted">
               {{ alert.activeAt || '—' }}
             </div>
           </div>
@@ -580,47 +580,47 @@ onUnmounted(() => {
       <!-- Rule Groups tab -->
       <div v-if="activeTab === 'groups'">
         <div v-if="groups.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
-          <BellOff :size="36" class="text-slate-300" />
-          <h3 class="text-lg font-semibold text-slate-900 m-0">No rule groups</h3>
-          <p class="text-sm text-slate-500 m-0">No alerting or recording rule groups found.</p>
+          <BellOff :size="36" class="text-text-muted" />
+          <h3 class="text-lg font-semibold text-text-primary m-0">No rule groups</h3>
+          <p class="text-sm text-text-muted m-0">No alerting or recording rule groups found.</p>
         </div>
 
         <div v-else class="space-y-3">
           <div
             v-for="group in groups"
             :key="group.name"
-            class="rounded-xl border border-slate-200 bg-white overflow-hidden"
+            class="rounded-xl border border-border bg-surface-raised overflow-hidden"
           >
             <button
-              class="flex items-center justify-between w-full px-4 py-3 bg-transparent border-none text-left cursor-pointer transition hover:bg-slate-50"
+              class="flex items-center justify-between w-full px-4 py-3 bg-transparent border-none text-left cursor-pointer transition hover:bg-surface-overlay"
               @click="toggleGroup(group.name)"
             >
               <div class="flex items-center gap-2">
                 <component
                   :is="isGroupExpanded(group.name) ? ChevronDown : ChevronRight"
                   :size="16"
-                  class="text-slate-400"
+                  class="text-text-muted"
                 />
-                <span class="text-sm font-semibold text-slate-900">{{ group.name }}</span>
+                <span class="text-sm font-semibold text-text-primary">{{ group.name }}</span>
               </div>
-              <span class="text-xs text-slate-400 font-mono">
+              <span class="text-xs text-text-muted font-mono">
                 {{ group.rules.length }} rule{{ group.rules.length !== 1 ? 's' : '' }}
                 · every {{ formatInterval(group.interval) }}
               </span>
             </button>
 
-            <div v-if="isGroupExpanded(group.name)" class="border-t border-slate-100 px-4 py-3">
-              <div class="divide-y divide-slate-100">
+            <div v-if="isGroupExpanded(group.name)" class="border-t border-border px-4 py-3">
+              <div class="divide-y divide-border">
                 <div
                   v-for="(rule, rIdx) in group.rules"
                   :key="rIdx"
                   class="py-3 first:pt-0 last:pb-0"
                 >
                   <div class="flex items-center gap-2 mb-2 flex-wrap">
-                    <span class="text-sm font-semibold text-slate-900">{{ rule.name }}</span>
+                    <span class="text-sm font-semibold text-text-primary">{{ rule.name }}</span>
                     <span
                       class="rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide"
-                      :class="rule.type === 'alerting' ? 'bg-rose-50 text-rose-600 ring-1 ring-rose-600/20' : 'bg-sky-50 text-sky-600 ring-1 ring-sky-600/20'"
+                      :class="rule.type === 'alerting' ? 'bg-rose-500/10 text-rose-500 ring-1 ring-rose-600/20' : 'bg-sky-500/10 text-sky-600 ring-1 ring-sky-600/20'"
                     >
                       {{ rule.type }}
                     </span>
@@ -628,28 +628,28 @@ onUnmounted(() => {
                       {{ rule.state }}
                     </span>
                   </div>
-                  <div class="bg-slate-50 rounded-lg px-3 py-2 mb-2 overflow-x-auto">
-                    <code class="text-xs font-mono text-slate-600 whitespace-pre-wrap break-all">{{ rule.query }}</code>
+                  <div class="bg-surface-overlay rounded-lg px-3 py-2 mb-2 overflow-x-auto">
+                    <code class="text-xs font-mono text-text-secondary whitespace-pre-wrap break-all">{{ rule.query }}</code>
                   </div>
                   <div class="flex flex-wrap gap-1.5 items-center">
-                    <span v-if="rule.duration > 0" class="text-xs text-slate-500 mr-1">
+                    <span v-if="rule.duration > 0" class="text-xs text-text-muted mr-1">
                       <strong>for:</strong> {{ formatDuration(rule.duration) }}
                     </span>
                     <span
                       v-for="(value, key) in rule.labels"
                       :key="String(key)"
-                      class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-600"
+                      class="inline-flex rounded-full bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-secondary"
                     >
                       {{ key }}={{ value }}
                     </span>
                   </div>
-                  <div v-if="rule.annotations && Object.keys(rule.annotations).length > 0" class="mt-2 pt-2 border-t border-slate-100">
+                  <div v-if="rule.annotations && Object.keys(rule.annotations).length > 0" class="mt-2 pt-2 border-t border-border">
                     <div
                       v-for="(value, key) in rule.annotations"
                       :key="String(key)"
-                      class="text-xs text-slate-500 leading-relaxed"
+                      class="text-xs text-text-muted leading-relaxed"
                     >
-                      <strong class="text-slate-700">{{ key }}:</strong> {{ value }}
+                      <strong class="text-text-secondary">{{ key }}:</strong> {{ value }}
                     </div>
                   </div>
                 </div>
@@ -662,73 +662,73 @@ onUnmounted(() => {
 
     <!-- AlertManager Tabs + Content -->
     <template v-else-if="selectedDatasourceId && isAlertManager">
-      <div class="flex gap-1 border-b border-slate-200 mb-6">
+      <div class="flex gap-1 border-b border-border mb-6">
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'am-alerts' ? 'text-emerald-600 border-emerald-600' : 'text-slate-500 border-transparent hover:text-slate-700'"
+          :class="activeTab === 'am-alerts' ? 'text-emerald-600 border-emerald-600' : 'text-text-muted border-transparent hover:text-text-primary'"
           @click="activeTab = 'am-alerts'"
         >
           Active Alerts
-          <span v-if="amAlerts.length > 0" class="ml-1.5 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-mono text-rose-600">{{ amAlerts.length }}</span>
+          <span v-if="amAlerts.length > 0" class="ml-1.5 rounded-full bg-rose-500/10 px-2 py-0.5 text-xs font-mono text-rose-500">{{ amAlerts.length }}</span>
         </button>
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'am-silences' ? 'text-emerald-600 border-emerald-600' : 'text-slate-500 border-transparent hover:text-slate-700'"
+          :class="activeTab === 'am-silences' ? 'text-emerald-600 border-emerald-600' : 'text-text-muted border-transparent hover:text-text-primary'"
           @click="activeTab = 'am-silences'"
         >
           Silences
-          <span v-if="activeSilences.length > 0" class="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-500">{{ activeSilences.length }}</span>
+          <span v-if="activeSilences.length > 0" class="ml-1.5 rounded-full bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-muted">{{ activeSilences.length }}</span>
         </button>
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'am-receivers' ? 'text-emerald-600 border-emerald-600' : 'text-slate-500 border-transparent hover:text-slate-700'"
+          :class="activeTab === 'am-receivers' ? 'text-emerald-600 border-emerald-600' : 'text-text-muted border-transparent hover:text-text-primary'"
           @click="activeTab = 'am-receivers'"
         >
           Receivers
-          <span v-if="amReceivers.length > 0" class="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-500">{{ amReceivers.length }}</span>
+          <span v-if="amReceivers.length > 0" class="ml-1.5 rounded-full bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-muted">{{ amReceivers.length }}</span>
         </button>
       </div>
 
       <!-- AM Active Alerts tab -->
       <div v-if="activeTab === 'am-alerts'">
         <div class="flex items-center gap-2 mb-4">
-          <span class="text-xs text-slate-400 font-medium">Show:</span>
+          <span class="text-xs text-text-muted font-medium">Show:</span>
           <button
             class="px-2.5 py-1 border rounded-md text-xs cursor-pointer transition"
-            :class="amFilterActive ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'"
+            :class="amFilterActive ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
             @click="amFilterActive = !amFilterActive"
           >Active</button>
           <button
             class="px-2.5 py-1 border rounded-md text-xs cursor-pointer transition"
-            :class="amFilterSilenced ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'"
+            :class="amFilterSilenced ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
             @click="amFilterSilenced = !amFilterSilenced"
           >Silenced</button>
           <button
             class="px-2.5 py-1 border rounded-md text-xs cursor-pointer transition"
-            :class="amFilterInhibited ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'"
+            :class="amFilterInhibited ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
             @click="amFilterInhibited = !amFilterInhibited"
           >Inhibited</button>
         </div>
 
         <div v-if="sortedAMAlerts.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
-          <BellOff :size="36" class="text-slate-300" />
-          <h3 class="text-lg font-semibold text-slate-900 m-0">No alerts</h3>
-          <p class="text-sm text-slate-500 m-0">No alerts matching current filters.</p>
+          <BellOff :size="36" class="text-text-muted" />
+          <h3 class="text-lg font-semibold text-text-primary m-0">No alerts</h3>
+          <p class="text-sm text-text-muted m-0">No alerts matching current filters.</p>
         </div>
 
         <div v-else class="space-y-3">
           <div
             v-for="(alert, idx) in sortedAMAlerts"
             :key="idx"
-            class="rounded-xl border border-slate-200 bg-white p-4 border-l-4"
+            class="rounded-xl border border-border bg-surface-raised p-4 border-l-4"
             :class="{
               'border-l-rose-500': alert.status?.state === 'active',
               'border-l-amber-500': alert.status?.state === 'suppressed',
-              'border-l-slate-300': alert.status?.state !== 'active' && alert.status?.state !== 'suppressed',
+              'border-l-border-strong': alert.status?.state !== 'active' && alert.status?.state !== 'suppressed',
             }"
           >
             <div class="flex items-start justify-between gap-3 mb-2">
-              <span class="text-sm font-semibold text-slate-900">{{ alert.labels?.alertname || '—' }}</span>
+              <span class="text-sm font-semibold text-text-primary">{{ alert.labels?.alertname || '—' }}</span>
               <div class="flex items-center gap-2">
                 <span class="rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="severityClass(alert.labels?.severity)">
                   {{ alert.labels?.severity || 'none' }}
@@ -738,10 +738,10 @@ onUnmounted(() => {
                 </span>
               </div>
             </div>
-            <div class="flex items-center gap-3 text-xs text-slate-500 mb-1">
+            <div class="flex items-center gap-3 text-xs text-text-muted mb-1">
               <span v-if="alert.labels?.instance" class="font-mono">{{ alert.labels.instance }}</span>
             </div>
-            <div class="text-xs font-mono text-slate-400">
+            <div class="text-xs font-mono text-text-muted">
               {{ formatDateShort(alert.startsAt) }}
             </div>
           </div>
@@ -751,7 +751,7 @@ onUnmounted(() => {
       <!-- AM Silences tab -->
       <div v-if="activeTab === 'am-silences'">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-sm font-semibold text-slate-900 m-0">Silences</h3>
+          <h3 class="text-sm font-semibold text-text-primary m-0">Silences</h3>
           <button
             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition cursor-pointer"
             @click="openSilenceModal"
@@ -762,32 +762,32 @@ onUnmounted(() => {
         </div>
 
         <div v-if="amSilences.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
-          <BellOff :size="36" class="text-slate-300" />
-          <h3 class="text-lg font-semibold text-slate-900 m-0">No silences</h3>
-          <p class="text-sm text-slate-500 m-0">No silence rules configured.</p>
+          <BellOff :size="36" class="text-text-muted" />
+          <h3 class="text-lg font-semibold text-text-primary m-0">No silences</h3>
+          <p class="text-sm text-text-muted m-0">No silence rules configured.</p>
         </div>
 
         <div v-else class="space-y-3">
           <div
             v-for="silence in amSilences"
             :key="silence.id"
-            class="rounded-xl border border-slate-200 bg-white p-4 border-l-4"
+            class="rounded-xl border border-border bg-surface-raised p-4 border-l-4"
             :class="{
               'border-l-emerald-500': silence.status.state === 'active',
               'border-l-amber-400': silence.status.state === 'pending',
-              'border-l-slate-200 opacity-60': silence.status.state === 'expired',
+              'border-l-border opacity-60': silence.status.state === 'expired',
             }"
           >
             <div class="flex items-start justify-between gap-3 mb-2">
               <div class="flex items-center gap-2 min-w-0">
-                <span class="text-xs font-mono text-slate-400 shrink-0" :title="silence.id">{{ truncateId(silence.id) }}</span>
+                <span class="text-xs font-mono text-text-muted shrink-0" :title="silence.id">{{ truncateId(silence.id) }}</span>
                 <span class="rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="silenceStatusClass(silence.status.state)">
                   {{ silence.status.state }}
                 </span>
               </div>
               <button
                 v-if="silence.status.state === 'active' || silence.status.state === 'pending'"
-                class="inline-flex items-center gap-1 text-sm text-rose-600 hover:text-rose-700 cursor-pointer bg-transparent border-none transition shrink-0"
+                class="inline-flex items-center gap-1 text-sm text-rose-500 hover:text-rose-600 cursor-pointer bg-transparent border-none transition shrink-0"
                 title="Expire silence"
                 @click="handleExpireSilence(silence.id)"
               >
@@ -799,15 +799,15 @@ onUnmounted(() => {
               <span
                 v-for="(m, mIdx) in silence.matchers"
                 :key="mIdx"
-                class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-600"
+                class="inline-flex rounded-full bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-secondary"
               >
                 {{ m.name }}{{ m.isEqual ? (m.isRegex ? '=~' : '=') : (m.isRegex ? '!~' : '!=') }}"{{ m.value }}"
               </span>
             </div>
-            <div class="flex items-center gap-3 text-xs text-slate-500">
+            <div class="flex items-center gap-3 text-xs text-text-muted">
               <span>{{ silence.createdBy }}</span>
               <span class="truncate max-w-[200px]">{{ silence.comment }}</span>
-              <span class="ml-auto font-mono text-slate-400 shrink-0">ends {{ formatDateShort(silence.endsAt) }}</span>
+              <span class="ml-auto font-mono text-text-muted shrink-0">ends {{ formatDateShort(silence.endsAt) }}</span>
             </div>
           </div>
         </div>
@@ -816,19 +816,19 @@ onUnmounted(() => {
       <!-- AM Receivers tab -->
       <div v-if="activeTab === 'am-receivers'">
         <div v-if="amReceivers.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
-          <Radio :size="36" class="text-slate-300" />
-          <h3 class="text-lg font-semibold text-slate-900 m-0">No receivers</h3>
-          <p class="text-sm text-slate-500 m-0">No receivers configured in AlertManager.</p>
+          <Radio :size="36" class="text-text-muted" />
+          <h3 class="text-lg font-semibold text-text-primary m-0">No receivers</h3>
+          <p class="text-sm text-text-muted m-0">No receivers configured in AlertManager.</p>
         </div>
 
         <div v-else class="space-y-3">
           <div
             v-for="receiver in amReceivers"
             :key="receiver.name"
-            class="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3"
+            class="rounded-xl border border-border bg-surface-raised p-4 flex items-center gap-3"
           >
-            <Radio :size="16" class="text-slate-400 shrink-0" />
-            <span class="text-sm font-semibold text-slate-900">{{ receiver.name }}</span>
+            <Radio :size="16" class="text-text-muted shrink-0" />
+            <span class="text-sm font-semibold text-text-primary">{{ receiver.name }}</span>
           </div>
         </div>
       </div>
@@ -837,11 +837,11 @@ onUnmounted(() => {
     <!-- Create Silence Modal -->
     <Teleport to="body">
       <div v-if="showSilenceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]" @click.self="closeSilenceModal">
-        <div class="bg-white border border-slate-200 rounded-xl w-full max-w-[560px] max-h-[90vh] overflow-y-auto shadow-2xl">
-          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-            <h2 class="text-base font-bold text-slate-900 m-0">Create Silence</h2>
+        <div class="bg-surface-raised border border-border rounded-xl w-full max-w-[560px] max-h-[90vh] overflow-y-auto shadow-2xl">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-border">
+            <h2 class="text-base font-bold text-text-primary m-0">Create Silence</h2>
             <button
-              class="flex items-center justify-center w-8 h-8 bg-transparent border-none rounded-md text-slate-400 cursor-pointer transition hover:bg-slate-100 hover:text-slate-700"
+              class="flex items-center justify-center w-8 h-8 bg-transparent border-none rounded-md text-text-muted cursor-pointer transition hover:bg-surface-overlay hover:text-text-primary"
               @click="closeSilenceModal"
             >
               <X :size="18" />
@@ -851,7 +851,7 @@ onUnmounted(() => {
           <div class="px-5 py-5 flex flex-col gap-4">
             <!-- Matchers -->
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-medium text-slate-700">Matchers <span class="text-rose-500">*</span></label>
+              <label class="text-sm font-medium text-text-secondary">Matchers <span class="text-rose-500">*</span></label>
               <div class="flex flex-col gap-2 mb-2">
                 <div
                   v-for="(m, idx) in silenceMatchers"
@@ -862,11 +862,11 @@ onUnmounted(() => {
                     v-model="m.name"
                     type="text"
                     placeholder="Label name"
-                    class="flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-mono text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                    class="flex-1 px-2.5 py-1.5 bg-surface-overlay border border-border rounded-md text-sm font-mono text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
                   <select
                     v-model="m.isEqual"
-                    class="w-13 px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-mono text-slate-900 text-center focus:outline-none focus:border-emerald-500"
+                    class="w-13 px-1.5 py-1.5 bg-surface-overlay border border-border rounded-md text-sm font-mono text-text-primary text-center focus:outline-none focus:border-emerald-500"
                   >
                     <option :value="true">{{ m.isRegex ? '=~' : '=' }}</option>
                     <option :value="false">{{ m.isRegex ? '!~' : '!=' }}</option>
@@ -875,14 +875,14 @@ onUnmounted(() => {
                     v-model="m.value"
                     type="text"
                     placeholder="Value"
-                    class="flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm font-mono text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                    class="flex-1 px-2.5 py-1.5 bg-surface-overlay border border-border rounded-md text-sm font-mono text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
-                  <label class="flex items-center gap-1 text-xs text-slate-500 whitespace-nowrap cursor-pointer" title="Regex match">
+                  <label class="flex items-center gap-1 text-xs text-text-muted whitespace-nowrap cursor-pointer" title="Regex match">
                     <input type="checkbox" v-model="m.isRegex" class="w-3.5 h-3.5" />
                     Regex
                   </label>
                   <button
-                    class="flex items-center justify-center w-7 h-7 bg-transparent border-none rounded-md text-slate-400 cursor-pointer transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                    class="flex items-center justify-center w-7 h-7 bg-transparent border-none rounded-md text-text-muted cursor-pointer transition hover:bg-surface-overlay hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
                     :disabled="silenceMatchers.length <= 1"
                     @click="removeMatcher(idx)"
                     title="Remove matcher"
@@ -903,59 +903,59 @@ onUnmounted(() => {
             <!-- Start / End -->
             <div class="grid grid-cols-2 gap-3">
               <div class="flex flex-col gap-1.5">
-                <label for="silence-start" class="text-sm font-medium text-slate-700">Start</label>
+                <label for="silence-start" class="text-sm font-medium text-text-secondary">Start</label>
                 <input
                   id="silence-start"
                   v-model="silenceStart"
                   type="datetime-local"
-                  class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                  class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
               <div class="flex flex-col gap-1.5">
-                <label for="silence-end" class="text-sm font-medium text-slate-700">End</label>
+                <label for="silence-end" class="text-sm font-medium text-text-secondary">End</label>
                 <input
                   id="silence-end"
                   v-model="silenceEnd"
                   type="datetime-local"
-                  class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                  class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
             </div>
 
             <!-- Created By -->
             <div class="flex flex-col gap-1.5">
-              <label for="silence-created-by" class="text-sm font-medium text-slate-700">Created By</label>
+              <label for="silence-created-by" class="text-sm font-medium text-text-secondary">Created By</label>
               <input
                 id="silence-created-by"
                 v-model="silenceCreatedBy"
                 type="text"
                 placeholder="your-name@example.com"
-                class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
             <!-- Comment -->
             <div class="flex flex-col gap-1.5">
-              <label for="silence-comment" class="text-sm font-medium text-slate-700">Comment <span class="text-rose-500">*</span></label>
+              <label for="silence-comment" class="text-sm font-medium text-text-secondary">Comment <span class="text-rose-500">*</span></label>
               <textarea
                 id="silence-comment"
                 v-model="silenceComment"
                 rows="3"
                 placeholder="Reason for silencing..."
-                class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 resize-y min-h-[68px] font-[inherit] focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary resize-y min-h-[68px] font-[inherit] focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               ></textarea>
             </div>
 
             <!-- Error -->
-            <div v-if="silenceError" class="flex items-center gap-2 px-4 py-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm">
+            <div v-if="silenceError" class="flex items-center gap-2 px-4 py-3 bg-rose-500/10 border border-rose-500/25 rounded-lg text-rose-500 text-sm">
               <AlertCircle :size="14" />
               {{ silenceError }}
             </div>
           </div>
 
-          <div class="flex justify-end gap-2.5 px-5 py-4 border-t border-slate-200">
+          <div class="flex justify-end gap-2.5 px-5 py-4 border-t border-border">
             <button
-              class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 cursor-pointer transition hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm font-medium text-text-secondary cursor-pointer transition hover:bg-surface-overlay disabled:opacity-50 disabled:cursor-not-allowed"
               @click="closeSilenceModal"
               :disabled="silenceSaving"
             >

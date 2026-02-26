@@ -326,14 +326,14 @@ function rowBgFill(rowIndex: number): string {
 <template>
   <div class="flex flex-col gap-3">
     <div class="flex flex-wrap gap-3">
-      <label class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 max-sm:w-full max-sm:justify-between">
+      <label class="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-xs text-slate-500 max-sm:w-full max-sm:justify-between">
         <span>Zoom</span>
         <input v-model.number="zoomPercent" type="range" min="100" max="400" step="25" class="w-36 max-sm:w-30" />
-        <strong class="min-w-[3.1rem] text-right text-xs font-semibold text-slate-900">{{ zoomPercent }}%</strong>
+        <strong class="min-w-[3.1rem] text-right text-xs font-semibold text-text-primary">{{ zoomPercent }}%</strong>
       </label>
 
       <label
-        class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 max-sm:w-full max-sm:justify-between"
+        class="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-xs text-slate-500 max-sm:w-full max-sm:justify-between"
         :class="{ 'opacity-60': maxPanDuration === 0 }"
       >
         <span>Pan</span>
@@ -345,7 +345,7 @@ function rowBgFill(rowIndex: number): string {
           :disabled="maxPanDuration === 0"
           class="w-36 max-sm:w-30"
         />
-        <strong class="min-w-[3.1rem] text-right text-xs font-semibold text-slate-900">{{ panPercent }}%</strong>
+        <strong class="min-w-[3.1rem] text-right text-xs font-semibold text-text-primary">{{ panPercent }}%</strong>
       </label>
     </div>
 
@@ -353,7 +353,7 @@ function rowBgFill(rowIndex: number): string {
       <span
         v-for="(color, serviceName) in serviceColorMap"
         :key="serviceName"
-        class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-500"
+        class="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-overlay px-2.5 py-1 text-xs text-slate-500"
       >
         <i class="inline-block h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: color }"></i>
         {{ serviceName }}
@@ -364,7 +364,7 @@ function rowBgFill(rowIndex: number): string {
       </span>
     </div>
 
-    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+    <div class="overflow-x-auto rounded-xl border border-border bg-surface-raised">
       <svg v-if="visibleRows.length > 0" :width="svgWidth" :height="svgHeight" class="block" role="img" aria-label="Trace timeline waterfall">
         <g>
           <line

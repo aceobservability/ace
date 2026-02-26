@@ -63,9 +63,9 @@ describe('Sidebar', () => {
     })
 
     const aside = wrapper.find('aside')
-    // Collapsed: w-16 (narrow)
+    // Collapsed: sidebar with w-16 (not expanded width)
     expect(aside.classes()).toContain('w-16')
-    expect(aside.classes()).not.toContain('w-58')
+    expect(aside.classes()).not.toContain('w-[232px]')
 
     // Click toggle button (Expand/Collapse title button)
     const toggleBtn = wrapper
@@ -73,9 +73,8 @@ describe('Sidebar', () => {
       .find((b) => b.attributes('title') === 'Expand' || b.attributes('title') === 'Collapse')!
     await toggleBtn.trigger('click')
 
-    // Expanded: w-58 (wide)
-    expect(aside.classes()).toContain('w-58')
-    expect(aside.classes()).not.toContain('w-16')
+    // Expanded: sidebar with w-[232px]
+    expect(aside.classes()).toContain('w-[232px]')
   })
 
   it('temporarily expands when hovered while collapsed', async () => {
@@ -95,17 +94,18 @@ describe('Sidebar', () => {
     })
 
     const aside = wrapper.find('aside')
-    // Collapsed: w-16
+    // Collapsed: sidebar with w-16 (not expanded width)
     expect(aside.classes()).toContain('w-16')
+    expect(aside.classes()).not.toContain('w-[232px]')
 
     await aside.trigger('mouseenter')
 
-    // Hover-expanded: w-58
-    expect(aside.classes()).toContain('w-58')
+    // Hover-expanded: sidebar with w-[232px]
+    expect(aside.classes()).toContain('w-[232px]')
 
     await aside.trigger('mouseleave')
 
-    // Back to collapsed: w-16
+    // Back to collapsed: sidebar with w-16
     expect(aside.classes()).toContain('w-16')
   })
 })

@@ -162,7 +162,7 @@ watch(
       </div>
       <div class="flex items-center gap-2.5">
         <button
-          class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed min-w-[96px]"
+          class="inline-flex items-center justify-center gap-2 rounded-lg border border-border-strong px-4 py-2 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed min-w-[96px]"
           :disabled="datasources.length === 0 || testAllLoading"
           @click="testAllDatasources"
         >
@@ -181,11 +181,11 @@ watch(
       </div>
     </header>
 
-    <div v-if="error" class="rounded-lg bg-rose-50 border border-rose-200 px-3 py-2 text-sm text-rose-700 mb-6">{{ error }}</div>
+    <div v-if="error" class="rounded-lg bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-sm text-rose-500 mb-6">{{ error }}</div>
 
     <div v-if="loading && datasources.length === 0" class="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
-      <div class="h-8 w-8 rounded-full border-3 border-slate-200 border-t-emerald-500 animate-spin"></div>
-      <p class="text-sm text-slate-500">Loading datasources...</p>
+      <div class="h-8 w-8 rounded-full border-3 border-border border-t-emerald-500 animate-spin"></div>
+      <p class="text-sm text-text-muted">Loading datasources...</p>
     </div>
 
     <div v-else-if="datasources.length === 0" class="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
@@ -221,16 +221,16 @@ watch(
                 <strong class="text-sm font-bold text-text-primary leading-tight">{{ dataSourceTypeLabels[ds.type] }}</strong>
               </div>
             </div>
-            <span v-if="ds.is_default" class="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-xs font-medium">
+            <span v-if="ds.is_default" class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-xs font-medium">
               <Check :size="12" />
               Default
             </span>
           </div>
           <div class="flex gap-1">
-            <button class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition border-none bg-transparent cursor-pointer" @click="openEditPage(ds.id)" title="Edit">
+            <button class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-surface-overlay hover:text-text-secondary transition border-none bg-transparent cursor-pointer" @click="openEditPage(ds.id)" title="Edit">
               <Pencil :size="16" />
             </button>
-            <button class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition border-none bg-transparent cursor-pointer" @click="handleDelete(ds)" title="Delete">
+            <button class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 transition border-none bg-transparent cursor-pointer" @click="handleDelete(ds)" title="Delete">
               <Trash2 :size="16" />
             </button>
           </div>
@@ -247,10 +247,10 @@ watch(
             <span
               class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs border"
               :class="{
-                'text-slate-500 bg-slate-50 border-slate-200': getHealthStatus(ds.id) === 'unknown',
+                'text-text-muted bg-surface-overlay border-border': getHealthStatus(ds.id) === 'unknown',
                 'text-sky-600 bg-sky-50 border-sky-200': getHealthStatus(ds.id) === 'checking',
-                'text-emerald-700 bg-emerald-50 border-emerald-200': getHealthStatus(ds.id) === 'healthy',
-                'text-rose-700 bg-rose-50 border-rose-200': getHealthStatus(ds.id) === 'unhealthy',
+                'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/25': getHealthStatus(ds.id) === 'healthy',
+                'text-rose-500 bg-rose-500/10 border-rose-500/25': getHealthStatus(ds.id) === 'unhealthy',
               }"
               :title="healthErrors[ds.id] || getHealthLabel(ds.id)"
             >
@@ -262,7 +262,7 @@ watch(
             </span>
 
             <button
-              class="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-300 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center justify-center gap-1.5 rounded-full border border-border-strong px-2.5 py-1 text-xs font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="getHealthStatus(ds.id) === 'checking'"
               @click="testDatasource(ds)"
               title="Run connection test"
@@ -272,7 +272,7 @@ watch(
               {{ getHealthStatus(ds.id) === 'checking' ? 'Testing...' : 'Test' }}
             </button>
           </div>
-          <div v-if="healthErrors[ds.id]" class="mt-1 text-xs text-rose-600 leading-relaxed">{{ healthErrors[ds.id] }}</div>
+          <div v-if="healthErrors[ds.id]" class="mt-1 text-xs text-rose-500 leading-relaxed">{{ healthErrors[ds.id] }}</div>
         </div>
       </div>
     </div>

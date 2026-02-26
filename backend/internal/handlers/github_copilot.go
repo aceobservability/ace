@@ -95,9 +95,9 @@ type copilotTokenResponse struct {
 }
 
 type copilotChatRequest struct {
-	DatasourceType string          `json:"datasource_type"`
-	DatasourceName string          `json:"datasource_name"`
-	Messages       []chatMessage   `json:"messages"`
+	DatasourceType string        `json:"datasource_type"`
+	DatasourceName string        `json:"datasource_name"`
+	Messages       []chatMessage `json:"messages"`
 }
 
 type chatMessage struct {
@@ -840,7 +840,7 @@ func (h *GitHubCopilotHandler) fetchCopilotToken(ctx context.Context, ghToken st
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("Copilot token request failed (%d): %s", resp.StatusCode, string(body))
+		return "", fmt.Errorf("copilot token request failed (%d): %s", resp.StatusCode, string(body))
 	}
 
 	var tokenResp copilotTokenResponse

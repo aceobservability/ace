@@ -92,14 +92,14 @@ const previewData = computed(() => {
 <template>
   <div class="flex flex-col gap-3">
     <div class="flex flex-col gap-2">
-      <label for="promql-query" class="text-sm font-medium text-slate-900">PromQL Query</label>
+      <label for="promql-query" class="text-sm font-medium text-text-primary">PromQL Query</label>
       <textarea
         id="promql-query"
         v-model="query"
         placeholder="up"
         rows="3"
         :disabled="disabled || loading"
-        class="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 font-mono text-sm text-slate-900 resize-y min-h-[80px] transition-colors duration-200 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+        class="w-full rounded-lg border border-border bg-surface-raised px-4 py-3 font-mono text-sm text-text-primary resize-y min-h-[80px] transition-colors duration-200 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed"
         @keydown.ctrl.enter="runQuery"
       ></textarea>
       <div class="flex items-center gap-4">
@@ -120,16 +120,16 @@ const previewData = computed(() => {
       {{ error }}
     </div>
 
-    <div v-if="showPreview && result?.status === 'success'" class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-      <div class="flex justify-between items-center px-4 py-3 bg-slate-50 border-b border-slate-200">
-        <h4 class="m-0 text-sm font-semibold text-slate-900">Query Results</h4>
-        <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{{ result.data?.result?.length || 0 }} series</span>
+    <div v-if="showPreview && result?.status === 'success'" class="border border-border rounded-lg overflow-hidden bg-surface-raised">
+      <div class="flex justify-between items-center px-4 py-3 bg-surface-overlay border-b border-border">
+        <h4 class="m-0 text-sm font-semibold text-text-primary">Query Results</h4>
+        <span class="text-xs text-text-muted bg-surface-overlay px-2 py-0.5 rounded">{{ result.data?.result?.length || 0 }} series</span>
       </div>
 
-      <div v-if="metricLabels.length > 0" class="flex items-center flex-wrap gap-2 px-4 py-3 border-b border-slate-200 text-sm">
+      <div v-if="metricLabels.length > 0" class="flex items-center flex-wrap gap-2 px-4 py-3 border-b border-border text-sm">
         <Tag :size="14" class="text-slate-400" />
-        <span class="text-slate-500 font-medium">Labels:</span>
-        <span v-for="label in metricLabels" :key="label" class="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 font-mono">
+        <span class="text-text-muted font-medium">Labels:</span>
+        <span v-for="label in metricLabels" :key="label" class="rounded-full bg-surface-overlay px-2 py-0.5 text-xs text-text-secondary font-mono">
           {{ label }}
         </span>
       </div>
@@ -138,18 +138,18 @@ const previewData = computed(() => {
         <table class="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th class="px-4 py-2.5 text-left border-b border-slate-200 bg-slate-50 font-medium sticky top-0 text-xs text-slate-500 uppercase tracking-wide">Metric</th>
-              <th class="px-4 py-2.5 text-left border-b border-slate-200 bg-slate-50 font-medium sticky top-0 text-xs text-slate-500 uppercase tracking-wide">Latest Value</th>
-              <th class="px-4 py-2.5 text-left border-b border-slate-200 bg-slate-50 font-medium sticky top-0 text-xs text-slate-500 uppercase tracking-wide">Points</th>
+              <th class="px-4 py-2.5 text-left border-b border-border bg-surface-overlay font-medium sticky top-0 text-xs text-text-muted uppercase tracking-wide">Metric</th>
+              <th class="px-4 py-2.5 text-left border-b border-border bg-surface-overlay font-medium sticky top-0 text-xs text-text-muted uppercase tracking-wide">Latest Value</th>
+              <th class="px-4 py-2.5 text-left border-b border-border bg-surface-overlay font-medium sticky top-0 text-xs text-text-muted uppercase tracking-wide">Points</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(row, index) in previewData" :key="index" class="hover:bg-slate-50">
-              <td class="px-4 py-2.5 text-left border-b border-slate-100 text-slate-900 max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap">
-                <code class="text-xs text-slate-500">{{ JSON.stringify(row.metric) }}</code>
+            <tr v-for="(row, index) in previewData" :key="index" class="hover:bg-surface-overlay">
+              <td class="px-4 py-2.5 text-left border-b border-border text-text-primary max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap">
+                <code class="text-xs text-text-muted">{{ JSON.stringify(row.metric) }}</code>
               </td>
-              <td class="px-4 py-2.5 text-left border-b border-slate-100 text-slate-900">{{ row.latestValue }}</td>
-              <td class="px-4 py-2.5 text-left border-b border-slate-100 text-slate-900">{{ row.valueCount }}</td>
+              <td class="px-4 py-2.5 text-left border-b border-border text-text-primary">{{ row.latestValue }}</td>
+              <td class="px-4 py-2.5 text-left border-b border-border text-text-primary">{{ row.valueCount }}</td>
             </tr>
           </tbody>
         </table>

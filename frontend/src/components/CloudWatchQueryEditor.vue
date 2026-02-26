@@ -49,12 +49,12 @@ function handleQueryInput(event: Event) {
 <template>
   <div class="flex flex-col gap-3.5" :class="{ 'opacity-60 pointer-events-none': props.disabled }">
     <div v-if="props.showSignalSelector" class="flex flex-col gap-1.5">
-      <label for="cloudwatch-signal" class="text-sm font-medium text-slate-900">Signal Type</label>
+      <label for="cloudwatch-signal" class="text-sm font-medium text-text-primary">Signal Type</label>
       <select
         id="cloudwatch-signal"
         :value="props.signal"
         :disabled="props.disabled"
-        class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+        class="w-full rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
         @change="handleSignalChange"
       >
         <option value="metrics">Metrics</option>
@@ -63,7 +63,7 @@ function handleQueryInput(event: Event) {
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label for="cloudwatch-query" class="text-sm font-medium text-slate-900">Query</label>
+      <label for="cloudwatch-query" class="text-sm font-medium text-text-primary">Query</label>
       <textarea
         id="cloudwatch-query"
         :value="props.modelValue"
@@ -71,7 +71,7 @@ function handleQueryInput(event: Event) {
         :placeholder="placeholder"
         rows="7"
         spellcheck="false"
-        class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-3 text-sm font-mono text-slate-900 min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+        class="w-full rounded-lg border border-border bg-surface-raised px-3.5 py-3 text-sm font-mono text-text-primary min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
         @input="handleQueryInput"
       />
     </div>

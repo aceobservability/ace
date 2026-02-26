@@ -22,7 +22,7 @@ const props = withDefaults(
 function extractTraceId(entry: LogEntry): string | null {
   const field = props.traceIdField || 'trace_id'
 
-  if (entry.labels && entry.labels[field]) {
+  if (entry.labels?.[field]) {
     return entry.labels[field]
   }
 
@@ -56,16 +56,16 @@ interface DetectedField {
 function getLevelBadgeClasses(level?: string): string {
   switch (level) {
     case 'error':
-      return 'rounded-full bg-rose-50 px-2 py-0.5 text-rose-700 ring-1 ring-rose-600/20 font-semibold'
+      return 'rounded-full bg-rose-500/10 px-2 py-0.5 text-rose-500 ring-1 ring-rose-500/20 font-semibold'
     case 'warning':
     case 'warn':
       return 'rounded-full bg-amber-50 px-2 py-0.5 text-amber-700 ring-1 ring-amber-600/20 font-semibold'
     case 'info':
       return 'rounded-full bg-sky-50 px-2 py-0.5 text-sky-700 ring-1 ring-sky-600/20 font-semibold'
     case 'debug':
-      return 'rounded-full bg-slate-100 px-2 py-0.5 text-slate-600'
+      return 'rounded-full bg-surface-overlay px-2 py-0.5 text-text-secondary'
     default:
-      return 'rounded-full bg-slate-100 px-2 py-0.5 text-slate-600'
+      return 'rounded-full bg-surface-overlay px-2 py-0.5 text-text-secondary'
   }
 }
 
@@ -227,7 +227,7 @@ watch(displayLogs, () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-hidden rounded-xl border border-slate-200 bg-white">
+  <div class="flex flex-col h-full overflow-hidden rounded-xl border border-border bg-surface-raised">
     <!-- Header -->
     <div class="flex items-center gap-4 bg-slate-900 px-4 py-2.5 font-mono text-xs uppercase tracking-[0.07em] text-slate-300">
       <span class="shrink-0 w-44">Timestamp</span>
@@ -243,8 +243,8 @@ watch(displayLogs, () => {
       <template v-for="(log, i) in displayLogs" :key="i">
         <div
           :class="[
-            'flex items-start gap-4 border-b border-slate-100 px-4 py-2 text-xs font-mono hover:bg-slate-50 cursor-pointer transition',
-            isExpanded(i) ? 'bg-slate-50' : '',
+            'flex items-start gap-4 border-b border-border px-4 py-2 text-xs font-mono hover:bg-surface-overlay cursor-pointer transition',
+            isExpanded(i) ? 'bg-surface-overlay' : '',
             isHighlighted(log) ? 'animate-[row-highlight-fade_2.4s_ease-out]' : '',
           ]"
           @click="toggleRow(i)"
@@ -276,7 +276,7 @@ watch(displayLogs, () => {
           </span>
 
           <!-- Message -->
-          <div class="flex-1 text-slate-700 break-all">
+          <div class="flex-1 text-text-primary break-all">
             <div class="flex items-start gap-1.5">
               <span class="shrink-0 text-slate-400 text-[0.72rem] leading-[1.35] mt-px">{{ isExpanded(i) ? 'v' : '>' }}</span>
               <span class="whitespace-pre-wrap">{{ log.line }}</span>
@@ -285,7 +285,7 @@ watch(displayLogs, () => {
               <span
                 v-for="(value, key) in log.labels"
                 :key="String(key)"
-                class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 mr-1"
+                class="inline-flex rounded-full bg-surface-overlay px-2 py-0.5 text-xs text-text-secondary mr-1"
               >
                 {{ key }}={{ value }}
               </span>
@@ -294,8 +294,8 @@ watch(displayLogs, () => {
         </div>
 
         <!-- Expanded detail row -->
-        <div v-if="isExpanded(i)" class="bg-slate-50 px-6 py-4 text-xs font-mono border-b border-slate-100">
-          <div class="text-[0.7rem] font-semibold uppercase tracking-[0.04em] text-slate-500 mb-2">
+        <div v-if="isExpanded(i)" class="bg-surface-overlay px-6 py-4 text-xs font-mono border-b border-border">
+          <div class="text-[0.7rem] font-semibold uppercase tracking-[0.04em] text-text-muted mb-2">
             Detected Fields
           </div>
           <div v-if="detectedFieldsByRow[i]?.length" class="grid gap-1.5">
@@ -304,8 +304,8 @@ watch(displayLogs, () => {
               :key="field.key"
               class="grid grid-cols-[minmax(120px,220px)_1fr] gap-2.5 max-sm:grid-cols-1 max-sm:gap-1"
             >
-              <span class="text-slate-500 break-words">{{ field.key }}</span>
-              <span class="text-slate-800 whitespace-pre-wrap break-words">{{ field.value }}</span>
+              <span class="text-text-muted break-words">{{ field.key }}</span>
+              <span class="text-text-primary whitespace-pre-wrap break-words">{{ field.value }}</span>
             </div>
           </div>
           <div v-else class="text-slate-400">No structured fields detected in this message.</div>

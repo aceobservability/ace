@@ -30,7 +30,7 @@ describe('LogViewer', () => {
 
     await wrapper.find('.cursor-pointer').trigger('click')
 
-    expect(wrapper.find('.bg-slate-50.px-6').exists()).toBe(true)
+    expect(wrapper.find('.bg-surface-overlay.px-6').exists()).toBe(true)
     expect(wrapper.text()).toContain('Detected Fields')
     expect(wrapper.text()).toContain('message')
     expect(wrapper.text()).toContain('request failed')
@@ -54,10 +54,10 @@ describe('LogViewer', () => {
 
     const row = wrapper.find('.cursor-pointer')
     await row.trigger('click')
-    expect(wrapper.find('.bg-slate-50.px-6').exists()).toBe(true)
+    expect(wrapper.find('.bg-surface-overlay.px-6').exists()).toBe(true)
 
     await row.trigger('click')
-    expect(wrapper.find('.bg-slate-50.px-6').exists()).toBe(false)
+    expect(wrapper.find('.bg-surface-overlay.px-6').exists()).toBe(false)
   })
 
   it('detects key-value fields in plain text logs', async () => {

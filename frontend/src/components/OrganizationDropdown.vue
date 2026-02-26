@@ -68,7 +68,7 @@ function handleCreateOrg() {
     </button>
 
     <Teleport to="body">
-      <div v-if="dropdownOpen" class="absolute z-[60] w-64 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden animate-[fadeIn_0.15s_ease-out]" :style="getDropdownPosition()">
+      <div v-if="dropdownOpen" class="absolute z-[60] w-64 rounded-xl border border-border bg-surface-raised shadow-lg overflow-hidden animate-[fadeIn_0.15s_ease-out]" :style="getDropdownPosition()">
         <div class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">Organizations</div>
 
         <div class="max-h-[200px] overflow-y-auto">
@@ -76,23 +76,23 @@ function handleCreateOrg() {
             v-for="org in organizations"
             :key="org.id"
             :class="[
-              'flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50 cursor-pointer border-none bg-transparent',
-              currentOrg?.id === org.id && 'bg-emerald-50 text-emerald-700'
+              'flex w-full items-center gap-3 px-4 py-2.5 text-sm text-text-primary transition hover:bg-surface-overlay cursor-pointer border-none bg-transparent',
+              currentOrg?.id === org.id && 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
             ]"
             @click="handleSelectOrg(org.id)"
           >
-            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-600">
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-overlay text-xs font-semibold text-text-secondary">
               {{ org.name.charAt(0).toUpperCase() }}
             </div>
             <div class="flex-1 min-w-0 text-left">
-              <span class="block truncate text-sm font-medium text-slate-700">{{ org.name }}</span>
-              <span class="rounded-full bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-500 capitalize">{{ org.role }}</span>
+              <span class="block truncate text-sm font-medium text-text-primary">{{ org.name }}</span>
+              <span class="rounded-full bg-surface-overlay px-2 py-0.5 font-mono text-xs text-text-muted capitalize">{{ org.role }}</span>
             </div>
             <Check v-if="currentOrg?.id === org.id" :size="16" class="shrink-0 text-emerald-600" />
           </button>
         </div>
 
-        <button class="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 cursor-pointer bg-transparent" @click="handleCreateOrg">
+        <button class="flex w-full items-center gap-2 border-t border-border px-4 py-3 text-sm font-medium text-emerald-600 transition hover:bg-emerald-500/10 cursor-pointer bg-transparent" @click="handleCreateOrg">
           <Plus :size="16" />
           <span>Create Organization</span>
         </button>

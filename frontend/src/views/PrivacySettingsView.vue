@@ -40,18 +40,18 @@ function toggleSessionRecording(event: Event) {
 
 <template>
   <div class="px-8 py-6 max-w-2xl mx-auto flex flex-col gap-4">
-    <h1 class="text-2xl font-bold text-slate-900 mb-6">Privacy Settings</h1>
+    <h1 class="text-2xl font-bold text-text-primary mb-6">Privacy Settings</h1>
 
-    <div class="rounded-xl border border-slate-200 bg-white p-6">
+    <div class="rounded-xl border border-border bg-surface-raised p-6">
       <!-- Product analytics toggle row -->
-      <div class="flex items-center justify-between py-4 border-b border-slate-100">
+      <div class="flex items-center justify-between py-4 border-b border-border">
         <div class="flex flex-col">
-          <span class="text-sm font-medium text-slate-900">Product analytics</span>
-          <span class="text-xs text-slate-500 mt-1">Anonymous usage events for page visits, dashboard actions, and settings interactions.</span>
+          <span class="text-sm font-medium text-text-primary">Product analytics</span>
+          <span class="text-xs text-text-secondary mt-1">Anonymous usage events for page visits, dashboard actions, and settings interactions.</span>
         </div>
         <button
           class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition"
-          :class="analyticsEnabled ? 'bg-emerald-600' : 'bg-slate-200'"
+          :class="analyticsEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'"
           :disabled="dntEnabled"
           role="switch"
           :aria-checked="analyticsEnabled"
@@ -67,12 +67,12 @@ function toggleSessionRecording(event: Event) {
       <!-- Session recording toggle row -->
       <div class="flex items-center justify-between py-4">
         <div class="flex flex-col">
-          <span class="text-sm font-medium text-slate-900">Session recording</span>
-          <span class="text-xs text-slate-500 mt-1">Optional replay sessions to debug UI flows. Requires analytics to be enabled.</span>
+          <span class="text-sm font-medium text-text-primary">Session recording</span>
+          <span class="text-xs text-text-secondary mt-1">Optional replay sessions to debug UI flows. Requires analytics to be enabled.</span>
         </div>
         <button
           class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition"
-          :class="sessionRecordingEnabled && analyticsEnabled ? 'bg-emerald-600' : 'bg-slate-200'"
+          :class="sessionRecordingEnabled && analyticsEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'"
           :disabled="!analyticsEnabled"
           role="switch"
           :aria-checked="sessionRecordingEnabled && analyticsEnabled"
@@ -90,8 +90,8 @@ function toggleSessionRecording(event: Event) {
         v-if="dntEnabled || analyticsEnabled || consent === 'pending'"
         class="mt-4 rounded-lg px-4 py-3 text-sm"
         :class="analyticsEnabled
-          ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
-          : 'bg-slate-50 border border-slate-200 text-slate-600'"
+          ? 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400'
+          : 'bg-surface-overlay border border-border text-text-secondary'"
       >
         <template v-if="dntEnabled">
           Analytics disabled by browser Do Not Track setting.

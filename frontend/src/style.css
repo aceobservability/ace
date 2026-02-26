@@ -35,6 +35,22 @@
   --color-danger:          #f43f5e;   /* rose-500 */
   --color-warning:         #f59e0b;
   --color-success:         #10b981;
+
+  /* Aliases — used by scoped component styles (Sidebar, OrgSettings, etc.) */
+  --border-primary:        var(--color-border);
+  --border-secondary:      var(--color-border-strong);
+  --text-primary:          var(--color-text-primary);
+  --text-secondary:        var(--color-text-secondary);
+  --text-tertiary:         var(--color-text-muted);
+  --accent-primary:        #10b981;   /* emerald-500 */
+  --accent-primary-hover:  #059669;   /* emerald-600 */
+  --accent-danger:         var(--color-danger);
+  --accent-success:        var(--color-success);
+  --accent-warning:        var(--color-warning);
+  --surface-1:             var(--color-surface-raised);
+  --surface-2:             var(--color-surface-overlay);
+  --bg-hover:              #f1f5f9;   /* slate-100 */
+  --bg-secondary:          #f8fafc;   /* slate-50 */
 }
 
 .dark {
@@ -63,6 +79,22 @@
   --color-danger:          #f43f5e;
   --color-warning:         #f59e0b;
   --color-success:         #10b981;
+
+  /* Aliases — dark overrides */
+  --border-primary:        var(--color-border);
+  --border-secondary:      var(--color-border-strong);
+  --text-primary:          var(--color-text-primary);
+  --text-secondary:        var(--color-text-secondary);
+  --text-tertiary:         var(--color-text-muted);
+  --accent-primary:        #10b981;
+  --accent-primary-hover:  #059669;
+  --accent-danger:         var(--color-danger);
+  --accent-success:        var(--color-success);
+  --accent-warning:        var(--color-warning);
+  --surface-1:             var(--color-surface-raised);
+  --surface-2:             var(--color-surface-overlay);
+  --bg-hover:              #1e293b;   /* slate-800 */
+  --bg-secondary:          #1e293b;   /* slate-800 */
 }
 
 @theme {

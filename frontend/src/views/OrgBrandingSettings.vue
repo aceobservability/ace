@@ -115,34 +115,34 @@ async function handleSave() {
 
 <template>
   <div v-if="loading" class="flex items-center justify-center py-12">
-    <div class="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-emerald-600"></div>
+    <div class="h-6 w-6 animate-spin rounded-full border-2 border-border-strong border-t-emerald-600"></div>
   </div>
 
   <div v-else class="flex flex-col gap-6">
     <!-- App Title -->
-    <section class="rounded-xl border border-slate-200 bg-white p-6">
-      <h2 class="m-0 mb-4 text-base font-semibold text-slate-900">App Title</h2>
-      <p class="m-0 mb-3 text-sm text-slate-500">Custom title replaces "Ace" in the sidebar header.</p>
+    <section class="rounded-xl border border-border bg-surface-raised p-6">
+      <h2 class="m-0 mb-4 text-base font-semibold text-text-primary">App Title</h2>
+      <p class="m-0 mb-3 text-sm text-text-muted">Custom title replaces "Ace" in the sidebar header.</p>
       <input
         v-model="appTitle"
         type="text"
         maxlength="100"
         placeholder="Ace"
         :disabled="!isAdmin"
-        class="w-full max-w-sm rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+        class="w-full max-w-sm rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
       />
     </section>
 
     <!-- Primary Accent Color -->
-    <section class="rounded-xl border border-slate-200 bg-white p-6">
-      <h2 class="m-0 mb-4 text-base font-semibold text-slate-900">Primary Accent Color</h2>
-      <p class="m-0 mb-3 text-sm text-slate-500">Replaces the default emerald accent across the app for your organisation.</p>
+    <section class="rounded-xl border border-border bg-surface-raised p-6">
+      <h2 class="m-0 mb-4 text-base font-semibold text-text-primary">Primary Accent Color</h2>
+      <p class="m-0 mb-3 text-sm text-text-muted">Replaces the default emerald accent across the app for your organisation.</p>
       <div class="flex items-center gap-3">
         <input
           v-model="primaryColor"
           type="color"
           :disabled="!isAdmin"
-          class="h-10 w-12 cursor-pointer rounded border border-slate-200 bg-white p-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="h-10 w-12 cursor-pointer rounded border border-border bg-surface-raised p-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <input
           v-model="primaryColor"
@@ -150,13 +150,13 @@ async function handleSave() {
           maxlength="7"
           placeholder="#10b981"
           :disabled="!isAdmin"
-          class="w-32 rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+          class="w-32 rounded-lg border border-border bg-surface-raised px-3 py-2 font-mono text-sm text-text-primary outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
         />
       </div>
 
       <!-- Color Preview -->
-      <div class="mt-4 rounded-lg border border-slate-200 p-4">
-        <p class="m-0 mb-3 text-xs text-slate-500">Preview</p>
+      <div class="mt-4 rounded-lg border border-border p-4">
+        <p class="m-0 mb-3 text-xs text-text-muted">Preview</p>
         <div class="flex items-center gap-3 flex-wrap">
           <button
             class="rounded-md px-3 py-1.5 text-sm font-medium text-white cursor-default"
@@ -168,22 +168,22 @@ async function handleSave() {
           >Badge</span>
           <div class="flex items-center gap-1.5">
             <div class="h-3 w-3 rounded-full" :style="{ backgroundColor: previewColor }"></div>
-            <span class="text-sm text-slate-500">Active indicator</span>
+            <span class="text-sm text-text-muted">Active indicator</span>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Organisation Logo -->
-    <section class="rounded-xl border border-slate-200 bg-white p-6">
-      <h2 class="m-0 mb-4 text-base font-semibold text-slate-900">Organisation Logo</h2>
-      <p class="m-0 mb-3 text-sm text-slate-500">Upload a logo (PNG, JPEG, SVG, GIF, or WebP, max 500KB). Replaces the default "A" icon in the sidebar.</p>
+    <section class="rounded-xl border border-border bg-surface-raised p-6">
+      <h2 class="m-0 mb-4 text-base font-semibold text-text-primary">Organisation Logo</h2>
+      <p class="m-0 mb-3 text-sm text-text-muted">Upload a logo (PNG, JPEG, SVG, GIF, or WebP, max 500KB). Replaces the default "A" icon in the sidebar.</p>
 
       <div v-if="logoDataURI" class="mb-4 flex items-center gap-4">
-        <img :src="logoDataURI" alt="Logo preview" class="h-14 w-14 rounded-lg border border-slate-200 object-contain bg-slate-50 p-1" />
+        <img :src="logoDataURI" alt="Logo preview" class="h-14 w-14 rounded-lg border border-border object-contain bg-surface-overlay p-1" />
         <button
           v-if="isAdmin"
-          class="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50 cursor-pointer"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/25 bg-surface-raised px-3 py-1.5 text-sm font-medium text-rose-500 transition hover:bg-rose-500/10 cursor-pointer"
           @click="removeLogo"
         >Remove logo</button>
       </div>
@@ -192,16 +192,16 @@ async function handleSave() {
         type="file"
         accept="image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
         :disabled="!isAdmin"
-        class="block w-full max-w-sm text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-700 file:cursor-pointer hover:file:bg-emerald-100 disabled:opacity-50"
+        class="block w-full max-w-sm text-sm text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-600 file:cursor-pointer hover:file:bg-emerald-500/15 disabled:opacity-50"
         @change="handleLogoUpload"
       />
 
-      <div v-if="logoError" class="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-600">{{ logoError }}</div>
+      <div v-if="logoError" class="mt-2 rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-500">{{ logoError }}</div>
     </section>
 
     <!-- Live Preview -->
-    <section class="rounded-xl border border-slate-200 bg-white p-6">
-      <h2 class="m-0 mb-4 text-base font-semibold text-slate-900">Sidebar Preview</h2>
+    <section class="rounded-xl border border-border bg-surface-raised p-6">
+      <h2 class="m-0 mb-4 text-base font-semibold text-text-primary">Sidebar Preview</h2>
       <div class="w-56 rounded-xl border border-slate-700 bg-slate-950 p-4">
         <div class="flex items-center gap-2.5">
           <img
@@ -245,10 +245,10 @@ async function handleSave() {
         :disabled="saving"
         @click="handleSave"
       >{{ saving ? 'Saving...' : 'Save Branding' }}</button>
-      <p v-if="!isAdmin" class="m-0 text-sm text-slate-500">Only admins can change branding settings.</p>
+      <p v-if="!isAdmin" class="m-0 text-sm text-text-muted">Only admins can change branding settings.</p>
     </div>
 
-    <div v-if="error" class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-600">{{ error }}</div>
-    <div v-if="success" class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">{{ success }}</div>
+    <div v-if="error" class="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2.5 text-sm text-rose-500">{{ error }}</div>
+    <div v-if="success" class="rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-600 dark:text-emerald-400">{{ success }}</div>
   </div>
 </template>

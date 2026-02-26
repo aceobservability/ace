@@ -139,15 +139,15 @@ async function handleSubmit() {
     >
       <div
         ref="modalRef"
-        class="w-full max-w-md m-4 rounded-xl border border-slate-200 bg-white shadow-lg animate-[slideUp_0.3s_ease-out] max-sm:max-w-none max-sm:m-0 max-sm:h-full max-sm:rounded-none"
+        class="w-full max-w-md m-4 rounded-xl border border-border bg-surface-raised shadow-lg animate-[slideUp_0.3s_ease-out] max-sm:max-w-none max-sm:m-0 max-sm:h-full max-sm:rounded-none"
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-org-modal-title"
       >
-        <header class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-          <h2 id="create-org-modal-title" class="text-lg font-semibold text-slate-900">Create Organization</h2>
+        <header class="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 id="create-org-modal-title" class="text-lg font-semibold text-text-primary">Create Organization</h2>
           <button
-            class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+            class="flex items-center justify-center h-8 w-8 rounded-lg text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer"
             @click="closeModal"
           >
             <X :size="20" />
@@ -156,7 +156,7 @@ async function handleSubmit() {
 
         <form class="px-6 py-4 max-sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]" @submit.prevent="handleSubmit">
           <div class="mb-5">
-            <label for="name" class="block mb-2 text-sm font-medium text-slate-700">
+            <label for="name" class="block mb-2 text-sm font-medium text-text-primary">
               Organization Name <span class="text-red-500">*</span>
             </label>
             <input
@@ -167,16 +167,16 @@ async function handleSubmit() {
               placeholder="My Organization"
               :disabled="loading"
               autocomplete="off"
-              class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary placeholder:text-text-muted transition focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
             />
           </div>
 
           <div class="mb-5">
-            <label for="slug" class="block mb-2 text-sm font-medium text-slate-700">
+            <label for="slug" class="block mb-2 text-sm font-medium text-text-primary">
               URL Slug <span class="text-red-500">*</span>
             </label>
-            <div class="flex items-center rounded-lg border border-slate-200 bg-slate-50 transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20">
-              <span class="py-2 pl-3 text-sm text-slate-500 select-none">org/</span>
+            <div class="flex items-center rounded-lg border border-border bg-surface-overlay transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20">
+              <span class="py-2 pl-3 text-sm text-text-muted select-none">org/</span>
               <input
                 id="slug"
                 v-model="slug"
@@ -184,11 +184,11 @@ async function handleSubmit() {
                 placeholder="my-organization"
                 :disabled="loading"
                 autocomplete="off"
-                class="w-full bg-transparent border-none pl-0 py-2 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0 disabled:text-slate-400 disabled:cursor-not-allowed"
+                class="w-full bg-transparent border-none pl-0 py-2 pr-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-0 disabled:text-text-muted disabled:cursor-not-allowed"
                 @input="handleSlugInput"
               />
             </div>
-            <span class="block mt-1.5 text-xs text-slate-500">Used in URLs and for SSO login</span>
+            <span class="block mt-1.5 text-xs text-text-muted">Used in URLs and for SSO login</span>
           </div>
 
           <div
@@ -198,10 +198,10 @@ async function handleSubmit() {
             {{ error }}
           </div>
 
-          <div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
+          <div class="flex justify-end gap-3 border-t border-border pt-4">
             <button
               type="button"
-              class="inline-flex items-center justify-center rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center justify-center rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-muted hover:text-text-primary transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="loading"
               @click="closeModal"
             >

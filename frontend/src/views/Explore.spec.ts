@@ -200,7 +200,7 @@ function findRunButton(wrapper: ReturnType<typeof mount>) {
 
 /** Find error display (use rounded-xl to distinguish from the health badge which uses rounded-full) */
 function findError(wrapper: ReturnType<typeof mount>) {
-  return wrapper.find('.rounded-xl.text-rose-700')
+  return wrapper.find('.rounded-xl.text-rose-500')
 }
 
 describe('Explore', () => {

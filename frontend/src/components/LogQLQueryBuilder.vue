@@ -316,11 +316,11 @@ watch(activeQuery, (newValue) => {
 
 <template>
   <div class="flex flex-col gap-4" :class="{ 'opacity-60 pointer-events-none': props.disabled }">
-    <div class="flex rounded-lg bg-slate-100 p-1 w-fit">
+    <div class="flex rounded-lg bg-surface-overlay p-1 w-fit">
       <button
         type="button"
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-slate-900"
-        :class="{ 'bg-white text-slate-900 shadow-sm': mode === 'builder' }"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-text-primary"
+        :class="{ 'bg-surface-raised text-text-primary shadow-sm': mode === 'builder' }"
         :disabled="props.disabled || !builderAvailable"
         :title="!builderAvailable ? 'Query cannot be edited in builder mode' : ''"
         @click="mode = 'builder'"
@@ -330,8 +330,8 @@ watch(activeQuery, (newValue) => {
       </button>
       <button
         type="button"
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-slate-900"
-        :class="{ 'bg-white text-slate-900 shadow-sm': mode === 'code' }"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-md text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-text-primary"
+        :class="{ 'bg-surface-raised text-text-primary shadow-sm': mode === 'code' }"
         :disabled="props.disabled"
         @click="mode = 'code'"
       >
@@ -343,10 +343,10 @@ watch(activeQuery, (newValue) => {
     <div v-if="mode === 'builder'" class="flex flex-col gap-4">
       <div class="flex flex-col gap-2">
         <div class="flex justify-between items-center">
-          <label class="text-sm font-medium text-slate-900">Stream Filters</label>
+          <label class="text-sm font-medium text-text-primary">Stream Filters</label>
           <button
             type="button"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 cursor-pointer transition-all duration-200 hover:enabled:bg-slate-50 hover:enabled:text-slate-900"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 hover:enabled:bg-surface-overlay hover:enabled:text-text-primary"
             :disabled="props.disabled"
             @click="addLabelFilter"
           >
@@ -355,14 +355,14 @@ watch(activeQuery, (newValue) => {
           </button>
         </div>
 
-        <div v-if="labelFilters.length === 0" class="p-4 text-center text-slate-400 text-sm bg-slate-50 rounded-lg">
+        <div v-if="labelFilters.length === 0" class="p-4 text-center text-slate-400 text-sm bg-surface-overlay rounded-lg">
           No filters yet. Add a field filter to build your selector.
         </div>
 
         <div v-else class="flex flex-col gap-2">
           <div v-for="filter in labelFilters" :key="filter.id" class="flex items-center gap-2">
             <select
-              class="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer focus:outline-none focus:border-emerald-500"
+              class="flex-1 min-w-0 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer focus:outline-none focus:border-emerald-500"
               :value="filter.label"
               :disabled="props.disabled"
               @change="handleLabelChange(filter, ($event.target as HTMLSelectElement).value)"
@@ -374,7 +374,7 @@ watch(activeQuery, (newValue) => {
             </select>
 
             <select
-              class="w-[120px] flex-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-600 cursor-pointer focus:outline-none focus:border-emerald-500"
+              class="w-[120px] flex-none rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm font-mono text-text-secondary cursor-pointer focus:outline-none focus:border-emerald-500"
               :value="filter.operator"
               :disabled="props.disabled"
               @change="updateLabelFilter(filter.id, { operator: ($event.target as HTMLSelectElement).value })"
@@ -386,7 +386,7 @@ watch(activeQuery, (newValue) => {
 
             <select
               v-if="getLabelValues(filter.label).length > 0"
-              class="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 cursor-pointer focus:outline-none focus:border-emerald-500"
+              class="flex-1 min-w-0 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer focus:outline-none focus:border-emerald-500"
               :value="filter.value"
               :disabled="props.disabled || loadingLabelValues === filter.label"
               @change="updateLabelFilter(filter.id, { value: ($event.target as HTMLSelectElement).value })"
@@ -398,7 +398,7 @@ watch(activeQuery, (newValue) => {
             </select>
             <input
               v-else
-              class="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500"
+              class="flex-1 min-w-0 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-emerald-500"
               type="text"
               placeholder="Field value"
               :value="filter.value"
@@ -421,11 +421,11 @@ watch(activeQuery, (newValue) => {
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-sm font-medium text-slate-900">{{ lineFilterLabel }}</label>
+        <label class="text-sm font-medium text-text-primary">{{ lineFilterLabel }}</label>
         <div class="flex items-center gap-2">
           <select
             v-model="lineFilterOperator"
-            class="w-[120px] flex-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-600 cursor-pointer focus:outline-none focus:border-emerald-500"
+            class="w-[120px] flex-none rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm font-mono text-text-secondary cursor-pointer focus:outline-none focus:border-emerald-500"
             :disabled="props.disabled"
           >
             <option v-for="operator in textOperators" :key="operator.value" :value="operator.value">
@@ -434,7 +434,7 @@ watch(activeQuery, (newValue) => {
           </select>
           <input
             v-model="lineFilterValue"
-            class="flex-1 min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-500"
+            class="flex-1 min-w-0 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-emerald-500"
             type="text"
             :placeholder="lineFilterPlaceholder"
             :disabled="props.disabled"
@@ -442,9 +442,9 @@ watch(activeQuery, (newValue) => {
         </div>
       </div>
 
-      <div class="flex flex-col gap-2 mt-2 pt-4 border-t border-slate-100">
-        <label class="text-sm font-medium text-slate-900">{{ generatedQueryLabel }}</label>
-        <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 min-h-[48px]">
+      <div class="flex flex-col gap-2 mt-2 pt-4 border-t border-border">
+        <label class="text-sm font-medium text-text-primary">{{ generatedQueryLabel }}</label>
+        <div class="rounded-lg border border-border bg-surface-overlay px-4 py-3 min-h-[48px]">
           <code v-if="generatedQuery" class="font-mono text-sm text-emerald-600 break-all">{{ generatedQuery }}</code>
           <span v-else class="text-slate-400 text-sm">Add a field/value filter to generate a query</span>
         </div>
@@ -452,7 +452,7 @@ watch(activeQuery, (newValue) => {
     </div>
 
     <div v-else class="flex flex-col gap-4">
-      <label class="text-sm font-medium text-slate-900">{{ codeEditorLabel }}</label>
+      <label class="text-sm font-medium text-text-primary">{{ codeEditorLabel }}</label>
       <MonacoQueryEditor
         v-model="codeQuery"
         :disabled="props.disabled"

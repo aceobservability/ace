@@ -208,11 +208,11 @@ function exportSpanJson() {
 </script>
 
 <template>
-  <aside class="flex min-w-0 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4" aria-label="Span details panel">
+  <aside class="flex min-w-0 flex-col gap-3 rounded-xl border border-border bg-surface-raised p-4" aria-label="Span details panel">
     <header class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
       <div>
         <h3 class="m-0 text-xs font-semibold uppercase tracking-wider text-slate-500">Span details</h3>
-        <p class="mt-1 text-sm font-semibold text-slate-900">{{ span.operationName || '(unnamed span)' }}</p>
+        <p class="mt-1 text-sm font-semibold text-text-primary">{{ span.operationName || '(unnamed span)' }}</p>
       </div>
       <span
         class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide"
@@ -225,19 +225,19 @@ function exportSpanJson() {
     </header>
 
     <div class="flex flex-wrap gap-2">
-      <button type="button" class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="copyToClipboard(span.spanId, 'Span ID')">
+      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="copyToClipboard(span.spanId, 'Span ID')">
         Copy span ID
       </button>
-      <button type="button" class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="copyToClipboard(trace.traceId, 'Trace ID')">
+      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="copyToClipboard(trace.traceId, 'Trace ID')">
         Copy trace ID
       </button>
-      <button type="button" class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="openTraceLogs">
+      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="openTraceLogs">
         View Logs
       </button>
-      <button type="button" class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="openServiceMetrics">
+      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="openServiceMetrics">
         View Service Metrics
       </button>
-      <button type="button" class="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="exportSpanJson">
+      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="exportSpanJson">
         Export JSON
       </button>
     </div>
@@ -246,11 +246,11 @@ function exportSpanJson() {
     <section class="grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-slate-100 p-3 max-md:grid-cols-1">
       <div class="flex min-w-0 flex-col gap-0.5">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Service</span>
-        <code class="break-all font-mono text-sm text-slate-900">{{ span.serviceName || 'unknown' }}</code>
+        <code class="break-all font-mono text-sm text-text-primary">{{ span.serviceName || 'unknown' }}</code>
       </div>
       <div class="flex min-w-0 flex-col gap-0.5">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Duration</span>
-        <code class="break-all font-mono text-sm text-slate-900">{{ formatDurationNano(span.durationNano) }}</code>
+        <code class="break-all font-mono text-sm text-text-primary">{{ formatDurationNano(span.durationNano) }}</code>
       </div>
       <div class="flex min-w-0 flex-col gap-0.5">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Start</span>
@@ -262,11 +262,11 @@ function exportSpanJson() {
       </div>
       <div class="flex min-w-0 flex-col gap-0.5">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Offset</span>
-        <code class="break-all font-mono text-sm text-slate-900">{{ formatTraceOffset(span.startTimeUnixNano) }}</code>
+        <code class="break-all font-mono text-sm text-text-primary">{{ formatTraceOffset(span.startTimeUnixNano) }}</code>
       </div>
       <div class="flex min-w-0 flex-col gap-0.5">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Span ID</span>
-        <code class="break-all font-mono text-sm text-slate-900">{{ span.spanId }}</code>
+        <code class="break-all font-mono text-sm text-text-primary">{{ span.spanId }}</code>
       </div>
     </section>
 
@@ -307,8 +307,8 @@ function exportSpanJson() {
       <table v-if="sortedTags.length > 0" class="w-full border-collapse text-sm">
         <thead>
           <tr>
-            <th class="border-b border-slate-200 pb-1.5 text-left text-xs text-slate-500">Key</th>
-            <th class="border-b border-slate-200 pb-1.5 text-left text-xs text-slate-500">Value</th>
+            <th class="border-b border-border pb-1.5 text-left text-xs text-slate-500">Key</th>
+            <th class="border-b border-border pb-1.5 text-left text-xs text-slate-500">Value</th>
           </tr>
         </thead>
         <tbody>
@@ -317,7 +317,7 @@ function exportSpanJson() {
               <code class="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-500">{{ key }}</code>
             </td>
             <td class="border-b border-slate-50 py-1.5 align-top">
-              <code class="rounded-md bg-slate-50 px-1.5 py-0.5 font-mono text-xs text-slate-900">{{ value }}</code>
+              <code class="rounded-md bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-primary">{{ value }}</code>
             </td>
           </tr>
         </tbody>
@@ -340,7 +340,7 @@ function exportSpanJson() {
               class="flex items-start gap-2"
             >
               <code class="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-500">{{ fieldKey }}</code>
-              <code class="rounded-md bg-slate-50 px-1.5 py-0.5 font-mono text-xs text-slate-900">{{ fieldValue }}</code>
+              <code class="rounded-md bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-primary">{{ fieldValue }}</code>
             </div>
           </div>
           <p v-else class="m-0 text-sm text-slate-500">No log fields</p>

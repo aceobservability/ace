@@ -11,6 +11,10 @@ const mockQueryDataSource = vi.hoisted(() => vi.fn())
 const mockRouterPush = vi.hoisted(() => vi.fn())
 
 vi.mock('vue-router', () => ({
+  useRoute: () => ({
+    path: '/explore/traces',
+    query: {},
+  }),
   useRouter: () => ({
     push: mockRouterPush,
   }),
@@ -188,12 +192,12 @@ function findTraceResultRows(wrapper: ReturnType<typeof mount>) {
 
 /** Find error display */
 function findError(wrapper: ReturnType<typeof mount>) {
-  return wrapper.find('.text-rose-700')
+  return wrapper.find('.rounded-xl.text-rose-500')
 }
 
 /** Find service graph error */
 function findServiceGraphError(wrapper: ReturnType<typeof mount>) {
-  return wrapper.find('.text-rose-600')
+  return wrapper.find('.rounded-lg.text-rose-500')
 }
 
 describe('ExploreTraces', () => {

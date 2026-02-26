@@ -226,7 +226,7 @@ describe('TimeRangePicker', () => {
 
     const selectedItem = wrapper
       .findAll('button')
-      .find((b) => b.text() === 'Last 5 minutes' && b.classes().includes('bg-emerald-50'))
+      .find((b) => b.text() === 'Last 5 minutes' && b.classes().includes('bg-emerald-500/10'))
     expect(selectedItem).toBeDefined()
     expect(selectedItem?.text()).toBe('Last 5 minutes')
   })

@@ -71,7 +71,7 @@ function getValue(seriesIndex: number, timestamp: number): number | undefined {
 
 <template>
   <div
-    class="h-full overflow-auto rounded-xl border border-slate-200 bg-white"
+    class="h-full overflow-auto rounded-xl border border-border bg-surface-raised"
     :style="{ height: typeof height === 'number' ? `${height}px` : height }"
   >
     <table class="w-full text-left">
@@ -91,19 +91,19 @@ function getValue(seriesIndex: number, timestamp: number): number | undefined {
         <tr
           v-for="ts in timestamps"
           :key="ts"
-          class="border-b border-slate-100 text-sm text-slate-600 hover:bg-slate-50"
+          class="border-b border-border text-sm text-text-secondary hover:bg-surface-overlay"
         >
-          <td class="min-w-[140px] px-4 py-3 text-slate-400">{{ formatTimestamp(ts) }}</td>
+          <td class="min-w-[140px] px-4 py-3 text-text-muted">{{ formatTimestamp(ts) }}</td>
           <td
             v-for="(_, idx) in series"
             :key="idx"
-            class="min-w-[100px] px-4 py-3 text-right tabular-nums text-slate-700"
+            class="min-w-[100px] px-4 py-3 text-right tabular-nums text-text-primary"
           >
             {{ formatValue(getValue(idx, ts)) }}
           </td>
         </tr>
         <tr v-if="timestamps.length === 0">
-          <td :colspan="series.length + 1" class="py-8 text-center text-sm text-slate-400">
+          <td :colspan="series.length + 1" class="py-8 text-center text-sm text-text-muted">
             No data available
           </td>
         </tr>

@@ -552,30 +552,30 @@ onMounted(async () => {
   <div class="px-8 py-6 max-w-5xl mx-auto">
     <!-- Page header -->
     <button
-      class="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition mb-4"
+      class="flex items-center gap-1 text-sm text-text-muted hover:text-text-primary transition mb-4"
       @click="goBack"
       title="Back to Dashboard"
     >
       <ArrowLeft :size="16" />
       <span>Back to dashboard</span>
     </button>
-    <h1 class="text-2xl font-bold text-slate-900">
+    <h1 class="text-2xl font-bold text-text-primary">
       Dashboard Settings
     </h1>
-    <p v-if="dashboard" class="mt-1 text-sm text-slate-500">{{ dashboard.title }}</p>
+    <p v-if="dashboard" class="mt-1 text-sm text-text-muted">{{ dashboard.title }}</p>
 
-    <div v-if="loading" class="text-center py-8 text-slate-500">Loading...</div>
-    <div v-else-if="error" class="text-center py-8 text-rose-600">{{ error }}</div>
+    <div v-if="loading" class="text-center py-8 text-text-muted">Loading...</div>
+    <div v-else-if="error" class="text-center py-8 text-rose-500">{{ error }}</div>
     <div v-else-if="dashboard">
       <!-- Tab bar -->
-      <nav class="flex gap-1 border-b border-slate-200 mt-6 mb-6" data-testid="dashboard-settings-sidebar">
+      <nav class="flex gap-1 border-b border-border mt-6 mb-6" data-testid="dashboard-settings-sidebar">
         <button
           v-for="section in settingsSections"
           :key="section.key"
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2"
           :class="activeSection === section.key
             ? 'text-emerald-600 border-emerald-600'
-            : 'text-slate-500 hover:text-slate-700 border-transparent'"
+            : 'text-text-muted hover:text-text-primary border-transparent'"
           :data-testid="`settings-section-${section.key}`"
           @click="navigateToSection(section.key)"
         >
@@ -592,42 +592,42 @@ onMounted(async () => {
         </p>
 
         <!-- General tab -->
-        <section v-if="activeSection === 'general'" class="rounded-xl border border-slate-200 bg-white p-6">
-          <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-slate-900 mb-4">
+        <section v-if="activeSection === 'general'" class="rounded-xl border border-border bg-surface-raised p-6">
+          <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-text-primary mb-4">
             <Settings :size="18" /> General
           </h2>
 
           <div class="grid gap-4">
             <div class="grid gap-1.5">
-              <label for="dashboard-name" class="text-sm font-medium text-slate-700">Name</label>
+              <label for="dashboard-name" class="text-sm font-medium text-text-secondary">Name</label>
               <input
                 id="dashboard-name"
                 v-model="title"
                 type="text"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 autocomplete="off"
               />
             </div>
 
             <div class="grid gap-1.5">
-              <label for="dashboard-description" class="text-sm font-medium text-slate-700">Description</label>
+              <label for="dashboard-description" class="text-sm font-medium text-text-secondary">Description</label>
               <textarea
                 id="dashboard-description"
                 v-model="description"
                 rows="3"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 placeholder="Optional dashboard description"
               ></textarea>
             </div>
 
             <div class="grid gap-1.5">
-              <label for="dashboard-time-range" class="text-sm font-medium text-slate-700">Default time range</label>
+              <label for="dashboard-time-range" class="text-sm font-medium text-text-secondary">Default time range</label>
               <select
                 id="dashboard-time-range"
                 v-model="timeRangePreset"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
               >
                 <option v-for="option in TIME_RANGE_OPTIONS" :key="option.value" :value="option.value">
@@ -637,11 +637,11 @@ onMounted(async () => {
             </div>
 
             <div class="grid gap-1.5">
-              <label for="dashboard-refresh" class="text-sm font-medium text-slate-700">Refresh interval</label>
+              <label for="dashboard-refresh" class="text-sm font-medium text-text-secondary">Refresh interval</label>
               <select
                 id="dashboard-refresh"
                 v-model="refreshInterval"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
               >
                 <option v-for="option in REFRESH_OPTIONS" :key="option.value" :value="option.value">
@@ -651,12 +651,12 @@ onMounted(async () => {
             </div>
 
             <div class="grid gap-1.5">
-              <label for="dashboard-variables" class="text-sm font-medium text-slate-700">Variable names (comma-separated)</label>
+              <label for="dashboard-variables" class="text-sm font-medium text-text-secondary">Variable names (comma-separated)</label>
               <input
                 id="dashboard-variables"
                 v-model="variablesInput"
                 type="text"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 placeholder="env, cluster, instance"
               />
@@ -666,7 +666,7 @@ onMounted(async () => {
           <div class="flex justify-between items-center gap-3 mt-6">
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong"
               :disabled="isExporting"
               @click="exportSettings"
             >
@@ -686,12 +686,12 @@ onMounted(async () => {
         </section>
 
         <!-- YAML tab -->
-        <section v-else-if="activeSection === 'yaml'" class="rounded-xl border border-slate-200 bg-white p-6">
+        <section v-else-if="activeSection === 'yaml'" class="rounded-xl border border-border bg-surface-raised p-6">
           <div class="flex items-center justify-between gap-3 mb-2">
-            <h2 class="m-0 text-base font-semibold text-slate-900">Dashboard YAML</h2>
+            <h2 class="m-0 text-base font-semibold text-text-primary">Dashboard YAML</h2>
             <button
               type="button"
-              class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+              class="rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong"
               :disabled="isConvertingGrafana || isYamlSaving"
               data-testid="grafana-replace-toggle"
               @click="showGrafanaReplace = !showGrafanaReplace"
@@ -700,16 +700,16 @@ onMounted(async () => {
             </button>
           </div>
 
-          <p class="m-0 text-sm text-slate-500 mb-4">
+          <p class="m-0 text-sm text-text-muted mb-4">
             Edit dashboard YAML directly. Validation runs as you type and shows required schema fields.
           </p>
 
-          <p v-if="isYamlLoading" class="m-0 text-sm text-slate-500">Loading current dashboard YAML...</p>
+          <p v-if="isYamlLoading" class="m-0 text-sm text-text-muted">Loading current dashboard YAML...</p>
 
-          <div v-else class="rounded-xl border border-slate-200 overflow-hidden mb-4">
+          <div v-else class="rounded-xl border border-border overflow-hidden mb-4">
             <textarea
               v-model="yamlContent"
-              class="w-full min-h-[320px] px-3 py-2.5 text-xs leading-relaxed font-mono bg-white text-slate-900 border-none focus:outline-none resize-y"
+              class="w-full min-h-[320px] px-3 py-2.5 text-xs leading-relaxed font-mono bg-surface-raised text-text-primary border-none focus:outline-none resize-y"
               data-testid="yaml-editor-input"
               spellcheck="false"
               :readonly="!canEdit || isYamlSaving"
@@ -719,22 +719,22 @@ onMounted(async () => {
 
           <div
             v-if="showGrafanaReplace"
-            class="rounded-lg border border-slate-200 bg-slate-50 p-4 grid gap-3 mb-4"
+            class="rounded-lg border border-border bg-surface-overlay p-4 grid gap-3 mb-4"
             data-testid="grafana-replace-panel"
           >
-            <label for="grafana-replace-source" class="text-sm font-medium text-slate-700">Grafana JSON</label>
+            <label for="grafana-replace-source" class="text-sm font-medium text-text-secondary">Grafana JSON</label>
             <textarea
               id="grafana-replace-source"
               v-model="grafanaSource"
               rows="5"
               placeholder="Paste Grafana dashboard JSON"
-              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="grafana-source"
               :disabled="isConvertingGrafana || isYamlSaving"
             ></textarea>
             <button
               type="button"
-              class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 justify-self-start"
+              class="rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong justify-self-start"
               :disabled="!grafanaSource.trim() || isConvertingGrafana || isYamlSaving"
               data-testid="grafana-replace-convert"
               @click="replaceWithGrafana"
@@ -752,17 +752,17 @@ onMounted(async () => {
 
           <div
             v-if="yamlDiffPreview.length"
-            class="rounded-lg border border-slate-200 bg-slate-50 p-4 mb-4"
+            class="rounded-lg border border-border bg-surface-overlay p-4 mb-4"
             data-testid="yaml-diff-preview"
           >
-            <h4 class="m-0 mb-2 text-xs font-mono uppercase tracking-[0.07em] text-slate-500">Diff preview</h4>
-            <pre class="m-0 whitespace-pre-wrap break-words text-xs leading-snug font-mono text-slate-700">{{ yamlDiffPreview.join('\n') }}</pre>
+            <h4 class="m-0 mb-2 text-xs font-mono uppercase tracking-[0.07em] text-text-muted">Diff preview</h4>
+            <pre class="m-0 whitespace-pre-wrap break-words text-xs leading-snug font-mono text-text-primary">{{ yamlDiffPreview.join('\n') }}</pre>
           </div>
 
           <div class="flex justify-between items-center gap-3">
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong"
               :disabled="isExporting"
               @click="exportSettings"
             >
@@ -782,9 +782,9 @@ onMounted(async () => {
         </section>
 
         <!-- Permissions tab -->
-        <section v-else class="rounded-xl border border-slate-200 bg-white p-6" data-testid="permissions-settings-panel">
-          <h2 class="m-0 text-base font-semibold text-slate-900 mb-2">Permissions</h2>
-          <p class="m-0 text-sm text-slate-500 mb-4">Manage who can view, edit, or administer this dashboard.</p>
+        <section v-else class="rounded-xl border border-border bg-surface-raised p-6" data-testid="permissions-settings-panel">
+          <h2 class="m-0 text-base font-semibold text-text-primary mb-2">Permissions</h2>
+          <p class="m-0 text-sm text-text-muted mb-4">Manage who can view, edit, or administer this dashboard.</p>
           <DashboardPermissionsEditor
             v-if="permissionsOrgId"
             data-testid="dashboard-permissions-editor"
@@ -793,7 +793,7 @@ onMounted(async () => {
           />
           <p
             v-else
-            class="py-3 px-4 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500"
+            class="py-3 px-4 border border-dashed border-border rounded-lg text-sm text-text-muted"
           >
             Permissions are unavailable until organization context is loaded.
           </p>
@@ -801,20 +801,20 @@ onMounted(async () => {
 
         <p
           v-if="actionError"
-          class="m-0 px-4 py-3 rounded-lg border border-rose-200 bg-rose-50 text-sm text-rose-600"
+          class="m-0 px-4 py-3 rounded-lg border border-rose-500/25 bg-rose-500/10 text-sm text-rose-500"
         >
           {{ actionError }}
         </p>
         <p
           v-if="yamlValidationError"
-          class="m-0 px-4 py-3 rounded-lg border border-rose-200 bg-rose-50 text-sm text-rose-600"
+          class="m-0 px-4 py-3 rounded-lg border border-rose-500/25 bg-rose-500/10 text-sm text-rose-500"
           data-testid="yaml-validation-error"
         >
           {{ yamlValidationError }}
         </p>
         <p
           v-if="successMessage"
-          class="m-0 px-4 py-3 rounded-lg border border-emerald-200 bg-emerald-50 text-sm text-emerald-600"
+          class="m-0 px-4 py-3 rounded-lg border border-emerald-500/25 bg-emerald-500/10 text-sm text-emerald-600 dark:text-emerald-400"
         >
           {{ successMessage }}
         </p>

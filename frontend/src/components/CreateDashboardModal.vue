@@ -259,9 +259,9 @@ async function handleSubmit() {
 
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="emit('close')">
-    <div class="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-lg">
+    <div class="w-full max-w-lg rounded-xl border border-border bg-surface-raised shadow-lg">
       <header class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-        <h2 class="text-lg font-semibold text-slate-900">Create Dashboard</h2>
+        <h2 class="text-lg font-semibold text-text-primary">Create Dashboard</h2>
         <button class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer" @click="emit('close')">
           <X :size="20" />
         </button>
@@ -272,7 +272,7 @@ async function handleSubmit() {
           <button
             type="button"
             class="rounded-md px-4 py-2 text-sm font-medium transition cursor-pointer"
-            :class="mode === 'create' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'"
+            :class="mode === 'create' ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-slate-600'"
             :disabled="loading"
             @click="setMode('create')"
           >
@@ -281,7 +281,7 @@ async function handleSubmit() {
           <button
             type="button"
             class="rounded-md px-4 py-2 text-sm font-medium transition cursor-pointer"
-            :class="mode === 'import' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'"
+            :class="mode === 'import' ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-slate-600'"
             :disabled="loading"
             @click="setMode('import')"
           >
@@ -290,7 +290,7 @@ async function handleSubmit() {
           <button
             type="button"
             class="rounded-md px-4 py-2 text-sm font-medium transition cursor-pointer"
-            :class="mode === 'grafana' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'"
+            :class="mode === 'grafana' ? 'bg-surface-raised text-text-primary shadow-sm' : 'text-slate-600'"
             :disabled="loading"
             @click="setMode('grafana')"
           >
@@ -308,7 +308,7 @@ async function handleSubmit() {
               placeholder="My Dashboard"
               :disabled="loading"
               autocomplete="off"
-              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -320,7 +320,7 @@ async function handleSubmit() {
               placeholder="Dashboard description (optional)"
               rows="3"
               :disabled="loading"
-              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed resize-vertical min-h-[80px]"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed resize-vertical min-h-[80px]"
             ></textarea>
           </div>
         </div>
@@ -339,7 +339,7 @@ async function handleSubmit() {
             <p class="mt-2 text-xs text-slate-400">Upload an exported dashboard YAML to import it into this organization.</p>
           </div>
 
-          <div v-if="importPreview" class="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-3" data-testid="yaml-preview">
+          <div v-if="importPreview" class="mb-5 rounded-lg border border-border bg-surface-overlay p-3" data-testid="yaml-preview">
             <p class="text-[0.8125rem] text-slate-600"><strong>Preview:</strong> {{ importPreview.title }}</p>
             <p v-if="importPreview.description" class="mt-1 text-[0.8125rem] text-slate-600">{{ importPreview.description }}</p>
             <p class="mt-1 text-[0.8125rem] text-slate-600">{{ importPreview.panelCount }} panel{{ importPreview.panelCount === 1 ? '' : 's' }}</p>
@@ -370,7 +370,7 @@ async function handleSubmit() {
               :disabled="loading || convertingGrafana"
               placeholder="Paste Grafana dashboard JSON here"
               data-testid="grafana-source"
-              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed resize-vertical min-h-[80px]"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed resize-vertical min-h-[80px]"
             ></textarea>
             <p v-if="grafanaFileName" class="mt-2 text-xs text-slate-400">File: {{ grafanaFileName }}</p>
           </div>
@@ -389,7 +389,7 @@ async function handleSubmit() {
             <li v-for="warning in grafanaWarnings" :key="warning">{{ warning }}</li>
           </ul>
 
-          <div v-if="importPreview" class="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-3" data-testid="yaml-preview">
+          <div v-if="importPreview" class="mb-5 rounded-lg border border-border bg-surface-overlay p-3" data-testid="yaml-preview">
             <p class="text-[0.8125rem] text-slate-600"><strong>Preview:</strong> {{ importPreview.title }}</p>
             <p v-if="importPreview.description" class="mt-1 text-[0.8125rem] text-slate-600">{{ importPreview.description }}</p>
             <p class="mt-1 text-[0.8125rem] text-slate-600">{{ importPreview.panelCount }} panel{{ importPreview.panelCount === 1 ? '' : 's' }}</p>

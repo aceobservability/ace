@@ -80,31 +80,31 @@ function sortIndicator(field: TraceSortField): string {
 </script>
 
 <template>
-  <div class="h-full overflow-auto rounded-xl border border-slate-200 bg-white">
+  <div class="h-full overflow-auto rounded-xl border border-border bg-surface-raised">
     <table class="w-full border-collapse text-sm">
-      <thead class="sticky top-0 z-10 bg-slate-50">
+      <thead class="sticky top-0 z-10 bg-surface-overlay">
         <tr>
-          <th class="border-b border-slate-200 px-4 py-3 text-left align-middle">
+          <th class="border-b border-border px-4 py-3 text-left align-middle">
             <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-slate-500 transition hover:text-slate-900" @click="toggleSort('traceId')">
               Trace {{ sortIndicator('traceId') }}
             </button>
           </th>
-          <th class="border-b border-slate-200 px-4 py-3 text-left align-middle">
+          <th class="border-b border-border px-4 py-3 text-left align-middle">
             <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-slate-500 transition hover:text-slate-900" @click="toggleSort('startTimeUnixNano')">
               Start {{ sortIndicator('startTimeUnixNano') }}
             </button>
           </th>
-          <th class="border-b border-slate-200 px-4 py-3 text-left align-middle">
+          <th class="border-b border-border px-4 py-3 text-left align-middle">
             <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-slate-500 transition hover:text-slate-900" @click="toggleSort('durationNano')">
               Duration {{ sortIndicator('durationNano') }}
             </button>
           </th>
-          <th class="border-b border-slate-200 px-4 py-3 text-left align-middle">
+          <th class="border-b border-border px-4 py-3 text-left align-middle">
             <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-slate-500 transition hover:text-slate-900" @click="toggleSort('spanCount')">
               Spans {{ sortIndicator('spanCount') }}
             </button>
           </th>
-          <th class="border-b border-slate-200 px-4 py-3 text-left align-middle">
+          <th class="border-b border-border px-4 py-3 text-left align-middle">
             <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-slate-500 transition hover:text-slate-900" @click="toggleSort('errorSpanCount')">
               Errors {{ sortIndicator('errorSpanCount') }}
             </button>
@@ -112,7 +112,7 @@ function sortIndicator(field: TraceSortField): string {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="trace in sortedTraces" :key="trace.traceId" class="transition hover:bg-slate-50">
+        <tr v-for="trace in sortedTraces" :key="trace.traceId" class="transition hover:bg-surface-overlay">
           <td class="max-w-[220px] border-b border-slate-100 px-4 py-3 align-middle">
             <button type="button" class="inline-block w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap border-none bg-transparent p-0 text-left font-mono text-xs text-emerald-600 transition hover:text-emerald-700 hover:underline" @click="openTrace(trace.traceId)">
               {{ trace.traceId }}

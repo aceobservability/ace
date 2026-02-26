@@ -367,7 +367,7 @@ onUnmounted(() => {
     <header class="relative z-20 mb-4 flex flex-col gap-3 rounded-xl border border-border bg-surface-raised px-6 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       <div class="flex items-center gap-4">
         <button
-          class="flex h-[38px] w-[38px] items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+          class="flex h-[38px] w-[38px] items-center justify-center rounded-lg border border-border bg-surface-raised text-text-muted transition hover:bg-surface-overlay hover:text-text-primary"
           @click="goBack"
           title="Back to Dashboards"
         >
@@ -375,7 +375,7 @@ onUnmounted(() => {
         </button>
         <div v-if="dashboard">
           <h1 class="mb-0.5 font-mono text-lg font-semibold uppercase tracking-wide text-text-primary">{{ dashboard.title }}</h1>
-          <p v-if="dashboard.description" class="text-sm text-slate-500">
+          <p v-if="dashboard.description" class="text-sm text-text-muted">
             {{ dashboard.description }}
           </p>
         </div>
@@ -386,7 +386,7 @@ onUnmounted(() => {
         </div>
         <button
           v-if="dashboard"
-          class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-700"
+          class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-text-secondary transition hover:bg-surface-overlay hover:text-text-primary"
           data-testid="dashboard-settings-button"
           @click="openDashboardSettings"
         >
@@ -405,22 +405,22 @@ onUnmounted(() => {
     </header>
 
     <div v-if="loading" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-border bg-surface-raised py-20 text-center text-text-muted">
-      <div class="mb-4 h-10 w-10 animate-spin rounded-full border-3 border-slate-200 border-t-emerald-600"></div>
+      <div class="mb-4 h-10 w-10 animate-spin rounded-full border-3 border-border border-t-emerald-500"></div>
       <p>Loading dashboard...</p>
     </div>
 
-    <div v-else-if="error" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-sm text-rose-700">
+    <div v-else-if="error" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-rose-500/25 bg-rose-500/10 p-4 text-center text-sm text-rose-500">
       <AlertCircle :size="48" />
       <p class="mb-4 mt-4">{{ error }}</p>
       <button
-        class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-700"
+        class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-text-secondary transition hover:bg-surface-overlay hover:text-text-primary"
         @click="goBack"
       >Back to Dashboards</button>
     </div>
 
     <template v-else>
       <div v-if="panels.length === 0" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-border bg-surface-raised px-8 py-16 text-center text-text-muted">
-        <div class="mb-4 flex h-[120px] w-[120px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-400">
+        <div class="mb-4 flex h-[120px] w-[120px] items-center justify-center rounded-2xl border border-border bg-surface-overlay text-text-muted">
           <LayoutGrid :size="64" />
         </div>
         <h2 class="mb-2 mt-4 text-text-primary">No panels yet</h2>
@@ -483,19 +483,19 @@ onUnmounted(() => {
 
     <div
       v-if="showDeleteConfirm"
-      class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
       @click.self="cancelDelete"
     >
       <div class="w-full max-w-[400px] rounded-xl border border-border bg-surface-raised p-8 text-center shadow-lg animate-slide-up">
-        <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+        <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
           <Trash2 :size="24" />
         </div>
         <h2 class="mb-2 text-text-primary">Delete Panel</h2>
-        <p class="mb-1 text-slate-500">Are you sure you want to delete "{{ deletingPanel?.title }}"?</p>
-        <p class="text-sm text-rose-600">This action cannot be undone.</p>
+        <p class="mb-1 text-text-muted">Are you sure you want to delete "{{ deletingPanel?.title }}"?</p>
+        <p class="text-sm text-rose-500">This action cannot be undone.</p>
         <div class="mt-6 flex justify-center gap-3">
           <button
-            class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-700"
+            class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-text-secondary transition hover:bg-surface-overlay hover:text-text-primary"
             @click="cancelDelete"
           >Cancel</button>
           <button

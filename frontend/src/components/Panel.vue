@@ -508,19 +508,19 @@ function handleOpenTrace(traceId: string) {
 </script>
 
 <template>
-  <div class="flex h-full flex-col rounded-xl border border-slate-200 bg-white overflow-hidden">
-    <div class="flex items-center justify-between border-b border-slate-100 px-4 py-2">
-      <h3 class="text-sm font-semibold text-slate-900 truncate">{{ panel.title }}</h3>
+  <div class="flex h-full flex-col rounded-xl border border-border bg-surface-raised overflow-hidden">
+    <div class="flex items-center justify-between border-b border-border px-4 py-2">
+      <h3 class="text-sm font-semibold text-text-primary truncate">{{ panel.title }}</h3>
       <div class="flex gap-1">
         <button
-          class="flex items-center justify-center h-7 w-7 rounded-lg border-0 bg-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+          class="flex items-center justify-center h-7 w-7 rounded-lg border-0 bg-transparent text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer"
           @click="$emit('edit', panel)"
           title="Edit panel"
         >
           <Pencil :size="16" />
         </button>
         <button
-          class="flex items-center justify-center h-7 w-7 rounded-lg border-0 bg-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+          class="flex items-center justify-center h-7 w-7 rounded-lg border-0 bg-transparent text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer"
           @click="$emit('delete', panel)"
           title="Delete panel"
         >
@@ -529,9 +529,9 @@ function handleOpenTrace(traceId: string) {
       </div>
     </div>
     <div class="flex-1 overflow-hidden p-2 flex flex-col min-h-0">
-      <div v-if="!hasQuery" class="flex-1 flex flex-col items-center justify-center gap-3 text-slate-400">
-        <BarChart3 :size="48" class="text-slate-300" />
-        <p class="text-sm text-slate-500 m-0">No query configured</p>
+      <div v-if="!hasQuery" class="flex-1 flex flex-col items-center justify-center gap-3 text-text-muted">
+        <BarChart3 :size="48" class="text-text-muted" />
+        <p class="text-sm text-text-muted m-0">No query configured</p>
         <button
           class="px-4 py-2 bg-emerald-600 text-white border-0 rounded-lg text-sm font-medium cursor-pointer hover:-translate-y-px transition"
           @click="$emit('edit', panel)"
@@ -540,8 +540,8 @@ function handleOpenTrace(traceId: string) {
         </button>
       </div>
       <div v-else-if="loading" class="flex-1 flex flex-col items-center justify-center gap-3">
-        <div class="h-8 w-8 rounded-full border-[3px] border-slate-200 border-t-emerald-600 animate-spin"></div>
-        <p class="text-sm text-slate-500 m-0">Loading data...</p>
+        <div class="h-8 w-8 rounded-full border-[3px] border-border border-t-emerald-600 animate-spin"></div>
+        <p class="text-sm text-text-muted m-0">Loading data...</p>
       </div>
       <div v-else-if="error" class="flex-1 flex flex-col items-center justify-center gap-3">
         <AlertCircle :size="48" class="text-rose-500" />
@@ -598,10 +598,10 @@ function handleOpenTrace(traceId: string) {
       </div>
       <div
         v-else-if="chartSeries.length === 0 && logEntries.length === 0 && traceSummaries.length === 0"
-        class="flex-1 flex flex-col items-center justify-center gap-3 text-slate-400"
+        class="flex-1 flex flex-col items-center justify-center gap-3 text-text-muted"
       >
         <AlertCircle :size="48" class="text-amber-400" />
-        <p class="text-sm text-slate-500 m-0">No data available</p>
+        <p class="text-sm text-text-muted m-0">No data available</p>
       </div>
     </div>
   </div>

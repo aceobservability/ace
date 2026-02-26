@@ -54,12 +54,12 @@ func pushToTempo(tempoEndpoint, traceID, spanID, serviceName, endpoint string, d
 					{
 						"spans": []map[string]interface{}{
 							{
-								"traceId":              traceID,
-								"spanId":               spanID,
-								"name":                 endpoint,
-								"kind":                 2,
-								"startTimeUnixNano":    fmt.Sprintf("%d", startNano),
-								"endTimeUnixNano":      fmt.Sprintf("%d", endNano),
+								"traceId":           traceID,
+								"spanId":            spanID,
+								"name":              endpoint,
+								"kind":              2,
+								"startTimeUnixNano": fmt.Sprintf("%d", startNano),
+								"endTimeUnixNano":   fmt.Sprintf("%d", endNano),
 								"attributes": []map[string]interface{}{
 									{"key": "http.method", "value": map[string]string{"stringValue": "GET"}},
 									{"key": "http.url", "value": map[string]string{"stringValue": endpoint}},

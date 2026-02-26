@@ -47,17 +47,17 @@ async function handleSubmit() {
 
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="emit('close')">
-    <div class="w-full max-w-lg rounded-xl border border-slate-200 bg-white shadow-lg">
-      <header class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-        <h2 class="text-lg font-semibold text-slate-900">Edit Dashboard</h2>
-        <button class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer" @click="emit('close')">
+    <div class="w-full max-w-lg rounded-xl border border-border bg-surface-raised shadow-lg">
+      <header class="flex items-center justify-between border-b border-border px-6 py-4">
+        <h2 class="text-lg font-semibold text-text-primary">Edit Dashboard</h2>
+        <button class="flex items-center justify-center h-8 w-8 rounded-lg text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer" @click="emit('close')">
           <X :size="20" />
         </button>
       </header>
 
       <form @submit.prevent="handleSubmit" class="px-6 py-4">
         <div class="mb-5">
-          <label for="title" class="block mb-2 text-sm font-medium text-slate-700">Title <span class="text-red-500">*</span></label>
+          <label for="title" class="block mb-2 text-sm font-medium text-text-primary">Title <span class="text-red-500">*</span></label>
           <input
             id="title"
             v-model="title"
@@ -65,29 +65,29 @@ async function handleSubmit() {
             placeholder="My Dashboard"
             :disabled="loading"
             autocomplete="off"
-            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
           />
         </div>
 
         <div class="mb-5">
-          <label for="description" class="block mb-2 text-sm font-medium text-slate-700">Description</label>
+          <label for="description" class="block mb-2 text-sm font-medium text-text-primary">Description</label>
           <textarea
             id="description"
             v-model="description"
             placeholder="Dashboard description (optional)"
             rows="3"
             :disabled="loading"
-            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed resize-vertical min-h-[80px]"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed resize-vertical min-h-[80px]"
           ></textarea>
         </div>
 
         <div class="mb-5">
-          <label for="folder" class="block mb-2 text-sm font-medium text-slate-700">Folder</label>
+          <label for="folder" class="block mb-2 text-sm font-medium text-text-primary">Folder</label>
           <select
             id="folder"
             v-model="folderId"
             :disabled="loading"
-            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
           >
             <option value="">Unfiled (Root)</option>
             <option
@@ -102,8 +102,8 @@ async function handleSubmit() {
 
         <div v-if="error" class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{{ error }}</div>
 
-        <div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
-          <button type="button" class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" @click="emit('close')" :disabled="loading">
+        <div class="flex justify-end gap-3 border-t border-border pt-4">
+          <button type="button" class="rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" @click="emit('close')" :disabled="loading">
             Cancel
           </button>
           <button type="submit" class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" :disabled="loading">

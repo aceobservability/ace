@@ -324,10 +324,10 @@ async function handleSubmit() {
 
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" @click.self="emit('close')">
-    <div class="w-full max-w-4xl rounded-xl border border-slate-200 bg-white shadow-lg max-h-[90vh] overflow-y-auto">
-      <header class="flex items-center justify-between border-b border-slate-100 px-6 py-4 sticky top-0 bg-white z-10">
-        <h2 class="text-lg font-semibold text-slate-900">{{ isEditing ? 'Edit Panel' : 'Add Panel' }}</h2>
-        <button class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer" @click="emit('close')">
+    <div class="w-full max-w-4xl rounded-xl border border-border bg-surface-raised shadow-lg max-h-[90vh] overflow-y-auto">
+      <header class="flex items-center justify-between border-b border-border px-6 py-4 sticky top-0 bg-surface-raised z-10">
+        <h2 class="text-lg font-semibold text-text-primary">{{ isEditing ? 'Edit Panel' : 'Add Panel' }}</h2>
+        <button class="flex items-center justify-center h-8 w-8 rounded-lg text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer" @click="emit('close')">
           <X :size="20" />
         </button>
       </header>
@@ -335,7 +335,7 @@ async function handleSubmit() {
       <form class="px-6 py-4" @submit.prevent="handleSubmit">
         <div class="grid grid-cols-[1fr_auto] gap-4">
           <div class="mb-5">
-            <label for="title" class="block mb-2 text-sm font-medium text-slate-700">Title <span class="text-red-500">*</span></label>
+            <label for="title" class="block mb-2 text-sm font-medium text-text-primary">Title <span class="text-red-500">*</span></label>
             <input
               id="title"
               v-model="title"
@@ -343,13 +343,13 @@ async function handleSubmit() {
               placeholder="Panel title"
               :disabled="loading"
               autocomplete="off"
-              class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
             />
           </div>
 
           <div class="mb-5 min-w-[160px]">
-            <label for="type" class="block mb-2 text-sm font-medium text-slate-700">Panel Type</label>
-            <select id="type" v-model="panelType" :disabled="loading" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed">
+            <label for="type" class="block mb-2 text-sm font-medium text-text-primary">Panel Type</label>
+            <select id="type" v-model="panelType" :disabled="loading" class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed">
               <option value="line_chart">Line Chart</option>
               <option value="bar_chart">Bar Chart</option>
               <option value="pie">Pie Chart</option>
@@ -364,8 +364,8 @@ async function handleSubmit() {
         </div>
 
         <div v-if="datasources.length > 0" class="mb-5">
-          <label for="datasource" class="block mb-2 text-sm font-medium text-slate-700">Data Source</label>
-          <select id="datasource" v-model="selectedDatasourceId" :disabled="loading" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed">
+          <label for="datasource" class="block mb-2 text-sm font-medium text-text-primary">Data Source</label>
+          <select id="datasource" v-model="selectedDatasourceId" :disabled="loading" class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed">
             <option v-if="!isTracePanelType" value="">Default (Prometheus)</option>
             <option v-else value="">Select tracing datasource</option>
             <option v-for="ds in availableDatasources" :key="ds.id" :value="ds.id">
@@ -374,8 +374,8 @@ async function handleSubmit() {
           </select>
         </div>
 
-        <div class="mb-5 border-t border-slate-100 pt-5">
-          <label class="block mb-2 text-sm font-medium text-slate-700">
+        <div class="mb-5 border-t border-border pt-5">
+          <label class="block mb-2 text-sm font-medium text-text-primary">
             {{
               isClickHouseDatasource
                 ? 'SQL Query'
@@ -413,23 +413,23 @@ async function handleSubmit() {
           />
         </div>
 
-        <div v-if="isTracePanelType" class="border-t border-slate-100 pt-5 mb-5">
-          <h4 class="text-sm font-semibold text-slate-900 mb-3">Trace Panel Options</h4>
+        <div v-if="isTracePanelType" class="border-t border-border pt-5 mb-5">
+          <h4 class="text-sm font-semibold text-text-primary mb-3">Trace Panel Options</h4>
 
           <div class="grid grid-cols-2 gap-3">
             <div class="mb-3">
-              <label for="trace-service-filter" class="block mb-2 text-sm font-medium text-slate-700">Service Filter (optional)</label>
+              <label for="trace-service-filter" class="block mb-2 text-sm font-medium text-text-primary">Service Filter (optional)</label>
               <input
                 id="trace-service-filter"
                 v-model="traceService"
                 type="text"
                 placeholder="api-service"
                 :disabled="loading"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
             <div class="mb-3">
-              <label for="trace-limit" class="block mb-2 text-sm font-medium text-slate-700">Max traces</label>
+              <label for="trace-limit" class="block mb-2 text-sm font-medium text-text-primary">Max traces</label>
               <input
                 id="trace-limit"
                 v-model.number="traceLimit"
@@ -437,50 +437,50 @@ async function handleSubmit() {
                 min="1"
                 max="200"
                 :disabled="loading"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
           </div>
         </div>
 
         <!-- Gauge Configuration -->
-        <div v-if="isGaugeType" class="border-t border-slate-100 pt-5 mb-5">
-          <h4 class="text-sm font-semibold text-slate-900 mb-3">Gauge Options</h4>
+        <div v-if="isGaugeType" class="border-t border-border pt-5 mb-5">
+          <h4 class="text-sm font-semibold text-text-primary mb-3">Gauge Options</h4>
 
           <div class="grid grid-cols-4 gap-3">
             <div class="mb-3">
-              <label for="gauge-min" class="block mb-2 text-sm font-medium text-slate-700">Min</label>
+              <label for="gauge-min" class="block mb-2 text-sm font-medium text-text-primary">Min</label>
               <input
                 id="gauge-min"
                 v-model.number="gaugeMin"
                 type="number"
                 :disabled="loading"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
             <div class="mb-3">
-              <label for="gauge-max" class="block mb-2 text-sm font-medium text-slate-700">Max</label>
+              <label for="gauge-max" class="block mb-2 text-sm font-medium text-text-primary">Max</label>
               <input
                 id="gauge-max"
                 v-model.number="gaugeMax"
                 type="number"
                 :disabled="loading"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
             <div class="mb-3">
-              <label for="gauge-unit" class="block mb-2 text-sm font-medium text-slate-700">Unit</label>
+              <label for="gauge-unit" class="block mb-2 text-sm font-medium text-text-primary">Unit</label>
               <input
                 id="gauge-unit"
                 v-model="gaugeUnit"
                 type="text"
                 placeholder="%"
                 :disabled="loading"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
             <div class="mb-3">
-              <label for="gauge-decimals" class="block mb-2 text-sm font-medium text-slate-700">Decimals</label>
+              <label for="gauge-decimals" class="block mb-2 text-sm font-medium text-text-primary">Decimals</label>
               <input
                 id="gauge-decimals"
                 v-model.number="gaugeDecimals"
@@ -488,15 +488,15 @@ async function handleSubmit() {
                 min="0"
                 max="10"
                 :disabled="loading"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
           <div class="mt-4">
             <div class="flex justify-between items-center mb-2">
-              <label class="text-sm font-medium text-slate-700">Thresholds</label>
-              <button type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="addThreshold" :disabled="loading">
+              <label class="text-sm font-medium text-text-primary">Thresholds</label>
+              <button type="button" class="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-raised px-2.5 py-1.5 text-xs font-medium text-text-primary transition hover:bg-surface-overlay cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="addThreshold" :disabled="loading">
                 <Plus :size="14" />
                 Add
               </button>
@@ -508,17 +508,17 @@ async function handleSubmit() {
                   type="number"
                   placeholder="Value"
                   :disabled="loading"
-                  class="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                  class="flex-1 rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
                 />
                 <input
                   v-model="threshold.color"
                   type="color"
                   :disabled="loading"
-                  class="w-10 h-9 p-0.5 bg-white border border-slate-200 rounded-lg cursor-pointer"
+                  class="w-10 h-9 p-0.5 bg-surface-raised border border-border rounded-lg cursor-pointer"
                 />
                 <button
                   type="button"
-                  class="flex items-center justify-center h-8 w-8 rounded-lg bg-transparent border-none text-slate-400 cursor-pointer transition hover:bg-red-50 hover:text-red-500"
+                  class="flex items-center justify-center h-8 w-8 rounded-lg bg-transparent border-none text-text-muted cursor-pointer transition hover:bg-red-50 hover:text-red-500"
                   @click="removeThreshold(index)"
                   :disabled="loading"
                   title="Remove threshold"
@@ -526,7 +526,7 @@ async function handleSubmit() {
                   <Trash2 :size="14" />
                 </button>
               </div>
-              <p v-if="gaugeThresholds.length === 0" class="text-xs text-slate-400 m-0 p-2 text-center">
+              <p v-if="gaugeThresholds.length === 0" class="text-xs text-text-muted m-0 p-2 text-center">
                 No thresholds configured. Values below any threshold will show green.
               </p>
             </div>
@@ -534,64 +534,64 @@ async function handleSubmit() {
         </div>
 
         <!-- Pie Chart Configuration -->
-        <div v-if="isPieType" class="border-t border-slate-100 pt-5 mb-5">
-          <h4 class="text-sm font-semibold text-slate-900 mb-3">Pie Chart Options</h4>
+        <div v-if="isPieType" class="border-t border-border pt-5 mb-5">
+          <h4 class="text-sm font-semibold text-text-primary mb-3">Pie Chart Options</h4>
 
           <div class="grid grid-cols-3 gap-3">
             <div class="mb-3">
-              <label for="pie-display" class="block mb-2 text-sm font-medium text-slate-700">Display Style</label>
-              <select id="pie-display" v-model="pieDisplayAs" :disabled="loading" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed">
+              <label for="pie-display" class="block mb-2 text-sm font-medium text-text-primary">Display Style</label>
+              <select id="pie-display" v-model="pieDisplayAs" :disabled="loading" class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed">
                 <option value="pie">Pie</option>
                 <option value="donut">Donut</option>
               </select>
             </div>
             <div class="mb-3">
-              <label for="pie-legend" class="block mb-2 text-sm font-medium text-slate-700">Show Legend</label>
+              <label for="pie-legend" class="block mb-2 text-sm font-medium text-text-primary">Show Legend</label>
               <div class="flex items-center gap-2">
                 <input
                   id="pie-legend"
                   v-model="pieShowLegend"
                   type="checkbox"
                   :disabled="loading"
-                  class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
+                  class="h-4 w-4 rounded border-border-strong text-emerald-600 focus:ring-emerald-500/20"
                 />
-                <label for="pie-legend" class="text-sm text-slate-700">Display legend</label>
+                <label for="pie-legend" class="text-sm text-text-primary">Display legend</label>
               </div>
             </div>
             <div class="mb-3">
-              <label for="pie-labels" class="block mb-2 text-sm font-medium text-slate-700">Show Labels</label>
+              <label for="pie-labels" class="block mb-2 text-sm font-medium text-text-primary">Show Labels</label>
               <div class="flex items-center gap-2">
                 <input
                   id="pie-labels"
                   v-model="pieShowLabels"
                   type="checkbox"
                   :disabled="loading"
-                  class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
+                  class="h-4 w-4 rounded border-border-strong text-emerald-600 focus:ring-emerald-500/20"
                 />
-                <label for="pie-labels" class="text-sm text-slate-700">Display value labels</label>
+                <label for="pie-labels" class="text-sm text-text-primary">Display value labels</label>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Stat Panel Configuration -->
-        <div v-if="isStatType" class="border-t border-slate-100 pt-5 mb-5">
-          <h4 class="text-sm font-semibold text-slate-900 mb-3">Stat Panel Options</h4>
+        <div v-if="isStatType" class="border-t border-border pt-5 mb-5">
+          <h4 class="text-sm font-semibold text-text-primary mb-3">Stat Panel Options</h4>
 
           <div class="grid grid-cols-2 gap-3">
             <div class="mb-3">
-              <label for="stat-unit" class="block mb-2 text-sm font-medium text-slate-700">Unit</label>
+              <label for="stat-unit" class="block mb-2 text-sm font-medium text-text-primary">Unit</label>
               <input
                 id="stat-unit"
                 v-model="statUnit"
                 type="text"
                 placeholder="%"
                 :disabled="loading"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
             <div class="mb-3">
-              <label for="stat-decimals" class="block mb-2 text-sm font-medium text-slate-700">Decimals</label>
+              <label for="stat-decimals" class="block mb-2 text-sm font-medium text-text-primary">Decimals</label>
               <input
                 id="stat-decimals"
                 v-model.number="statDecimals"
@@ -599,30 +599,30 @@ async function handleSubmit() {
                 min="0"
                 max="10"
                 :disabled="loading"
-                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3 mb-3">
             <div>
-              <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+              <label class="flex items-center gap-2 text-sm font-medium text-text-primary cursor-pointer">
                 <input
                   type="checkbox"
                   v-model="statShowTrend"
                   :disabled="loading"
-                  class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
+                  class="h-4 w-4 rounded border-border-strong text-emerald-600 focus:ring-emerald-500/20"
                 />
                 Show Trend Indicator
               </label>
             </div>
             <div>
-              <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+              <label class="flex items-center gap-2 text-sm font-medium text-text-primary cursor-pointer">
                 <input
                   type="checkbox"
                   v-model="statShowSparkline"
                   :disabled="loading"
-                  class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
+                  class="h-4 w-4 rounded border-border-strong text-emerald-600 focus:ring-emerald-500/20"
                 />
                 Show Sparkline
               </label>
@@ -631,8 +631,8 @@ async function handleSubmit() {
 
           <div class="mt-4">
             <div class="flex justify-between items-center mb-2">
-              <label class="text-sm font-medium text-slate-700">Thresholds (Optional)</label>
-              <button type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="addStatThreshold" :disabled="loading">
+              <label class="text-sm font-medium text-text-primary">Thresholds (Optional)</label>
+              <button type="button" class="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-raised px-2.5 py-1.5 text-xs font-medium text-text-primary transition hover:bg-surface-overlay cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="addStatThreshold" :disabled="loading">
                 <Plus :size="14" />
                 Add
               </button>
@@ -644,17 +644,17 @@ async function handleSubmit() {
                   type="number"
                   placeholder="Value"
                   :disabled="loading"
-                  class="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                  class="flex-1 rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
                 />
                 <input
                   v-model="threshold.color"
                   type="color"
                   :disabled="loading"
-                  class="w-10 h-9 p-0.5 bg-white border border-slate-200 rounded-lg cursor-pointer"
+                  class="w-10 h-9 p-0.5 bg-surface-raised border border-border rounded-lg cursor-pointer"
                 />
                 <button
                   type="button"
-                  class="flex items-center justify-center h-8 w-8 rounded-lg bg-transparent border-none text-slate-400 cursor-pointer transition hover:bg-red-50 hover:text-red-500"
+                  class="flex items-center justify-center h-8 w-8 rounded-lg bg-transparent border-none text-text-muted cursor-pointer transition hover:bg-red-50 hover:text-red-500"
                   @click="removeStatThreshold(index)"
                   :disabled="loading"
                   title="Remove threshold"
@@ -662,7 +662,7 @@ async function handleSubmit() {
                   <Trash2 :size="14" />
                 </button>
               </div>
-              <p v-if="statThresholds.length === 0" class="text-xs text-slate-400 m-0 p-2 text-center">
+              <p v-if="statThresholds.length === 0" class="text-xs text-text-muted m-0 p-2 text-center">
                 No thresholds configured.
               </p>
             </div>
@@ -671,8 +671,8 @@ async function handleSubmit() {
 
         <div v-if="error" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 mb-5">{{ error }}</div>
 
-        <div class="flex justify-end gap-3 border-t border-slate-100 pt-4 mt-2">
-          <button type="button" class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="emit('close')" :disabled="loading">
+        <div class="flex justify-end gap-3 border-t border-border pt-4 mt-2">
+          <button type="button" class="rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="emit('close')" :disabled="loading">
             Cancel
           </button>
           <button type="submit" class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" :disabled="loading">

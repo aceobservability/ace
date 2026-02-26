@@ -55,6 +55,10 @@
   },
   "overrides": [
     {
+      "includes": ["**/style.css"],
+      "linter": { "enabled": false }
+    },
+    {
       "includes": ["**/*.vue"],
       "linter": {
         "rules": {
