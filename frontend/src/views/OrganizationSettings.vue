@@ -757,16 +757,16 @@ function goBack() {
 <template>
   <div class="px-8 py-6 max-w-4xl mx-auto">
     <!-- Back link -->
-    <button class="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4 bg-transparent border-none cursor-pointer transition" @click="goBack">
+    <button class="flex items-center gap-1 text-sm text-text-muted hover:text-text-primary mb-4 bg-transparent border-none cursor-pointer transition" @click="goBack">
       <ArrowLeft :size="16" />
       <span>Back</span>
     </button>
 
     <!-- Title -->
-    <h1 class="text-2xl font-bold text-slate-900 m-0">Organization Settings</h1>
-    <p v-if="org" class="text-sm text-slate-500 mt-1 mb-0">{{ org.name }}</p>
+    <h1 class="text-2xl font-bold text-text-primary m-0">Organization Settings</h1>
+    <p v-if="org" class="text-sm text-text-muted mt-1 mb-0">{{ org.name }}</p>
 
-    <div v-if="loading" class="text-center py-8 text-slate-500">Loading...</div>
+    <div v-if="loading" class="text-center py-8 text-text-muted">Loading...</div>
     <div v-else-if="error" class="text-center py-8 text-rose-600">{{ error }}</div>
     <div v-else-if="org">
       <!-- Tab bar -->

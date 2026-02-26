@@ -157,8 +157,8 @@ watch(
   <div class="px-8 py-6 max-w-[1120px] mx-auto">
     <header class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-lg font-bold text-slate-900">Data Sources</h1>
-        <p class="text-sm text-slate-500 mt-1">Manage connections to your monitoring systems</p>
+        <h1 class="text-lg font-bold text-text-primary">Data Sources</h1>
+        <p class="text-sm text-text-muted mt-1">Manage connections to your monitoring systems</p>
       </div>
       <div class="flex items-center gap-2.5">
         <button
@@ -190,8 +190,8 @@ watch(
 
     <div v-else-if="datasources.length === 0" class="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
       <Database :size="48" class="text-slate-300" />
-      <h3 class="text-lg font-semibold text-slate-900 m-0">No data sources configured</h3>
-      <p class="text-sm text-slate-500 m-0">Add a data source to start querying your monitoring systems.</p>
+      <h3 class="text-lg font-semibold text-text-primary m-0">No data sources configured</h3>
+      <p class="text-sm text-text-muted m-0">Add a data source to start querying your monitoring systems.</p>
       <button
         class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="!canCreate"
@@ -206,7 +206,7 @@ watch(
       <div
         v-for="ds in datasources"
         :key="ds.id"
-        class="rounded-xl border border-slate-200 bg-white transition hover:border-emerald-300 hover:shadow-md"
+        class="rounded-xl border border-border bg-surface-raised transition hover:border-emerald-300 hover:shadow-md"
       >
         <div class="flex justify-between items-start p-4 pb-0 gap-3">
           <div class="flex items-start flex-wrap gap-2.5 min-w-0">
@@ -218,7 +218,7 @@ watch(
               <Database v-else :size="26" class="shrink-0 text-slate-400" />
               <div class="flex flex-col gap-px min-w-0">
                 <span class="text-[0.64rem] tracking-[0.05em] uppercase text-slate-400">Source Type</span>
-                <strong class="text-sm font-bold text-slate-900 leading-tight">{{ dataSourceTypeLabels[ds.type] }}</strong>
+                <strong class="text-sm font-bold text-text-primary leading-tight">{{ dataSourceTypeLabels[ds.type] }}</strong>
               </div>
             </div>
             <span v-if="ds.is_default" class="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-xs font-medium">
@@ -237,7 +237,7 @@ watch(
         </div>
         <div class="flex flex-col gap-3 p-4">
           <div class="flex flex-col gap-2">
-            <h3 class="text-sm font-semibold text-slate-900 m-0">{{ ds.name }}</h3>
+            <h3 class="text-sm font-semibold text-text-primary m-0">{{ ds.name }}</h3>
             <div class="flex items-center gap-1.5 text-xs text-slate-400 break-all">
               <ExternalLink :size="14" class="shrink-0" />
               <span class="truncate">{{ ds.url }}</span>

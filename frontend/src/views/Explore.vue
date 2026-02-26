@@ -531,7 +531,7 @@ watch(selectedDatasourceId, () => {
     <div class="flex flex-col flex-1 min-w-0 px-8 py-6">
     <header class="flex items-center justify-between mb-6">
       <div class="flex items-center flex-wrap gap-3">
-        <h1 class="text-2xl font-bold text-slate-900 m-0">Explore</h1>
+        <h1 class="text-2xl font-bold text-text-primary m-0">Explore</h1>
         <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">Metrics</span>
       </div>
       <button
@@ -546,7 +546,7 @@ watch(selectedDatasourceId, () => {
     </header>
 
     <div class="flex flex-col gap-6 flex-1">
-      <div class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4">
+      <div class="flex flex-col gap-4 rounded-xl border border-border bg-surface-raised p-4">
         <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-end max-md:grid-cols-1">
           <div class="flex flex-col gap-2.5">
             <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Data Source</label>
@@ -699,14 +699,14 @@ watch(selectedDatasourceId, () => {
       </div>
 
       <!-- Results section -->
-      <div class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white overflow-hidden min-h-[400px]">
+      <div class="flex flex-1 flex-col rounded-xl border border-border bg-surface-raised overflow-hidden min-h-[400px]">
         <div v-if="loading" class="flex flex-col items-center justify-center gap-4 py-12 text-slate-500 flex-1">
           <div class="animate-spin h-8 w-8 rounded-full border-[3px] border-slate-200 border-t-emerald-600"></div>
           <span class="text-sm">Executing query...</span>
         </div>
 
         <div v-else-if="hasResults" class="flex flex-col flex-1">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-overlay">
             <span class="text-sm text-slate-500">{{ seriesCount }} {{ seriesCount === 1 ? 'series' : 'series' }}</span>
           </div>
           <div class="flex-1 p-4 min-h-[400px]">

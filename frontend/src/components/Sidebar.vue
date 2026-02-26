@@ -8,13 +8,17 @@ import {
   Database,
   LayoutDashboard,
   LogOut,
+  Monitor,
+  Moon,
   Settings,
   Shield,
+  Sun,
 } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useOrganization } from '../composables/useOrganization'
+import { useTheme } from '../composables/useTheme'
 import CreateOrganizationModal from './CreateOrganizationModal.vue'
 import OrganizationDropdown from './OrganizationDropdown.vue'
 
@@ -22,6 +26,7 @@ const route = useRoute()
 const router = useRouter()
 const { fetchOrganizations, clearOrganizations, currentOrg } = useOrganization()
 const { logout, user } = useAuth()
+const { mode, cycle } = useTheme()
 
 const isExpanded = ref(typeof window !== 'undefined' ? window.innerWidth > 1100 : true)
 const isHoverExpanded = ref(false)
@@ -145,7 +150,7 @@ defineExpose({ isExpanded })
 <template>
   <aside
     :class="[
-      'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-800 bg-slate-950 transition-[width] duration-200',
+      'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-800 bg-surface-sidebar transition-[width] duration-200',
       isVisuallyExpanded ? 'w-58' : 'w-16'
     ]"
     @mouseenter="handleSidebarMouseEnter"
@@ -267,6 +272,23 @@ defineExpose({ isExpanded })
             v-if="!isVisuallyExpanded"
             class="pointer-events-none invisible absolute left-[calc(100%+12px)] top-1/2 z-[100] -translate-y-1/2 whitespace-nowrap rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-200 opacity-0 transition group-hover/item:visible group-hover/item:opacity-100"
           >Privacy</span>
+        </button>
+        <button
+          :class="[
+            'group/item relative mx-2 flex h-10 items-center gap-3 rounded-lg border border-transparent px-3 text-sm font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-200',
+            !isVisuallyExpanded && 'mx-auto w-11 justify-center px-0'
+          ]"
+          @click="cycle()"
+          :title="`Theme: ${mode} (click to cycle)`"
+        >
+          <Moon v-if="mode === 'dark'" :size="20" />
+          <Sun v-if="mode === 'light'" :size="20" />
+          <Monitor v-if="mode === 'system'" :size="20" />
+          <span v-if="isVisuallyExpanded" class="truncate text-xs capitalize">{{ mode }}</span>
+          <span
+            v-if="!isVisuallyExpanded"
+            class="pointer-events-none invisible absolute left-[calc(100%+12px)] top-1/2 z-[100] -translate-y-1/2 whitespace-nowrap rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-200 opacity-0 transition group-hover/item:visible group-hover/item:opacity-100"
+          >Theme: {{ mode }}</span>
         </button>
         <div v-if="isVisuallyExpanded && user" class="mx-3 mt-2 truncate rounded-lg bg-slate-900 px-3 py-2 font-mono text-xs text-slate-500">
           {{ user.email }}

@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import './composables/useTheme'  // initialize theme before render
 import './style.css'
 import App from './App.vue'
 import { createPostHogPlugin } from './plugins/posthog'

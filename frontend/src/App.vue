@@ -23,7 +23,7 @@ const showSidebar = computed(() => {
   <div class="relative flex min-h-screen w-full" :class="{ 'block': !showSidebar }">
     <Sidebar v-if="showSidebar" ref="sidebarRef" />
     <main
-      class="min-h-screen flex-1 bg-slate-50 transition-[margin-left] duration-200 ease-out"
+      class="min-h-screen flex-1 bg-surface-base transition-[margin-left] duration-200 ease-out"
       :style="showSidebar ? { marginLeft: sidebarWidth } : {}"
     >
       <RouterView />

@@ -794,7 +794,7 @@ onUnmounted(() => {
     <!-- Page header -->
     <header class="flex items-center justify-between mb-6">
       <div class="flex items-center flex-wrap gap-3">
-        <h1 class="text-2xl font-bold text-slate-900 m-0">Explore</h1>
+        <h1 class="text-2xl font-bold text-text-primary m-0">Explore</h1>
         <span class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">Tracing</span>
       </div>
       <button
@@ -810,7 +810,7 @@ onUnmounted(() => {
 
     <div class="flex flex-col gap-6 flex-1">
       <!-- Query / filter section -->
-      <div class="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4">
+      <div class="flex flex-col gap-4 rounded-xl border border-border bg-surface-raised p-4">
         <!-- Datasource + time range row -->
         <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-end max-md:grid-cols-1">
           <div class="flex flex-col gap-2.5">
@@ -980,7 +980,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Results section -->
-      <div class="flex flex-1 flex-col rounded-xl border border-slate-200 bg-white overflow-hidden min-h-[440px]">
+      <div class="flex flex-1 flex-col rounded-xl border border-border bg-surface-raised overflow-hidden min-h-[440px]">
         <!-- No datasources -->
         <div v-if="!hasTracingDatasources" class="flex flex-col items-center justify-center py-12 text-center text-sm text-slate-500 flex-1">
           <p class="m-0">No tracing datasource configured.</p>
@@ -1007,8 +1007,8 @@ onUnmounted(() => {
         <!-- Standard trace layout: list + detail -->
         <div v-else class="grid grid-cols-[320px_minmax(0,1fr)] min-h-[460px] flex-1 max-lg:grid-cols-1">
           <!-- Trace results sidebar -->
-          <aside class="flex flex-col border-r border-slate-200 max-lg:border-r-0 max-lg:border-b max-lg:max-h-[320px]">
-            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+          <aside class="flex flex-col border-r border-border max-lg:border-r-0 max-lg:border-b max-lg:max-h-[320px]">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-overlay">
               <h2 class="m-0 text-xs font-semibold uppercase tracking-wide text-slate-700">Matching traces</h2>
               <span class="text-xs text-slate-400">{{ traceSummaries.length }} result{{ traceSummaries.length === 1 ? '' : 's' }}</span>
             </div>
@@ -1046,7 +1046,7 @@ onUnmounted(() => {
 
           <!-- Timeline / detail panel -->
           <section class="flex flex-col">
-            <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-overlay">
               <h2 class="m-0 text-xs font-semibold uppercase tracking-wide text-slate-700">Timeline waterfall</h2>
               <span v-if="activeTrace" class="text-xs text-slate-400">{{ activeTrace.spans.length }} spans</span>
             </div>

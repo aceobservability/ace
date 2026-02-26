@@ -2,9 +2,85 @@
 
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
+@variant dark (&:where(.dark, .dark *));
+
+/* Semantic colour tokens — light (default) */
+:root {
+  /* Surface */
+  --color-surface-base:    #f8fafc;   /* slate-50 — page background */
+  --color-surface-raised:  #ffffff;   /* white — cards, panels */
+  --color-surface-overlay: #f1f5f9;   /* slate-100 — hover, subtle panels */
+  --color-surface-input:   #ffffff;   /* input backgrounds */
+  --color-surface-sidebar: #0f172a;   /* sidebar stays dark in both modes */
+
+  /* Text */
+  --color-text-primary:    #0f172a;   /* slate-950 */
+  --color-text-secondary:  #475569;   /* slate-600 */
+  --color-text-muted:      #94a3b8;   /* slate-400 */
+  --color-text-inverse:    #f8fafc;   /* for use on dark surfaces */
+
+  /* Border */
+  --color-border:          #e2e8f0;   /* slate-200 */
+  --color-border-strong:   #cbd5e1;   /* slate-300 */
+
+  /* Accent (same in both modes) */
+  --color-accent:          #10b981;   /* emerald-500 */
+  --color-accent-muted:    rgba(16,185,129,0.15);
+
+  /* Amber (Ace's primary CTA accent) */
+  --color-amber:           #f59e0b;
+  --color-amber-muted:     rgba(245,158,11,0.15);
+
+  /* Status */
+  --color-danger:          #f43f5e;   /* rose-500 */
+  --color-warning:         #f59e0b;
+  --color-success:         #10b981;
+}
+
+.dark {
+  /* Surface */
+  --color-surface-base:    #0f172a;   /* slate-950 */
+  --color-surface-raised:  #1e293b;   /* slate-800 */
+  --color-surface-overlay: #334155;   /* slate-700 */
+  --color-surface-input:   #1e293b;
+  --color-surface-sidebar: #0f172a;
+
+  /* Text */
+  --color-text-primary:    #f1f5f9;   /* slate-100 */
+  --color-text-secondary:  #94a3b8;   /* slate-400 */
+  --color-text-muted:      #64748b;   /* slate-500 */
+  --color-text-inverse:    #0f172a;
+
+  /* Border */
+  --color-border:          #334155;   /* slate-700 */
+  --color-border-strong:   #475569;   /* slate-600 */
+
+  /* Accents unchanged in dark */
+  --color-accent:          #10b981;
+  --color-accent-muted:    rgba(16,185,129,0.15);
+  --color-amber:           #f59e0b;
+  --color-amber-muted:     rgba(245,158,11,0.15);
+  --color-danger:          #f43f5e;
+  --color-warning:         #f59e0b;
+  --color-success:         #10b981;
+}
+
 @theme {
   --font-sans: "Space Grotesk", "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", "Cascadia Mono", monospace;
+
+  --color-surface-base: var(--color-surface-base);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-surface-overlay: var(--color-surface-overlay);
+  --color-surface-input: var(--color-surface-input);
+  --color-surface-sidebar: var(--color-surface-sidebar);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-inverse: var(--color-text-inverse);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-accent: var(--color-accent);
 }
 
 /* Base styles */
@@ -29,8 +105,9 @@
     font-family: var(--font-sans);
     line-height: 1.5;
     font-weight: 400;
-    color: #475569;
-    background-color: #f8fafc;
+    color: var(--color-text-primary);
+    background-color: var(--color-surface-base);
+    transition: background-color 0.15s ease, color 0.15s ease;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -49,7 +126,7 @@
   h4,
   h5,
   h6 {
-    color: #0f172a;
+    color: var(--color-text-primary);
     font-weight: 600;
     margin: 0;
     letter-spacing: -0.02em;
@@ -70,7 +147,7 @@
   }
 
   p {
-    color: #475569;
+    color: var(--color-text-secondary);
     margin: 0;
   }
 

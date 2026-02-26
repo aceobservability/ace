@@ -364,7 +364,7 @@ onUnmounted(() => {
 
 <template>
   <div class="mx-auto max-w-[1600px] px-6 py-5">
-    <header class="relative z-20 mb-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-6 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <header class="relative z-20 mb-4 flex flex-col gap-3 rounded-xl border border-border bg-surface-raised px-6 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       <div class="flex items-center gap-4">
         <button
           class="flex h-[38px] w-[38px] items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
@@ -374,7 +374,7 @@ onUnmounted(() => {
           <ArrowLeft :size="20" />
         </button>
         <div v-if="dashboard">
-          <h1 class="mb-0.5 font-mono text-lg font-semibold uppercase tracking-wide text-slate-900">{{ dashboard.title }}</h1>
+          <h1 class="mb-0.5 font-mono text-lg font-semibold uppercase tracking-wide text-text-primary">{{ dashboard.title }}</h1>
           <p v-if="dashboard.description" class="text-sm text-slate-500">
             {{ dashboard.description }}
           </p>
@@ -404,7 +404,7 @@ onUnmounted(() => {
       </div>
     </header>
 
-    <div v-if="loading" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-20 text-center text-slate-500">
+    <div v-if="loading" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-border bg-surface-raised py-20 text-center text-text-muted">
       <div class="mb-4 h-10 w-10 animate-spin rounded-full border-3 border-slate-200 border-t-emerald-600"></div>
       <p>Loading dashboard...</p>
     </div>
@@ -419,11 +419,11 @@ onUnmounted(() => {
     </div>
 
     <template v-else>
-      <div v-if="panels.length === 0" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white px-8 py-16 text-center text-slate-500">
+      <div v-if="panels.length === 0" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-border bg-surface-raised px-8 py-16 text-center text-text-muted">
         <div class="mb-4 flex h-[120px] w-[120px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-400">
           <LayoutGrid :size="64" />
         </div>
-        <h2 class="mb-2 mt-4 text-slate-900">No panels yet</h2>
+        <h2 class="mb-2 mt-4 text-text-primary">No panels yet</h2>
         <p class="mb-6">Add your first panel to start visualizing data</p>
         <button
           class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
@@ -486,11 +486,11 @@ onUnmounted(() => {
       class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in"
       @click.self="cancelDelete"
     >
-      <div class="w-full max-w-[400px] rounded-xl border border-slate-200 bg-white p-8 text-center shadow-lg animate-slide-up">
+      <div class="w-full max-w-[400px] rounded-xl border border-border bg-surface-raised p-8 text-center shadow-lg animate-slide-up">
         <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-600">
           <Trash2 :size="24" />
         </div>
-        <h2 class="mb-2 text-slate-900">Delete Panel</h2>
+        <h2 class="mb-2 text-text-primary">Delete Panel</h2>
         <p class="mb-1 text-slate-500">Are you sure you want to delete "{{ deletingPanel?.title }}"?</p>
         <p class="text-sm text-rose-600">This action cannot be undone.</p>
         <div class="mt-6 flex justify-center gap-3">

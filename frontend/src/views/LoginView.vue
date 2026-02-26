@@ -39,17 +39,17 @@ function switchMode() {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-    <div class="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-8">
+  <div class="flex min-h-screen items-center justify-center bg-surface-base px-4">
+    <div class="w-full max-w-md rounded-xl border border-border bg-surface-raised p-8">
       <div class="mb-8 text-center">
         <div class="mb-6 flex flex-col items-center justify-center">
           <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 font-mono text-sm font-bold text-white">
             A
           </div>
-          <span class="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-slate-400">Ace</span>
+          <span class="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-text-muted">Ace</span>
         </div>
-        <h1 class="text-2xl font-bold text-slate-100 text-center">{{ mode === 'login' ? 'Welcome back' : 'Create account' }}</h1>
-        <p class="text-sm text-slate-400 text-center mt-2">
+        <h1 class="text-2xl font-bold text-text-primary text-center">{{ mode === 'login' ? 'Welcome back' : 'Create account' }}</h1>
+        <p class="text-sm text-text-muted text-center mt-2">
           {{ mode === 'login' ? 'Sign in to your account to continue' : 'Get started with your new account' }}
         </p>
       </div>
@@ -61,24 +61,24 @@ function switchMode() {
         </div>
 
         <div v-if="mode === 'register'" class="flex flex-col">
-          <label for="name" class="block text-sm font-medium text-slate-300 mb-1.5">Name</label>
+          <label for="name" class="block text-sm font-medium text-text-secondary mb-1.5">Name</label>
           <div class="relative flex items-center">
-            <User :size="18" class="absolute left-3.5 text-slate-500 pointer-events-none" />
+            <User :size="18" class="absolute left-3.5 text-text-muted pointer-events-none" />
             <input
               id="name"
               v-model="name"
               type="text"
               placeholder="Your name (optional)"
               :disabled="loading"
-              class="w-full rounded-lg border border-slate-700 bg-slate-800 pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
         </div>
 
         <div class="flex flex-col">
-          <label for="email" class="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+          <label for="email" class="block text-sm font-medium text-text-secondary mb-1.5">Email</label>
           <div class="relative flex items-center">
-            <Mail :size="18" class="absolute left-3.5 text-slate-500 pointer-events-none" />
+            <Mail :size="18" class="absolute left-3.5 text-text-muted pointer-events-none" />
             <input
               id="email"
               v-model="email"
@@ -86,15 +86,15 @@ function switchMode() {
               placeholder="you@example.com"
               required
               :disabled="loading"
-              class="w-full rounded-lg border border-slate-700 bg-slate-800 pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
         </div>
 
         <div class="flex flex-col">
-          <label for="password" class="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+          <label for="password" class="block text-sm font-medium text-text-secondary mb-1.5">Password</label>
           <div class="relative flex items-center">
-            <Lock :size="18" class="absolute left-3.5 text-slate-500 pointer-events-none" />
+            <Lock :size="18" class="absolute left-3.5 text-text-muted pointer-events-none" />
             <input
               id="password"
               v-model="password"
@@ -102,10 +102,10 @@ function switchMode() {
               placeholder="Enter your password"
               required
               :disabled="loading"
-              class="w-full rounded-lg border border-slate-700 bg-slate-800 pl-11 pr-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
-          <p v-if="mode === 'register'" class="text-xs text-slate-500 mt-1">
+          <p v-if="mode === 'register'" class="text-xs text-text-muted mt-1">
             Min 8 characters with uppercase, lowercase, and number
           </p>
         </div>
@@ -124,7 +124,7 @@ function switchMode() {
       </form>
 
       <div class="mt-6 text-center">
-        <p class="text-sm text-slate-400">
+        <p class="text-sm text-text-muted">
           {{ mode === 'login' ? "Don't have an account?" : 'Already have an account?' }}
           <button type="button" class="ml-1 text-sm text-emerald-400 hover:text-emerald-300 cursor-pointer bg-transparent border-none p-0 font-medium" @click="switchMode">
             {{ mode === 'login' ? 'Create one' : 'Sign in' }}
