@@ -508,10 +508,10 @@ watch(selectedDatasourceId, () => {
     <header class="flex items-center justify-between mb-6">
       <div class="flex items-center flex-wrap gap-3">
         <h1 class="text-2xl font-bold text-text-primary m-0">Explore</h1>
-        <span class="rounded-full border border-accent-border bg-accent-muted px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">Metrics</span>
+        <span class="rounded-sm border border-accent-border bg-accent-muted px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">Metrics</span>
       </div>
       <button
-        class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-xs font-semibold cursor-pointer transition hover:bg-accent-muted hover:border-accent-border"
+        class="inline-flex items-center gap-1.5 rounded-sm border border-border bg-surface-raised px-3 py-1.5 text-xs font-semibold cursor-pointer transition hover:bg-accent-muted hover:border-accent-border"
         :class="showCopilot ? 'text-accent border-accent-border bg-accent-muted' : 'text-text-secondary'"
         @click="showCopilot = !showCopilot"
         title="Toggle AI assistant"
@@ -522,14 +522,14 @@ watch(selectedDatasourceId, () => {
     </header>
 
     <div class="flex flex-col gap-6 flex-1">
-      <div class="flex flex-col gap-4 rounded-xl border border-border bg-surface-raised p-4">
+      <div class="flex flex-col gap-4 rounded border border-border bg-surface-raised p-4">
         <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-end max-md:grid-cols-1">
           <div class="flex flex-col gap-2.5">
             <label class="text-xs font-semibold uppercase tracking-wide text-text-muted">Data Source</label>
             <div ref="datasourceMenuRef" class="relative">
               <button
                 type="button"
-                class="flex w-full items-center gap-3 rounded-xl border border-border bg-surface-raised px-4 py-3 text-left cursor-pointer transition hover:border-border-strong hover:bg-surface-overlay disabled:opacity-60 disabled:cursor-not-allowed"
+                class="flex w-full items-center gap-3 rounded border border-border bg-surface-raised px-4 py-3 text-left cursor-pointer transition hover:border-border-strong hover:bg-surface-overlay disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="loading || !hasMetricsDatasources"
                 @click="toggleDatasourceMenu"
                 :title="activeDatasource ? `Active datasource: ${activeDatasource.name}` : 'No metrics datasource configured'"
@@ -541,12 +541,12 @@ watch(selectedDatasourceId, () => {
                     class="h-7 w-7 shrink-0 object-contain"
                   />
                   <div class="flex flex-col min-w-0 gap-px">
-                    <span class="text-[0.68rem] uppercase tracking-wide text-slate-400">Active Source</span>
+                    <span class="text-[0.68rem] uppercase tracking-wide text-text-muted">Active Source</span>
                     <strong class="text-sm font-semibold text-text-primary truncate">{{ activeDatasource.name }}</strong>
                     <span class="font-mono text-xs uppercase tracking-[0.07em] text-text-muted">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
                   </div>
                   <span
-                    class="ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs border"
+                    class="ml-auto inline-flex items-center gap-1.5 rounded-sm px-2.5 py-0.5 text-xs border"
                     :class="{
                       'border-border text-text-muted': activeDatasourceHealth === 'checking' || activeDatasourceHealth === 'unknown',
                       'border-accent-border bg-accent-muted text-accent': activeDatasourceHealth === 'healthy',
@@ -561,16 +561,16 @@ watch(selectedDatasourceId, () => {
                   </span>
                 </template>
 
-                <span v-else class="text-sm text-slate-400">No metrics datasource configured</span>
+                <span v-else class="text-sm text-text-muted">No metrics datasource configured</span>
 
                 <component
                   :is="showDatasourceMenu ? ChevronUp : ChevronDown"
                   :size="16"
-                  class="ml-1 shrink-0 text-slate-400"
+                  class="ml-1 shrink-0 text-text-muted"
                 />
               </button>
 
-              <div v-if="showDatasourceMenu && hasMetricsDatasources" class="absolute left-0 right-0 top-full mt-1.5 z-[110] max-h-[280px] overflow-y-auto rounded-xl border border-border bg-surface-raised shadow-lg">
+              <div v-if="showDatasourceMenu && hasMetricsDatasources" class="absolute left-0 right-0 top-full mt-1.5 z-[110] max-h-[280px] overflow-y-auto rounded border border-border bg-surface-raised shadow-lg">
                 <button
                   v-for="ds in metricsDatasources"
                   :key="ds.id"
@@ -636,10 +636,10 @@ watch(selectedDatasourceId, () => {
             </button>
 
             <!-- Query history dropdown -->
-            <div v-if="showHistory" class="absolute left-0 top-full mt-1 z-10 w-80 max-h-[300px] overflow-y-auto rounded-xl border border-border bg-surface-raised shadow-lg max-md:w-full">
+            <div v-if="showHistory" class="absolute left-0 top-full mt-1 z-10 w-80 max-h-[300px] overflow-y-auto rounded border border-border bg-surface-raised shadow-lg max-md:w-full">
               <div class="flex items-center justify-between px-4 py-3 border-b border-border text-xs font-semibold uppercase tracking-wide text-text-muted">
                 <span>Recent Queries</span>
-                <button class="flex items-center justify-center h-6 w-6 rounded bg-transparent border-none text-slate-400 cursor-pointer transition hover:bg-surface-overlay hover:text-rose-500" @click="clearHistory" title="Clear history">
+                <button class="flex items-center justify-center h-6 w-6 rounded bg-transparent border-none text-text-muted cursor-pointer transition hover:bg-surface-overlay hover:text-rose-500" @click="clearHistory" title="Clear history">
                   <X :size="14" />
                 </button>
               </div>
@@ -657,25 +657,25 @@ watch(selectedDatasourceId, () => {
 
         <div class="flex items-center gap-4">
           <button
-            class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            class="inline-flex items-center gap-2 rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             :disabled="loading || !query.trim() || !selectedDatasourceId || !hasMetricsDatasources"
             @click="runQuery"
           >
             <Play :size="16" />
             <span>{{ loading ? 'Running...' : 'Run Query' }}</span>
           </button>
-          <span class="text-xs text-slate-400">Ctrl+Enter to run</span>
+          <span class="text-xs text-text-muted">Ctrl+Enter to run</span>
         </div>
 
         <!-- Error display -->
-        <div v-if="error" class="flex items-center gap-2 rounded-xl border border-rose-500/25 bg-rose-500/10 p-4 text-sm text-rose-500">
+        <div v-if="error" class="flex items-center gap-2 rounded border border-rose-500/25 bg-rose-500/10 p-4 text-sm text-rose-500">
           <AlertCircle :size="16" />
           <span>{{ error }}</span>
         </div>
       </div>
 
       <!-- Results section -->
-      <div class="flex flex-1 flex-col rounded-xl border border-border bg-surface-raised overflow-hidden min-h-[400px]">
+      <div class="flex flex-1 flex-col rounded border border-border bg-surface-raised overflow-hidden min-h-[400px]">
         <div v-if="loading" class="flex flex-col items-center justify-center gap-4 py-12 text-text-muted flex-1">
           <div class="animate-spin h-8 w-8 rounded-full border-[3px] border-border border-t-accent"></div>
           <span class="text-sm">Executing query...</span>
@@ -696,7 +696,7 @@ watch(selectedDatasourceId, () => {
 
         <div v-else-if="!hasMetricsDatasources" class="flex flex-col items-center justify-center py-12 text-center text-sm text-text-muted flex-1">
           <p class="m-0">No metrics datasource configured.</p>
-          <p class="m-0 text-xs text-slate-400">Add a Prometheus, VictoriaMetrics, CloudWatch, or Elasticsearch datasource in Data Sources.</p>
+          <p class="m-0 text-xs text-text-muted">Add a Prometheus, VictoriaMetrics, CloudWatch, or Elasticsearch datasource in Data Sources.</p>
         </div>
 
         <div v-else class="flex flex-col items-center justify-center py-12 text-center text-sm text-text-muted flex-1">
@@ -711,16 +711,16 @@ watch(selectedDatasourceId, () => {
                     : 'Write a PromQL query and click "Run Query" to visualize your metrics.'
             }}
           </p>
-          <p v-if="isClickHouseDatasource" class="m-0 text-xs text-slate-400">
+          <p v-if="isClickHouseDatasource" class="m-0 text-xs text-text-muted">
             Examples: <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">SELECT timestamp, value, metric FROM metrics WHERE timestamp &gt;= toDateTime({start})</code>
           </p>
-          <p v-else-if="isCloudWatchDatasource" class="m-0 text-xs text-slate-400">
+          <p v-else-if="isCloudWatchDatasource" class="m-0 text-xs text-text-muted">
             Example: <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">{"namespace":"AWS/EC2","metric_name":"CPUUtilization","stat":"Average","period":60}</code>
           </p>
-          <p v-else-if="isElasticsearchDatasource" class="m-0 text-xs text-slate-400">
+          <p v-else-if="isElasticsearchDatasource" class="m-0 text-xs text-text-muted">
             Example: <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">{"index":"logs-*","aggs":{"timeseries":{"date_histogram":{"field":"@timestamp","fixed_interval":"1m"}}}}</code>
           </p>
-          <p v-else class="m-0 text-xs text-slate-400">Examples: <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">up</code>, <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">rate(http_requests_total[5m])</code>, <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">node_cpu_seconds_total</code></p>
+          <p v-else class="m-0 text-xs text-text-muted">Examples: <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">up</code>, <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">rate(http_requests_total[5m])</code>, <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">node_cpu_seconds_total</code></p>
         </div>
       </div>
     </div>
