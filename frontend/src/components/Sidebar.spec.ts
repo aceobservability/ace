@@ -67,10 +67,10 @@ describe('Sidebar', () => {
     expect(aside.classes()).toContain('w-16')
     expect(aside.classes()).not.toContain('w-[232px]')
 
-    // Click toggle button (Expand/Collapse title button)
+    // Click toggle button (Expand/Collapse sidebar button)
     const toggleBtn = wrapper
       .findAll('button')
-      .find((b) => b.attributes('title') === 'Expand' || b.attributes('title') === 'Collapse')!
+      .find((b) => b.attributes('title') === 'Expand sidebar' || b.attributes('title') === 'Collapse sidebar')!
     await toggleBtn.trigger('click')
 
     // Expanded: sidebar with w-[232px]

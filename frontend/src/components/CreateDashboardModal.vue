@@ -308,7 +308,7 @@ async function handleSubmit() {
               placeholder="My Dashboard"
               :disabled="loading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -320,7 +320,7 @@ async function handleSubmit() {
               placeholder="Dashboard description (optional)"
               rows="3"
               :disabled="loading"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed resize-vertical min-h-[80px]"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed resize-vertical min-h-[80px]"
             ></textarea>
           </div>
         </div>
@@ -370,7 +370,7 @@ async function handleSubmit() {
               :disabled="loading || convertingGrafana"
               placeholder="Paste Grafana dashboard JSON here"
               data-testid="grafana-source"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed resize-vertical min-h-[80px]"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed resize-vertical min-h-[80px]"
             ></textarea>
             <p v-if="grafanaFileName" class="mt-2 text-xs text-slate-400">File: {{ grafanaFileName }}</p>
           </div>
@@ -403,7 +403,7 @@ async function handleSubmit() {
           <button type="button" class="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" @click="emit('close')" :disabled="loading">
             Cancel
           </button>
-          <button type="submit" class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" :disabled="loading">
+          <button type="submit" class="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" :disabled="loading">
             {{ submitLabel }}
           </button>
         </div>

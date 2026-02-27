@@ -115,7 +115,7 @@ async function handleSave() {
 
 <template>
   <div v-if="loading" class="flex items-center justify-center py-12">
-    <div class="h-6 w-6 animate-spin rounded-full border-2 border-border-strong border-t-emerald-600"></div>
+    <div class="h-6 w-6 animate-spin rounded-full border-2 border-border-strong border-t-accent"></div>
   </div>
 
   <div v-else class="flex flex-col gap-6">
@@ -129,7 +129,7 @@ async function handleSave() {
         maxlength="100"
         placeholder="Ace"
         :disabled="!isAdmin"
-        class="w-full max-w-sm rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+        class="w-full max-w-sm rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
       />
     </section>
 
@@ -150,7 +150,7 @@ async function handleSave() {
           maxlength="7"
           placeholder="#10b981"
           :disabled="!isAdmin"
-          class="w-32 rounded-lg border border-border bg-surface-raised px-3 py-2 font-mono text-sm text-text-primary outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+          class="w-32 rounded-lg border border-border bg-surface-raised px-3 py-2 font-mono text-sm text-text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
         />
       </div>
 
@@ -192,7 +192,7 @@ async function handleSave() {
         type="file"
         accept="image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
         :disabled="!isAdmin"
-        class="block w-full max-w-sm text-sm text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-500/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-emerald-600 file:cursor-pointer hover:file:bg-emerald-500/15 disabled:opacity-50"
+        class="block w-full max-w-sm text-sm text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-accent-muted file:px-4 file:py-2 file:text-sm file:font-semibold file:text-accent file:cursor-pointer hover:file:bg-accent-muted disabled:opacity-50"
         @change="handleLogoUpload"
       />
 
@@ -241,7 +241,7 @@ async function handleSave() {
     <div class="flex items-center gap-3">
       <button
         v-if="isAdmin"
-        class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="saving"
         @click="handleSave"
       >{{ saving ? 'Saving...' : 'Save Branding' }}</button>
@@ -249,6 +249,6 @@ async function handleSave() {
     </div>
 
     <div v-if="error" class="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2.5 text-sm text-rose-500">{{ error }}</div>
-    <div v-if="success" class="rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-600 dark:text-emerald-400">{{ success }}</div>
+    <div v-if="success" class="rounded-lg border border-accent-border bg-accent-muted px-3 py-2.5 text-sm text-accent">{{ success }}</div>
   </div>
 </template>

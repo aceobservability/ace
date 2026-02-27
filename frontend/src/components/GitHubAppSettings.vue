@@ -96,7 +96,7 @@ async function handleSave() {
         class="inline-block rounded-full px-2.5 py-0.5 text-xs border"
         :class="configured
           ? (enabled
-            ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+            ? 'border-accent-border bg-accent-muted text-accent'
             : 'border-amber-200 bg-amber-50 text-amber-700')
           : 'border-border bg-surface-overlay text-text-muted'"
       >
@@ -121,7 +121,7 @@ async function handleSave() {
             v-model="clientId"
             type="text"
             :disabled="saving"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
           />
         </div>
         <div class="mb-4">
@@ -131,7 +131,7 @@ async function handleSave() {
             type="password"
             :placeholder="configured ? '••••••••' : 'Enter client secret'"
             :disabled="saving"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
           />
         </div>
         <div class="mb-4">
@@ -140,7 +140,7 @@ async function handleSave() {
               v-model="enabled"
               type="checkbox"
               :disabled="saving"
-              class="rounded border-border-strong text-emerald-600 focus:ring-emerald-500"
+              class="rounded border-border-strong text-accent focus:ring-accent"
             />
             Enable GitHub Copilot
           </label>
@@ -155,11 +155,11 @@ async function handleSave() {
         </div>
 
         <div v-if="error" class="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2.5 text-sm text-rose-500 mb-3">{{ error }}</div>
-        <div v-if="notice" class="rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-600 dark:text-emerald-400 mb-3">{{ notice }}</div>
+        <div v-if="notice" class="rounded-lg border border-accent-border bg-accent-muted px-3 py-2.5 text-sm text-accent mb-3">{{ notice }}</div>
 
         <div class="flex justify-end">
           <button
-            class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="saving"
             @click="handleSave"
           >

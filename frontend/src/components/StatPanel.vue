@@ -230,7 +230,7 @@ onUnmounted(() => {
         v-if="showTrend && trend !== 'neutral'"
         class="mt-1 flex items-center gap-1 text-xs font-medium"
         :class="{
-          'text-emerald-600': trend === 'up',
+          'text-accent': trend === 'up',
           'text-rose-500': trend === 'down',
           'text-slate-400': trend === 'neutral',
         }"

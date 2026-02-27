@@ -13,17 +13,7 @@ import {
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { testDataSourceConnection } from '../api/datasources'
-import alertmanagerLogo from '../assets/datasources/alertmanager-logo.svg'
-import clickhouseLogo from '../assets/datasources/clickhouse-logo.svg'
-import cloudwatchLogo from '../assets/datasources/cloudwatch-logo.svg'
-import elasticsearchLogo from '../assets/datasources/elasticsearch-logo.svg'
-import lokiLogo from '../assets/datasources/loki-logo.svg'
-import prometheusLogo from '../assets/datasources/prometheus-logo.svg'
-import tempoLogo from '../assets/datasources/tempo-logo.svg'
-import victoriaLogsLogo from '../assets/datasources/victorialogs-logo.svg'
-import victoriaMetricsLogo from '../assets/datasources/victoriametrics-logo.svg'
-import victoriaTracesLogo from '../assets/datasources/victoriatraces-logo.svg'
-import vmalertLogo from '../assets/datasources/vmalert-logo.svg'
+import { dataSourceTypeLogos } from '../utils/datasourceLogos'
 import { useDatasource } from '../composables/useDatasource'
 import { useOrganization } from '../composables/useOrganization'
 import type { DataSource, DataSourceType } from '../types/datasource'
@@ -36,20 +26,6 @@ const { datasources, loading, error, fetchDatasources, removeDatasource } = useD
 const testAllLoading = ref(false)
 const healthStatus = ref<Record<string, 'unknown' | 'checking' | 'healthy' | 'unhealthy'>>({})
 const healthErrors = ref<Record<string, string>>({})
-
-const dataSourceTypeLogos: Partial<Record<DataSourceType, string>> = {
-  prometheus: prometheusLogo,
-  loki: lokiLogo,
-  victoriametrics: victoriaMetricsLogo,
-  victorialogs: victoriaLogsLogo,
-  tempo: tempoLogo,
-  victoriatraces: victoriaTracesLogo,
-  clickhouse: clickhouseLogo,
-  cloudwatch: cloudwatchLogo,
-  elasticsearch: elasticsearchLogo,
-  vmalert: vmalertLogo,
-  alertmanager: alertmanagerLogo,
-}
 
 const canCreate = computed(() => !!currentOrg.value && currentOrg.value.role !== 'viewer')
 
@@ -171,7 +147,7 @@ watch(
           {{ testAllLoading ? 'Testing...' : 'Test All' }}
         </button>
         <button
-          class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="!canCreate"
           @click="openCreatePage"
         >
@@ -184,7 +160,7 @@ watch(
     <div v-if="error" class="rounded-lg bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-sm text-rose-500 mb-6">{{ error }}</div>
 
     <div v-if="loading && datasources.length === 0" class="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
-      <div class="h-8 w-8 rounded-full border-3 border-border border-t-emerald-500 animate-spin"></div>
+      <div class="h-8 w-8 rounded-full border-3 border-border border-t-accent animate-spin"></div>
       <p class="text-sm text-text-muted">Loading datasources...</p>
     </div>
 
@@ -193,7 +169,7 @@ watch(
       <h3 class="text-lg font-semibold text-text-primary m-0">No data sources configured</h3>
       <p class="text-sm text-text-muted m-0">Add a data source to start querying your monitoring systems.</p>
       <button
-        class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="!canCreate"
         @click="openCreatePage"
       >
@@ -206,7 +182,7 @@ watch(
       <div
         v-for="ds in datasources"
         :key="ds.id"
-        class="rounded-xl border border-border bg-surface-raised transition hover:border-emerald-300 hover:shadow-md"
+        class="rounded-xl border border-border bg-surface-raised transition hover:border-accent-border hover:shadow-md"
       >
         <div class="flex justify-between items-start p-4 pb-0 gap-3">
           <div class="flex items-start flex-wrap gap-2.5 min-w-0">
@@ -221,7 +197,7 @@ watch(
                 <strong class="text-sm font-bold text-text-primary leading-tight">{{ dataSourceTypeLabels[ds.type] }}</strong>
               </div>
             </div>
-            <span v-if="ds.is_default" class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-xs font-medium">
+            <span v-if="ds.is_default" class="inline-flex items-center gap-1 rounded-full bg-accent-muted text-accent px-2 py-0.5 text-xs font-medium">
               <Check :size="12" />
               Default
             </span>
@@ -249,13 +225,13 @@ watch(
               :class="{
                 'text-text-muted bg-surface-overlay border-border': getHealthStatus(ds.id) === 'unknown',
                 'text-sky-600 bg-sky-50 border-sky-200': getHealthStatus(ds.id) === 'checking',
-                'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/25': getHealthStatus(ds.id) === 'healthy',
+                'text-accent bg-accent-muted border-accent-border': getHealthStatus(ds.id) === 'healthy',
                 'text-rose-500 bg-rose-500/10 border-rose-500/25': getHealthStatus(ds.id) === 'unhealthy',
               }"
               :title="healthErrors[ds.id] || getHealthLabel(ds.id)"
             >
               <Loader2 v-if="getHealthStatus(ds.id) === 'checking'" :size="12" class="animate-spin" />
-              <span v-else-if="getHealthStatus(ds.id) === 'healthy'" class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+              <span v-else-if="getHealthStatus(ds.id) === 'healthy'" class="h-2.5 w-2.5 rounded-full bg-accent"></span>
               <span v-else-if="getHealthStatus(ds.id) === 'unhealthy'" class="h-2.5 w-2.5 rounded-full bg-rose-500"></span>
               <span v-else class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
               <span>{{ getHealthLabel(ds.id) }}</span>

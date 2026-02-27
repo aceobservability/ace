@@ -99,10 +99,10 @@ function formatMessage(content: string): string {
   // Replace code blocks with styled pre/code
   return content.replace(
     /```(\w*)\n?([\s\S]*?)```/g,
-    '<pre class="rounded-lg bg-slate-900 p-3 my-2 overflow-x-auto"><code class="text-xs font-mono text-emerald-400 whitespace-pre-wrap">$2</code></pre>',
+    '<pre class="rounded-lg bg-slate-900 p-3 my-2 overflow-x-auto"><code class="text-xs font-mono text-accent whitespace-pre-wrap">$2</code></pre>',
   ).replace(
     /`([^`]+)`/g,
-    '<code class="rounded bg-slate-900 px-1.5 py-0.5 text-xs font-mono text-emerald-400">$1</code>',
+    '<code class="rounded bg-slate-900 px-1.5 py-0.5 text-xs font-mono text-accent">$1</code>',
   ).replace(/\n/g, '<br />')
 }
 
@@ -113,11 +113,11 @@ async function handleDisconnect() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full w-80 shrink-0 bg-surface-raised border-l border-border">
+  <div class="flex flex-col h-screen w-80 shrink-0 bg-surface-raised border-l border-border sticky top-0">
     <!-- Header -->
     <div class="flex items-center justify-between px-4 py-3 border-b border-border">
       <div class="flex items-center gap-2">
-        <Sparkles :size="16" class="text-emerald-500" />
+        <Sparkles :size="16" class="text-accent" />
         <span class="text-sm font-semibold text-text-primary">Copilot</span>
       </div>
       <button
@@ -131,13 +131,13 @@ async function handleDisconnect() {
 
     <!-- Not connected state -->
     <div v-if="!isConnected" class="flex flex-col items-center justify-center gap-4 p-6 text-center flex-1">
-      <Sparkles :size="32" class="text-emerald-500" />
+      <Sparkles :size="32" class="text-accent" />
       <div class="flex flex-col gap-2">
         <h3 class="text-sm font-semibold text-text-primary m-0">GitHub Copilot</h3>
         <p class="text-xs text-text-secondary m-0">Connect your GitHub account to get AI-assisted query writing powered by your Copilot subscription.</p>
       </div>
       <button
-        class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white cursor-pointer border-none transition hover:bg-emerald-700"
+        class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white cursor-pointer border-none transition hover:bg-accent-hover"
         :disabled="!currentOrgId"
         @click="currentOrgId && connect(currentOrgId)"
       >
@@ -157,7 +157,7 @@ async function handleDisconnect() {
           href="https://github.com/features/copilot"
           target="_blank"
           rel="noopener noreferrer"
-          class="text-xs text-emerald-500 hover:text-emerald-600"
+          class="text-xs text-accent hover:text-accent"
         >
           Learn about GitHub Copilot
         </a>
@@ -176,14 +176,14 @@ async function handleDisconnect() {
       <!-- Messages -->
       <div ref="messagesContainer" class="flex flex-col gap-3 flex-1 overflow-y-auto p-4">
         <div v-if="messages.length === 0" class="flex flex-col items-center justify-center gap-2 text-center py-8 flex-1">
-          <Sparkles :size="24" class="text-emerald-500/50" />
+          <Sparkles :size="24" class="text-accent/50" />
           <p class="text-xs text-text-muted m-0">Ask Copilot to help write {{ datasourceType }} queries</p>
         </div>
 
         <div v-for="(msg, index) in messages" :key="index" class="flex flex-col gap-1">
           <!-- User message -->
           <div v-if="msg.role === 'user'" class="self-end max-w-[85%]">
-            <div class="rounded-xl bg-emerald-600 px-3 py-2 text-sm text-white">
+            <div class="rounded-xl bg-accent px-3 py-2 text-sm text-white">
               {{ msg.content }}
             </div>
           </div>
@@ -194,7 +194,7 @@ async function handleDisconnect() {
               <div v-html="formatMessage(msg.content)" />
               <button
                 v-if="hasCodeBlock(msg.content) && !isLoading"
-                class="mt-2 inline-flex items-center gap-1 rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white cursor-pointer border-none transition hover:bg-emerald-700"
+                class="mt-2 inline-flex items-center gap-1 rounded bg-accent px-2 py-1 text-xs font-semibold text-white cursor-pointer border-none transition hover:bg-accent-hover"
                 @click="handleInsertQuery(msg.content)"
               >
                 Insert query
@@ -206,7 +206,7 @@ async function handleDisconnect() {
         <!-- Loading indicator -->
         <div v-if="isLoading && messages.length > 0 && messages[messages.length - 1]?.content === ''" class="self-start">
           <div class="rounded-xl bg-surface-overlay px-3 py-2">
-            <Loader2 :size="14" class="animate-spin text-emerald-500" />
+            <Loader2 :size="14" class="animate-spin text-accent" />
           </div>
         </div>
       </div>
@@ -221,7 +221,7 @@ async function handleDisconnect() {
         <div class="flex gap-2">
           <textarea
             v-model="inputText"
-            class="flex-1 resize-none rounded-lg bg-surface-overlay border border-border px-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-emerald-500 min-h-[38px] max-h-[120px]"
+            class="flex-1 resize-none rounded-lg bg-surface-overlay border border-border px-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent min-h-[38px] max-h-[120px]"
             placeholder="Ask about queries..."
             rows="1"
             @keydown="handleKeydown"
@@ -229,7 +229,7 @@ async function handleDisconnect() {
           />
           <button
             class="flex items-center justify-center h-[38px] w-[38px] shrink-0 rounded-lg border-none cursor-pointer transition"
-            :class="inputText.trim() && !isLoading ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-surface-overlay text-text-muted cursor-not-allowed'"
+            :class="inputText.trim() && !isLoading ? 'bg-accent text-white hover:bg-accent-hover' : 'bg-surface-overlay text-text-muted cursor-not-allowed'"
             :disabled="!inputText.trim() || isLoading"
             @click="handleSend"
             title="Send message"

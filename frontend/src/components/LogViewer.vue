@@ -266,7 +266,7 @@ watch(displayLogs, () => {
           <span class="shrink-0 w-40">
             <button
               v-if="linkedTraceDatasourceId && extractTraceId(log)"
-              class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/30 transition-colors cursor-pointer border border-emerald-500/30"
+              class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono bg-accent-muted text-accent hover:bg-accent-muted transition-colors cursor-pointer border border-accent-border"
               @click.stop="navigateToTrace(extractTraceId(log)!)"
               :title="`View trace ${extractTraceId(log)}`"
             >

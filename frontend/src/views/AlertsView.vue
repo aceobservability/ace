@@ -179,7 +179,7 @@ function severityClass(severity: string | undefined): string {
 function silenceStatusClass(state: string): string {
   switch (state) {
     case 'active':
-      return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-600/20'
+      return 'bg-accent-muted text-accent ring-1 ring-accent/20'
     case 'pending':
       return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
     case 'expired':
@@ -452,7 +452,7 @@ onUnmounted(() => {
       <div class="flex items-center gap-2">
         <select
           v-model="selectedDatasourceId"
-          class="px-3 py-2 pr-8 bg-surface-overlay border border-border rounded-lg text-text-primary text-sm appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.65rem_center] focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+          class="px-3 py-2 pr-8 bg-surface-overlay border border-border rounded-lg text-text-primary text-sm appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.65rem_center] focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
           :disabled="alertingDatasources.length === 0"
         >
           <option value="" disabled>
@@ -477,7 +477,7 @@ onUnmounted(() => {
         </button>
         <button
           class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-medium cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
-          :class="autoRefresh ? 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400' : 'bg-surface-overlay border border-border text-text-primary hover:bg-surface-overlay'"
+          :class="autoRefresh ? 'bg-accent-muted border border-accent-border text-accent' : 'bg-surface-overlay border border-border text-text-primary hover:bg-surface-overlay'"
           :disabled="!selectedDatasourceId"
           @click="toggleAutoRefresh"
           title="Auto-refresh every 30s"
@@ -486,7 +486,7 @@ onUnmounted(() => {
           Auto
         </button>
         <span v-if="lastRefreshed" class="flex items-center gap-2 text-xs text-text-muted font-mono">
-          <span v-if="autoRefresh" class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span v-if="autoRefresh" class="w-1.5 h-1.5 rounded-full bg-accent"></span>
           {{ formattedLastRefreshed }}
         </span>
       </div>
@@ -520,7 +520,7 @@ onUnmounted(() => {
       <div class="flex gap-1 border-b border-border mb-6">
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'alerts' ? 'text-emerald-600 border-emerald-600' : 'text-text-muted border-transparent hover:text-text-primary'"
+          :class="activeTab === 'alerts' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
           @click="activeTab = 'alerts'"
         >
           Active Alerts
@@ -528,7 +528,7 @@ onUnmounted(() => {
         </button>
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'groups' ? 'text-emerald-600 border-emerald-600' : 'text-text-muted border-transparent hover:text-text-primary'"
+          :class="activeTab === 'groups' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
           @click="activeTab = 'groups'"
         >
           Rule Groups
@@ -665,7 +665,7 @@ onUnmounted(() => {
       <div class="flex gap-1 border-b border-border mb-6">
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'am-alerts' ? 'text-emerald-600 border-emerald-600' : 'text-text-muted border-transparent hover:text-text-primary'"
+          :class="activeTab === 'am-alerts' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
           @click="activeTab = 'am-alerts'"
         >
           Active Alerts
@@ -673,7 +673,7 @@ onUnmounted(() => {
         </button>
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'am-silences' ? 'text-emerald-600 border-emerald-600' : 'text-text-muted border-transparent hover:text-text-primary'"
+          :class="activeTab === 'am-silences' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
           @click="activeTab = 'am-silences'"
         >
           Silences
@@ -681,7 +681,7 @@ onUnmounted(() => {
         </button>
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'am-receivers' ? 'text-emerald-600 border-emerald-600' : 'text-text-muted border-transparent hover:text-text-primary'"
+          :class="activeTab === 'am-receivers' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
           @click="activeTab = 'am-receivers'"
         >
           Receivers
@@ -695,17 +695,17 @@ onUnmounted(() => {
           <span class="text-xs text-text-muted font-medium">Show:</span>
           <button
             class="px-2.5 py-1 border rounded-md text-xs cursor-pointer transition"
-            :class="amFilterActive ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
+            :class="amFilterActive ? 'bg-accent-muted border-accent-border text-accent' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
             @click="amFilterActive = !amFilterActive"
           >Active</button>
           <button
             class="px-2.5 py-1 border rounded-md text-xs cursor-pointer transition"
-            :class="amFilterSilenced ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
+            :class="amFilterSilenced ? 'bg-accent-muted border-accent-border text-accent' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
             @click="amFilterSilenced = !amFilterSilenced"
           >Silenced</button>
           <button
             class="px-2.5 py-1 border rounded-md text-xs cursor-pointer transition"
-            :class="amFilterInhibited ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
+            :class="amFilterInhibited ? 'bg-accent-muted border-accent-border text-accent' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
             @click="amFilterInhibited = !amFilterInhibited"
           >Inhibited</button>
         </div>
@@ -753,7 +753,7 @@ onUnmounted(() => {
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-sm font-semibold text-text-primary m-0">Silences</h3>
           <button
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition cursor-pointer"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent-hover transition cursor-pointer"
             @click="openSilenceModal"
           >
             <Plus :size="14" />
@@ -773,7 +773,7 @@ onUnmounted(() => {
             :key="silence.id"
             class="rounded-xl border border-border bg-surface-raised p-4 border-l-4"
             :class="{
-              'border-l-emerald-500': silence.status.state === 'active',
+              'border-l-accent': silence.status.state === 'active',
               'border-l-amber-400': silence.status.state === 'pending',
               'border-l-border opacity-60': silence.status.state === 'expired',
             }"
@@ -862,11 +862,11 @@ onUnmounted(() => {
                     v-model="m.name"
                     type="text"
                     placeholder="Label name"
-                    class="flex-1 px-2.5 py-1.5 bg-surface-overlay border border-border rounded-md text-sm font-mono text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                    class="flex-1 px-2.5 py-1.5 bg-surface-overlay border border-border rounded-md text-sm font-mono text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
                   />
                   <select
                     v-model="m.isEqual"
-                    class="w-13 px-1.5 py-1.5 bg-surface-overlay border border-border rounded-md text-sm font-mono text-text-primary text-center focus:outline-none focus:border-emerald-500"
+                    class="w-13 px-1.5 py-1.5 bg-surface-overlay border border-border rounded-md text-sm font-mono text-text-primary text-center focus:outline-none focus:border-accent"
                   >
                     <option :value="true">{{ m.isRegex ? '=~' : '=' }}</option>
                     <option :value="false">{{ m.isRegex ? '!~' : '!=' }}</option>
@@ -875,7 +875,7 @@ onUnmounted(() => {
                     v-model="m.value"
                     type="text"
                     placeholder="Value"
-                    class="flex-1 px-2.5 py-1.5 bg-surface-overlay border border-border rounded-md text-sm font-mono text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                    class="flex-1 px-2.5 py-1.5 bg-surface-overlay border border-border rounded-md text-sm font-mono text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
                   />
                   <label class="flex items-center gap-1 text-xs text-text-muted whitespace-nowrap cursor-pointer" title="Regex match">
                     <input type="checkbox" v-model="m.isRegex" class="w-3.5 h-3.5" />
@@ -892,7 +892,7 @@ onUnmounted(() => {
                 </div>
               </div>
               <button
-                class="text-sm text-emerald-600 hover:text-emerald-700 cursor-pointer bg-transparent border-none inline-flex items-center gap-1 self-start transition"
+                class="text-sm text-accent hover:text-accent cursor-pointer bg-transparent border-none inline-flex items-center gap-1 self-start transition"
                 @click="addMatcher"
               >
                 <Plus :size="12" />
@@ -908,7 +908,7 @@ onUnmounted(() => {
                   id="silence-start"
                   v-model="silenceStart"
                   type="datetime-local"
-                  class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                  class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
                 />
               </div>
               <div class="flex flex-col gap-1.5">
@@ -917,7 +917,7 @@ onUnmounted(() => {
                   id="silence-end"
                   v-model="silenceEnd"
                   type="datetime-local"
-                  class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                  class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
                 />
               </div>
             </div>
@@ -930,7 +930,7 @@ onUnmounted(() => {
                 v-model="silenceCreatedBy"
                 type="text"
                 placeholder="your-name@example.com"
-                class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
               />
             </div>
 
@@ -942,7 +942,7 @@ onUnmounted(() => {
                 v-model="silenceComment"
                 rows="3"
                 placeholder="Reason for silencing..."
-                class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary resize-y min-h-[68px] font-[inherit] focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                class="px-3 py-2 bg-surface-overlay border border-border rounded-lg text-sm text-text-primary resize-y min-h-[68px] font-[inherit] focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
               ></textarea>
             </div>
 
@@ -962,7 +962,7 @@ onUnmounted(() => {
               Cancel
             </button>
             <button
-              class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 border border-emerald-600 rounded-lg text-sm font-medium text-white cursor-pointer transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center gap-1.5 px-4 py-2 bg-accent border border-accent rounded-lg text-sm font-medium text-white cursor-pointer transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
               @click="handleCreateSilence"
               :disabled="silenceSaving"
             >

@@ -176,7 +176,7 @@ function openTrace(traceId: string) {
           <div
             v-for="(count, cellIndex) in row.cells"
             :key="`${row.label}-${cellIndex}`"
-            class="min-h-4 rounded border border-emerald-200/30"
+            class="min-h-4 rounded border border-accent-border"
             :style="{ backgroundColor: cellBg(count) }"
             :title="cellTitle(row.label, cellIndex, count)"
           ></div>
@@ -192,7 +192,7 @@ function openTrace(traceId: string) {
       <h4 class="m-0 mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Recent traces</h4>
       <ul class="m-0 grid list-none grid-cols-2 gap-x-2.5 gap-y-1.5 p-0">
         <li v-for="trace in recentTraces" :key="trace.traceId">
-          <button type="button" class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-none bg-emerald-500/10 px-2.5 py-1.5 transition hover:bg-emerald-500/15" @click="openTrace(trace.traceId)">
+          <button type="button" class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-none bg-accent-muted px-2.5 py-1.5 transition hover:bg-accent-muted" @click="openTrace(trace.traceId)">
             <span class="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-text-primary">{{ trace.traceId }}</span>
             <span class="text-xs text-text-muted">{{ formatDuration(trace.durationNano) }}</span>
           </button>

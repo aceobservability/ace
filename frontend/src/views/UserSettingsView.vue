@@ -46,7 +46,7 @@ async function handleDisconnect() {
     <!-- Success toast -->
     <div
       v-if="showSuccessToast"
-      class="mb-4 flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400"
+      class="mb-4 flex items-center gap-2 rounded-xl border border-accent-border bg-accent-muted px-4 py-3 text-sm text-accent"
     >
       <Check :size="16" />
       GitHub Copilot connected successfully!
@@ -79,11 +79,11 @@ async function handleDisconnect() {
               </div>
 
               <div v-else-if="isConnected" class="flex items-center gap-3 mt-2">
-                <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-accent-border bg-accent-muted px-2.5 py-0.5 text-xs font-medium text-accent">
                   <Check :size="12" />
                   Connected as {{ githubUsername }}
                 </span>
-                <span v-if="hasCopilot" class="text-xs text-emerald-600">Copilot active</span>
+                <span v-if="hasCopilot" class="text-xs text-accent">Copilot active</span>
                 <span v-else class="text-xs text-amber-600">No Copilot subscription</span>
               </div>
             </div>

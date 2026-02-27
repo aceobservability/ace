@@ -114,7 +114,7 @@ function sortIndicator(field: TraceSortField): string {
       <tbody>
         <tr v-for="trace in sortedTraces" :key="trace.traceId" class="transition hover:bg-surface-overlay">
           <td class="max-w-[220px] border-b border-slate-100 px-4 py-3 align-middle">
-            <button type="button" class="inline-block w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap border-none bg-transparent p-0 text-left font-mono text-xs text-emerald-600 transition hover:text-emerald-700 hover:underline" @click="openTrace(trace.traceId)">
+            <button type="button" class="inline-block w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap border-none bg-transparent p-0 text-left font-mono text-xs text-accent transition hover:text-accent hover:underline" @click="openTrace(trace.traceId)">
               {{ trace.traceId }}
             </button>
           </td>

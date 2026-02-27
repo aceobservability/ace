@@ -105,7 +105,7 @@ describe('StatPanel', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, previousValue: 80, showTrend: true },
     })
-    expect(wrapper.find('.text-emerald-600').exists()).toBe(true)
+    expect(wrapper.find('.text-accent').exists()).toBe(true)
   })
 
   it('shows downward trend when value is lower than previous', () => {
@@ -119,7 +119,7 @@ describe('StatPanel', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, previousValue: 80, showTrend: false },
     })
-    expect(wrapper.find('.text-emerald-600').exists()).toBe(false)
+    expect(wrapper.find('.text-accent').exists()).toBe(false)
     expect(wrapper.find('.text-rose-500').exists()).toBe(false)
   })
 
@@ -127,7 +127,7 @@ describe('StatPanel', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, showTrend: true },
     })
-    expect(wrapper.find('.text-emerald-600').exists()).toBe(false)
+    expect(wrapper.find('.text-accent').exists()).toBe(false)
     expect(wrapper.find('.text-rose-500').exists()).toBe(false)
   })
 

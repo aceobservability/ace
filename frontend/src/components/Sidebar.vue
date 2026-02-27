@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { LayoutDashboard, Settings, Activity, ChevronLeft, ChevronRight, Compass, LogOut, ChevronDown, Shield, Moon, Sun, Monitor } from 'lucide-vue-next'
+import { LayoutDashboard, Settings, Activity, ChevronLeft, ChevronRight, Compass, LogOut, ChevronDown, Shield, Moon, Sun, Monitor, PanelLeftOpen } from 'lucide-vue-next'
 import OrganizationDropdown from './OrganizationDropdown.vue'
 import CreateOrganizationModal from './CreateOrganizationModal.vue'
 import { useOrganization } from '../composables/useOrganization'
@@ -146,11 +146,11 @@ defineExpose({ isExpanded })
     @mouseenter="handleSidebarMouseEnter"
     @mouseleave="handleSidebarMouseLeave"
   >
+    <!-- Header -->
     <div
       :class="[
-        isVisuallyExpanded
-          ? 'h-16 flex items-center justify-between px-3 border-b border-slate-700'
-          : 'h-[88px] flex flex-col items-center justify-center gap-[0.45rem] py-2 border-b border-slate-700'
+        'h-14 flex items-center border-b border-slate-700 shrink-0',
+        isVisuallyExpanded ? 'justify-between px-3' : 'justify-center px-2'
       ]"
     >
       <div
@@ -159,50 +159,56 @@ defineExpose({ isExpanded })
           isVisuallyExpanded ? 'pl-0.5' : 'pl-0'
         ]"
       >
+        <img
+          v-if="currentOrg?.branding?.logo_data_uri"
+          :src="currentOrg.branding.logo_data_uri"
+          class="shrink-0 w-6 h-6 rounded-[10px] object-contain"
+          alt="Logo"
+        />
         <Activity
-          class="text-emerald-500 shrink-0 p-1 rounded-[10px] bg-emerald-500/15"
+          v-else
+          class="text-accent shrink-0 p-1 rounded-[10px] bg-accent-muted"
           :size="24"
         />
         <div v-if="isVisuallyExpanded" class="flex flex-col min-w-0">
-          <span class="text-[0.95rem] font-bold tracking-wide uppercase font-mono text-slate-100">Ace</span>
-          <span class="text-[0.64rem] uppercase tracking-widest text-slate-500 whitespace-nowrap">developer cockpit</span>
+          <span class="text-[0.95rem] font-bold tracking-wide uppercase font-mono text-slate-100">{{ currentOrg?.branding?.app_title || 'Ace' }}</span>
+          <span v-if="!currentOrg?.branding?.app_title" class="text-[0.64rem] uppercase tracking-widest text-slate-500 whitespace-nowrap">developer cockpit</span>
         </div>
       </div>
       <button
-        :class="[
-          'flex items-center justify-center w-[30px] h-[30px] bg-slate-800 border border-slate-700 rounded-lg text-slate-400 cursor-pointer transition-all duration-200 hover:bg-slate-700 hover:text-slate-200 shrink-0',
-          !isVisuallyExpanded ? 'mx-auto' : ''
-        ]"
+        v-if="isVisuallyExpanded"
+        class="flex items-center justify-center w-[28px] h-[28px] bg-slate-800/60 border border-slate-700 rounded-lg text-slate-400 cursor-pointer transition-all duration-200 hover:bg-slate-700 hover:text-slate-200 shrink-0"
         @click="toggleSidebar"
-        :title="isExpanded ? 'Collapse' : 'Expand'"
+        title="Collapse sidebar"
       >
-        <component :is="isExpanded ? ChevronLeft : ChevronRight" :size="16" />
+        <ChevronLeft :size="15" />
       </button>
     </div>
 
     <OrganizationDropdown :expanded="isVisuallyExpanded" @createOrg="showCreateOrgModal = true" />
 
-    <nav class="flex-1 flex flex-col justify-between py-3.5">
-      <div class="flex flex-col gap-1">
+    <!-- Navigation -->
+    <nav class="flex-1 flex flex-col py-3 overflow-y-auto">
+      <div class="flex flex-col gap-0.5">
         <div
           v-for="item in navItems"
           :key="item.id"
-          class="flex flex-col gap-1"
+          class="flex flex-col"
         >
           <button
             :class="[
-              'group relative h-[42px] flex items-center gap-3 bg-transparent border border-transparent rounded-[10px] text-slate-400 cursor-pointer transition-all duration-200',
+              'group relative h-[40px] flex items-center gap-3 bg-transparent border border-transparent rounded-[10px] cursor-pointer transition-all duration-200',
               isVisuallyExpanded
                 ? 'mx-2.5 px-3.5 hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200'
                 : 'w-11 mx-auto p-0 justify-center hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200',
               isActive(item)
-                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 before:absolute before:-left-1 before:top-1/2 before:-translate-y-1/2 before:w-1.5 before:h-1.5 before:bg-emerald-500 before:rounded-full'
-                : ''
+                ? 'bg-accent-muted border-accent-border text-accent'
+                : 'text-slate-400'
             ]"
             @click="handleNavItemClick(item)"
             :title="isVisuallyExpanded ? undefined : item.label"
           >
-            <component :is="item.icon" :size="20" />
+            <component :is="item.icon" :size="19" />
             <span
               v-if="isVisuallyExpanded"
               class="text-[0.82rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis"
@@ -228,16 +234,16 @@ defineExpose({ isExpanded })
 
           <div
             v-if="isVisuallyExpanded && item.children && isNavGroupOpen(item.id)"
-            class="flex flex-col gap-[0.2rem] mx-2.5 mb-1.5 ml-7"
+            class="flex flex-col gap-px mt-0.5 mb-1 ml-[2.1rem] mr-2.5"
           >
             <button
               v-for="child in item.children"
               :key="child.path"
               :class="[
-                'h-8 flex items-center px-3 bg-transparent border border-transparent rounded-lg text-slate-500 cursor-pointer transition-all duration-200 hover:bg-slate-800 hover:text-slate-200',
+                'h-[30px] flex items-center px-3 border rounded-lg cursor-pointer transition-all duration-200',
                 isRouteMatch(child.path)
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                  : ''
+                  ? 'border-accent-border bg-accent-muted text-accent font-medium'
+                  : 'border-transparent text-slate-500 hover:bg-slate-800 hover:text-slate-200'
               ]"
               @click="navigate(child.path)"
             >
@@ -247,25 +253,26 @@ defineExpose({ isExpanded })
         </div>
       </div>
 
-      <div class="flex flex-col gap-1">
+      <!-- Bottom section -->
+      <div class="mt-auto flex flex-col gap-0.5 pt-3 mx-2.5 border-t border-slate-800">
         <button
           v-if="settingsPath"
           :class="[
-            'group relative h-[42px] flex items-center gap-3 bg-transparent border border-transparent rounded-[10px] text-slate-400 cursor-pointer transition-all duration-200',
+            'group relative h-[38px] flex items-center gap-3 bg-transparent border border-transparent rounded-[10px] cursor-pointer transition-all duration-200',
             isVisuallyExpanded
-              ? 'mx-2.5 px-3.5 hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200'
+              ? 'px-3.5 hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200'
               : 'w-11 mx-auto p-0 justify-center hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200',
             isRouteMatch('/settings')
-              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 before:absolute before:-left-1 before:top-1/2 before:-translate-y-1/2 before:w-1.5 before:h-1.5 before:bg-emerald-500 before:rounded-full'
-              : ''
+              ? 'bg-accent-muted border-accent-border text-accent'
+              : 'text-slate-400'
           ]"
           @click="navigate(settingsPath)"
           :title="isVisuallyExpanded ? undefined : 'Settings'"
         >
-          <Settings :size="20" />
+          <Settings :size="18" />
           <span
             v-if="isVisuallyExpanded"
-            class="text-[0.82rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis"
+            class="text-[0.8rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis"
           >Settings</span>
           <span
             v-else
@@ -274,21 +281,21 @@ defineExpose({ isExpanded })
         </button>
         <button
           :class="[
-            'group relative h-[42px] flex items-center gap-3 bg-transparent border border-transparent rounded-[10px] text-slate-400 cursor-pointer transition-all duration-200',
+            'group relative h-[38px] flex items-center gap-3 bg-transparent border border-transparent rounded-[10px] cursor-pointer transition-all duration-200',
             isVisuallyExpanded
-              ? 'mx-2.5 px-3.5 hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200'
+              ? 'px-3.5 hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200'
               : 'w-11 mx-auto p-0 justify-center hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200',
             isRouteMatch(privacySettingsPath)
-              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 before:absolute before:-left-1 before:top-1/2 before:-translate-y-1/2 before:w-1.5 before:h-1.5 before:bg-emerald-500 before:rounded-full'
-              : ''
+              ? 'bg-accent-muted border-accent-border text-accent'
+              : 'text-slate-400'
           ]"
           @click="navigate(privacySettingsPath)"
           :title="isVisuallyExpanded ? undefined : 'Privacy'"
         >
-          <Shield :size="20" />
+          <Shield :size="18" />
           <span
             v-if="isVisuallyExpanded"
-            class="text-[0.82rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis"
+            class="text-[0.8rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis"
           >Privacy</span>
           <span
             v-else
@@ -297,51 +304,65 @@ defineExpose({ isExpanded })
         </button>
         <button
           :class="[
-            'group relative h-[42px] flex items-center gap-3 bg-transparent border border-transparent rounded-[10px] text-slate-400 cursor-pointer transition-all duration-200',
+            'group relative h-[38px] flex items-center gap-3 bg-transparent border border-transparent rounded-[10px] cursor-pointer transition-all duration-200',
             isVisuallyExpanded
-              ? 'mx-2.5 px-3.5 hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200'
-              : 'w-11 mx-auto p-0 justify-center hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200'
+              ? 'px-3.5 hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200'
+              : 'w-11 mx-auto p-0 justify-center hover:bg-slate-800 hover:border-slate-600 hover:text-slate-200',
           ]"
           @click="cycle()"
           :title="`Theme: ${mode} (click to cycle)`"
         >
-          <Moon v-if="mode === 'dark'" :size="20" />
-          <Sun v-if="mode === 'light'" :size="20" />
-          <Monitor v-if="mode === 'system'" :size="20" />
+          <Moon v-if="mode === 'dark'" :size="18" />
+          <Sun v-if="mode === 'light'" :size="18" />
+          <Monitor v-if="mode === 'system'" :size="18" />
           <span
             v-if="isVisuallyExpanded"
-            class="text-[0.82rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis capitalize"
+            class="text-[0.8rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis capitalize"
           >{{ mode }}</span>
           <span
             v-else
             class="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-900 border border-slate-600 rounded-md text-xs font-medium text-slate-200 whitespace-nowrap opacity-0 invisible pointer-events-none z-[100] group-hover:opacity-100 group-hover:visible"
           >Theme: {{ mode }}</span>
         </button>
-        <div v-if="isVisuallyExpanded && user" class="px-3.5 py-2.5 mx-2 mt-2 border-t border-slate-700 bg-slate-900 rounded-[10px]">
-          <span class="text-[0.72rem] font-mono text-slate-500 overflow-hidden text-ellipsis whitespace-nowrap block">{{ user.email }}</span>
-        </div>
-        <button
-          :class="[
-            'group relative h-[42px] flex items-center gap-3 bg-transparent border border-transparent rounded-[10px] text-slate-400 cursor-pointer transition-all duration-200 hover:bg-rose-500/15 hover:border-rose-500/30 hover:text-rose-500',
-            isVisuallyExpanded
-              ? 'mx-2.5 px-3.5'
-              : 'w-11 mx-auto p-0 justify-center'
-          ]"
-          @click="handleLogout"
-          :title="isVisuallyExpanded ? undefined : 'Log out'"
-        >
-          <LogOut :size="20" />
-          <span
-            v-if="isVisuallyExpanded"
-            class="text-[0.82rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis"
-          >Log out</span>
-          <span
-            v-else
-            class="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-900 border border-slate-600 rounded-md text-xs font-medium text-slate-200 whitespace-nowrap opacity-0 invisible pointer-events-none z-[100] group-hover:opacity-100 group-hover:visible"
-          >Log out</span>
-        </button>
       </div>
     </nav>
+
+    <!-- User section -->
+    <div class="shrink-0 border-t border-slate-700">
+      <div v-if="isVisuallyExpanded && user" class="px-4 py-2.5">
+        <span class="text-[0.7rem] font-mono text-slate-500 overflow-hidden text-ellipsis whitespace-nowrap block">{{ user.email }}</span>
+      </div>
+      <button
+        :class="[
+          'group relative h-[40px] flex items-center gap-3 bg-transparent border border-transparent rounded-[10px] text-slate-400 cursor-pointer transition-all duration-200 hover:bg-rose-500/15 hover:border-rose-500/30 hover:text-rose-500',
+          isVisuallyExpanded
+            ? 'mx-2.5 mb-2 px-3.5'
+            : 'w-11 mx-auto mb-2 p-0 justify-center'
+        ]"
+        @click="handleLogout"
+        :title="isVisuallyExpanded ? undefined : 'Log out'"
+      >
+        <LogOut :size="18" />
+        <span
+          v-if="isVisuallyExpanded"
+          class="text-[0.8rem] font-medium tracking-[0.01em] whitespace-nowrap overflow-hidden text-ellipsis"
+        >Log out</span>
+        <span
+          v-else
+          class="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-900 border border-slate-600 rounded-md text-xs font-medium text-slate-200 whitespace-nowrap opacity-0 invisible pointer-events-none z-[100] group-hover:opacity-100 group-hover:visible"
+        >Log out</span>
+      </button>
+    </div>
+
+    <!-- Expand button (collapsed state) - floating edge tab -->
+    <button
+      v-if="!isExpanded && !isHoverExpanded"
+      class="absolute -right-3 top-1/2 -translate-y-1/2 z-[60] flex items-center justify-center w-6 h-12 bg-slate-800 border border-slate-600 rounded-r-lg text-slate-400 cursor-pointer transition-all duration-200 hover:bg-accent-muted hover:border-accent-border hover:text-accent hover:w-7 shadow-lg"
+      @click.stop="toggleSidebar"
+      title="Expand sidebar"
+    >
+      <PanelLeftOpen :size="14" />
+    </button>
 
     <CreateOrganizationModal
       v-if="showCreateOrgModal"

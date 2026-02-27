@@ -14,17 +14,7 @@ import {
 } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { queryDataSource } from '../api/datasources'
-import alertmanagerLogo from '../assets/datasources/alertmanager-logo.svg'
-import clickhouseLogo from '../assets/datasources/clickhouse-logo.svg'
-import cloudwatchLogo from '../assets/datasources/cloudwatch-logo.svg'
-import elasticsearchLogo from '../assets/datasources/elasticsearch-logo.svg'
-import lokiLogo from '../assets/datasources/loki-logo.svg'
-import prometheusLogo from '../assets/datasources/prometheus-logo.svg'
-import tempoLogo from '../assets/datasources/tempo-logo.svg'
-import victoriaLogsLogo from '../assets/datasources/victorialogs-logo.svg'
-import victoriaMetricsLogo from '../assets/datasources/victoriametrics-logo.svg'
-import victoriaTracesLogo from '../assets/datasources/victoriatraces-logo.svg'
-import vmalertLogo from '../assets/datasources/vmalert-logo.svg'
+import { dataSourceTypeLogos } from '../utils/datasourceLogos'
 import ClickHouseSQLEditor from '../components/ClickHouseSQLEditor.vue'
 import CloudWatchQueryEditor from '../components/CloudWatchQueryEditor.vue'
 import CopilotPanel from '../components/CopilotPanel.vue'
@@ -43,20 +33,6 @@ import { dataSourceTypeLabels } from '../types/datasource'
 const { timeRange, onRefresh, setCustomRange } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { metricsDatasources, fetchDatasources } = useDatasource()
-
-const dataSourceTypeLogos: Partial<Record<DataSourceType, string>> = {
-  prometheus: prometheusLogo,
-  loki: lokiLogo,
-  victoriametrics: victoriaMetricsLogo,
-  victorialogs: victoriaLogsLogo,
-  tempo: tempoLogo,
-  victoriatraces: victoriaTracesLogo,
-  clickhouse: clickhouseLogo,
-  cloudwatch: cloudwatchLogo,
-  elasticsearch: elasticsearchLogo,
-  vmalert: vmalertLogo,
-  alertmanager: alertmanagerLogo,
-}
 
 type DatasourceHealthStatus = 'unknown' | 'checking' | 'healthy' | 'unhealthy'
 
@@ -532,11 +508,11 @@ watch(selectedDatasourceId, () => {
     <header class="flex items-center justify-between mb-6">
       <div class="flex items-center flex-wrap gap-3">
         <h1 class="text-2xl font-bold text-text-primary m-0">Explore</h1>
-        <span class="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">Metrics</span>
+        <span class="rounded-full border border-accent-border bg-accent-muted px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">Metrics</span>
       </div>
       <button
-        class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-xs font-semibold cursor-pointer transition hover:bg-emerald-500/15 hover:border-emerald-500/30"
-        :class="showCopilot ? 'text-emerald-600 border-emerald-500/30 bg-emerald-500/10' : 'text-text-secondary'"
+        class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-xs font-semibold cursor-pointer transition hover:bg-accent-muted hover:border-accent-border"
+        :class="showCopilot ? 'text-accent border-accent-border bg-accent-muted' : 'text-text-secondary'"
         @click="showCopilot = !showCopilot"
         title="Toggle AI assistant"
       >
@@ -573,7 +549,7 @@ watch(selectedDatasourceId, () => {
                     class="ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs border"
                     :class="{
                       'border-border text-text-muted': activeDatasourceHealth === 'checking' || activeDatasourceHealth === 'unknown',
-                      'border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400': activeDatasourceHealth === 'healthy',
+                      'border-accent-border bg-accent-muted text-accent': activeDatasourceHealth === 'healthy',
                       'border-rose-500/25 bg-rose-500/10 text-rose-500': activeDatasourceHealth === 'unhealthy',
                     }"
                     :title="activeDatasourceHealthError || activeDatasourceHealthLabel"
@@ -600,7 +576,7 @@ watch(selectedDatasourceId, () => {
                   :key="ds.id"
                   type="button"
                   class="flex w-full items-center gap-2.5 border-none bg-transparent px-3 py-2.5 text-left text-text-primary cursor-pointer hover:bg-surface-overlay"
-                  :class="{ 'bg-emerald-500/10': ds.id === selectedDatasourceId }"
+                  :class="{ 'bg-accent-muted': ds.id === selectedDatasourceId }"
                   @click="selectDatasource(ds.id)"
                 >
                   <img
@@ -612,7 +588,7 @@ watch(selectedDatasourceId, () => {
                     <strong class="text-sm font-semibold text-text-primary">{{ ds.name }}</strong>
                     <span class="text-xs text-text-muted">{{ dataSourceTypeLabels[ds.type] }}</span>
                   </div>
-                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="ml-auto text-emerald-600" />
+                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="ml-auto text-accent" />
                 </button>
               </div>
             </div>
@@ -681,7 +657,7 @@ watch(selectedDatasourceId, () => {
 
         <div class="flex items-center gap-4">
           <button
-            class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             :disabled="loading || !query.trim() || !selectedDatasourceId || !hasMetricsDatasources"
             @click="runQuery"
           >
@@ -701,7 +677,7 @@ watch(selectedDatasourceId, () => {
       <!-- Results section -->
       <div class="flex flex-1 flex-col rounded-xl border border-border bg-surface-raised overflow-hidden min-h-[400px]">
         <div v-if="loading" class="flex flex-col items-center justify-center gap-4 py-12 text-text-muted flex-1">
-          <div class="animate-spin h-8 w-8 rounded-full border-[3px] border-border border-t-emerald-600"></div>
+          <div class="animate-spin h-8 w-8 rounded-full border-[3px] border-border border-t-accent"></div>
           <span class="text-sm">Executing query...</span>
         </div>
 

@@ -218,30 +218,30 @@ function exportSpanJson() {
         class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide"
         :class="span.status === 'error'
           ? 'border border-rose-200 bg-rose-50 text-rose-700'
-          : 'border border-emerald-200 bg-emerald-50 text-emerald-700'"
+          : 'border border-accent-border bg-accent-muted text-accent'"
       >
         {{ span.status === 'error' ? 'Error' : 'OK' }}
       </span>
     </header>
 
     <div class="flex flex-wrap gap-2">
-      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="copyToClipboard(span.spanId, 'Span ID')">
+      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-accent-border hover:text-accent" @click="copyToClipboard(span.spanId, 'Span ID')">
         Copy span ID
       </button>
-      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="copyToClipboard(trace.traceId, 'Trace ID')">
+      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-accent-border hover:text-accent" @click="copyToClipboard(trace.traceId, 'Trace ID')">
         Copy trace ID
       </button>
-      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="openTraceLogs">
+      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-accent-border hover:text-accent" @click="openTraceLogs">
         View Logs
       </button>
-      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="openServiceMetrics">
+      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-accent-border hover:text-accent" @click="openServiceMetrics">
         View Service Metrics
       </button>
-      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700" @click="exportSpanJson">
+      <button type="button" class="cursor-pointer rounded-lg border border-border bg-surface-overlay px-3 py-1.5 text-xs text-slate-600 transition hover:border-accent-border hover:text-accent" @click="exportSpanJson">
         Export JSON
       </button>
     </div>
-    <p v-if="feedbackMessage" class="-mt-1 text-xs font-medium text-emerald-600">{{ feedbackMessage }}</p>
+    <p v-if="feedbackMessage" class="-mt-1 text-xs font-medium text-accent">{{ feedbackMessage }}</p>
 
     <section class="grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-slate-100 p-3 max-md:grid-cols-1">
       <div class="flex min-w-0 flex-col gap-0.5">
@@ -277,7 +277,7 @@ function exportSpanJson() {
         <button
           v-if="parentSpan"
           type="button"
-          class="cursor-pointer rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-left text-sm text-emerald-600 transition hover:border-emerald-300 hover:text-emerald-700"
+          class="cursor-pointer rounded-lg border border-accent-border bg-accent-muted px-3 py-1.5 text-left text-sm text-accent transition hover:border-accent-border hover:text-accent"
           @click="emit('select-span', parentSpan)"
         >
           {{ parentSpan.operationName || '(unnamed span)' }}
@@ -292,7 +292,7 @@ function exportSpanJson() {
             v-for="child in childSpans"
             :key="child.spanId"
             type="button"
-            class="cursor-pointer rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-left text-sm text-emerald-600 transition hover:border-emerald-300 hover:text-emerald-700"
+            class="cursor-pointer rounded-lg border border-accent-border bg-accent-muted px-3 py-1.5 text-left text-sm text-accent transition hover:border-accent-border hover:text-accent"
             @click="emit('select-span', child)"
           >
             {{ child.operationName || '(unnamed span)' }}

@@ -106,7 +106,7 @@ describe('TraceSpanDetailsPanel', () => {
       },
     })
 
-    // The parent relation link is the button with emerald styling in the Relationships section
+    // The parent relation link is the button with accent styling in the Relationships section
     const parentButton = childWrapper
       .findAll('button')
       .find((b) => b.text().includes('GET /api/orders'))

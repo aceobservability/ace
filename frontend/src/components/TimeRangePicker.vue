@@ -144,7 +144,7 @@ onUnmounted(() => {
         <button
           class="flex items-center gap-2 rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary transition cursor-pointer hover:border-border-strong hover:bg-surface-overlay"
           :class="[
-            isOpen ? 'border-emerald-500 ring-1 ring-emerald-600/20' : '',
+            isOpen ? 'border-accent ring-1 ring-accent/20' : '',
             props.stacked ? 'w-full justify-between' : ''
           ]"
           @click.stop="toggleDropdown"
@@ -162,7 +162,7 @@ onUnmounted(() => {
       >
         <button
           class="flex items-center justify-center rounded-lg border border-border bg-surface-raised px-2 py-1.5 text-text-muted transition cursor-pointer hover:bg-surface-overlay hover:text-text-primary"
-          :class="isRefreshing ? 'text-emerald-600' : ''"
+          :class="isRefreshing ? 'text-accent' : ''"
           @click="handleRefresh"
           :title="'Last refresh: ' + formatLastRefresh()"
         >
@@ -174,7 +174,7 @@ onUnmounted(() => {
             :value="refreshIntervalValue"
             @change="selectRefreshInterval(($event.target as HTMLSelectElement).value)"
             title="Auto-refresh interval"
-            class="rounded-lg border border-border bg-surface-raised px-2 py-1.5 pr-7 text-xs font-medium text-text-secondary cursor-pointer transition appearance-none hover:border-border-strong focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-600/20 bg-[url('data:image/svg+xml,%3Csvg_xmlns=%27http://www.w3.org/2000/svg%27_width=%2712%27_height=%2712%27_viewBox=%270_0_24_24%27_fill=%27none%27_stroke=%27%2394a3b8%27_stroke-width=%272%27_stroke-linecap=%27round%27_stroke-linejoin=%27round%27%3E%3Cpath_d=%27m6_9_6_6_6-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.5rem_center]"
+            class="rounded-lg border border-border bg-surface-raised px-2 py-1.5 pr-7 text-xs font-medium text-text-secondary cursor-pointer transition appearance-none hover:border-border-strong focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 bg-[url('data:image/svg+xml,%3Csvg_xmlns=%27http://www.w3.org/2000/svg%27_width=%2712%27_height=%2712%27_viewBox=%270_0_24_24%27_fill=%27none%27_stroke=%27%2394a3b8%27_stroke-width=%272%27_stroke-linecap=%27round%27_stroke-linejoin=%27round%27%3E%3Cpath_d=%27m6_9_6_6_6-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.5rem_center]"
           >
             <option
               v-for="interval in refreshIntervals"
@@ -211,7 +211,7 @@ onUnmounted(() => {
             v-for="preset in presets"
             :key="preset.value"
             class="block w-full px-4 py-2.5 border-0 bg-transparent text-left text-sm text-text-secondary cursor-pointer transition hover:bg-surface-overlay"
-            :class="!isCustomRange && selectedPreset === preset.value ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium' : ''"
+            :class="!isCustomRange && selectedPreset === preset.value ? 'bg-accent-muted text-accent font-medium' : ''"
             @click="selectPreset(preset.value)"
           >
             {{ preset.label }}
@@ -221,7 +221,7 @@ onUnmounted(() => {
         <div class="h-px bg-border mx-0 my-1"></div>
 
         <button
-          class="block w-full px-4 py-2.5 border-0 bg-transparent text-left text-sm text-emerald-600 cursor-pointer transition hover:bg-surface-overlay"
+          class="block w-full px-4 py-2.5 border-0 bg-transparent text-left text-sm text-accent cursor-pointer transition hover:bg-surface-overlay"
           @click="openCustomRange"
         >
           Custom range...
@@ -239,7 +239,7 @@ onUnmounted(() => {
             id="custom-from"
             type="datetime-local"
             v-model="customFrom"
-            class="w-full rounded-lg border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-600/20"
+            class="w-full rounded-lg border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20"
           />
         </div>
 
@@ -249,7 +249,7 @@ onUnmounted(() => {
             id="custom-to"
             type="datetime-local"
             v-model="customTo"
-            class="w-full rounded-lg border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-600/20"
+            class="w-full rounded-lg border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20"
           />
         </div>
 
@@ -268,7 +268,7 @@ onUnmounted(() => {
             Cancel
           </button>
           <button
-            class="rounded-md px-4 py-2 text-sm font-medium border border-emerald-600 bg-emerald-600 text-white cursor-pointer transition hover:bg-emerald-700 hover:border-emerald-700"
+            class="rounded-md px-4 py-2 text-sm font-medium border border-accent bg-accent text-white cursor-pointer transition hover:bg-accent-hover hover:border-accent-hover"
             @click="applyCustomRange"
           >
             Apply

@@ -10,7 +10,7 @@
       <Database :size="40" class="text-text-muted" />
       <h3 class="m-0 text-base text-text-primary">No data sources configured</h3>
       <p class="m-0 text-text-secondary text-sm">Add a data source to start visualising your metrics, logs, and traces.</p>
-      <RouterLink :to="`/app/datasources/new?orgId=${orgId}`" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 text-white border-none rounded-lg text-sm font-medium cursor-pointer no-underline transition hover:bg-emerald-700">
+      <RouterLink :to="`/app/datasources/new?orgId=${orgId}`" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-accent text-white border-none rounded-lg text-sm font-medium cursor-pointer no-underline transition hover:bg-accent-hover">
         Add data source
       </RouterLink>
     </div>
@@ -19,15 +19,18 @@
     <div v-else>
       <div class="flex items-center justify-between mb-3">
         <span class="text-sm text-text-secondary font-medium">{{ datasources.length }} data source{{ datasources.length !== 1 ? 's' : '' }}</span>
-        <RouterLink :to="`/app/datasources/new?orgId=${orgId}`" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 text-white border-none rounded-lg text-sm font-medium cursor-pointer no-underline transition hover:bg-emerald-700">
+        <RouterLink :to="`/app/datasources/new?orgId=${orgId}`" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-accent text-white border-none rounded-lg text-sm font-medium cursor-pointer no-underline transition hover:bg-accent-hover">
           Add data source
         </RouterLink>
       </div>
 
       <div class="flex flex-col gap-2">
-        <div v-for="ds in datasources" :key="ds.id" class="flex items-center justify-between gap-4 px-4 py-3 bg-surface-overlay border border-border rounded-[10px] transition-colors hover:border-emerald-500/30">
+        <div v-for="ds in datasources" :key="ds.id" class="flex items-center justify-between gap-4 px-4 py-3 bg-surface-overlay border border-border rounded-[10px] transition-colors hover:border-accent-border">
           <div class="flex items-center gap-3 min-w-0 flex-1">
-            <span class="inline-flex px-2 py-0.5 rounded-full text-[0.68rem] font-semibold uppercase tracking-wide bg-emerald-500/15 text-emerald-500 border border-emerald-500/25 whitespace-nowrap">{{ dataSourceTypeLabels[ds.type] }}</span>
+            <div class="flex items-center gap-2">
+              <img v-if="dataSourceTypeLogos[ds.type]" :src="dataSourceTypeLogos[ds.type]" :alt="ds.type" class="h-5 w-5 shrink-0 object-contain" />
+              <span class="inline-flex px-2 py-0.5 rounded-full text-[0.68rem] font-semibold uppercase tracking-wide bg-accent-muted text-accent border border-accent-border whitespace-nowrap">{{ dataSourceTypeLabels[ds.type] }}</span>
+            </div>
             <span class="text-sm font-semibold text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">{{ ds.name }}</span>
             <span class="text-xs text-text-muted whitespace-nowrap overflow-hidden text-ellipsis">{{ ds.url }}</span>
           </div>
@@ -51,7 +54,7 @@
       v-if="testResult"
       class="fixed bottom-6 right-6 px-4 py-2.5 rounded-lg text-sm font-medium z-[1000] animate-slide-up"
       :class="testResult.ok
-        ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 dark:bg-emerald-500/15 dark:border-emerald-500/30 dark:text-emerald-400'
+        ? 'bg-accent-muted border border-accent-border text-accent'
         : 'bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-500/15 dark:border-rose-500/30 dark:text-rose-400'"
     >
       {{ testResult.message }}
@@ -65,6 +68,7 @@ import { Database, Edit2, Trash2, Zap } from 'lucide-vue-next'
 import { listDataSources, deleteDataSource, testDataSourceConnection } from '../api/datasources'
 import type { DataSource } from '../types/datasource'
 import { dataSourceTypeLabels } from '../types/datasource'
+import { dataSourceTypeLogos } from '../utils/datasourceLogos'
 
 const props = defineProps<{ orgId: string }>()
 

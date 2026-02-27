@@ -30,6 +30,8 @@ import {
 } from '../api/sso'
 import { useOrganization } from '../composables/useOrganization'
 import DataSourceSettingsPanel from '../components/DataSourceSettingsPanel.vue'
+import GitHubAppSettings from '../components/GitHubAppSettings.vue'
+import OrgBrandingSettings from './OrgBrandingSettings.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -135,17 +137,19 @@ const activeSsoLabel = computed(() => {
 
 const isAdmin = computed(() => org.value?.role === 'admin')
 
-type SettingsSection = 'general' | 'members' | 'groups' | 'datasources'
+type SettingsSection = 'general' | 'members' | 'groups' | 'datasources' | 'branding' | 'ai'
 
 const settingsSections: Array<{ key: SettingsSection; label: string }> = [
   { key: 'general', label: 'General' },
   { key: 'members', label: 'Members' },
   { key: 'groups', label: 'Groups' },
   { key: 'datasources', label: 'Data Sources' },
+  { key: 'branding', label: 'Branding' },
+  { key: 'ai', label: 'AI' },
 ]
 
 function isSettingsSection(value: string | undefined): value is SettingsSection {
-  return value === 'general' || value === 'members' || value === 'groups' || value === 'datasources'
+  return value === 'general' || value === 'members' || value === 'groups' || value === 'datasources' || value === 'branding' || value === 'ai'
 }
 
 const activeSection = computed<SettingsSection>(() => {
@@ -773,21 +777,23 @@ function goBack() {
 
     <div v-if="loading" class="text-center py-8 text-text-secondary">Loading...</div>
     <div v-else-if="error" class="text-center py-8 text-rose-500">{{ error }}</div>
-    <div v-else-if="org" class="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-4 items-start">
-      <aside class="flex flex-row md:flex-col gap-1.5 bg-surface-raised border border-border rounded-xl p-2 md:p-3 md:sticky md:top-4 overflow-x-auto md:overflow-x-visible" data-testid="org-settings-sidebar">
+    <div v-else-if="org" class="flex flex-col gap-6">
+      <div class="flex gap-1 border-b border-border overflow-x-auto pb-0" data-testid="org-settings-tabs">
         <button
           v-for="section in settingsSections"
           :key="section.key"
           :class="[
-            'w-auto md:w-full min-w-[110px] md:min-w-0 text-center md:text-left bg-transparent border border-transparent rounded-[10px] text-text-secondary px-3 py-2.5 text-[0.85rem] font-semibold cursor-pointer transition-all duration-200 whitespace-nowrap md:whitespace-normal hover:text-text-primary hover:border-border-strong hover:bg-surface-overlay',
-            activeSection === section.key ? 'bg-emerald-500/15 !text-emerald-500 !border-emerald-500/30' : ''
+            'bg-transparent border-none border-b-2 px-4 py-2.5 text-[0.85rem] font-semibold cursor-pointer transition-all duration-200 whitespace-nowrap',
+            activeSection === section.key
+              ? 'border-b-accent text-accent'
+              : 'border-b-transparent text-text-secondary hover:text-text-primary hover:border-b-border-strong'
           ]"
           :data-testid="`settings-section-${section.key}`"
           @click="navigateToSection(section.key)"
         >
           {{ section.label }}
         </button>
-      </aside>
+      </div>
 
       <div class="flex flex-col gap-4">
       <!-- General Settings -->
@@ -810,7 +816,7 @@ function goBack() {
             <input
               v-model="editName"
               type="text"
-              class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+              class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
               :disabled="editLoading"
             />
           </div>
@@ -819,7 +825,7 @@ function goBack() {
             <input
               v-model="editSlug"
               type="text"
-              class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+              class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
               :disabled="editLoading"
             />
           </div>
@@ -831,7 +837,7 @@ function goBack() {
               :disabled="editLoading"
             >Cancel</button>
             <button
-              class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-accent text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
               @click="saveEdit"
               :disabled="editLoading"
             >
@@ -853,8 +859,8 @@ function goBack() {
             <span
               :class="[
                 'inline-block px-2 py-1 rounded text-xs font-medium capitalize',
-                org.role === 'admin' ? 'bg-emerald-500/15 text-emerald-500' : '',
-                org.role === 'editor' ? 'bg-emerald-500/15 text-emerald-500' : '',
+                org.role === 'admin' ? 'bg-accent-muted text-accent' : '',
+                org.role === 'editor' ? 'bg-accent-muted text-accent' : '',
                 org.role === 'viewer' ? 'bg-amber-500/15 text-amber-500' : ''
               ]"
             >{{ org.role }}</span>
@@ -872,7 +878,7 @@ function goBack() {
           <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-text-primary"><Users :size="20" /> Members ({{ members.length }})</h2>
           <button
             v-if="isAdmin"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white border-none rounded-md text-[0.8125rem] font-semibold cursor-pointer transition-all duration-200 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent text-white border-none rounded-md text-[0.8125rem] font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
             @click="showInviteForm = !showInviteForm"
           >
             <UserPlus :size="16" />
@@ -887,12 +893,12 @@ function goBack() {
               v-model="inviteEmail"
               type="email"
               placeholder="Email address"
-              class="flex-1 px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+              class="flex-1 px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
               :disabled="inviteLoading"
             />
             <select
               v-model="inviteRole"
-              class="w-full md:w-[120px] px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary cursor-pointer outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+              class="w-full md:w-[120px] px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary cursor-pointer outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
               :disabled="inviteLoading"
             >
               <option value="viewer">Viewer</option>
@@ -900,7 +906,7 @@ function goBack() {
               <option value="admin">Admin</option>
             </select>
             <button
-              class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-accent text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
               @click="handleInvite"
               :disabled="inviteLoading"
             >
@@ -908,13 +914,13 @@ function goBack() {
             </button>
           </div>
           <div v-if="inviteError" class="px-3.5 py-2.5 bg-rose-500/10 border border-rose-500/30 rounded-md text-rose-500 text-sm mt-3">{{ inviteError }}</div>
-          <div v-if="inviteSuccess" class="px-3.5 py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-md text-emerald-500 text-sm mt-3 break-all">{{ inviteSuccess }}</div>
+          <div v-if="inviteSuccess" class="px-3.5 py-2.5 bg-accent-muted border border-accent-border rounded-md text-accent text-sm mt-3 break-all">{{ inviteSuccess }}</div>
         </div>
 
         <!-- Members List -->
         <div class="flex flex-col gap-2">
           <div v-for="member in members" :key="member.id" class="flex items-center gap-3 p-3 bg-surface-overlay rounded-[10px] border border-border">
-            <div class="w-9 h-9 flex items-center justify-center bg-emerald-600 rounded-full text-sm font-semibold text-white shrink-0">
+            <div class="w-9 h-9 flex items-center justify-center bg-accent rounded-full text-sm font-semibold text-white shrink-0">
               {{ (member.name || member.email).charAt(0).toUpperCase() }}
             </div>
             <div class="flex-1 min-w-0">
@@ -926,7 +932,7 @@ function goBack() {
                 v-if="isAdmin"
                 :value="member.role"
                 @change="handleRoleChange(member, ($event.target as HTMLSelectElement).value as MembershipRole)"
-                class="w-auto px-2 py-1.5 text-xs bg-surface-overlay border border-border rounded-md text-text-primary cursor-pointer outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                class="w-auto px-2 py-1.5 text-xs bg-surface-overlay border border-border rounded-md text-text-primary cursor-pointer outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
               >
                 <option value="viewer">Viewer</option>
                 <option value="editor">Editor</option>
@@ -936,8 +942,8 @@ function goBack() {
                 v-else
                 :class="[
                   'inline-block px-2 py-1 rounded text-xs font-medium capitalize',
-                  member.role === 'admin' ? 'bg-emerald-500/15 text-emerald-500' : '',
-                  member.role === 'editor' ? 'bg-emerald-500/15 text-emerald-500' : '',
+                  member.role === 'admin' ? 'bg-accent-muted text-accent' : '',
+                  member.role === 'editor' ? 'bg-accent-muted text-accent' : '',
                   member.role === 'viewer' ? 'bg-amber-500/15 text-amber-500' : ''
                 ]"
               >{{ member.role }}</span>
@@ -960,7 +966,7 @@ function goBack() {
           <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-text-primary"><Users :size="20" /> Groups ({{ groups.length }})</h2>
           <button
             v-if="isAdmin && !showCreateGroupForm"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white border-none rounded-md text-[0.8125rem] font-semibold cursor-pointer transition-all duration-200 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent text-white border-none rounded-md text-[0.8125rem] font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
             data-testid="new-group-button"
             @click="startCreateGroup"
           >
@@ -968,7 +974,7 @@ function goBack() {
           </button>
         </div>
 
-        <div v-if="groupMessage" class="px-3.5 py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-md text-emerald-500 text-sm mt-3 break-all">{{ groupMessage }}</div>
+        <div v-if="groupMessage" class="px-3.5 py-2.5 bg-accent-muted border border-accent-border rounded-md text-accent text-sm mt-3 break-all">{{ groupMessage }}</div>
         <div v-if="groupActionError" class="px-3.5 py-2.5 bg-rose-500/10 border border-rose-500/30 rounded-md text-rose-500 text-sm mt-3">{{ groupActionError }}</div>
 
         <div v-if="showCreateGroupForm && isAdmin" class="p-4 bg-surface-overlay rounded-[10px] border border-border mb-4">
@@ -978,7 +984,7 @@ function goBack() {
               v-model="createGroupName"
               type="text"
               data-testid="create-group-name"
-              class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+              class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
               :disabled="createGroupLoading"
             />
           </div>
@@ -988,7 +994,7 @@ function goBack() {
               v-model="createGroupDescription"
               type="text"
               data-testid="create-group-description"
-              class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+              class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
               :disabled="createGroupLoading"
             />
           </div>
@@ -1001,7 +1007,7 @@ function goBack() {
               Cancel
             </button>
             <button
-              class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-accent text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="create-group-submit"
               @click="handleCreateGroup"
               :disabled="createGroupLoading"
@@ -1060,7 +1066,7 @@ function goBack() {
                   v-model="editGroupName"
                   type="text"
                   data-testid="edit-group-name"
-                  class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+                  class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
                   :disabled="groupUpdateLoading"
                 />
               </div>
@@ -1070,7 +1076,7 @@ function goBack() {
                   v-model="editGroupDescription"
                   type="text"
                   data-testid="edit-group-description"
-                  class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+                  class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
                   :disabled="groupUpdateLoading"
                 />
               </div>
@@ -1083,7 +1089,7 @@ function goBack() {
                   Cancel
                 </button>
                 <button
-                  class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-accent text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   :data-testid="`save-group-${group.id}`"
                   @click="handleUpdateGroup(group)"
                   :disabled="groupUpdateLoading"
@@ -1103,7 +1109,7 @@ function goBack() {
                   <select
                     v-model="addMemberUserId[group.id]"
                     :data-testid="`add-member-select-${group.id}`"
-                    class="flex-1 px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary cursor-pointer outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+                    class="flex-1 px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary cursor-pointer outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
                     :disabled="groupMemberActionLoading[group.id]"
                   >
                     <option value="">Select member</option>
@@ -1116,7 +1122,7 @@ function goBack() {
                     </option>
                   </select>
                   <button
-                    class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-accent text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
                     :data-testid="`add-member-button-${group.id}`"
                     @click="handleAddGroupMember(group.id)"
                     :disabled="groupMemberActionLoading[group.id] || availableMembersForGroup(group.id).length === 0"
@@ -1164,13 +1170,19 @@ function goBack() {
         <DataSourceSettingsPanel :org-id="orgId" />
       </section>
 
+      <!-- Branding Section -->
+      <OrgBrandingSettings v-if="activeSection === 'branding'" :org-id="orgId" />
+
+      <!-- AI Section -->
+      <GitHubAppSettings v-if="activeSection === 'ai'" :org-id="orgId" :is-admin="isAdmin" />
+
       <!-- SSO Section -->
       <section v-if="activeSection === 'general'" class="bg-surface-raised border border-border rounded-xl p-6">
         <div class="flex justify-between items-center mb-4">
           <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-text-primary"><Shield :size="20" /> Single Sign-On</h2>
           <div v-if="isAdmin" class="flex gap-2 items-center">
             <button
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white border-none rounded-md text-[0.8125rem] font-semibold cursor-pointer transition-all duration-200 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent text-white border-none rounded-md text-[0.8125rem] font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="add-authentication"
               @click="handleAddSso"
             >
@@ -1191,7 +1203,7 @@ function goBack() {
                 <p class="mt-1 mb-0 text-sm text-text-secondary">Built-in authentication method available for all organizations.</p>
               </div>
               <div class="flex items-center justify-between gap-3 flex-wrap">
-                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">Enabled</span>
+                <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-accent-muted text-accent border border-accent-border">Enabled</span>
               </div>
             </article>
 
@@ -1211,7 +1223,7 @@ function goBack() {
                 <span
                   :class="[
                     'inline-flex px-2 py-0.5 rounded-full text-xs font-medium border',
-                    provider.enabled ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30' : '',
+                    provider.enabled ? 'bg-accent-muted text-accent border-accent-border' : '',
                     provider.configured && !provider.enabled ? 'bg-amber-500/10 text-amber-500 border-amber-500/30' : '',
                     !provider.configured && !provider.enabled ? 'text-text-secondary border-border' : ''
                   ]"
@@ -1257,7 +1269,7 @@ function goBack() {
 
         </div>
 
-        <div v-if="ssoNotice" class="px-3.5 py-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-md text-emerald-500 text-sm mt-3 break-all">{{ ssoNotice }}</div>
+        <div v-if="ssoNotice" class="px-3.5 py-2.5 bg-accent-muted border border-accent-border rounded-md text-accent text-sm mt-3 break-all">{{ ssoNotice }}</div>
       </section>
 
       <!-- Danger Zone -->
@@ -1333,7 +1345,7 @@ function goBack() {
             v-for="provider in selectableSsoProviders"
             :key="provider.key"
             type="button"
-            class="flex justify-between items-center gap-3 w-full border border-border rounded-[10px] bg-surface-overlay text-text-primary px-3.5 py-3 cursor-pointer transition-all duration-200 hover:border-emerald-500 hover:bg-surface-overlay"
+            class="flex justify-between items-center gap-3 w-full border border-border rounded-[10px] bg-surface-overlay text-text-primary px-3.5 py-3 cursor-pointer transition-all duration-200 hover:border-accent-border hover:bg-surface-overlay"
             :data-testid="`sso-provider-option-${provider.key}`"
             @click="chooseSsoProvider(provider.key)"
           >
@@ -1341,7 +1353,7 @@ function goBack() {
             <span
               :class="[
                 'inline-flex px-2 py-0.5 rounded-full text-xs font-medium border',
-                provider.enabled ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30' : '',
+                provider.enabled ? 'bg-accent-muted text-accent border-accent-border' : '',
                 provider.configured && !provider.enabled ? 'bg-amber-500/10 text-amber-500 border-amber-500/30' : '',
                 !provider.configured && !provider.enabled ? 'text-text-secondary border-border' : ''
               ]"
@@ -1359,7 +1371,7 @@ function goBack() {
                 v-model="googleClientId"
                 type="text"
                 data-testid="google-client-id"
-                class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+                class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
                 :disabled="!isAdmin || googleSaving"
               />
             </div>
@@ -1370,7 +1382,7 @@ function goBack() {
                 type="password"
                 data-testid="google-client-secret"
                 placeholder="Enter to update"
-                class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+                class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
                 :disabled="!isAdmin || googleSaving"
               />
             </div>
@@ -1398,7 +1410,7 @@ function goBack() {
                 Back
               </button>
               <button
-                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-accent text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="save-google-sso"
                 :disabled="googleSaving"
                 @click="handleSaveGoogleSSO"
@@ -1415,7 +1427,7 @@ function goBack() {
                 v-model="microsoftTenantId"
                 type="text"
                 data-testid="microsoft-tenant-id"
-                class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+                class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
                 :disabled="!isAdmin || microsoftSaving"
               />
             </div>
@@ -1425,7 +1437,7 @@ function goBack() {
                 v-model="microsoftClientId"
                 type="text"
                 data-testid="microsoft-client-id"
-                class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+                class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
                 :disabled="!isAdmin || microsoftSaving"
               />
             </div>
@@ -1436,7 +1448,7 @@ function goBack() {
                 type="password"
                 data-testid="microsoft-client-secret"
                 placeholder="Enter to update"
-                class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-50"
+                class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-md text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
                 :disabled="!isAdmin || microsoftSaving"
               />
             </div>
@@ -1464,7 +1476,7 @@ function goBack() {
                 Back
               </button>
               <button
-                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-accent text-white border-none rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="save-microsoft-sso"
                 :disabled="microsoftSaving"
                 @click="handleSaveMicrosoftSSO"

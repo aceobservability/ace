@@ -605,7 +605,7 @@ watch(
               placeholder="My Prometheus"
               :disabled="saveLoading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
 
@@ -615,7 +615,7 @@ watch(
               id="ds-type"
               v-model="formType"
               :disabled="saveLoading"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
             >
               <option value="prometheus">Prometheus (PromQL)</option>
               <option value="victoriametrics">VictoriaMetrics (PromQL)</option>
@@ -641,7 +641,7 @@ watch(
             placeholder="http://localhost:9090"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
         </div>
       </section>
@@ -658,7 +658,7 @@ watch(
               placeholder="us-east-1"
               :disabled="saveLoading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
           <div class="mb-4">
@@ -670,7 +670,7 @@ watch(
               placeholder="AWS/ECS"
               :disabled="saveLoading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
         </div>
@@ -684,7 +684,7 @@ watch(
             placeholder="/aws/lambda/my-function"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
         </div>
 
@@ -699,7 +699,7 @@ watch(
                 type="text"
                 :disabled="saveLoading"
                 autocomplete="off"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
             <div class="mb-4">
@@ -710,7 +710,7 @@ watch(
                 type="password"
                 :disabled="saveLoading"
                 autocomplete="new-password"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
           </div>
@@ -723,7 +723,7 @@ watch(
               type="password"
               :disabled="saveLoading"
               autocomplete="new-password"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
         </div>
@@ -740,7 +740,7 @@ watch(
             placeholder="default"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
         </div>
       </section>
@@ -756,7 +756,7 @@ watch(
             placeholder="logs-*"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
         </div>
 
@@ -770,7 +770,7 @@ watch(
               placeholder="@timestamp"
               :disabled="saveLoading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
           <div class="mb-4">
@@ -782,7 +782,7 @@ watch(
               placeholder="message"
               :disabled="saveLoading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
         </div>
@@ -796,7 +796,7 @@ watch(
             placeholder="level"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
         </div>
       </section>
@@ -812,7 +812,7 @@ watch(
             placeholder="trace_id"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
           <p class="text-xs text-slate-400 mt-1 m-0">The log field name that contains distributed trace IDs. Default: trace_id</p>
         </div>
@@ -822,7 +822,7 @@ watch(
             id="ds-linked-trace-ds"
             :value="formLinkedTraceDatasourceId || ''"
             :disabled="saveLoading"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
             @change="formLinkedTraceDatasourceId = ($event.target as HTMLSelectElement).value || null"
           >
             <option value="">None — disable trace linking</option>
@@ -840,7 +840,7 @@ watch(
             id="ds-auth-type"
             v-model="formAuthType"
             :disabled="saveLoading"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
           >
             <option value="none">None</option>
             <option value="basic">Basic auth</option>
@@ -859,7 +859,7 @@ watch(
                 type="text"
                 :disabled="saveLoading"
                 autocomplete="off"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
             <div class="mb-0">
@@ -870,7 +870,7 @@ watch(
                 type="password"
                 :disabled="saveLoading"
                 autocomplete="new-password"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
           </div>
@@ -885,7 +885,7 @@ watch(
               type="password"
               :disabled="saveLoading"
               autocomplete="new-password"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
         </div>
@@ -900,7 +900,7 @@ watch(
                 type="text"
                 :disabled="saveLoading"
                 autocomplete="off"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
             <div class="mb-0">
@@ -911,7 +911,7 @@ watch(
                 type="password"
                 :disabled="saveLoading"
                 autocomplete="new-password"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
           </div>
@@ -934,7 +934,7 @@ watch(
             <HeartPulse v-else :size="16" />
             {{ testLoading ? 'Testing...' : 'Test Connection' }}
           </button>
-          <span v-if="testSuccess && !isTestStale" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 px-3 py-2 text-sm text-emerald-600 dark:text-emerald-400">
+          <span v-if="testSuccess && !isTestStale" class="inline-flex items-center gap-1.5 rounded-lg bg-accent-muted border border-accent-border px-3 py-2 text-sm text-accent">
             <CheckCircle2 :size="16" />
             {{ testSuccess }}
           </span>
@@ -969,7 +969,7 @@ watch(
         </button>
         <button
           type="submit"
-          class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed max-md:w-full"
+          class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed max-md:w-full"
           :disabled="saveLoading"
         >
           <Loader2 v-if="saveLoading" :size="16" class="animate-spin" />

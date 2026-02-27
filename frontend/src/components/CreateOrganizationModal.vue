@@ -167,7 +167,7 @@ async function handleSubmit() {
               placeholder="My Organization"
               :disabled="loading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary placeholder:text-text-muted transition focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary placeholder:text-text-muted transition focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
             />
           </div>
 
@@ -175,7 +175,7 @@ async function handleSubmit() {
             <label for="slug" class="block mb-2 text-sm font-medium text-text-primary">
               URL Slug <span class="text-red-500">*</span>
             </label>
-            <div class="flex items-center rounded-lg border border-border bg-surface-overlay transition focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20">
+            <div class="flex items-center rounded-lg border border-border bg-surface-overlay transition focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
               <span class="py-2 pl-3 text-sm text-text-muted select-none">org/</span>
               <input
                 id="slug"
@@ -209,7 +209,7 @@ async function handleSubmit() {
             </button>
             <button
               type="submit"
-              class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="loading"
             >
               {{ loading ? 'Creating...' : 'Create Organization' }}

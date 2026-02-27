@@ -153,7 +153,7 @@ describe('TimeRangePicker', () => {
     await fromInput.setValue('2026-02-01T10:00')
     await toInput.setValue('2026-02-02T14:00')
 
-    // Click apply (the emerald-colored button)
+    // Click apply (the accent-colored button)
     const applyBtn = wrapper.findAll('button').find((b) => b.text() === 'Apply')!
     await applyBtn.trigger('click')
 
@@ -226,7 +226,7 @@ describe('TimeRangePicker', () => {
 
     const selectedItem = wrapper
       .findAll('button')
-      .find((b) => b.text() === 'Last 5 minutes' && b.classes().includes('bg-emerald-500/10'))
+      .find((b) => b.text() === 'Last 5 minutes' && b.classes().includes('bg-accent-muted'))
     expect(selectedItem).toBeDefined()
     expect(selectedItem?.text()).toBe('Last 5 minutes')
   })

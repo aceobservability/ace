@@ -51,7 +51,7 @@ function toggleSessionRecording(event: Event) {
         </div>
         <button
           class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition"
-          :class="analyticsEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'"
+          :class="analyticsEnabled ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600'"
           :disabled="dntEnabled"
           role="switch"
           :aria-checked="analyticsEnabled"
@@ -72,7 +72,7 @@ function toggleSessionRecording(event: Event) {
         </div>
         <button
           class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition"
-          :class="sessionRecordingEnabled && analyticsEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'"
+          :class="sessionRecordingEnabled && analyticsEnabled ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600'"
           :disabled="!analyticsEnabled"
           role="switch"
           :aria-checked="sessionRecordingEnabled && analyticsEnabled"
@@ -90,7 +90,7 @@ function toggleSessionRecording(event: Event) {
         v-if="dntEnabled || analyticsEnabled || consent === 'pending'"
         class="mt-4 rounded-lg px-4 py-3 text-sm"
         :class="analyticsEnabled
-          ? 'bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400'
+          ? 'bg-accent-muted border border-accent-border text-accent'
           : 'bg-surface-overlay border border-border text-text-secondary'"
       >
         <template v-if="dntEnabled">
@@ -111,7 +111,7 @@ function toggleSessionRecording(event: Event) {
     <!-- Save / back button -->
     <div class="flex items-center gap-3 mt-2">
       <button
-        class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+        class="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover"
         @click="goBack"
       >
         Done

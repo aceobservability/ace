@@ -202,7 +202,7 @@ defineExpose({ focus })
 </script>
 
 <template>
-  <div class="relative rounded-lg border border-border overflow-hidden bg-surface-raised transition-colors duration-200 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20" :class="{ 'opacity-60 pointer-events-none': disabled }">
+  <div class="relative rounded-lg border border-border overflow-hidden bg-surface-raised transition-colors duration-200 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20" :class="{ 'opacity-60 pointer-events-none': disabled }">
     <div
       ref="containerRef"
       class="w-full min-h-[60px]"

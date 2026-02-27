@@ -65,7 +65,7 @@ async function handleSubmit() {
             placeholder="My Dashboard"
             :disabled="loading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
           />
         </div>
 
@@ -77,7 +77,7 @@ async function handleSubmit() {
             placeholder="Dashboard description (optional)"
             rows="3"
             :disabled="loading"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed resize-vertical min-h-[80px]"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed resize-vertical min-h-[80px]"
           ></textarea>
         </div>
 
@@ -87,7 +87,7 @@ async function handleSubmit() {
             id="folder"
             v-model="folderId"
             :disabled="loading"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
           >
             <option value="">Unfiled (Root)</option>
             <option
@@ -106,7 +106,7 @@ async function handleSubmit() {
           <button type="button" class="rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" @click="emit('close')" :disabled="loading">
             Cancel
           </button>
-          <button type="submit" class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" :disabled="loading">
+          <button type="submit" class="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" :disabled="loading">
             {{ loading ? 'Saving...' : 'Save Changes' }}
           </button>
         </div>

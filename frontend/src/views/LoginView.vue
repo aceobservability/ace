@@ -43,7 +43,7 @@ function switchMode() {
     <div class="w-full max-w-md rounded-xl border border-border bg-surface-raised p-8">
       <div class="mb-8 text-center">
         <div class="mb-6 flex flex-col items-center justify-center">
-          <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600 font-mono text-sm font-bold text-white">
+          <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-accent font-mono text-sm font-bold text-white">
             A
           </div>
           <span class="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-text-muted">Ace</span>
@@ -70,7 +70,7 @@ function switchMode() {
               type="text"
               placeholder="Your name (optional)"
               :disabled="loading"
-              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
         </div>
@@ -86,7 +86,7 @@ function switchMode() {
               placeholder="you@example.com"
               required
               :disabled="loading"
-              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
         </div>
@@ -102,7 +102,7 @@ function switchMode() {
               placeholder="Enter your password"
               required
               :disabled="loading"
-              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
           <p v-if="mode === 'register'" class="text-xs text-text-muted mt-1">
@@ -110,7 +110,7 @@ function switchMode() {
           </p>
         </div>
 
-        <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed" :disabled="loading">
+        <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-accent py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed" :disabled="loading">
           <template v-if="loading">
             <span class="animate-spin h-4 w-4 rounded-full border-2 border-white/30 border-t-white"></span>
             {{ mode === 'login' ? 'Signing in...' : 'Creating account...' }}
@@ -126,7 +126,7 @@ function switchMode() {
       <div class="mt-6 text-center">
         <p class="text-sm text-text-muted">
           {{ mode === 'login' ? "Don't have an account?" : 'Already have an account?' }}
-          <button type="button" class="ml-1 text-sm text-emerald-400 hover:text-emerald-300 cursor-pointer bg-transparent border-none p-0 font-medium" @click="switchMode">
+          <button type="button" class="ml-1 text-sm text-accent hover:text-accent cursor-pointer bg-transparent border-none p-0 font-medium" @click="switchMode">
             {{ mode === 'login' ? 'Create one' : 'Sign in' }}
           </button>
         </p>

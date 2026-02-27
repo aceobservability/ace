@@ -20,17 +20,7 @@ import {
   queryDataSource,
   searchDataSourceTraces,
 } from '../api/datasources'
-import alertmanagerLogo from '../assets/datasources/alertmanager-logo.svg'
-import clickhouseLogo from '../assets/datasources/clickhouse-logo.svg'
-import cloudwatchLogo from '../assets/datasources/cloudwatch-logo.svg'
-import elasticsearchLogo from '../assets/datasources/elasticsearch-logo.svg'
-import lokiLogo from '../assets/datasources/loki-logo.svg'
-import prometheusLogo from '../assets/datasources/prometheus-logo.svg'
-import tempoLogo from '../assets/datasources/tempo-logo.svg'
-import victoriaLogsLogo from '../assets/datasources/victorialogs-logo.svg'
-import victoriaMetricsLogo from '../assets/datasources/victoriametrics-logo.svg'
-import victoriaTracesLogo from '../assets/datasources/victoriatraces-logo.svg'
-import vmalertLogo from '../assets/datasources/vmalert-logo.svg'
+import { dataSourceTypeLogos } from '../utils/datasourceLogos'
 import ClickHouseSQLEditor from '../components/ClickHouseSQLEditor.vue'
 import CopilotPanel from '../components/CopilotPanel.vue'
 import TimeRangePicker from '../components/TimeRangePicker.vue'
@@ -82,20 +72,6 @@ const router = useRouter()
 const { timeRange, isCustomRange, onRefresh } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { tracingDatasources, fetchDatasources } = useDatasource()
-
-const dataSourceTypeLogos: Partial<Record<DataSourceType, string>> = {
-  prometheus: prometheusLogo,
-  loki: lokiLogo,
-  victoriametrics: victoriaMetricsLogo,
-  victorialogs: victoriaLogsLogo,
-  tempo: tempoLogo,
-  victoriatraces: victoriaTracesLogo,
-  clickhouse: clickhouseLogo,
-  cloudwatch: cloudwatchLogo,
-  elasticsearch: elasticsearchLogo,
-  vmalert: vmalertLogo,
-  alertmanager: alertmanagerLogo,
-}
 
 type DatasourceHealthStatus = 'unknown' | 'checking' | 'healthy' | 'unhealthy'
 
@@ -795,11 +771,11 @@ onUnmounted(() => {
     <header class="flex items-center justify-between mb-6">
       <div class="flex items-center flex-wrap gap-3">
         <h1 class="text-2xl font-bold text-text-primary m-0">Explore</h1>
-        <span class="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">Tracing</span>
+        <span class="rounded-full border border-accent-border bg-accent-muted px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">Tracing</span>
       </div>
       <button
-        class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-xs font-semibold cursor-pointer transition hover:bg-emerald-500/15 hover:border-emerald-500/30"
-        :class="showCopilot ? 'text-emerald-600 border-emerald-500/30 bg-emerald-500/10' : 'text-text-secondary'"
+        class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-xs font-semibold cursor-pointer transition hover:bg-accent-muted hover:border-accent-border"
+        :class="showCopilot ? 'text-accent border-accent-border bg-accent-muted' : 'text-text-secondary'"
         @click="showCopilot = !showCopilot"
         title="Toggle AI assistant"
       >
@@ -837,7 +813,7 @@ onUnmounted(() => {
                     class="ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs border"
                     :class="{
                       'border-border text-text-muted': activeDatasourceHealth === 'checking' || activeDatasourceHealth === 'unknown',
-                      'border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400': activeDatasourceHealth === 'healthy',
+                      'border-accent-border bg-accent-muted text-accent': activeDatasourceHealth === 'healthy',
                       'border-rose-500/25 bg-rose-500/10 text-rose-500': activeDatasourceHealth === 'unhealthy',
                     }"
                     :title="activeDatasourceHealthError || activeDatasourceHealthLabel"
@@ -862,7 +838,7 @@ onUnmounted(() => {
                   :key="ds.id"
                   type="button"
                   class="flex w-full items-center gap-2.5 border-none bg-transparent px-3 py-2.5 text-left text-text-primary cursor-pointer hover:bg-surface-overlay"
-                  :class="{ 'bg-emerald-500/10': ds.id === selectedDatasourceId }"
+                  :class="{ 'bg-accent-muted': ds.id === selectedDatasourceId }"
                   @click="selectDatasource(ds.id)"
                 >
                   <img
@@ -874,7 +850,7 @@ onUnmounted(() => {
                     <strong class="text-sm font-semibold text-text-primary">{{ ds.name }}</strong>
                     <span class="text-xs text-text-muted">{{ dataSourceTypeLabels[ds.type] }}</span>
                   </div>
-                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="ml-auto text-emerald-600" />
+                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="ml-auto text-accent" />
                 </button>
               </div>
             </div>
@@ -939,7 +915,7 @@ onUnmounted(() => {
         <!-- Search button -->
         <div class="flex items-center gap-4">
           <button
-            class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             :disabled="loadingSearch || !selectedDatasourceId || (isClickHouseDatasource && !query.trim())"
             @click="runSearch"
           >
@@ -1024,11 +1000,11 @@ onUnmounted(() => {
                 :key="summary.traceId"
                 class="flex flex-col gap-1 text-left p-3 rounded-lg border cursor-pointer transition"
                 :class="selectedTraceId === summary.traceId
-                  ? 'border-emerald-500/25 bg-emerald-500/10'
+                  ? 'border-accent-border bg-accent-muted'
                   : 'border-border bg-surface-raised hover:border-border-strong hover:bg-surface-overlay'"
                 @click="loadTrace(summary.traceId)"
               >
-                <code class="text-xs font-mono text-emerald-600 dark:text-emerald-400 break-all">{{ summary.traceId }}</code>
+                <code class="text-xs font-mono text-accent break-all">{{ summary.traceId }}</code>
                 <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-text-muted">
                   <span>{{ summary.rootServiceName || 'unknown service' }}</span>
                   <span>{{ formatDurationNano(summary.durationNano) }}</span>
@@ -1059,7 +1035,7 @@ onUnmounted(() => {
             <div v-else-if="activeTrace" class="flex flex-col gap-3.5 p-4">
               <!-- Trace summary bar -->
               <div class="flex items-center gap-3 flex-wrap rounded-lg border border-border bg-surface-overlay px-3 py-2">
-                <code class="text-xs font-mono text-emerald-600 dark:text-emerald-400">{{ activeTrace.traceId }}</code>
+                <code class="text-xs font-mono text-accent">{{ activeTrace.traceId }}</code>
                 <span class="text-xs text-text-muted">{{ formatDurationNano(activeTrace.durationNano) }}</span>
                 <span class="text-xs text-text-muted">{{ activeTrace.services.length }} services</span>
               </div>

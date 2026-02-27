@@ -26,6 +26,8 @@
   /* Accent (same in both modes) */
   --color-accent:          #10b981;   /* emerald-500 */
   --color-accent-muted:    rgba(16,185,129,0.15);
+  --color-accent-border:   rgba(16,185,129,0.25);
+  --color-accent-hover:    color-mix(in srgb, var(--color-accent) 85%, black);
 
   /* Amber (Ace's primary CTA accent) */
   --color-amber:           #f59e0b;
@@ -74,6 +76,8 @@
   /* Accents unchanged in dark */
   --color-accent:          #10b981;
   --color-accent-muted:    rgba(16,185,129,0.15);
+  --color-accent-border:   rgba(16,185,129,0.25);
+  --color-accent-hover:    color-mix(in srgb, var(--color-accent) 85%, black);
   --color-amber:           #f59e0b;
   --color-amber-muted:     rgba(245,158,11,0.15);
   --color-danger:          #f43f5e;
@@ -113,6 +117,9 @@
   --color-border: var(--color-border);
   --color-border-strong: var(--color-border-strong);
   --color-accent: var(--color-accent);
+  --color-accent-muted: var(--color-accent-muted);
+  --color-accent-border: var(--color-accent-border);
+  --color-accent-hover: var(--color-accent-hover);
 }
 
 /* Base styles */

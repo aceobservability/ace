@@ -39,7 +39,7 @@ function openPrivacySettings() {
     </div>
     <div class="inline-flex items-center gap-2 flex-wrap justify-end max-md:justify-start">
       <button
-        class="text-emerald-600 hover:text-emerald-700 underline text-sm px-4 py-2 rounded-lg transition"
+        class="text-accent hover:text-accent underline text-sm px-4 py-2 rounded-lg transition"
         @click="openPrivacySettings"
       >
         Privacy settings
@@ -51,7 +51,7 @@ function openPrivacySettings() {
         Decline
       </button>
       <button
-        class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+        class="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover"
         @click="acceptAnalytics"
       >
         Allow analytics

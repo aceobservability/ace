@@ -394,7 +394,7 @@ onUnmounted(() => {
           <span>Settings</span>
         </button>
         <button
-          class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+          class="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
           @click="openAddPanel"
           :disabled="loading"
         >
@@ -405,7 +405,7 @@ onUnmounted(() => {
     </header>
 
     <div v-if="loading" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-border bg-surface-raised py-20 text-center text-text-muted">
-      <div class="mb-4 h-10 w-10 animate-spin rounded-full border-3 border-border border-t-emerald-500"></div>
+      <div class="mb-4 h-10 w-10 animate-spin rounded-full border-3 border-border border-t-accent"></div>
       <p>Loading dashboard...</p>
     </div>
 
@@ -426,7 +426,7 @@ onUnmounted(() => {
         <h2 class="mb-2 mt-4 text-text-primary">No panels yet</h2>
         <p class="mb-6">Add your first panel to start visualizing data</p>
         <button
-          class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+          class="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-accent-hover"
           @click="openAddPanel"
         >
           <Plus :size="18" />

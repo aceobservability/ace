@@ -574,7 +574,7 @@ onMounted(async () => {
           :key="section.key"
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2"
           :class="activeSection === section.key
-            ? 'text-emerald-600 border-emerald-600'
+            ? 'text-accent border-accent'
             : 'text-text-muted hover:text-text-primary border-transparent'"
           :data-testid="`settings-section-${section.key}`"
           @click="navigateToSection(section.key)"
@@ -604,7 +604,7 @@ onMounted(async () => {
                 id="dashboard-name"
                 v-model="title"
                 type="text"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 autocomplete="off"
               />
@@ -616,7 +616,7 @@ onMounted(async () => {
                 id="dashboard-description"
                 v-model="description"
                 rows="3"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 placeholder="Optional dashboard description"
               ></textarea>
@@ -627,7 +627,7 @@ onMounted(async () => {
               <select
                 id="dashboard-time-range"
                 v-model="timeRangePreset"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
               >
                 <option v-for="option in TIME_RANGE_OPTIONS" :key="option.value" :value="option.value">
@@ -641,7 +641,7 @@ onMounted(async () => {
               <select
                 id="dashboard-refresh"
                 v-model="refreshInterval"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
               >
                 <option v-for="option in REFRESH_OPTIONS" :key="option.value" :value="option.value">
@@ -656,7 +656,7 @@ onMounted(async () => {
                 id="dashboard-variables"
                 v-model="variablesInput"
                 type="text"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 placeholder="env, cluster, instance"
               />
@@ -675,7 +675,7 @@ onMounted(async () => {
             </button>
             <button
               type="button"
-              class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              class="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="save-dashboard-settings"
               :disabled="!canEdit || isSaving"
               @click="saveGeneralSettings"
@@ -728,7 +728,7 @@ onMounted(async () => {
               v-model="grafanaSource"
               rows="5"
               placeholder="Paste Grafana dashboard JSON"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="grafana-source"
               :disabled="isConvertingGrafana || isYamlSaving"
             ></textarea>
@@ -771,7 +771,7 @@ onMounted(async () => {
             </button>
             <button
               type="button"
-              class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              class="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="save-dashboard-yaml"
               :disabled="!canEdit || isYamlSaving"
               @click="saveYamlSettings"
@@ -814,7 +814,7 @@ onMounted(async () => {
         </p>
         <p
           v-if="successMessage"
-          class="m-0 px-4 py-3 rounded-lg border border-emerald-500/25 bg-emerald-500/10 text-sm text-emerald-600 dark:text-emerald-400"
+          class="m-0 px-4 py-3 rounded-lg border border-accent-border bg-accent-muted text-sm text-accent"
         >
           {{ successMessage }}
         </p>

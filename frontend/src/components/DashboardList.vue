@@ -809,7 +809,7 @@ onMounted(() => {
           <span>New Folder</span>
         </button>
         <button
-          class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer"
+          class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer"
           @click="openCreateModal"
         >
           <Plus :size="18" />
@@ -820,7 +820,7 @@ onMounted(() => {
 
     <!-- Loading state -->
     <div v-if="loading" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-border bg-surface-raised py-16 text-center text-slate-500">
-      <div class="mb-4 h-10 w-10 animate-spin rounded-full border-3 border-slate-300 border-t-emerald-500"></div>
+      <div class="mb-4 h-10 w-10 animate-spin rounded-full border-3 border-slate-300 border-t-accent"></div>
       <p>Loading dashboards...</p>
     </div>
 
@@ -838,7 +838,7 @@ onMounted(() => {
 
     <!-- Empty state -->
     <div v-else-if="isCompletelyEmpty" class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-border bg-surface-raised py-16 text-center text-slate-500">
-      <div class="mb-4 flex h-28 w-28 items-center justify-center rounded-2xl border border-border bg-gradient-to-br from-emerald-50 to-slate-50 text-slate-300">
+      <div class="mb-4 flex h-28 w-28 items-center justify-center rounded-2xl border border-border bg-gradient-to-br from-accent-muted to-slate-50 text-slate-300">
         <LayoutDashboard :size="64" />
       </div>
       <h2 class="mt-4 mb-2 text-lg font-semibold text-text-primary">No dashboards yet</h2>
@@ -854,7 +854,7 @@ onMounted(() => {
           <span>Create Folder</span>
         </button>
         <button
-          class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer"
+          class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer"
           @click="openCreateModal"
         >
           <Plus :size="18" />
@@ -922,7 +922,7 @@ onMounted(() => {
           <div :style="{ paddingLeft: '0px' }">
             <div
               class="flex items-center gap-1 rounded-lg border border-transparent transition"
-              :class="dropTargetSectionId === normalizeSectionId(null) ? 'border-emerald-400 bg-emerald-50' : 'hover:border-border hover:bg-surface-overlay'"
+              :class="dropTargetSectionId === normalizeSectionId(null) ? 'border-accent-border bg-accent-muted' : 'hover:border-border hover:bg-surface-overlay'"
               data-testid="tree-row-root"
               @dragover.prevent="onSectionDragOver(null)"
               @drop.prevent="onSectionDrop(null)"
@@ -930,15 +930,15 @@ onMounted(() => {
               <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center"></span>
               <button
                 class="flex w-full items-center gap-2 rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-sm text-slate-600 transition cursor-pointer"
-                :class="selectedExplorerNode === 'all' ? 'border-emerald-200 bg-emerald-50 font-medium text-emerald-700' : 'hover:bg-surface-overlay hover:text-text-primary'"
+                :class="selectedExplorerNode === 'all' ? 'border-accent-border bg-accent-muted font-medium text-accent' : 'hover:bg-surface-overlay hover:text-text-primary'"
                 data-testid="tree-node-all"
                 @click="selectExplorerAll"
               >
-                <LayoutDashboard :size="15" :class="selectedExplorerNode === 'all' ? 'text-emerald-600' : 'text-slate-400'" />
+                <LayoutDashboard :size="15" :class="selectedExplorerNode === 'all' ? 'text-accent' : 'text-slate-400'" />
                 <span>All Dashboards</span>
                 <span
                   class="ml-auto inline-flex h-6 min-w-6 items-center justify-center rounded-full border text-xs font-mono"
-                  :class="selectedExplorerNode === 'all' ? 'border-emerald-200 bg-emerald-100 text-emerald-700' : 'border-border bg-surface-overlay text-slate-500'"
+                  :class="selectedExplorerNode === 'all' ? 'border-accent-border bg-accent-muted text-accent' : 'border-border bg-surface-overlay text-slate-500'"
                 >
                   {{ dashboards.length }}
                 </span>
@@ -950,7 +950,7 @@ onMounted(() => {
           <div v-for="row in explorerTreeRows" :key="row.folder.id" :style="{ paddingLeft: `${row.depth * 14}px` }">
             <div
               class="flex items-center gap-1 rounded-lg border border-transparent transition"
-              :class="dropTargetSectionId === normalizeSectionId(row.folder.id) ? 'border-emerald-400 bg-emerald-50' : 'hover:border-border hover:bg-surface-overlay'"
+              :class="dropTargetSectionId === normalizeSectionId(row.folder.id) ? 'border-accent-border bg-accent-muted' : 'hover:border-border hover:bg-surface-overlay'"
               :data-testid="`tree-row-${row.folder.id}`"
               @dragover.prevent="onSectionDragOver(row.folder.id)"
               @drop.prevent="onSectionDrop(row.folder.id)"
@@ -968,15 +968,15 @@ onMounted(() => {
 
               <button
                 class="flex w-full items-center gap-2 rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-sm text-slate-600 transition cursor-pointer"
-                :class="selectedExplorerNode === `folder:${row.folder.id}` ? 'border-emerald-200 bg-emerald-50 font-medium text-emerald-700' : 'hover:bg-surface-overlay hover:text-text-primary'"
+                :class="selectedExplorerNode === `folder:${row.folder.id}` ? 'border-accent-border bg-accent-muted font-medium text-accent' : 'hover:bg-surface-overlay hover:text-text-primary'"
                 :data-testid="`tree-node-${row.folder.id}`"
                 @click="onTreeFolderClick(row.folder.id, row.hasChildren)"
               >
-                <FolderIcon :size="14" :class="selectedExplorerNode === `folder:${row.folder.id}` ? 'text-emerald-600' : 'text-slate-400'" />
+                <FolderIcon :size="14" :class="selectedExplorerNode === `folder:${row.folder.id}` ? 'text-accent' : 'text-slate-400'" />
                 <span>{{ row.folder.name }}</span>
                 <span
                   class="ml-auto inline-flex h-6 min-w-6 items-center justify-center rounded-full border text-xs font-mono"
-                  :class="selectedExplorerNode === `folder:${row.folder.id}` ? 'border-emerald-200 bg-emerald-100 text-emerald-700' : 'border-border bg-surface-overlay text-slate-500'"
+                  :class="selectedExplorerNode === `folder:${row.folder.id}` ? 'border-accent-border bg-accent-muted text-accent' : 'border-border bg-surface-overlay text-slate-500'"
                 >
                   {{ folderDashboardCountMap.get(row.folder.id) ?? 0 }}
                 </span>
@@ -1000,7 +1000,7 @@ onMounted(() => {
                 <button
                   class="flex w-full items-center gap-2 rounded-lg border border-transparent bg-transparent px-2 py-1 text-xs text-slate-400 transition cursor-pointer"
                   :class="[
-                    selectedTreeDashboardId === dashboard.id ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'hover:border-border hover:text-slate-700',
+                    selectedTreeDashboardId === dashboard.id ? 'border-accent-border bg-accent-muted text-accent' : 'hover:border-border hover:text-slate-700',
                     canManageDashboards ? '[&[draggable=true]]:cursor-grab [&[draggable=true]]:active:cursor-grabbing' : '',
                   ]"
                   :data-testid="`tree-dashboard-${dashboard.id}`"
@@ -1032,7 +1032,7 @@ onMounted(() => {
               <button
                 class="flex w-full items-center gap-2 rounded-lg border border-transparent bg-transparent px-2 py-1 text-xs text-slate-400 transition cursor-pointer"
                 :class="[
-                  selectedTreeDashboardId === dashboard.id ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'hover:border-border hover:text-slate-700',
+                  selectedTreeDashboardId === dashboard.id ? 'border-accent-border bg-accent-muted text-accent' : 'hover:border-border hover:text-slate-700',
                   canManageDashboards ? '[&[draggable=true]]:cursor-grab [&[draggable=true]]:active:cursor-grabbing' : '',
                 ]"
                 :data-testid="`tree-dashboard-${dashboard.id}`"
@@ -1061,7 +1061,7 @@ onMounted(() => {
                 placeholder="Operations"
                 :disabled="creatingFolder"
                 autocomplete="off"
-                class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition"
+                class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
             <p v-if="folderError" class="mt-1.5 text-sm text-rose-600">{{ folderError }}</p>
@@ -1076,7 +1076,7 @@ onMounted(() => {
               </button>
               <button
                 type="submit"
-                class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer"
+                class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer"
                 :disabled="creatingFolder"
               >
                 {{ creatingFolder ? 'Creating...' : 'Create' }}
@@ -1103,7 +1103,7 @@ onMounted(() => {
         </div>
 
         <!-- Messages -->
-        <p v-if="folderPermissionsMessage" class="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">
+        <p v-if="folderPermissionsMessage" class="mb-3 rounded-lg border border-accent-border bg-accent-muted px-3.5 py-2.5 text-sm text-accent">
           {{ folderPermissionsMessage }}
         </p>
         <p v-if="moveError" class="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-600">
@@ -1123,7 +1123,7 @@ onMounted(() => {
               v-for="child in selectedFolderChildren"
               :key="child.id"
               type="button"
-              class="inline-flex items-center gap-2 rounded-full border border-border bg-surface-raised px-3 py-1.5 text-xs text-slate-600 transition cursor-pointer hover:border-emerald-300 hover:text-text-primary"
+              class="inline-flex items-center gap-2 rounded-full border border-border bg-surface-raised px-3 py-1.5 text-xs text-slate-600 transition cursor-pointer hover:border-accent-border hover:text-text-primary"
               @click="selectExplorerFolder(child.id)"
             >
               <FolderIcon :size="14" />
@@ -1158,7 +1158,7 @@ onMounted(() => {
           <section
             v-if="rootDashboardsForMain.length > 0"
             class="rounded-xl border border-border bg-surface-overlay p-4 transition"
-            :class="{ 'ring-2 ring-emerald-500/50': dropTargetSectionId === normalizeSectionId(null) }"
+            :class="{ 'ring-2 ring-accent/50': dropTargetSectionId === normalizeSectionId(null) }"
             data-testid="folder-section-root"
             @dragover.prevent="onSectionDragOver(null)"
             @drop.prevent="onSectionDrop(null)"
@@ -1208,7 +1208,7 @@ onMounted(() => {
             v-for="section in filteredSections"
             :key="section.id"
             class="rounded-xl border border-border bg-surface-overlay p-4 transition"
-            :class="{ 'ring-2 ring-emerald-500/50': dropTargetSectionId === normalizeSectionId(section.id) }"
+            :class="{ 'ring-2 ring-accent/50': dropTargetSectionId === normalizeSectionId(section.id) }"
             :data-testid="`folder-section-${section.id}`"
             @dragover.prevent="onSectionDragOver(section.id)"
             @drop.prevent="onSectionDrop(section.id)"

@@ -99,13 +99,13 @@ const previewData = computed(() => {
         placeholder="up"
         rows="3"
         :disabled="disabled || loading"
-        class="w-full rounded-lg border border-border bg-surface-raised px-4 py-3 font-mono text-sm text-text-primary resize-y min-h-[80px] transition-colors duration-200 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed"
+        class="w-full rounded-lg border border-border bg-surface-raised px-4 py-3 font-mono text-sm text-text-primary resize-y min-h-[80px] transition-colors duration-200 placeholder:text-slate-400 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-slate-400 disabled:cursor-not-allowed"
         @keydown.ctrl.enter="runQuery"
       ></textarea>
       <div class="flex items-center gap-4">
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 border border-emerald-600 rounded-lg text-white text-sm font-medium cursor-pointer transition-all duration-200 hover:enabled:bg-emerald-700 hover:enabled:border-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-accent border border-accent rounded-lg text-white text-sm font-medium cursor-pointer transition-all duration-200 hover:enabled:bg-accent-hover hover:enabled:border-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="disabled || loading || !query.trim()"
           @click="runQuery"
         >

@@ -13,9 +13,13 @@ export function useOrgBranding() {
       const g = parseInt(hex.slice(3, 5), 16)
       const b = parseInt(hex.slice(5, 7), 16)
       root.style.setProperty('--color-accent-muted', `rgba(${r},${g},${b},0.15)`)
+      root.style.setProperty('--color-accent-border', `rgba(${r},${g},${b},0.25)`)
+      root.style.setProperty('--color-accent-hover', `color-mix(in srgb, ${hex} 85%, black)`)
     } else {
       root.style.removeProperty('--color-accent')
       root.style.removeProperty('--color-accent-muted')
+      root.style.removeProperty('--color-accent-border')
+      root.style.removeProperty('--color-accent-hover')
     }
   }
 

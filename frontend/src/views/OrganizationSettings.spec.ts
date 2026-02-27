@@ -29,6 +29,8 @@ const mockGetGoogleSSOConfig = vi.hoisted(() => vi.fn())
 const mockUpdateGoogleSSOConfig = vi.hoisted(() => vi.fn())
 const mockGetMicrosoftSSOConfig = vi.hoisted(() => vi.fn())
 const mockUpdateMicrosoftSSOConfig = vi.hoisted(() => vi.fn())
+const mockGetGitHubAppConfig = vi.hoisted(() => vi.fn())
+const mockConfigureGitHubApp = vi.hoisted(() => vi.fn())
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({ params: mockRouteParams }),
@@ -66,6 +68,8 @@ vi.mock('../api/sso', () => ({
   updateGoogleSSOConfig: mockUpdateGoogleSSOConfig,
   getMicrosoftSSOConfig: mockGetMicrosoftSSOConfig,
   updateMicrosoftSSOConfig: mockUpdateMicrosoftSSOConfig,
+  getGitHubAppConfig: mockGetGitHubAppConfig,
+  configureGitHubApp: mockConfigureGitHubApp,
 }))
 
 const baseOrg = {
@@ -163,6 +167,12 @@ describe('OrganizationSettings', () => {
       enabled: true,
       created_at: '2026-02-08T00:00:00Z',
       updated_at: '2026-02-08T00:00:00Z',
+    })
+
+    mockGetGitHubAppConfig.mockRejectedValue(new Error('GitHub Copilot not configured'))
+    mockConfigureGitHubApp.mockResolvedValue({
+      client_id: 'gh-client-id',
+      enabled: true,
     })
 
     vi.stubGlobal(
@@ -271,15 +281,17 @@ describe('OrganizationSettings', () => {
     expect(errorWrapper.text()).toContain('Failed to fetch groups')
   })
 
-  it('navigates between settings sections with active sidebar state', async () => {
+  it('navigates between settings sections with active tab state', async () => {
     const wrapper = mount(OrganizationSettings)
     await flushPromises()
 
     const generalLink = wrapper.get('[data-testid="settings-section-general"]')
     const membersLink = wrapper.get('[data-testid="settings-section-members"]')
     const groupsLink = wrapper.get('[data-testid="settings-section-groups"]')
+    const brandingLink = wrapper.get('[data-testid="settings-section-branding"]')
+    const aiLink = wrapper.get('[data-testid="settings-section-ai"]')
 
-    expect(generalLink.classes()).toContain('bg-emerald-500/15')
+    expect(generalLink.classes()).toContain('border-b-accent')
     expect(wrapper.text()).toContain('Single Sign-On')
 
     await membersLink.trigger('click')
@@ -287,6 +299,21 @@ describe('OrganizationSettings', () => {
 
     await groupsLink.trigger('click')
     expect(mockPush).toHaveBeenCalledWith('/app/settings/org/org-1/groups')
+
+    await brandingLink.trigger('click')
+    expect(mockPush).toHaveBeenCalledWith('/app/settings/org/org-1/branding')
+
+    await aiLink.trigger('click')
+    expect(mockPush).toHaveBeenCalledWith('/app/settings/org/org-1/ai')
+  })
+
+  it('renders AI section with GitHub App settings', async () => {
+    mockRouteParams.section = 'ai'
+
+    const wrapper = mount(OrganizationSettings)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('GitHub Copilot Integration')
   })
 
   it('redirects invalid sections to general', async () => {

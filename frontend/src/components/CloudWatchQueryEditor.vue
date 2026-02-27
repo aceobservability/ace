@@ -54,7 +54,7 @@ function handleQueryInput(event: Event) {
         id="cloudwatch-signal"
         :value="props.signal"
         :disabled="props.disabled"
-        class="w-full rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+        class="w-full rounded-lg border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer transition-colors duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
         @change="handleSignalChange"
       >
         <option value="metrics">Metrics</option>
@@ -71,7 +71,7 @@ function handleQueryInput(event: Event) {
         :placeholder="placeholder"
         rows="7"
         spellcheck="false"
-        class="w-full rounded-lg border border-border bg-surface-raised px-3.5 py-3 text-sm font-mono text-text-primary min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+        class="w-full rounded-lg border border-border bg-surface-raised px-3.5 py-3 text-sm font-mono text-text-primary min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
         @input="handleQueryInput"
       />
     </div>

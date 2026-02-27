@@ -184,11 +184,11 @@ onMounted(loadData)
       <div v-else class="px-6 py-4 flex flex-col gap-3">
         <div class="flex items-center gap-3 rounded-lg border border-border bg-surface-overlay p-3">
           <div class="grid grid-cols-[130px_minmax(0,1fr)_120px] max-md:grid-cols-1 gap-2 flex-1 mb-0">
-            <select v-model="newPrincipalType" data-testid="principal-type-select" :disabled="saving" class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
+            <select v-model="newPrincipalType" data-testid="principal-type-select" :disabled="saving" class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-accent">
               <option value="user">User</option>
               <option value="group">Group</option>
             </select>
-            <select v-model="newPrincipalId" data-testid="principal-select" :disabled="saving || principalOptions.length === 0" class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
+            <select v-model="newPrincipalId" data-testid="principal-select" :disabled="saving || principalOptions.length === 0" class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-accent">
               <option value="">Select {{ newPrincipalType }}</option>
               <option
                 v-for="option in principalOptions"
@@ -198,13 +198,13 @@ onMounted(loadData)
                 {{ option.label }}
               </option>
             </select>
-            <select v-model="newPermission" data-testid="permission-select" :disabled="saving" class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
+            <select v-model="newPermission" data-testid="permission-select" :disabled="saving" class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-accent">
               <option value="view">View</option>
               <option value="edit">Edit</option>
               <option value="admin">Admin</option>
             </select>
           </div>
-          <button class="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transition" data-testid="add-permission-entry" @click="addEntry" :disabled="saving">
+          <button class="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transition" data-testid="add-permission-entry" @click="addEntry" :disabled="saving">
             Add Entry
           </button>
         </div>
@@ -225,7 +225,7 @@ onMounted(loadData)
           >
             <div class="flex flex-col min-w-0">
               <strong class="text-sm text-text-primary truncate">{{ principalLabel(entry) }}</strong>
-              <span class="mt-1 w-fit px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs uppercase tracking-wide">{{ entry.principal_type }}</span>
+              <span class="mt-1 w-fit px-2 py-0.5 rounded-full bg-accent-muted text-accent text-xs uppercase tracking-wide">{{ entry.principal_type }}</span>
             </div>
             <div class="flex items-center gap-2 max-md:flex-col max-md:w-full max-md:items-start">
               <select
@@ -233,7 +233,7 @@ onMounted(loadData)
                 :data-testid="`entry-permission-${index}`"
                 :disabled="saving"
                 @change="updateEntryPermission(index, ($event.target as HTMLSelectElement).value as ResourcePermissionLevel)"
-                class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-emerald-500 max-md:w-full"
+                class="rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-accent max-md:w-full"
               >
                 <option value="view">View</option>
                 <option value="edit">Edit</option>
@@ -252,11 +252,11 @@ onMounted(loadData)
         </div>
 
         <div v-if="actionError" class="px-3 py-2 border border-rose-200 rounded-lg bg-rose-50 text-sm text-rose-600">{{ actionError }}</div>
-        <div v-if="successMessage" class="px-3 py-2 border border-emerald-200 rounded-lg bg-emerald-50 text-sm text-emerald-600">{{ successMessage }}</div>
+        <div v-if="successMessage" class="px-3 py-2 border border-accent-border rounded-lg bg-accent-muted text-sm text-accent">{{ successMessage }}</div>
 
         <div class="flex justify-end gap-3 border-t border-slate-100 pt-4">
           <button class="inline-flex items-center justify-center gap-1 rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm font-medium text-slate-700 hover:bg-surface-overlay cursor-pointer transition disabled:opacity-60 disabled:cursor-not-allowed" @click="closeModal" :disabled="saving">Close</button>
-          <button class="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 cursor-pointer transition disabled:opacity-60 disabled:cursor-not-allowed" data-testid="save-folder-permissions" @click="savePermissions" :disabled="saving">
+          <button class="inline-flex items-center justify-center gap-1 rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white hover:bg-accent-hover cursor-pointer transition disabled:opacity-60 disabled:cursor-not-allowed" data-testid="save-folder-permissions" @click="savePermissions" :disabled="saving">
             {{ saving ? 'Saving...' : 'Save Permissions' }}
           </button>
         </div>

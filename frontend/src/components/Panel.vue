@@ -533,14 +533,14 @@ function handleOpenTrace(traceId: string) {
         <BarChart3 :size="48" class="text-text-muted" />
         <p class="text-sm text-text-muted m-0">No query configured</p>
         <button
-          class="px-4 py-2 bg-emerald-600 text-white border-0 rounded-lg text-sm font-medium cursor-pointer hover:-translate-y-px transition"
+          class="px-4 py-2 bg-accent text-white border-0 rounded-lg text-sm font-medium cursor-pointer hover:-translate-y-px transition"
           @click="$emit('edit', panel)"
         >
           Configure Panel
         </button>
       </div>
       <div v-else-if="loading" class="flex-1 flex flex-col items-center justify-center gap-3">
-        <div class="h-8 w-8 rounded-full border-[3px] border-border border-t-emerald-600 animate-spin"></div>
+        <div class="h-8 w-8 rounded-full border-[3px] border-border border-t-accent animate-spin"></div>
         <p class="text-sm text-text-muted m-0">Loading data...</p>
       </div>
       <div v-else-if="error" class="flex-1 flex flex-col items-center justify-center gap-3">

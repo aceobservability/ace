@@ -343,13 +343,13 @@ async function handleSubmit() {
               placeholder="Panel title"
               :disabled="loading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
             />
           </div>
 
           <div class="mb-5 min-w-[160px]">
             <label for="type" class="block mb-2 text-sm font-medium text-text-primary">Panel Type</label>
-            <select id="type" v-model="panelType" :disabled="loading" class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed">
+            <select id="type" v-model="panelType" :disabled="loading" class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed">
               <option value="line_chart">Line Chart</option>
               <option value="bar_chart">Bar Chart</option>
               <option value="pie">Pie Chart</option>
@@ -365,7 +365,7 @@ async function handleSubmit() {
 
         <div v-if="datasources.length > 0" class="mb-5">
           <label for="datasource" class="block mb-2 text-sm font-medium text-text-primary">Data Source</label>
-          <select id="datasource" v-model="selectedDatasourceId" :disabled="loading" class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed">
+          <select id="datasource" v-model="selectedDatasourceId" :disabled="loading" class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed">
             <option v-if="!isTracePanelType" value="">Default (Prometheus)</option>
             <option v-else value="">Select tracing datasource</option>
             <option v-for="ds in availableDatasources" :key="ds.id" :value="ds.id">
@@ -425,7 +425,7 @@ async function handleSubmit() {
                 type="text"
                 placeholder="api-service"
                 :disabled="loading"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
             <div class="mb-3">
@@ -437,7 +437,7 @@ async function handleSubmit() {
                 min="1"
                 max="200"
                 :disabled="loading"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -455,7 +455,7 @@ async function handleSubmit() {
                 v-model.number="gaugeMin"
                 type="number"
                 :disabled="loading"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
             <div class="mb-3">
@@ -465,7 +465,7 @@ async function handleSubmit() {
                 v-model.number="gaugeMax"
                 type="number"
                 :disabled="loading"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
             <div class="mb-3">
@@ -476,7 +476,7 @@ async function handleSubmit() {
                 type="text"
                 placeholder="%"
                 :disabled="loading"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
             <div class="mb-3">
@@ -488,7 +488,7 @@ async function handleSubmit() {
                 min="0"
                 max="10"
                 :disabled="loading"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -508,7 +508,7 @@ async function handleSubmit() {
                   type="number"
                   placeholder="Value"
                   :disabled="loading"
-                  class="flex-1 rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+                  class="flex-1 rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
                 />
                 <input
                   v-model="threshold.color"
@@ -540,7 +540,7 @@ async function handleSubmit() {
           <div class="grid grid-cols-3 gap-3">
             <div class="mb-3">
               <label for="pie-display" class="block mb-2 text-sm font-medium text-text-primary">Display Style</label>
-              <select id="pie-display" v-model="pieDisplayAs" :disabled="loading" class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed">
+              <select id="pie-display" v-model="pieDisplayAs" :disabled="loading" class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition cursor-pointer appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-10 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed">
                 <option value="pie">Pie</option>
                 <option value="donut">Donut</option>
               </select>
@@ -553,7 +553,7 @@ async function handleSubmit() {
                   v-model="pieShowLegend"
                   type="checkbox"
                   :disabled="loading"
-                  class="h-4 w-4 rounded border-border-strong text-emerald-600 focus:ring-emerald-500/20"
+                  class="h-4 w-4 rounded border-border-strong text-accent focus:ring-accent/20"
                 />
                 <label for="pie-legend" class="text-sm text-text-primary">Display legend</label>
               </div>
@@ -566,7 +566,7 @@ async function handleSubmit() {
                   v-model="pieShowLabels"
                   type="checkbox"
                   :disabled="loading"
-                  class="h-4 w-4 rounded border-border-strong text-emerald-600 focus:ring-emerald-500/20"
+                  class="h-4 w-4 rounded border-border-strong text-accent focus:ring-accent/20"
                 />
                 <label for="pie-labels" class="text-sm text-text-primary">Display value labels</label>
               </div>
@@ -587,7 +587,7 @@ async function handleSubmit() {
                 type="text"
                 placeholder="%"
                 :disabled="loading"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
             <div class="mb-3">
@@ -599,7 +599,7 @@ async function handleSubmit() {
                 min="0"
                 max="10"
                 :disabled="loading"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -611,7 +611,7 @@ async function handleSubmit() {
                   type="checkbox"
                   v-model="statShowTrend"
                   :disabled="loading"
-                  class="h-4 w-4 rounded border-border-strong text-emerald-600 focus:ring-emerald-500/20"
+                  class="h-4 w-4 rounded border-border-strong text-accent focus:ring-accent/20"
                 />
                 Show Trend Indicator
               </label>
@@ -622,7 +622,7 @@ async function handleSubmit() {
                   type="checkbox"
                   v-model="statShowSparkline"
                   :disabled="loading"
-                  class="h-4 w-4 rounded border-border-strong text-emerald-600 focus:ring-emerald-500/20"
+                  class="h-4 w-4 rounded border-border-strong text-accent focus:ring-accent/20"
                 />
                 Show Sparkline
               </label>
@@ -644,7 +644,7 @@ async function handleSubmit() {
                   type="number"
                   placeholder="Value"
                   :disabled="loading"
-                  class="flex-1 rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+                  class="flex-1 rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
                 />
                 <input
                   v-model="threshold.color"
@@ -675,7 +675,7 @@ async function handleSubmit() {
           <button type="button" class="rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="emit('close')" :disabled="loading">
             Cancel
           </button>
-          <button type="submit" class="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" :disabled="loading">
+          <button type="submit" class="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" :disabled="loading">
             {{ loading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Add Panel') }}
           </button>
         </div>
