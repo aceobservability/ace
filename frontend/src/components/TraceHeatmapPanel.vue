@@ -166,7 +166,7 @@ function openTrace(traceId: string) {
 </script>
 
 <template>
-  <div class="flex h-full flex-col gap-2.5 rounded-xl border border-border bg-surface-raised p-4">
+  <div class="flex h-full flex-col gap-2.5 rounded border border-border bg-surface-raised p-4">
     <div class="grid min-h-[150px] grid-cols-[auto_1fr] gap-2">
       <div class="grid grid-rows-[repeat(8,1fr)] gap-[3px]">
         <span v-for="row in heatmapRows" :key="row.label" class="flex items-center justify-end whitespace-nowrap text-[0.65rem] text-text-muted">{{ row.label }}</span>
@@ -192,7 +192,7 @@ function openTrace(traceId: string) {
       <h4 class="m-0 mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Recent traces</h4>
       <ul class="m-0 grid list-none grid-cols-2 gap-x-2.5 gap-y-1.5 p-0">
         <li v-for="trace in recentTraces" :key="trace.traceId">
-          <button type="button" class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border-none bg-accent-muted px-2.5 py-1.5 transition hover:bg-accent-muted" @click="openTrace(trace.traceId)">
+          <button type="button" class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-sm border-none bg-accent-muted px-2.5 py-1.5 transition hover:bg-accent-muted" @click="openTrace(trace.traceId)">
             <span class="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-text-primary">{{ trace.traceId }}</span>
             <span class="text-xs text-text-muted">{{ formatDuration(trace.durationNano) }}</span>
           </button>

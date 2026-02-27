@@ -80,32 +80,32 @@ function sortIndicator(field: TraceSortField): string {
 </script>
 
 <template>
-  <div class="h-full overflow-auto rounded-xl border border-border bg-surface-raised">
+  <div class="h-full overflow-auto rounded border border-border bg-surface-raised">
     <table class="w-full border-collapse text-sm">
       <thead class="sticky top-0 z-10 bg-surface-overlay">
         <tr>
           <th class="border-b border-border px-4 py-3 text-left align-middle">
-            <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-slate-500 transition hover:text-slate-900" @click="toggleSort('traceId')">
+            <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-text-muted transition hover:text-text-primary" @click="toggleSort('traceId')">
               Trace {{ sortIndicator('traceId') }}
             </button>
           </th>
           <th class="border-b border-border px-4 py-3 text-left align-middle">
-            <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-slate-500 transition hover:text-slate-900" @click="toggleSort('startTimeUnixNano')">
+            <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-text-muted transition hover:text-text-primary" @click="toggleSort('startTimeUnixNano')">
               Start {{ sortIndicator('startTimeUnixNano') }}
             </button>
           </th>
           <th class="border-b border-border px-4 py-3 text-left align-middle">
-            <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-slate-500 transition hover:text-slate-900" @click="toggleSort('durationNano')">
+            <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-text-muted transition hover:text-text-primary" @click="toggleSort('durationNano')">
               Duration {{ sortIndicator('durationNano') }}
             </button>
           </th>
           <th class="border-b border-border px-4 py-3 text-left align-middle">
-            <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-slate-500 transition hover:text-slate-900" @click="toggleSort('spanCount')">
+            <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-text-muted transition hover:text-text-primary" @click="toggleSort('spanCount')">
               Spans {{ sortIndicator('spanCount') }}
             </button>
           </th>
           <th class="border-b border-border px-4 py-3 text-left align-middle">
-            <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-slate-500 transition hover:text-slate-900" @click="toggleSort('errorSpanCount')">
+            <button type="button" class="cursor-pointer border-none bg-transparent p-0 text-xs font-semibold text-text-muted transition hover:text-text-primary" @click="toggleSort('errorSpanCount')">
               Errors {{ sortIndicator('errorSpanCount') }}
             </button>
           </th>
@@ -113,16 +113,16 @@ function sortIndicator(field: TraceSortField): string {
       </thead>
       <tbody>
         <tr v-for="trace in sortedTraces" :key="trace.traceId" class="transition hover:bg-surface-overlay">
-          <td class="max-w-[220px] border-b border-slate-100 px-4 py-3 align-middle">
+          <td class="max-w-[220px] border-b border-border px-4 py-3 align-middle">
             <button type="button" class="inline-block w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap border-none bg-transparent p-0 text-left font-mono text-xs text-accent transition hover:text-accent hover:underline" @click="openTrace(trace.traceId)">
               {{ trace.traceId }}
             </button>
           </td>
-          <td class="border-b border-slate-100 px-4 py-3 align-middle text-sm text-slate-600">{{ formatStart(trace.startTimeUnixNano) }}</td>
-          <td class="border-b border-slate-100 px-4 py-3 align-middle font-mono text-xs text-slate-500">{{ formatDuration(trace.durationNano) }}</td>
-          <td class="border-b border-slate-100 px-4 py-3 align-middle text-sm text-slate-600">{{ trace.spanCount }}</td>
-          <td class="border-b border-slate-100 px-4 py-3 align-middle">
-            <span :class="trace.errorSpanCount > 0 ? 'font-semibold text-rose-600' : 'text-slate-600'">
+          <td class="border-b border-border px-4 py-3 align-middle text-sm text-text-secondary">{{ formatStart(trace.startTimeUnixNano) }}</td>
+          <td class="border-b border-border px-4 py-3 align-middle font-mono text-xs text-text-muted">{{ formatDuration(trace.durationNano) }}</td>
+          <td class="border-b border-border px-4 py-3 align-middle text-sm text-text-secondary">{{ trace.spanCount }}</td>
+          <td class="border-b border-border px-4 py-3 align-middle">
+            <span :class="trace.errorSpanCount > 0 ? 'font-semibold text-rose-600' : 'text-text-secondary'">
               {{ trace.errorSpanCount }}
             </span>
           </td>

@@ -326,14 +326,14 @@ function rowBgFill(rowIndex: number): string {
 <template>
   <div class="flex flex-col gap-3">
     <div class="flex flex-wrap gap-3">
-      <label class="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-xs text-slate-500 max-sm:w-full max-sm:justify-between">
+      <label class="inline-flex items-center gap-2 rounded-sm border border-border bg-surface-overlay px-3 py-2 text-xs text-text-muted max-sm:w-full max-sm:justify-between">
         <span>Zoom</span>
         <input v-model.number="zoomPercent" type="range" min="100" max="400" step="25" class="w-36 max-sm:w-30" />
         <strong class="min-w-[3.1rem] text-right text-xs font-semibold text-text-primary">{{ zoomPercent }}%</strong>
       </label>
 
       <label
-        class="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-overlay px-3 py-2 text-xs text-slate-500 max-sm:w-full max-sm:justify-between"
+        class="inline-flex items-center gap-2 rounded-sm border border-border bg-surface-overlay px-3 py-2 text-xs text-text-muted max-sm:w-full max-sm:justify-between"
         :class="{ 'opacity-60': maxPanDuration === 0 }"
       >
         <span>Pan</span>
@@ -353,18 +353,18 @@ function rowBgFill(rowIndex: number): string {
       <span
         v-for="(color, serviceName) in serviceColorMap"
         :key="serviceName"
-        class="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-overlay px-2.5 py-1 text-xs text-slate-500"
+        class="inline-flex items-center gap-1.5 rounded-sm border border-border bg-surface-overlay px-2.5 py-1 text-xs text-text-muted"
       >
         <i class="inline-block h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: color }"></i>
         {{ serviceName }}
       </span>
-      <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs text-amber-700">
+      <span class="inline-flex items-center gap-1.5 rounded-sm border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs text-amber-700">
         <i class="inline-block h-2.5 w-2.5 rounded-full bg-amber-500"></i>
         Critical path
       </span>
     </div>
 
-    <div class="overflow-x-auto rounded-xl border border-border bg-surface-raised">
+    <div class="overflow-x-auto rounded border border-border bg-surface-raised">
       <svg v-if="visibleRows.length > 0" :width="svgWidth" :height="svgHeight" class="block" role="img" aria-label="Trace timeline waterfall">
         <g>
           <line
@@ -443,7 +443,7 @@ function rowBgFill(rowIndex: number): string {
         </g>
       </svg>
 
-      <div v-else class="p-4 text-sm text-slate-500">
+      <div v-else class="p-4 text-sm text-text-muted">
         No spans visible in the current zoom window.
       </div>
     </div>

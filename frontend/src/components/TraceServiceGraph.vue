@@ -235,21 +235,21 @@ function handleSelectEdge(edge: PositionedEdge) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2.5 rounded-xl border border-border bg-surface-raised p-4">
+  <div class="flex flex-col gap-2.5 rounded border border-border bg-surface-raised p-4">
     <div class="flex flex-wrap gap-2.5">
-      <label class="inline-flex items-center gap-2 rounded-full border border-border bg-surface-overlay px-3 py-1 text-xs text-slate-500 max-sm:w-full max-sm:justify-between">
+      <label class="inline-flex items-center gap-2 rounded-sm border border-border bg-surface-overlay px-3 py-1 text-xs text-text-muted max-sm:w-full max-sm:justify-between">
         <span>Zoom</span>
         <input v-model.number="zoomPercent" type="range" min="80" max="180" step="5" class="w-28 max-sm:w-30" />
         <strong class="min-w-[2.4rem] text-right text-xs font-semibold text-text-primary">{{ zoomPercent }}%</strong>
       </label>
 
-      <label class="inline-flex items-center gap-2 rounded-full border border-border bg-surface-overlay px-3 py-1 text-xs text-slate-500 max-sm:w-full max-sm:justify-between">
+      <label class="inline-flex items-center gap-2 rounded-sm border border-border bg-surface-overlay px-3 py-1 text-xs text-text-muted max-sm:w-full max-sm:justify-between">
         <span>Pan X</span>
         <input v-model.number="panX" type="range" min="-220" max="220" step="10" class="w-28 max-sm:w-30" />
         <strong class="min-w-[2.4rem] text-right text-xs font-semibold text-text-primary">{{ panX }}</strong>
       </label>
 
-      <label class="inline-flex items-center gap-2 rounded-full border border-border bg-surface-overlay px-3 py-1 text-xs text-slate-500 max-sm:w-full max-sm:justify-between">
+      <label class="inline-flex items-center gap-2 rounded-sm border border-border bg-surface-overlay px-3 py-1 text-xs text-text-muted max-sm:w-full max-sm:justify-between">
         <span>Pan Y</span>
         <input v-model.number="panY" type="range" min="-140" max="140" step="10" class="w-28 max-sm:w-30" />
         <strong class="min-w-[2.4rem] text-right text-xs font-semibold text-text-primary">{{ panY }}</strong>
@@ -257,13 +257,13 @@ function handleSelectEdge(edge: PositionedEdge) {
     </div>
 
     <div class="flex flex-wrap gap-2">
-      <span class="rounded-full border border-border bg-surface-overlay px-2.5 py-1 text-xs text-slate-500">{{ graph.nodes.length }} services</span>
-      <span class="rounded-full border border-border bg-surface-overlay px-2.5 py-1 text-xs text-slate-500">{{ graph.edges.length }} dependencies</span>
-      <span class="rounded-full border border-border bg-surface-overlay px-2.5 py-1 text-xs text-slate-500">{{ graph.totalRequests }} spans</span>
-      <span class="rounded-full border border-border bg-surface-overlay px-2.5 py-1 text-xs text-slate-500">{{ graph.totalErrorCount }} errors</span>
+      <span class="rounded-sm border border-border bg-surface-overlay px-2.5 py-1 text-xs text-text-muted">{{ graph.nodes.length }} services</span>
+      <span class="rounded-sm border border-border bg-surface-overlay px-2.5 py-1 text-xs text-text-muted">{{ graph.edges.length }} dependencies</span>
+      <span class="rounded-sm border border-border bg-surface-overlay px-2.5 py-1 text-xs text-text-muted">{{ graph.totalRequests }} spans</span>
+      <span class="rounded-sm border border-border bg-surface-overlay px-2.5 py-1 text-xs text-text-muted">{{ graph.totalErrorCount }} errors</span>
     </div>
 
-    <div class="overflow-auto rounded-lg border border-border bg-surface-overlay">
+    <div class="overflow-auto rounded-sm border border-border bg-surface-overlay">
       <svg
         :width="graphWidth"
         :height="graphHeight"
@@ -315,14 +315,14 @@ function handleSelectEdge(edge: PositionedEdge) {
               }"
               class="transition-[stroke]"
             />
-            <text :x="node.x" :y="node.y - 2" class="pointer-events-none fill-slate-900 text-[11px] font-bold" text-anchor="middle">{{ node.serviceName }}</text>
-            <text :x="node.x" :y="node.y + 11" class="pointer-events-none fill-slate-500 text-[9px]" text-anchor="middle">{{ node.requestCount }} req</text>
+            <text :x="node.x" :y="node.y - 2" class="pointer-events-none fill-text-primary text-[11px] font-bold" text-anchor="middle">{{ node.serviceName }}</text>
+            <text :x="node.x" :y="node.y + 11" class="pointer-events-none fill-text-muted text-[9px]" text-anchor="middle">{{ node.requestCount }} req</text>
           </g>
         </g>
       </svg>
     </div>
 
-    <div class="border-t border-border pt-2 text-xs text-slate-500">
+    <div class="border-t border-border pt-2 text-xs text-text-muted">
       <p v-if="selectedService" class="m-0 flex flex-wrap gap-1.5">
         <strong class="text-text-primary">{{ selectedService }}</strong>
         <span>
