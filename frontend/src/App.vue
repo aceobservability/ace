@@ -56,10 +56,10 @@ watch(
 </script>
 
 <template>
-  <div class="relative flex min-h-screen w-full" :class="{ 'block': !showSidebar }">
+  <div class="relative flex min-h-screen w-full overflow-x-hidden" :class="{ 'block': !showSidebar }">
     <Sidebar v-if="showSidebar" ref="sidebarRef" />
     <main
-      class="min-h-screen flex-1 bg-surface-base transition-[margin-left] duration-200"
+      class="min-h-screen min-w-0 flex-1 bg-surface-base transition-[margin-left] duration-200"
       :style="mainMargin"
     >
       <RouterView />

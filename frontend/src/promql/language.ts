@@ -327,6 +327,56 @@ export function registerPromQLLanguage(monaco: typeof Monaco) {
   })
 }
 
+// Define light theme colors for PromQL - matches app light design tokens
+export function definePromQLLightTheme(monaco: typeof Monaco) {
+  monaco.editor.defineTheme('promql-light', {
+    base: 'vs',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '6b7280', fontStyle: 'italic' },
+      { token: 'string', foreground: 'b45309' },
+      { token: 'string.escape', foreground: 'b45309' },
+      { token: 'string.invalid', foreground: 'e11d48' },
+      { token: 'number', foreground: '0369a1' },
+      { token: 'number.duration', foreground: '0369a1', fontStyle: 'bold' },
+      { token: 'operator', foreground: '334155' },
+      { token: 'keyword', foreground: '0284c7', fontStyle: 'bold' },
+      { token: 'function', foreground: '059669' },
+      { token: 'identifier', foreground: '2563eb' },
+      { token: 'label', foreground: '0891b2' },
+    ],
+    colors: {
+      'editor.background': '#f9fafb',
+      'editor.foreground': '#1e293b',
+      'editor.lineHighlightBackground': '#f1f5f9',
+      'editor.lineHighlightBorder': '#e2e8f0',
+      'editorCursor.foreground': '#059669',
+      'editor.selectionBackground': '#dbeafe',
+      'editor.selectionHighlightBackground': '#e0f2fe',
+      'editorLineNumber.foreground': '#94a3b8',
+      'editorLineNumber.activeForeground': '#64748b',
+      'editorGutter.background': '#f9fafb',
+      'editorWidget.background': '#ffffff',
+      'editorWidget.border': '#e2e8f0',
+      'editorSuggestWidget.background': '#ffffff',
+      'editorSuggestWidget.border': '#e2e8f0',
+      'editorSuggestWidget.selectedBackground': '#f1f5f9',
+      'editorSuggestWidget.highlightForeground': '#059669',
+      'editorSuggestWidget.focusHighlightForeground': '#059669',
+      'editorHoverWidget.background': '#ffffff',
+      'editorHoverWidget.border': '#e2e8f0',
+      'scrollbarSlider.background': '#cbd5e1',
+      'scrollbarSlider.hoverBackground': '#94a3b8',
+      'scrollbarSlider.activeBackground': '#64748b',
+      'input.background': '#ffffff',
+      'input.border': '#e2e8f0',
+      'input.foreground': '#1e293b',
+      'inputOption.activeBorder': '#059669',
+      focusBorder: '#059669',
+    },
+  })
+}
+
 // Define dark theme colors for PromQL - matches app design system
 export function definePromQLTheme(monaco: typeof Monaco) {
   monaco.editor.defineTheme('promql-dark', {

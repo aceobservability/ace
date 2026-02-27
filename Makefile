@@ -1,30 +1,25 @@
-.PHONY: help backend seed-admin seed-datasources seed-dashboards frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down
+.PHONY: help backend seed seed-correlated frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs telemetrygen
 
 EMAIL ?= admin@admin.com
 PASSWORD ?= Admin1234
-ORG ?= default
+PROFILES ?=
+LOKI_URL ?= http://localhost:3100
+TEMPO_URL ?= http://localhost:3200
+COUNT ?= 20
+COMPOSE_FILE := deploy/docker/docker-compose.yml
 
-SEED_NAME :=
-SEED_SLUG :=
-
-ifneq ($(filter command line,$(origin NAME)),)
-SEED_NAME := $(NAME)
-endif
-
-ifneq ($(filter command line,$(origin SLUG)),)
-SEED_SLUG := $(SLUG)
-endif
+comma := ,
 
 help:
 	@printf "Available targets:\n"
 	@printf "  make backend   Start Go backend (hot reload with air if installed)\n"
 	@printf "  make backend-lint Run backend lint checks with golangci-lint\n"
-	@printf "  make seed-admin [EMAIL=...] [PASSWORD=...] [ORG=...] [NAME=...] [SLUG=...]\n"
-	@printf "                 Defaults: EMAIL=admin@admin.com PASSWORD=Admin1234 ORG=default\n"
-	@printf "  make seed-datasources [ORG=...]\n"
-	@printf "                 Seeds default connectors into existing ORG (default=default)\n"
-	@printf "  make seed-dashboards [ORG=...]\n"
-	@printf "                 Seeds default dashboards for each datasource in ORG (default=default)\n"
+	@printf "  make seed [EMAIL=...] [PASSWORD=...]\n"
+	@printf "                 Seed 4 orgs with stack datasources. Defaults: EMAIL=admin@admin.com PASSWORD=Admin1234\n"
+	@printf "  make compose-up [PROFILES=...]  Start Docker Compose infra (core + profiles)\n"
+	@printf "  make compose-down              Tear down all Docker Compose services\n"
+	@printf "  make compose-logs              Follow Docker Compose logs\n"
+	@printf "  make telemetrygen PROFILES=... Start OTLP telemetry generators for a profile\n"
 	@printf "  make tilt-up   Start Tilt with local Helm infra + app services\n"
 	@printf "  make tilt-down Stop Tilt and tear down deployed resources\n"
 	@printf "  make frontend  Start Vite frontend dev server\n"
@@ -74,7 +69,7 @@ backend:
 		cd backend && go run ./cmd/api; \
 	fi
 
-seed-admin:
+seed:
 	@set -e; \
 	GO_BIN=""; \
 	if [ -x "$$HOME/.go-sdk/go1.25.7/bin/go" ]; then \
@@ -84,20 +79,12 @@ seed-admin:
 	fi; \
 	if [ -z "$$GO_BIN" ]; then \
 		printf "Go is not installed.\n"; \
-		printf "Install Go 1.25+ and retry make seed-admin.\n"; \
+		printf "Install Go 1.25+ and retry make seed.\n"; \
 		exit 1; \
 	fi; \
-	if [ -n "$(SEED_NAME)" ] && [ -n "$(SEED_SLUG)" ]; then \
-		cd backend && "$$GO_BIN" run ./cmd/seed-admin -email "$(EMAIL)" -password "$(PASSWORD)" -org "$(ORG)" -name "$(SEED_NAME)" -slug "$(SEED_SLUG)"; \
-	elif [ -n "$(SEED_NAME)" ]; then \
-		cd backend && "$$GO_BIN" run ./cmd/seed-admin -email "$(EMAIL)" -password "$(PASSWORD)" -org "$(ORG)" -name "$(SEED_NAME)"; \
-	elif [ -n "$(SEED_SLUG)" ]; then \
-		cd backend && "$$GO_BIN" run ./cmd/seed-admin -email "$(EMAIL)" -password "$(PASSWORD)" -org "$(ORG)" -slug "$(SEED_SLUG)"; \
-	else \
-		cd backend && "$$GO_BIN" run ./cmd/seed-admin -email "$(EMAIL)" -password "$(PASSWORD)" -org "$(ORG)"; \
-	fi
+	cd backend && "$$GO_BIN" run ./cmd/seed -email "$(EMAIL)" -password "$(PASSWORD)"
 
-seed-datasources:
+seed-correlated:
 	@set -e; \
 	GO_BIN=""; \
 	if [ -x "$$HOME/.go-sdk/go1.25.7/bin/go" ]; then \
@@ -107,25 +94,10 @@ seed-datasources:
 	fi; \
 	if [ -z "$$GO_BIN" ]; then \
 		printf "Go is not installed.\n"; \
-		printf "Install Go 1.25+ and retry make seed-datasources.\n"; \
+		printf "Install Go 1.25+ and retry make seed-correlated.\n"; \
 		exit 1; \
 	fi; \
-	cd backend && "$$GO_BIN" run ./cmd/seed-datasources -org "$(ORG)"
-
-seed-dashboards:
-	@set -e; \
-	GO_BIN=""; \
-	if [ -x "$$HOME/.go-sdk/go1.25.7/bin/go" ]; then \
-		GO_BIN="$$HOME/.go-sdk/go1.25.7/bin/go"; \
-	elif command -v go >/dev/null 2>&1; then \
-		GO_BIN="$$(command -v go)"; \
-	fi; \
-	if [ -z "$$GO_BIN" ]; then \
-		printf "Go is not installed.\n"; \
-		printf "Install Go 1.25+ and retry make seed-dashboards.\n"; \
-		exit 1; \
-	fi; \
-	cd backend && "$$GO_BIN" run ./cmd/seed-dashboards -org "$(ORG)"
+	cd backend && "$$GO_BIN" run ./cmd/seed-correlated --loki-url $(LOKI_URL) --tempo-url $(TEMPO_URL) --count $(COUNT)
 
 tilt-up:
 	@tilt up
@@ -169,6 +141,21 @@ security-local:
 	docker run --rm -v "$$PWD:/repo" -w /repo/backend golang:1.25.7 /bin/sh -c 'go run golang.org/x/vuln/cmd/govulncheck@latest ./...'; \
 	printf "Running gitleaks (repo)...\n"; \
 	docker run --rm -v "$$PWD:/repo" -w /repo ghcr.io/gitleaks/gitleaks:latest detect --source . --redact --no-banner
+
+compose-up:
+	docker compose -f $(COMPOSE_FILE) $(if $(PROFILES),$(foreach p,$(subst $(comma), ,$(PROFILES)),--profile $(p)),) up -d
+
+compose-down:
+	docker compose -f $(COMPOSE_FILE) --profile victoria --profile lgtm --profile elk --profile clickhouse --profile gen-victoria --profile gen-lgtm --profile gen-elk --profile gen-clickhouse down
+
+compose-reset:
+	docker compose -f $(COMPOSE_FILE) --profile victoria --profile lgtm --profile elk --profile clickhouse --profile gen-victoria --profile gen-lgtm --profile gen-elk --profile gen-clickhouse down -v
+
+compose-logs:
+	docker compose -f $(COMPOSE_FILE) logs -f
+
+telemetrygen:
+	docker compose -f $(COMPOSE_FILE) $(if $(PROFILES),$(foreach p,$(subst $(comma), ,$(PROFILES)),--profile $(p) --profile gen-$(p)),$(error PROFILES required, e.g. make telemetrygen PROFILES=victoria)) up -d
 
 check:
 	@set +e; \

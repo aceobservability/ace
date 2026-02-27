@@ -8,9 +8,10 @@ import {
   registerLogQueryLanguages,
   setLogQLIndexedLabels,
 } from '../logquery/language'
+import { useTheme } from '../composables/useTheme'
 import { registerCompletionProvider } from '../promql/completionProvider'
 import { registerHoverProvider } from '../promql/hoverProvider'
-import { definePromQLTheme, PROMQL_LANGUAGE_ID, registerPromQLLanguage } from '../promql/language'
+import { definePromQLLightTheme, definePromQLTheme, PROMQL_LANGUAGE_ID, registerPromQLLanguage } from '../promql/language'
 
 type QueryLanguage = 'promql' | 'logql' | 'logsql'
 
@@ -28,6 +29,7 @@ function initializeMonaco() {
 
   registerPromQLLanguage(monaco)
   definePromQLTheme(monaco)
+  definePromQLLightTheme(monaco)
   registerCompletionProvider(monaco)
   registerHoverProvider(monaco)
   registerLogQueryLanguages(monaco)
@@ -55,6 +57,8 @@ const emit = defineEmits<{
   submit: []
 }>()
 
+const { isDark } = useTheme()
+
 const containerRef = ref<HTMLElement | null>(null)
 const editorInstance = shallowRef<monaco.editor.IStandaloneCodeEditor | null>(null)
 const isFocused = ref(false)
@@ -71,7 +75,7 @@ onMounted(() => {
   const editor = monaco.editor.create(containerRef.value, {
     value: props.modelValue,
     language: getMonacoLanguageId(props.language),
-    theme: 'promql-dark',
+    theme: isDark.value ? 'promql-dark' : 'promql-light',
     minimap: { enabled: false },
     lineNumbers: 'on',
     wordWrap: 'on',
@@ -183,6 +187,10 @@ watch(
     }
   },
 )
+
+watch(isDark, (dark) => {
+  monaco.editor.setTheme(dark ? 'promql-dark' : 'promql-light')
+})
 
 watch(
   () => props.indexedLabels,

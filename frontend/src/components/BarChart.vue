@@ -11,6 +11,7 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import VChart from 'vue-echarts'
+import { useTheme } from '../composables/useTheme'
 
 // Register ECharts components
 use([
@@ -51,6 +52,13 @@ const props = withDefaults(
 )
 
 const chartRef = ref<typeof VChart | null>(null)
+const { isDark } = useTheme()
+
+const gridColor = computed(() => isDark.value ? '#1a1a30' : '#e2e8f0')
+const labelColor = computed(() => isDark.value ? '#8b8fa2' : '#64748b')
+const textColor = computed(() => isDark.value ? '#eaeaf0' : '#334155')
+const tooltipBg = computed(() => isDark.value ? '#0f0f1a' : '#fff')
+const tooltipBorder = computed(() => isDark.value ? '#1a1a30' : '#e2e8f0')
 
 // Colors for the chart bars
 const barColors = [
@@ -117,7 +125,7 @@ const chartOption = computed<EChartsOption>(() => {
           text: props.title,
           left: 'center',
           textStyle: {
-            color: '#334155',
+            color: textColor.value,
             fontSize: 13,
             fontWeight: 500,
           },
@@ -125,24 +133,24 @@ const chartOption = computed<EChartsOption>(() => {
       : undefined,
     tooltip: {
       trigger: 'axis',
-      backgroundColor: '#fff',
-      borderColor: '#e2e8f0',
+      backgroundColor: tooltipBg.value,
+      borderColor: tooltipBorder.value,
       borderWidth: 1,
       textStyle: {
-        color: '#334155',
+        color: textColor.value,
         fontSize: 12,
       },
       formatter: (params: TooltipParam[]) => {
         if (!Array.isArray(params) || params.length === 0) return ''
         const timestamp = params[0].data[0]
         const timeStr = formatFullDateTime(timestamp / 1000)
-        let result = `<div style="font-weight: 500; margin-bottom: 6px; color: #64748b; font-size: 11px;">${timeStr}</div>`
+        let result = `<div style="font-weight: 500; margin-bottom: 6px; color: ${labelColor.value}; font-size: 11px;">${timeStr}</div>`
         for (const param of params) {
           const value = typeof param.data[1] === 'number' ? param.data[1].toFixed(4) : param.data[1]
           result += `<div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
             <span style="display: inline-block; width: 8px; height: 8px; background: ${param.color}; border-radius: 2px;"></span>
-            <span style="color: #64748b; font-size: 12px;">${param.seriesName}:</span>
-            <span style="font-weight: 600; color: #334155;">${value}</span>
+            <span style="color: ${labelColor.value}; font-size: 12px;">${param.seriesName}:</span>
+            <span style="font-weight: 600; color: ${textColor.value};">${value}</span>
           </div>`
         }
         return result
@@ -152,7 +160,7 @@ const chartOption = computed<EChartsOption>(() => {
       show: props.series.length > 1,
       bottom: 0,
       textStyle: {
-        color: '#64748b',
+        color: labelColor.value,
         fontSize: 11,
       },
       itemWidth: 16,
@@ -170,14 +178,14 @@ const chartOption = computed<EChartsOption>(() => {
       axisLine: {
         show: true,
         lineStyle: {
-          color: '#e2e8f0',
+          color: gridColor.value,
         },
       },
       axisTick: {
         show: false,
       },
       axisLabel: {
-        color: '#64748b',
+        color: labelColor.value,
         fontSize: 10,
         hideOverlap: true,
         formatter: (value: number) => formatTime(value / 1000),
@@ -185,7 +193,7 @@ const chartOption = computed<EChartsOption>(() => {
       splitLine: {
         show: true,
         lineStyle: {
-          color: '#e2e8f0',
+          color: gridColor.value,
           type: 'solid',
         },
       },
@@ -195,20 +203,20 @@ const chartOption = computed<EChartsOption>(() => {
       axisLine: {
         show: true,
         lineStyle: {
-          color: '#e2e8f0',
+          color: gridColor.value,
         },
       },
       axisTick: {
         show: false,
       },
       axisLabel: {
-        color: '#64748b',
+        color: labelColor.value,
         fontSize: 10,
       },
       splitLine: {
         show: true,
         lineStyle: {
-          color: '#e2e8f0',
+          color: gridColor.value,
           type: 'solid',
         },
       },

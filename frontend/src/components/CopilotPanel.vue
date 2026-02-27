@@ -56,6 +56,7 @@ const inputText = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
 const modelSelectorRef = ref<HTMLElement | null>(null)
 const renderedHtml = ref<Record<number, string>>({})
+const messageToolCalls = ref<Record<number, Array<{ name: string; status: 'running' | 'complete' | 'error' }>>>({})
 
 const panelWidth = ref(320)
 const isResizing = ref(false)
@@ -136,6 +137,10 @@ function scrollToBottom() {
   })
 }
 
+function toolLabel(name: string): string {
+  return name.replace(/_/g, ' ')
+}
+
 watch(messages, scrollToBottom, { deep: true })
 
 watch([isConnected, hasCopilot], ([connected, copilot], [prevConnected, prevCopilot]) => {
@@ -202,23 +207,26 @@ async function handleSend() {
       })
 
       for (const toolCall of result.toolCalls) {
+        const tcEntry = { name: toolCall.function.name, status: 'running' as const }
+        const existing = messageToolCalls.value[assistantIndex] || []
+        messageToolCalls.value = { ...messageToolCalls.value, [assistantIndex]: [...existing, tcEntry] }
+
         let toolResult: string
         try {
           toolResult = await executeTool(toolCall)
+          tcEntry.status = 'complete'
         } catch (e) {
+          tcEntry.status = 'error'
           toolResult = `Error: ${e instanceof Error ? e.message : 'Tool execution failed'}`
         }
+        messageToolCalls.value = { ...messageToolCalls.value }
+
         chatHistory.push({
           role: 'tool',
           tool_call_id: toolCall.id,
           content: toolResult,
         })
       }
-
-      const toolNames = result.toolCalls.map((tc) => tc.function.name).join(', ')
-      assistantMsg.content += assistantMsg.content
-        ? `\n\nUsing tools: ${toolNames}...`
-        : `Using tools: ${toolNames}...`
     }
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to send message'
@@ -238,6 +246,7 @@ function handleKeydown(e: KeyboardEvent) {
 function clearChat() {
   messages.value = []
   renderedHtml.value = {}
+  messageToolCalls.value = {}
 }
 
 watch(
@@ -420,9 +429,16 @@ onBeforeUnmount(() => {
 
           <!-- Assistant message -->
           <div v-else class="self-start max-w-[95%]">
-            <div class="copilot-prose prose prose-sm max-w-none rounded bg-surface-overlay px-3 py-2 text-sm text-text-primary">
+            <div v-if="msg.content" class="copilot-prose prose prose-sm max-w-none rounded bg-surface-overlay px-3 py-2 text-sm text-text-primary">
               <div v-if="renderedHtml[index]" v-html="renderedHtml[index]" />
               <span v-else>{{ msg.content }}</span>
+            </div>
+            <!-- Tool call indicators -->
+            <div v-if="messageToolCalls[index]?.length" class="flex flex-wrap gap-1.5" :class="{ 'mt-1.5': msg.content }">
+              <div v-for="(tc, ti) in messageToolCalls[index]" :key="ti" class="tool-chip">
+                <span class="tool-chip-dot" :class="`tool-chip-dot--${tc.status}`" />
+                <span>{{ toolLabel(tc.name) }}</span>
+              </div>
             </div>
           </div>
         </div>
