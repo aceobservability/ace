@@ -40,10 +40,10 @@ function switchMode() {
 
 <template>
   <div class="flex min-h-screen items-center justify-center bg-surface-base px-4">
-    <div class="w-full max-w-md rounded-xl border border-border bg-surface-raised p-8">
+    <div class="w-full max-w-md rounded border border-border bg-surface-raised p-8">
       <div class="mb-8 text-center">
         <div class="mb-6 flex flex-col items-center justify-center">
-          <div class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-accent font-mono text-sm font-bold text-white">
+          <div class="inline-flex h-10 w-10 items-center justify-center rounded-sm bg-accent font-mono text-sm font-bold text-white">
             A
           </div>
           <span class="mt-2 font-mono text-xs uppercase tracking-[0.16em] text-text-muted">Ace</span>
@@ -55,7 +55,7 @@ function switchMode() {
       </div>
 
       <form class="flex flex-col gap-5" @submit.prevent="handleSubmit">
-        <div v-if="error" class="flex items-center gap-2 rounded-lg bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-400">
+        <div v-if="error" class="flex items-center gap-2 rounded-sm bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-400">
           <AlertCircle :size="16" class="shrink-0" />
           <span>{{ error }}</span>
         </div>
@@ -70,7 +70,7 @@ function switchMode() {
               type="text"
               placeholder="Your name (optional)"
               :disabled="loading"
-              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-sm border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
         </div>
@@ -86,7 +86,7 @@ function switchMode() {
               placeholder="you@example.com"
               required
               :disabled="loading"
-              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-sm border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
         </div>
@@ -102,7 +102,7 @@ function switchMode() {
               placeholder="Enter your password"
               required
               :disabled="loading"
-              class="w-full rounded-lg border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-sm border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
           <p v-if="mode === 'register'" class="text-xs text-text-muted mt-1">
@@ -110,9 +110,9 @@ function switchMode() {
           </p>
         </div>
 
-        <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-accent py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed" :disabled="loading">
+        <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-sm bg-accent py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed" :disabled="loading">
           <template v-if="loading">
-            <span class="animate-spin h-4 w-4 rounded-full border-2 border-white/30 border-t-white"></span>
+            <span class="animate-spin h-4 w-4 rounded-sm border-2 border-white/30 border-t-white"></span>
             {{ mode === 'login' ? 'Signing in...' : 'Creating account...' }}
           </template>
           <template v-else>
