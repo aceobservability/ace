@@ -586,13 +586,13 @@ onMounted(async () => {
       <div class="flex flex-col gap-4">
         <p
           v-if="!canEdit && activeSection !== 'permissions'"
-          class="m-0 px-4 py-3 rounded-lg border border-amber-200 bg-amber-50 text-sm text-amber-800"
+          class="m-0 px-4 py-3 rounded-sm border border-amber-200 bg-amber-50 text-sm text-amber-800"
         >
           You have view-only access. Settings are visible, but only editors and admins can save changes.
         </p>
 
         <!-- General tab -->
-        <section v-if="activeSection === 'general'" class="rounded-xl border border-border bg-surface-raised p-6">
+        <section v-if="activeSection === 'general'" class="rounded border border-border bg-surface-raised p-6">
           <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-text-primary mb-4">
             <Settings :size="18" /> General
           </h2>
@@ -604,7 +604,7 @@ onMounted(async () => {
                 id="dashboard-name"
                 v-model="title"
                 type="text"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 autocomplete="off"
               />
@@ -616,7 +616,7 @@ onMounted(async () => {
                 id="dashboard-description"
                 v-model="description"
                 rows="3"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 placeholder="Optional dashboard description"
               ></textarea>
@@ -627,7 +627,7 @@ onMounted(async () => {
               <select
                 id="dashboard-time-range"
                 v-model="timeRangePreset"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
               >
                 <option v-for="option in TIME_RANGE_OPTIONS" :key="option.value" :value="option.value">
@@ -641,7 +641,7 @@ onMounted(async () => {
               <select
                 id="dashboard-refresh"
                 v-model="refreshInterval"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
               >
                 <option v-for="option in REFRESH_OPTIONS" :key="option.value" :value="option.value">
@@ -656,7 +656,7 @@ onMounted(async () => {
                 id="dashboard-variables"
                 v-model="variablesInput"
                 type="text"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
                 placeholder="env, cluster, instance"
               />
@@ -666,7 +666,7 @@ onMounted(async () => {
           <div class="flex justify-between items-center gap-3 mt-6">
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong"
+              class="inline-flex items-center gap-1.5 rounded-sm border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong"
               :disabled="isExporting"
               @click="exportSettings"
             >
@@ -675,7 +675,7 @@ onMounted(async () => {
             </button>
             <button
               type="button"
-              class="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed"
+              class="rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="save-dashboard-settings"
               :disabled="!canEdit || isSaving"
               @click="saveGeneralSettings"
@@ -686,12 +686,12 @@ onMounted(async () => {
         </section>
 
         <!-- YAML tab -->
-        <section v-else-if="activeSection === 'yaml'" class="rounded-xl border border-border bg-surface-raised p-6">
+        <section v-else-if="activeSection === 'yaml'" class="rounded border border-border bg-surface-raised p-6">
           <div class="flex items-center justify-between gap-3 mb-2">
             <h2 class="m-0 text-base font-semibold text-text-primary">Dashboard YAML</h2>
             <button
               type="button"
-              class="rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong"
+              class="rounded-sm border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong"
               :disabled="isConvertingGrafana || isYamlSaving"
               data-testid="grafana-replace-toggle"
               @click="showGrafanaReplace = !showGrafanaReplace"
@@ -706,7 +706,7 @@ onMounted(async () => {
 
           <p v-if="isYamlLoading" class="m-0 text-sm text-text-muted">Loading current dashboard YAML...</p>
 
-          <div v-else class="rounded-xl border border-border overflow-hidden mb-4">
+          <div v-else class="rounded border border-border overflow-hidden mb-4">
             <textarea
               v-model="yamlContent"
               class="w-full min-h-[320px] px-3 py-2.5 text-xs leading-relaxed font-mono bg-surface-raised text-text-primary border-none focus:outline-none resize-y"
@@ -719,7 +719,7 @@ onMounted(async () => {
 
           <div
             v-if="showGrafanaReplace"
-            class="rounded-lg border border-border bg-surface-overlay p-4 grid gap-3 mb-4"
+            class="rounded-sm border border-border bg-surface-overlay p-4 grid gap-3 mb-4"
             data-testid="grafana-replace-panel"
           >
             <label for="grafana-replace-source" class="text-sm font-medium text-text-secondary">Grafana JSON</label>
@@ -728,13 +728,13 @@ onMounted(async () => {
               v-model="grafanaSource"
               rows="5"
               placeholder="Paste Grafana dashboard JSON"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
+              class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="grafana-source"
               :disabled="isConvertingGrafana || isYamlSaving"
             ></textarea>
             <button
               type="button"
-              class="rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong justify-self-start"
+              class="rounded-sm border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong justify-self-start"
               :disabled="!grafanaSource.trim() || isConvertingGrafana || isYamlSaving"
               data-testid="grafana-replace-convert"
               @click="replaceWithGrafana"
@@ -752,7 +752,7 @@ onMounted(async () => {
 
           <div
             v-if="yamlDiffPreview.length"
-            class="rounded-lg border border-border bg-surface-overlay p-4 mb-4"
+            class="rounded-sm border border-border bg-surface-overlay p-4 mb-4"
             data-testid="yaml-diff-preview"
           >
             <h4 class="m-0 mb-2 text-xs font-mono uppercase tracking-[0.07em] text-text-muted">Diff preview</h4>
@@ -762,7 +762,7 @@ onMounted(async () => {
           <div class="flex justify-between items-center gap-3">
             <button
               type="button"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong"
+              class="inline-flex items-center gap-1.5 rounded-sm border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong"
               :disabled="isExporting"
               @click="exportSettings"
             >
@@ -771,7 +771,7 @@ onMounted(async () => {
             </button>
             <button
               type="button"
-              class="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed"
+              class="rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="save-dashboard-yaml"
               :disabled="!canEdit || isYamlSaving"
               @click="saveYamlSettings"
@@ -782,7 +782,7 @@ onMounted(async () => {
         </section>
 
         <!-- Permissions tab -->
-        <section v-else class="rounded-xl border border-border bg-surface-raised p-6" data-testid="permissions-settings-panel">
+        <section v-else class="rounded border border-border bg-surface-raised p-6" data-testid="permissions-settings-panel">
           <h2 class="m-0 text-base font-semibold text-text-primary mb-2">Permissions</h2>
           <p class="m-0 text-sm text-text-muted mb-4">Manage who can view, edit, or administer this dashboard.</p>
           <DashboardPermissionsEditor
@@ -793,7 +793,7 @@ onMounted(async () => {
           />
           <p
             v-else
-            class="py-3 px-4 border border-dashed border-border rounded-lg text-sm text-text-muted"
+            class="py-3 px-4 border border-dashed border-border rounded-sm text-sm text-text-muted"
           >
             Permissions are unavailable until organization context is loaded.
           </p>
@@ -801,20 +801,20 @@ onMounted(async () => {
 
         <p
           v-if="actionError"
-          class="m-0 px-4 py-3 rounded-lg border border-rose-500/25 bg-rose-500/10 text-sm text-rose-500"
+          class="m-0 px-4 py-3 rounded-sm border border-rose-500/25 bg-rose-500/10 text-sm text-rose-500"
         >
           {{ actionError }}
         </p>
         <p
           v-if="yamlValidationError"
-          class="m-0 px-4 py-3 rounded-lg border border-rose-500/25 bg-rose-500/10 text-sm text-rose-500"
+          class="m-0 px-4 py-3 rounded-sm border border-rose-500/25 bg-rose-500/10 text-sm text-rose-500"
           data-testid="yaml-validation-error"
         >
           {{ yamlValidationError }}
         </p>
         <p
           v-if="successMessage"
-          class="m-0 px-4 py-3 rounded-lg border border-accent-border bg-accent-muted text-sm text-accent"
+          class="m-0 px-4 py-3 rounded-sm border border-accent-border bg-accent-muted text-sm text-accent"
         >
           {{ successMessage }}
         </p>
