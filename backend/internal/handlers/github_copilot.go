@@ -101,7 +101,9 @@ type copilotChatRequest struct {
 	DatasourceType string        `json:"datasource_type"`
 	DatasourceName string        `json:"datasource_name"`
 	Model          string        `json:"model,omitempty"`
-	Messages       []chatMessage `json:"messages"`
+	Messages       []interface{} `json:"messages"`
+	Tools          []interface{} `json:"tools,omitempty"`
+	Stream         *bool         `json:"stream,omitempty"`
 }
 
 type chatMessage struct {
@@ -691,8 +693,8 @@ func (h *GitHubCopilotHandler) Chat(w http.ResponseWriter, r *http.Request) {
 		systemPrompt = prompt
 	}
 
-	messages := make([]chatMessage, 0, len(req.Messages)+1)
-	messages = append(messages, chatMessage{Role: "system", Content: systemPrompt})
+	messages := make([]interface{}, 0, len(req.Messages)+1)
+	messages = append(messages, map[string]string{"role": "system", "content": systemPrompt})
 	messages = append(messages, req.Messages...)
 
 	// Forward to Copilot API
@@ -700,10 +702,18 @@ func (h *GitHubCopilotHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	if model == "" {
 		model = "gpt-4o"
 	}
+	shouldStream := true
+	if req.Stream != nil {
+		shouldStream = *req.Stream
+	}
+
 	body := map[string]interface{}{
 		"model":    model,
-		"stream":   true,
+		"stream":   shouldStream,
 		"messages": messages,
+	}
+	if len(req.Tools) > 0 {
+		body["tools"] = req.Tools
 	}
 
 	bodyJSON, err := json.Marshal(body)
@@ -741,6 +751,12 @@ func (h *GitHubCopilotHandler) Chat(w http.ResponseWriter, r *http.Request) {
 			statusCode = resp.StatusCode
 		}
 		http.Error(w, fmt.Sprintf(`{"error":"Copilot API error (%d): %s"}`, resp.StatusCode, string(respBody)), statusCode)
+		return
+	}
+
+	if !shouldStream {
+		w.Header().Set("Content-Type", "application/json")
+		io.Copy(w, resp.Body)
 		return
 	}
 
