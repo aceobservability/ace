@@ -85,7 +85,7 @@ async function handleSave() {
 </script>
 
 <template>
-  <section class="rounded-xl border border-border bg-surface-raised p-6">
+  <section class="rounded border border-border bg-surface-raised p-6">
     <div class="flex justify-between items-center mb-4">
       <h2 class="flex items-center gap-2 m-0 text-base font-semibold text-text-primary">
         <Github :size="20" />
@@ -93,7 +93,7 @@ async function handleSave() {
       </h2>
       <span
         v-if="!loading"
-        class="inline-block rounded-full px-2.5 py-0.5 text-xs border"
+        class="inline-block rounded-sm px-2.5 py-0.5 text-xs border"
         :class="configured
           ? (enabled
             ? 'border-accent-border bg-accent-muted text-accent'
@@ -105,7 +105,7 @@ async function handleSave() {
     </div>
 
     <div v-if="loading" class="flex items-center gap-2 py-4">
-      <Loader2 :size="16" class="animate-spin text-slate-400" />
+      <Loader2 :size="16" class="animate-spin text-text-muted" />
       <span class="text-sm text-text-muted">Loading configuration...</span>
     </div>
 
@@ -114,14 +114,14 @@ async function handleSave() {
         Configure a GitHub OAuth App so members of this organization can connect their GitHub Copilot subscriptions for AI-assisted query writing.
       </p>
 
-      <div class="rounded-xl border border-border bg-surface-overlay p-4">
+      <div class="rounded border border-border bg-surface-overlay p-4">
         <div class="mb-4">
           <label class="block mb-1.5 text-sm font-medium text-text-primary">Client ID</label>
           <input
             v-model="clientId"
             type="text"
             :disabled="saving"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
+            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
           />
         </div>
         <div class="mb-4">
@@ -131,7 +131,7 @@ async function handleSave() {
             type="password"
             :placeholder="configured ? '••••••••' : 'Enter client secret'"
             :disabled="saving"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
+            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
           />
         </div>
         <div class="mb-4">
@@ -146,7 +146,7 @@ async function handleSave() {
           </label>
         </div>
 
-        <div class="rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-xs text-text-muted mb-4">
+        <div class="rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-xs text-text-muted mb-4">
           Create a GitHub OAuth App at
           <strong>github.com/settings/developers</strong>.
           Set the callback URL to:
@@ -154,12 +154,12 @@ async function handleSave() {
           Required scopes: <code class="rounded bg-surface-overlay px-1.5 py-0.5 text-xs font-mono text-text-primary">read:user, copilot</code>.
         </div>
 
-        <div v-if="error" class="rounded-lg border border-rose-500/25 bg-rose-500/10 px-3 py-2.5 text-sm text-rose-500 mb-3">{{ error }}</div>
-        <div v-if="notice" class="rounded-lg border border-accent-border bg-accent-muted px-3 py-2.5 text-sm text-accent mb-3">{{ notice }}</div>
+        <div v-if="error" class="rounded-sm border border-rose-500/25 bg-rose-500/10 px-3 py-2.5 text-sm text-rose-500 mb-3">{{ error }}</div>
+        <div v-if="notice" class="rounded-sm border border-accent-border bg-accent-muted px-3 py-2.5 text-sm text-accent mb-3">{{ notice }}</div>
 
         <div class="flex justify-end">
           <button
-            class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center gap-1.5 rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="saving"
             @click="handleSave"
           >

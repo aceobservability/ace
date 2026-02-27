@@ -28,7 +28,7 @@ function openPrivacySettings() {
 <template>
   <div
     v-if="visible"
-    class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-border bg-surface-raised px-6 py-4 shadow-lg flex items-center gap-4 max-w-lg max-md:flex-col max-md:items-stretch"
+    class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded border border-border bg-surface-raised px-6 py-4 shadow-lg flex items-center gap-4 max-w-lg max-md:flex-col max-md:items-stretch"
     data-testid="cookie-consent-banner"
   >
     <div class="min-w-0">
@@ -39,19 +39,19 @@ function openPrivacySettings() {
     </div>
     <div class="inline-flex items-center gap-2 flex-wrap justify-end max-md:justify-start">
       <button
-        class="text-accent hover:text-accent underline text-sm px-4 py-2 rounded-lg transition"
+        class="text-accent hover:text-accent underline text-sm px-4 py-2 rounded-sm transition"
         @click="openPrivacySettings"
       >
         Privacy settings
       </button>
       <button
-        class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-muted hover:text-text-primary transition"
+        class="rounded-sm border border-border px-4 py-2 text-sm font-medium text-text-muted hover:text-text-primary transition"
         @click="declineAnalytics"
       >
         Decline
       </button>
       <button
-        class="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover"
+        class="rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover"
         @click="acceptAnalytics"
       >
         Allow analytics

@@ -2,7 +2,7 @@
   <div class="relative">
     <!-- Loading state -->
     <div v-if="loading" class="flex flex-col gap-3">
-      <div v-for="i in 3" :key="i" class="h-14 rounded-lg bg-surface-overlay border border-border animate-pulse" />
+      <div v-for="i in 3" :key="i" class="h-14 rounded-sm bg-surface-overlay border border-border animate-pulse" />
     </div>
 
     <!-- Empty state -->
@@ -10,7 +10,7 @@
       <Database :size="40" class="text-text-muted" />
       <h3 class="m-0 text-base text-text-primary">No data sources configured</h3>
       <p class="m-0 text-text-secondary text-sm">Add a data source to start visualising your metrics, logs, and traces.</p>
-      <RouterLink :to="`/app/datasources/new?orgId=${orgId}`" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-accent text-white border-none rounded-lg text-sm font-medium cursor-pointer no-underline transition hover:bg-accent-hover">
+      <RouterLink :to="`/app/datasources/new?orgId=${orgId}`" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-accent text-white border-none rounded-sm text-sm font-medium cursor-pointer no-underline transition hover:bg-accent-hover">
         Add data source
       </RouterLink>
     </div>
@@ -19,29 +19,29 @@
     <div v-else>
       <div class="flex items-center justify-between mb-3">
         <span class="text-sm text-text-secondary font-medium">{{ datasources.length }} data source{{ datasources.length !== 1 ? 's' : '' }}</span>
-        <RouterLink :to="`/app/datasources/new?orgId=${orgId}`" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-accent text-white border-none rounded-lg text-sm font-medium cursor-pointer no-underline transition hover:bg-accent-hover">
+        <RouterLink :to="`/app/datasources/new?orgId=${orgId}`" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-accent text-white border-none rounded-sm text-sm font-medium cursor-pointer no-underline transition hover:bg-accent-hover">
           Add data source
         </RouterLink>
       </div>
 
       <div class="flex flex-col gap-2">
-        <div v-for="ds in datasources" :key="ds.id" class="flex items-center justify-between gap-4 px-4 py-3 bg-surface-overlay border border-border rounded-[10px] transition-colors hover:border-accent-border">
+        <div v-for="ds in datasources" :key="ds.id" class="flex items-center justify-between gap-4 px-4 py-3 bg-surface-overlay border border-border rounded transition-colors hover:border-accent-border">
           <div class="flex items-center gap-3 min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <img v-if="dataSourceTypeLogos[ds.type]" :src="dataSourceTypeLogos[ds.type]" :alt="ds.type" class="h-5 w-5 shrink-0 object-contain" />
-              <span class="inline-flex px-2 py-0.5 rounded-full text-[0.68rem] font-semibold uppercase tracking-wide bg-accent-muted text-accent border border-accent-border whitespace-nowrap">{{ dataSourceTypeLabels[ds.type] }}</span>
+              <span class="inline-flex px-2 py-0.5 rounded-sm text-[0.68rem] font-semibold uppercase tracking-wide bg-accent-muted text-accent border border-accent-border whitespace-nowrap">{{ dataSourceTypeLabels[ds.type] }}</span>
             </div>
             <span class="text-sm font-semibold text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">{{ ds.name }}</span>
             <span class="text-xs text-text-muted whitespace-nowrap overflow-hidden text-ellipsis">{{ ds.url }}</span>
           </div>
           <div class="flex items-center gap-1 shrink-0">
-            <button @click="testDatasource(ds.id)" class="inline-flex items-center justify-center w-[30px] h-[30px] p-0 bg-transparent border border-transparent rounded-md text-text-secondary cursor-pointer transition-all no-underline hover:bg-surface-overlay hover:border-border-strong hover:text-text-primary" title="Test connection">
+            <button @click="testDatasource(ds.id)" class="inline-flex items-center justify-center w-[30px] h-[30px] p-0 bg-transparent border border-transparent rounded-sm text-text-secondary cursor-pointer transition-all no-underline hover:bg-surface-overlay hover:border-border-strong hover:text-text-primary" title="Test connection">
               <Zap :size="14" />
             </button>
-            <RouterLink :to="`/app/datasources/${ds.id}/edit`" class="inline-flex items-center justify-center w-[30px] h-[30px] p-0 bg-transparent border border-transparent rounded-md text-text-secondary cursor-pointer transition-all no-underline hover:bg-surface-overlay hover:border-border-strong hover:text-text-primary" title="Edit">
+            <RouterLink :to="`/app/datasources/${ds.id}/edit`" class="inline-flex items-center justify-center w-[30px] h-[30px] p-0 bg-transparent border border-transparent rounded-sm text-text-secondary cursor-pointer transition-all no-underline hover:bg-surface-overlay hover:border-border-strong hover:text-text-primary" title="Edit">
               <Edit2 :size="14" />
             </RouterLink>
-            <button @click="deleteDatasource(ds.id)" class="inline-flex items-center justify-center w-[30px] h-[30px] p-0 bg-transparent border border-transparent rounded-md text-text-secondary cursor-pointer transition-all no-underline hover:bg-surface-overlay hover:border-border-strong hover:text-text-primary hover:!bg-rose-500/15 hover:!border-rose-500/30 hover:!text-rose-500" title="Delete">
+            <button @click="deleteDatasource(ds.id)" class="inline-flex items-center justify-center w-[30px] h-[30px] p-0 bg-transparent border border-transparent rounded-sm text-text-secondary cursor-pointer transition-all no-underline hover:bg-surface-overlay hover:border-border-strong hover:text-text-primary hover:!bg-rose-500/15 hover:!border-rose-500/30 hover:!text-rose-500" title="Delete">
               <Trash2 :size="14" />
             </button>
           </div>
@@ -52,7 +52,7 @@
     <!-- Test result toast -->
     <div
       v-if="testResult"
-      class="fixed bottom-6 right-6 px-4 py-2.5 rounded-lg text-sm font-medium z-[1000] animate-slide-up"
+      class="fixed bottom-6 right-6 px-4 py-2.5 rounded-sm text-sm font-medium z-[1000] animate-slide-up"
       :class="testResult.ok
         ? 'bg-accent-muted border border-accent-border text-accent'
         : 'bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-500/15 dark:border-rose-500/30 dark:text-rose-400'"

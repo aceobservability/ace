@@ -142,16 +142,16 @@ onUnmounted(() => {
       <!-- Time select row -->
       <div class="flex items-center gap-2" :class="props.stacked ? 'w-full' : ''">
         <button
-          class="flex items-center gap-2 rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary transition cursor-pointer hover:border-border-strong hover:bg-surface-overlay"
+          class="flex items-center gap-2 rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary transition cursor-pointer hover:border-border-strong hover:bg-surface-overlay"
           :class="[
             isOpen ? 'border-accent ring-1 ring-accent/20' : '',
             props.stacked ? 'w-full justify-between' : ''
           ]"
           @click.stop="toggleDropdown"
         >
-          <Clock :size="16" class="text-slate-400" />
+          <Clock :size="16" class="text-text-muted" />
           <span class="min-w-[100px] font-mono text-xs">{{ currentDisplayText }}</span>
-          <component :is="isOpen ? ChevronUp : ChevronDown" :size="14" class="text-slate-400" />
+          <component :is="isOpen ? ChevronUp : ChevronDown" :size="14" class="text-text-muted" />
         </button>
       </div>
 
@@ -161,7 +161,7 @@ onUnmounted(() => {
         :class="props.stacked ? 'w-full flex-wrap' : ''"
       >
         <button
-          class="flex items-center justify-center rounded-lg border border-border bg-surface-raised px-2 py-1.5 text-text-muted transition cursor-pointer hover:bg-surface-overlay hover:text-text-primary"
+          class="flex items-center justify-center rounded-sm border border-border bg-surface-raised px-2 py-1.5 text-text-muted transition cursor-pointer hover:bg-surface-overlay hover:text-text-primary"
           :class="isRefreshing ? 'text-accent' : ''"
           @click="handleRefresh"
           :title="'Last refresh: ' + formatLastRefresh()"
@@ -174,7 +174,7 @@ onUnmounted(() => {
             :value="refreshIntervalValue"
             @change="selectRefreshInterval(($event.target as HTMLSelectElement).value)"
             title="Auto-refresh interval"
-            class="rounded-lg border border-border bg-surface-raised px-2 py-1.5 pr-7 text-xs font-medium text-text-secondary cursor-pointer transition appearance-none hover:border-border-strong focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 bg-[url('data:image/svg+xml,%3Csvg_xmlns=%27http://www.w3.org/2000/svg%27_width=%2712%27_height=%2712%27_viewBox=%270_0_24_24%27_fill=%27none%27_stroke=%27%2394a3b8%27_stroke-width=%272%27_stroke-linecap=%27round%27_stroke-linejoin=%27round%27%3E%3Cpath_d=%27m6_9_6_6_6-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.5rem_center]"
+            class="rounded-sm border border-border bg-surface-raised px-2 py-1.5 pr-7 text-xs font-medium text-text-secondary cursor-pointer transition appearance-none hover:border-border-strong focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 bg-[url('data:image/svg+xml,%3Csvg_xmlns=%27http://www.w3.org/2000/svg%27_width=%2712%27_height=%2712%27_viewBox=%270_0_24_24%27_fill=%27none%27_stroke=%27%2394a3b8%27_stroke-width=%272%27_stroke-linecap=%27round%27_stroke-linejoin=%27round%27%3E%3Cpath_d=%27m6_9_6_6_6-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.5rem_center]"
           >
             <option
               v-for="interval in refreshIntervals"
@@ -188,7 +188,7 @@ onUnmounted(() => {
 
         <span
           v-if="refreshIntervalValue !== 'off'"
-          class="text-xs text-slate-400 px-2"
+          class="text-xs text-text-muted px-2"
           :class="props.stacked ? 'px-0' : ''"
         >
           {{ isRefreshing ? 'Refreshing...' : formatLastRefresh() }}
@@ -199,12 +199,12 @@ onUnmounted(() => {
     <!-- Dropdown -->
     <div
       v-if="isOpen"
-      class="absolute top-[calc(100%+4px)] left-0 min-w-[220px] rounded-lg border border-border bg-surface-raised shadow-lg z-[1000] animate-fade-in"
+      class="absolute top-[calc(100%+4px)] left-0 min-w-[220px] rounded-sm border border-border bg-surface-raised shadow-lg z-[1000] animate-fade-in"
       @click.stop
     >
       <div v-if="!showCustomRange">
         <div class="py-2">
-          <div class="px-4 py-2 text-[0.6875rem] font-semibold text-slate-400 uppercase tracking-wide">
+          <div class="px-4 py-2 text-[0.6875rem] font-semibold text-text-muted uppercase tracking-wide">
             Quick ranges
           </div>
           <button
@@ -229,7 +229,7 @@ onUnmounted(() => {
       </div>
 
       <div v-else class="p-4">
-        <div class="px-0 py-2 text-[0.6875rem] font-semibold text-slate-400 uppercase tracking-wide">
+        <div class="px-0 py-2 text-[0.6875rem] font-semibold text-text-muted uppercase tracking-wide">
           Custom time range
         </div>
 
@@ -239,7 +239,7 @@ onUnmounted(() => {
             id="custom-from"
             type="datetime-local"
             v-model="customFrom"
-            class="w-full rounded-lg border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20"
+            class="w-full rounded-sm border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20"
           />
         </div>
 
@@ -249,26 +249,26 @@ onUnmounted(() => {
             id="custom-to"
             type="datetime-local"
             v-model="customTo"
-            class="w-full rounded-lg border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20"
+            class="w-full rounded-sm border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20"
           />
         </div>
 
         <div
           v-if="customRangeError"
-          class="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600"
+          class="mb-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600"
         >
           {{ customRangeError }}
         </div>
 
         <div class="flex justify-end gap-2">
           <button
-            class="rounded-md px-4 py-2 text-sm font-medium border border-border bg-transparent text-text-secondary cursor-pointer transition hover:bg-surface-overlay"
+            class="rounded-sm px-4 py-2 text-sm font-medium border border-border bg-transparent text-text-secondary cursor-pointer transition hover:bg-surface-overlay"
             @click="cancelCustomRange"
           >
             Cancel
           </button>
           <button
-            class="rounded-md px-4 py-2 text-sm font-medium border border-accent bg-accent text-white cursor-pointer transition hover:bg-accent-hover hover:border-accent-hover"
+            class="rounded-sm px-4 py-2 text-sm font-medium border border-accent bg-accent text-white cursor-pointer transition hover:bg-accent-hover hover:border-accent-hover"
             @click="applyCustomRange"
           >
             Apply

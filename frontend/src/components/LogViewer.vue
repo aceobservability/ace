@@ -56,16 +56,16 @@ interface DetectedField {
 function getLevelBadgeClasses(level?: string): string {
   switch (level) {
     case 'error':
-      return 'rounded-full bg-rose-500/10 px-2 py-0.5 text-rose-500 ring-1 ring-rose-500/20 font-semibold'
+      return 'rounded-sm bg-rose-500/10 px-2 py-0.5 text-rose-500 ring-1 ring-rose-500/20 font-semibold'
     case 'warning':
     case 'warn':
-      return 'rounded-full bg-amber-50 px-2 py-0.5 text-amber-700 ring-1 ring-amber-600/20 font-semibold'
+      return 'rounded-sm bg-amber-50 px-2 py-0.5 text-amber-700 ring-1 ring-amber-600/20 font-semibold'
     case 'info':
-      return 'rounded-full bg-sky-50 px-2 py-0.5 text-sky-700 ring-1 ring-sky-600/20 font-semibold'
+      return 'rounded-sm bg-sky-50 px-2 py-0.5 text-sky-700 ring-1 ring-sky-600/20 font-semibold'
     case 'debug':
-      return 'rounded-full bg-surface-overlay px-2 py-0.5 text-text-secondary'
+      return 'rounded-sm bg-surface-overlay px-2 py-0.5 text-text-secondary'
     default:
-      return 'rounded-full bg-surface-overlay px-2 py-0.5 text-text-secondary'
+      return 'rounded-sm bg-surface-overlay px-2 py-0.5 text-text-secondary'
   }
 }
 
@@ -227,15 +227,15 @@ watch(displayLogs, () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-hidden rounded-xl border border-border bg-surface-raised">
+  <div class="flex flex-col h-full overflow-hidden rounded border border-border bg-surface-raised">
     <!-- Header -->
-    <div class="flex items-center gap-4 bg-slate-900 px-4 py-2.5 font-mono text-xs uppercase tracking-[0.07em] text-slate-300">
+    <div class="flex items-center gap-4 bg-surface-overlay px-4 py-2.5 font-mono text-xs uppercase tracking-[0.07em] text-text-secondary">
       <span class="shrink-0 w-44">Timestamp</span>
       <span class="shrink-0 w-20">Level</span>
       <span class="flex-1">Message</span>
     </div>
-    <div class="shrink-0 text-xs font-mono py-1 px-4 bg-slate-900 border-b border-slate-700">
-      <span class="text-slate-400">{{ logs.length }} log entries</span>
+    <div class="shrink-0 text-xs font-mono py-1 px-4 bg-surface-overlay border-b border-border">
+      <span class="text-text-muted">{{ logs.length }} log entries</span>
     </div>
 
     <!-- Log rows -->
@@ -250,7 +250,7 @@ watch(displayLogs, () => {
           @click="toggleRow(i)"
         >
           <!-- Timestamp -->
-          <span class="shrink-0 text-slate-400 w-44">{{ formatTimestamp(log.timestamp) }}</span>
+          <span class="shrink-0 text-text-muted w-44">{{ formatTimestamp(log.timestamp) }}</span>
 
           <!-- Level badge -->
           <span class="shrink-0 w-20">
@@ -278,14 +278,14 @@ watch(displayLogs, () => {
           <!-- Message -->
           <div class="flex-1 text-text-primary break-all">
             <div class="flex items-start gap-1.5">
-              <span class="shrink-0 text-slate-400 text-[0.72rem] leading-[1.35] mt-px">{{ isExpanded(i) ? 'v' : '>' }}</span>
+              <span class="shrink-0 text-text-muted text-[0.72rem] leading-[1.35] mt-px">{{ isExpanded(i) ? 'v' : '>' }}</span>
               <span class="whitespace-pre-wrap">{{ log.line }}</span>
             </div>
             <div v-if="log.labels && Object.keys(log.labels).length > 0" class="mt-1 flex flex-wrap gap-1">
               <span
                 v-for="(value, key) in log.labels"
                 :key="String(key)"
-                class="inline-flex rounded-full bg-surface-overlay px-2 py-0.5 text-xs text-text-secondary mr-1"
+                class="inline-flex rounded-sm bg-surface-overlay px-2 py-0.5 text-xs text-text-secondary mr-1"
               >
                 {{ key }}={{ value }}
               </span>
@@ -308,12 +308,12 @@ watch(displayLogs, () => {
               <span class="text-text-primary whitespace-pre-wrap break-words">{{ field.value }}</span>
             </div>
           </div>
-          <div v-else class="text-slate-400">No structured fields detected in this message.</div>
+          <div v-else class="text-text-muted">No structured fields detected in this message.</div>
         </div>
       </template>
 
       <!-- Empty state -->
-      <div v-if="logs.length === 0" class="text-center text-slate-400 py-8 px-4 text-xs font-mono">
+      <div v-if="logs.length === 0" class="text-center text-text-muted py-8 px-4 text-xs font-mono">
         No log entries
       </div>
     </div>
