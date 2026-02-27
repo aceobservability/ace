@@ -14,7 +14,6 @@ import {
 } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { queryDataSource } from '../api/datasources'
-import { dataSourceTypeLogos } from '../utils/datasourceLogos'
 import ClickHouseSQLEditor from '../components/ClickHouseSQLEditor.vue'
 import CloudWatchQueryEditor from '../components/CloudWatchQueryEditor.vue'
 import CopilotPanel from '../components/CopilotPanel.vue'
@@ -26,13 +25,16 @@ import TimeRangePicker from '../components/TimeRangePicker.vue'
 import { useDatasource } from '../composables/useDatasource'
 import { useOrganization } from '../composables/useOrganization'
 import { type PrometheusQueryResult, transformToChartData } from '../composables/useProm'
+import { useQueryEditor } from '../composables/useQueryEditor'
 import { useTimeRange } from '../composables/useTimeRange'
 import type { DataSourceType } from '../types/datasource'
 import { dataSourceTypeLabels } from '../types/datasource'
+import { dataSourceTypeLogos } from '../utils/datasourceLogos'
 
 const { timeRange, onRefresh, setCustomRange } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { metricsDatasources, fetchDatasources } = useDatasource()
+const queryEditor = useQueryEditor()
 
 type DatasourceHealthStatus = 'unknown' | 'checking' | 'healthy' | 'unhealthy'
 
@@ -214,6 +216,16 @@ onMounted(() => {
   if (currentOrg.value) {
     fetchDatasources(currentOrg.value.id)
   }
+
+  queryEditor.register({
+    setQuery: (q: string) => {
+      query.value = q
+    },
+    execute: () => {
+      runQuery()
+    },
+    getQuery: () => query.value,
+  })
 })
 
 watch(
@@ -367,6 +379,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  queryEditor.unregister()
   document.removeEventListener('click', handleDocumentClick)
   if (unsubscribeRefresh) {
     unsubscribeRefresh()
