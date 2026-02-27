@@ -743,7 +743,7 @@ watch(selectedDatasourceId, () => {
       v-if="showCopilot"
       :datasource-type="activeDatasource?.type || 'prometheus'"
       :datasource-name="activeDatasource?.name || ''"
-      :on-insert-query="(q: string) => { query = q }"
+      :datasource-id="activeDatasource?.id || ''"
       @close="showCopilot = false"
     />
   </div>

@@ -1,13 +1,25 @@
 <script setup lang="ts">
-import { Check, ChevronDown, ClipboardCopy, ExternalLink, Loader2, Send, Sparkles, Trash2, Unplug, X } from 'lucide-vue-next'
+import {
+  Check,
+  ChevronDown,
+  ClipboardCopy,
+  ExternalLink,
+  Loader2,
+  Send,
+  Sparkles,
+  Trash2,
+  Unplug,
+  X,
+} from 'lucide-vue-next'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { type CopilotMessage, useCopilot } from '../composables/useCopilot'
+import { getVictoriaMetricsTools, useCopilotToolExecutor } from '../composables/useCopilotTools'
 import { useOrganization } from '../composables/useOrganization'
 
 const props = defineProps<{
   datasourceType: string
   datasourceName: string
-  onInsertQuery: (query: string) => void
+  datasourceId: string
 }>()
 
 const emit = defineEmits<{
@@ -31,7 +43,10 @@ const {
   cancelDeviceFlow,
   disconnect,
   sendMessage,
+  sendChatRequest,
 } = useCopilot()
+
+const { executeTool } = useCopilotToolExecutor(() => props.datasourceId)
 
 const { currentOrgId } = useOrganization()
 
@@ -70,7 +85,7 @@ function selectModel(modelId: string) {
 }
 
 function selectedModelName(): string {
-  const model = models.value.find(m => m.id === selectedModel.value)
+  const model = models.value.find((m) => m.id === selectedModel.value)
   return model?.name || 'Select model'
 }
 
@@ -90,25 +105,87 @@ watch([isConnected, hasCopilot], ([connected, copilot], [prevConnected, prevCopi
   }
 })
 
+const MAX_TOOL_ITERATIONS = 10
+
 async function handleSend() {
   const text = inputText.value.trim()
   if (!text || isLoading.value) return
 
   inputText.value = ''
   messages.value.push({ role: 'user', content: text })
-
-  const chatMessages = messages.value.map((m) => ({ role: m.role, content: m.content }))
   messages.value.push({ role: 'assistant', content: '' })
   const assistantIndex = messages.value.length - 1
   const assistantMsg = messages.value[assistantIndex]!
 
-  const generator = sendMessage(props.datasourceType, props.datasourceName, chatMessages)
-  for await (const chunk of generator) {
-    assistantMsg.content += chunk
+  const tools = props.datasourceType === 'victoriametrics' ? getVictoriaMetricsTools() : undefined
+
+  // If no tools, use streaming as before
+  if (!tools) {
+    const chatMessages = messages.value
+      .slice(0, -1)
+      .map((m) => ({ role: m.role, content: m.content }))
+    const generator = sendMessage(props.datasourceType, props.datasourceName, chatMessages)
+    for await (const chunk of generator) {
+      assistantMsg.content += chunk
+    }
+    if (error.value) {
+      assistantMsg.content = assistantMsg.content || `Error: ${error.value}`
+    }
+    return
   }
 
-  if (error.value) {
+  // Tool-calling loop
+  isLoading.value = true
+  error.value = null
+  const chatHistory: Array<Record<string, unknown>> = messages.value.slice(0, -1).map((m) => ({
+    role: m.role,
+    content: m.content,
+  }))
+
+  try {
+    for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+      const result = await sendChatRequest(
+        props.datasourceType,
+        props.datasourceName,
+        chatHistory as Parameters<typeof sendChatRequest>[2],
+        tools,
+      )
+
+      if (result.toolCalls.length === 0) {
+        assistantMsg.content = result.content || ''
+        break
+      }
+
+      chatHistory.push({
+        role: 'assistant',
+        content: result.content,
+        tool_calls: result.toolCalls,
+      })
+
+      for (const toolCall of result.toolCalls) {
+        let toolResult: string
+        try {
+          toolResult = await executeTool(toolCall)
+        } catch (e) {
+          toolResult = `Error: ${e instanceof Error ? e.message : 'Tool execution failed'}`
+        }
+        chatHistory.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: toolResult,
+        })
+      }
+
+      const toolNames = result.toolCalls.map((tc) => tc.function.name).join(', ')
+      assistantMsg.content += assistantMsg.content
+        ? `\n\nUsing tools: ${toolNames}...`
+        : `Using tools: ${toolNames}...`
+    }
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to send message'
     assistantMsg.content = assistantMsg.content || `Error: ${error.value}`
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -123,31 +200,18 @@ function clearChat() {
   messages.value = []
 }
 
-function extractCodeBlock(content: string): string | null {
-  const match = content.match(/```[\w]*\n?([\s\S]*?)```/)
-  return match?.[1]?.trim() ?? null
-}
-
-function handleInsertQuery(content: string) {
-  const code = extractCodeBlock(content)
-  if (code) {
-    props.onInsertQuery(code)
-  }
-}
-
-function hasCodeBlock(content: string): boolean {
-  return /```[\w]*\n?[\s\S]*?```/.test(content)
-}
-
 function formatMessage(content: string): string {
   // Replace code blocks with styled pre/code
-  return content.replace(
-    /```(\w*)\n?([\s\S]*?)```/g,
-    '<pre class="rounded-sm bg-surface-overlay p-3 my-2 overflow-x-auto"><code class="text-xs font-mono text-accent whitespace-pre-wrap">$2</code></pre>',
-  ).replace(
-    /`([^`]+)`/g,
-    '<code class="rounded bg-surface-overlay px-1.5 py-0.5 text-xs font-mono text-accent">$1</code>',
-  ).replace(/\n/g, '<br />')
+  return content
+    .replace(
+      /```(\w*)\n?([\s\S]*?)```/g,
+      '<pre class="rounded-sm bg-surface-overlay p-3 my-2 overflow-x-auto"><code class="text-xs font-mono text-accent whitespace-pre-wrap">$2</code></pre>',
+    )
+    .replace(
+      /`([^`]+)`/g,
+      '<code class="rounded bg-surface-overlay px-1.5 py-0.5 text-xs font-mono text-accent">$1</code>',
+    )
+    .replace(/\n/g, '<br />')
 }
 
 const codeCopied = ref(false)
@@ -156,7 +220,9 @@ async function copyCode() {
   try {
     await navigator.clipboard.writeText(userCode.value)
     codeCopied.value = true
-    setTimeout(() => { codeCopied.value = false }, 2000)
+    setTimeout(() => {
+      codeCopied.value = false
+    }, 2000)
   } catch {
     // fallback
   }
@@ -173,7 +239,11 @@ async function handleDisconnect() {
 }
 
 function handleClickOutside(e: MouseEvent) {
-  if (modelDropdownOpen.value && modelSelectorRef.value && !modelSelectorRef.value.contains(e.target as Node)) {
+  if (
+    modelDropdownOpen.value &&
+    modelSelectorRef.value &&
+    !modelSelectorRef.value.contains(e.target as Node)
+  ) {
     modelDropdownOpen.value = false
   }
 }
@@ -305,13 +375,6 @@ onBeforeUnmount(() => {
           <div v-else class="self-start max-w-[95%]">
             <div class="rounded bg-surface-overlay px-3 py-2 text-sm text-text-primary">
               <div v-html="formatMessage(msg.content)" />
-              <button
-                v-if="hasCodeBlock(msg.content) && !isLoading"
-                class="mt-2 inline-flex items-center gap-1 rounded bg-accent px-2 py-1 text-xs font-semibold text-white cursor-pointer border-none transition hover:bg-accent-hover"
-                @click="handleInsertQuery(msg.content)"
-              >
-                Insert query
-              </button>
             </div>
           </div>
         </div>
