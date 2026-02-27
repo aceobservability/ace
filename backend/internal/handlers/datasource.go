@@ -1305,9 +1305,25 @@ func (h *DataSourceHandler) Labels(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+	case models.DataSourceVictoriaMetrics, models.DataSourcePrometheus:
+		client, err := datasource.NewVictoriaMetricsClient(ds.URL)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
+			return
+		}
+
+		metric := r.URL.Query().Get("metric")
+		labels, err = client.Labels(ctx, metric)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch labels: " + err.Error()})
+			return
+		}
+
 	default:
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "label discovery is only supported for log datasources"})
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "label discovery is not supported for this datasource type"})
 		return
 	}
 
@@ -1390,9 +1406,25 @@ func (h *DataSourceHandler) LabelValues(w http.ResponseWriter, r *http.Request) 
 			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch label values: " + err.Error()})
 			return
 		}
+	case models.DataSourceVictoriaMetrics, models.DataSourcePrometheus:
+		client, err := datasource.NewVictoriaMetricsClient(ds.URL)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
+			return
+		}
+
+		metric := r.URL.Query().Get("metric")
+		values, err = client.LabelValues(ctx, labelName, metric)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch label values: " + err.Error()})
+			return
+		}
+
 	default:
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "label value discovery is only supported for log datasources"})
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "label value discovery is not supported for this datasource type"})
 		return
 	}
 
@@ -1403,6 +1435,73 @@ func (h *DataSourceHandler) LabelValues(w http.ResponseWriter, r *http.Request) 
 	}{
 		Status: "success",
 		Data:   values,
+	})
+}
+
+// MetricNames returns metric names for Prometheus/VictoriaMetrics datasources
+func (h *DataSourceHandler) MetricNames(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, `{"error":"invalid datasource id"}`, http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	defer cancel()
+
+	var ds models.DataSource
+	err = h.pool.QueryRow(ctx,
+		`SELECT id, organization_id, name, type, url, is_default, auth_type, auth_config, trace_id_field, linked_trace_datasource_id, created_at, updated_at
+		 FROM datasources WHERE id = $1`, id,
+	).Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt)
+	if err != nil {
+		http.Error(w, `{"error":"datasource not found"}`, http.StatusNotFound)
+		return
+	}
+
+	_, err = h.checkOrgMembership(ctx, userID, ds.OrganizationID)
+	if err != nil {
+		http.Error(w, `{"error":"not a member of this organization"}`, http.StatusForbidden)
+		return
+	}
+
+	var names []string
+	switch ds.Type {
+	case models.DataSourceVictoriaMetrics, models.DataSourcePrometheus:
+		client, err := datasource.NewVictoriaMetricsClient(ds.URL)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
+			return
+		}
+
+		search := r.URL.Query().Get("search")
+		names, err = client.MetricNames(ctx, search)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch metric names: " + err.Error()})
+			return
+		}
+
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "metric name discovery is only supported for Prometheus and VictoriaMetrics datasources"})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(struct {
+		Status string   `json:"status"`
+		Data   []string `json:"data"`
+	}{
+		Status: "success",
+		Data:   names,
 	})
 }
 

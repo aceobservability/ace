@@ -195,6 +195,7 @@ func main() {
 	mux.HandleFunc("DELETE /api/datasources/{id}", auth.RequireAuth(jwtManager, dsHandler.Delete))
 	mux.HandleFunc("GET /api/datasources/{id}/labels", auth.RequireAuth(jwtManager, dsHandler.Labels))
 	mux.HandleFunc("GET /api/datasources/{id}/labels/{name}/values", auth.RequireAuth(jwtManager, dsHandler.LabelValues))
+	mux.HandleFunc("GET /api/datasources/{id}/metric-names", auth.RequireAuth(jwtManager, dsHandler.MetricNames))
 	mux.HandleFunc("POST /api/datasources/{id}/query", auth.RequireAuth(jwtManager, dsHandler.Query))
 	mux.HandleFunc("GET /api/datasources/{id}/traces/{traceId}", auth.RequireAuth(jwtManager, dsHandler.GetTrace))
 	mux.HandleFunc("GET /api/datasources/{id}/traces/{traceId}/service-graph", auth.RequireAuth(jwtManager, dsHandler.TraceServiceGraph))
