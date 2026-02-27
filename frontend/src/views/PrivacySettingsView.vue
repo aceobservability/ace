@@ -42,7 +42,7 @@ function toggleSessionRecording(event: Event) {
   <div class="px-8 py-6 max-w-2xl mx-auto flex flex-col gap-4">
     <h1 class="text-2xl font-bold text-text-primary mb-6">Privacy Settings</h1>
 
-    <div class="rounded-xl border border-border bg-surface-raised p-6">
+    <div class="rounded border border-border bg-surface-raised p-6">
       <!-- Product analytics toggle row -->
       <div class="flex items-center justify-between py-4 border-b border-border">
         <div class="flex flex-col">
@@ -51,7 +51,7 @@ function toggleSessionRecording(event: Event) {
         </div>
         <button
           class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition"
-          :class="analyticsEnabled ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600'"
+          :class="analyticsEnabled ? 'bg-accent' : 'bg-surface-overlay'"
           :disabled="dntEnabled"
           role="switch"
           :aria-checked="analyticsEnabled"
@@ -72,7 +72,7 @@ function toggleSessionRecording(event: Event) {
         </div>
         <button
           class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition"
-          :class="sessionRecordingEnabled && analyticsEnabled ? 'bg-accent' : 'bg-slate-300 dark:bg-slate-600'"
+          :class="sessionRecordingEnabled && analyticsEnabled ? 'bg-accent' : 'bg-surface-overlay'"
           :disabled="!analyticsEnabled"
           role="switch"
           :aria-checked="sessionRecordingEnabled && analyticsEnabled"
@@ -88,7 +88,7 @@ function toggleSessionRecording(event: Event) {
       <!-- Status message -->
       <div
         v-if="dntEnabled || analyticsEnabled || consent === 'pending'"
-        class="mt-4 rounded-lg px-4 py-3 text-sm"
+        class="mt-4 rounded-sm px-4 py-3 text-sm"
         :class="analyticsEnabled
           ? 'bg-accent-muted border border-accent-border text-accent'
           : 'bg-surface-overlay border border-border text-text-secondary'"
@@ -111,7 +111,7 @@ function toggleSessionRecording(event: Event) {
     <!-- Save / back button -->
     <div class="flex items-center gap-3 mt-2">
       <button
-        class="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover"
+        class="rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover"
         @click="goBack"
       >
         Done

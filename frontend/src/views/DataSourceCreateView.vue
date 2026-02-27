@@ -583,17 +583,17 @@ watch(
       </div>
     </header>
 
-    <div v-if="pageLoading" class="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-raised px-3.5 py-3 text-sm text-text-muted mb-4">
+    <div v-if="pageLoading" class="inline-flex items-center gap-2 rounded-sm border border-border bg-surface-raised px-3.5 py-3 text-sm text-text-muted mb-4">
       <Loader2 :size="18" class="animate-spin" />
       <span>Loading datasource details...</span>
     </div>
 
-    <div v-else-if="loadError" class="rounded-lg bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-sm text-rose-500 mb-4">
+    <div v-else-if="loadError" class="rounded-sm bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-sm text-rose-500 mb-4">
       {{ loadError }}
     </div>
 
     <form v-else class="flex flex-col gap-4" @submit.prevent="handleSave">
-      <section class="rounded-xl border border-border bg-surface-raised p-6">
+      <section class="rounded border border-border bg-surface-raised p-6">
         <h2 class="text-sm font-semibold text-text-primary mb-3 mt-0">Basics</h2>
         <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
           <div class="mb-4">
@@ -605,7 +605,7 @@ watch(
               placeholder="My Prometheus"
               :disabled="saveLoading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+              class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
 
@@ -615,7 +615,7 @@ watch(
               id="ds-type"
               v-model="formType"
               :disabled="saveLoading"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
+              class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
             >
               <option value="prometheus">Prometheus (PromQL)</option>
               <option value="victoriametrics">VictoriaMetrics (PromQL)</option>
@@ -641,12 +641,12 @@ watch(
             placeholder="http://localhost:9090"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
         </div>
       </section>
 
-      <section v-if="isCloudWatchType" class="rounded-xl border border-border bg-surface-raised p-6">
+      <section v-if="isCloudWatchType" class="rounded border border-border bg-surface-raised p-6">
         <h2 class="text-sm font-semibold text-text-primary mb-3 mt-0">CloudWatch Settings</h2>
         <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
           <div class="mb-4">
@@ -658,7 +658,7 @@ watch(
               placeholder="us-east-1"
               :disabled="saveLoading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+              class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
           <div class="mb-4">
@@ -670,7 +670,7 @@ watch(
               placeholder="AWS/ECS"
               :disabled="saveLoading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+              class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
         </div>
@@ -684,11 +684,11 @@ watch(
             placeholder="/aws/lambda/my-function"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
         </div>
 
-        <div class="rounded-lg border border-border bg-surface-overlay p-4 mt-4">
+        <div class="rounded-sm border border-border bg-surface-overlay p-4 mt-4">
           <h3 class="text-sm font-semibold text-text-primary mb-3 mt-0">AWS Credentials (optional)</h3>
           <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
             <div class="mb-4">
@@ -699,7 +699,7 @@ watch(
                 type="text"
                 :disabled="saveLoading"
                 autocomplete="off"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+                class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
             <div class="mb-4">
@@ -710,7 +710,7 @@ watch(
                 type="password"
                 :disabled="saveLoading"
                 autocomplete="new-password"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+                class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
           </div>
@@ -723,13 +723,13 @@ watch(
               type="password"
               :disabled="saveLoading"
               autocomplete="new-password"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+              class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
         </div>
       </section>
 
-      <section v-if="isClickHouseType" class="rounded-xl border border-border bg-surface-raised p-6">
+      <section v-if="isClickHouseType" class="rounded border border-border bg-surface-raised p-6">
         <h2 class="text-sm font-semibold text-text-primary mb-3 mt-0">ClickHouse Settings</h2>
         <div class="mb-0">
           <label for="ds-database" class="block text-sm font-medium text-text-primary mb-1.5">Database (optional)</label>
@@ -740,12 +740,12 @@ watch(
             placeholder="default"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
         </div>
       </section>
 
-      <section v-if="isElasticsearchType" class="rounded-xl border border-border bg-surface-raised p-6">
+      <section v-if="isElasticsearchType" class="rounded border border-border bg-surface-raised p-6">
         <h2 class="text-sm font-semibold text-text-primary mb-3 mt-0">Elasticsearch Settings</h2>
         <div class="mb-4">
           <label for="ds-elasticsearch-index" class="block text-sm font-medium text-text-primary mb-1.5">Default Index Pattern (optional)</label>
@@ -756,7 +756,7 @@ watch(
             placeholder="logs-*"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
         </div>
 
@@ -770,7 +770,7 @@ watch(
               placeholder="@timestamp"
               :disabled="saveLoading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+              class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
           <div class="mb-4">
@@ -782,7 +782,7 @@ watch(
               placeholder="message"
               :disabled="saveLoading"
               autocomplete="off"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+              class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
         </div>
@@ -796,12 +796,12 @@ watch(
             placeholder="level"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
         </div>
       </section>
 
-      <section v-if="showLogCorrelation" class="rounded-xl border border-border bg-surface-raised p-6">
+      <section v-if="showLogCorrelation" class="rounded border border-border bg-surface-raised p-6">
         <h2 class="text-sm font-semibold text-text-primary mb-3 mt-0">Log Correlation</h2>
         <div class="mb-4">
           <label for="ds-trace-id-field" class="block text-sm font-medium text-text-primary mb-1.5">Trace ID Field</label>
@@ -812,9 +812,9 @@ watch(
             placeholder="trace_id"
             :disabled="saveLoading"
             autocomplete="off"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
           />
-          <p class="text-xs text-slate-400 mt-1 m-0">The log field name that contains distributed trace IDs. Default: trace_id</p>
+          <p class="text-xs text-text-muted mt-1 m-0">The log field name that contains distributed trace IDs. Default: trace_id</p>
         </div>
         <div class="mb-0">
           <label for="ds-linked-trace-ds" class="block text-sm font-medium text-text-primary mb-1.5">Linked Tracing Datasource (optional)</label>
@@ -822,17 +822,17 @@ watch(
             id="ds-linked-trace-ds"
             :value="formLinkedTraceDatasourceId || ''"
             :disabled="saveLoading"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
+            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
             @change="formLinkedTraceDatasourceId = ($event.target as HTMLSelectElement).value || null"
           >
             <option value="">None — disable trace linking</option>
             <option v-for="td in traceDatasources" :key="td.id" :value="td.id">{{ td.name }} ({{ td.type }})</option>
           </select>
-          <p class="text-xs text-slate-400 mt-1 m-0">When a user clicks a trace ID in logs, they'll be taken to this tracing datasource.</p>
+          <p class="text-xs text-text-muted mt-1 m-0">When a user clicks a trace ID in logs, they'll be taken to this tracing datasource.</p>
         </div>
       </section>
 
-      <section v-if="showAuthSettings" class="rounded-xl border border-border bg-surface-raised p-6">
+      <section v-if="showAuthSettings" class="rounded border border-border bg-surface-raised p-6">
         <h2 class="text-sm font-semibold text-text-primary mb-3 mt-0">Authentication</h2>
         <div class="mb-4">
           <label for="ds-auth-type" class="block text-sm font-medium text-text-primary mb-1.5">Authentication</label>
@@ -840,7 +840,7 @@ watch(
             id="ds-auth-type"
             v-model="formAuthType"
             :disabled="saveLoading"
-            class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
+            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
           >
             <option value="none">None</option>
             <option value="basic">Basic auth</option>
@@ -849,7 +849,7 @@ watch(
           </select>
         </div>
 
-        <div v-if="formAuthType === 'basic'" class="rounded-lg border border-border bg-surface-overlay p-4 mt-4">
+        <div v-if="formAuthType === 'basic'" class="rounded-sm border border-border bg-surface-overlay p-4 mt-4">
           <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
             <div class="mb-0">
               <label for="ds-basic-username" class="block text-sm font-medium text-text-primary mb-1.5">Username <span class="text-rose-500">*</span></label>
@@ -859,7 +859,7 @@ watch(
                 type="text"
                 :disabled="saveLoading"
                 autocomplete="off"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+                class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
             <div class="mb-0">
@@ -870,13 +870,13 @@ watch(
                 type="password"
                 :disabled="saveLoading"
                 autocomplete="new-password"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+                class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
           </div>
         </div>
 
-        <div v-else-if="formAuthType === 'bearer'" class="rounded-lg border border-border bg-surface-overlay p-4 mt-4">
+        <div v-else-if="formAuthType === 'bearer'" class="rounded-sm border border-border bg-surface-overlay p-4 mt-4">
           <div class="mb-0">
             <label for="ds-bearer-token" class="block text-sm font-medium text-text-primary mb-1.5">Bearer token <span class="text-rose-500">*</span></label>
             <input
@@ -885,12 +885,12 @@ watch(
               type="password"
               :disabled="saveLoading"
               autocomplete="new-password"
-              class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+              class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
             />
           </div>
         </div>
 
-        <div v-else-if="formAuthType === 'api_key'" class="rounded-lg border border-border bg-surface-overlay p-4 mt-4">
+        <div v-else-if="formAuthType === 'api_key'" class="rounded-sm border border-border bg-surface-overlay p-4 mt-4">
           <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
             <div class="mb-0">
               <label for="ds-api-header" class="block text-sm font-medium text-text-primary mb-1.5">Header name</label>
@@ -900,7 +900,7 @@ watch(
                 type="text"
                 :disabled="saveLoading"
                 autocomplete="off"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+                class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
             <div class="mb-0">
@@ -911,22 +911,22 @@ watch(
                 type="password"
                 :disabled="saveLoading"
                 autocomplete="new-password"
-                class="w-full rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-slate-400 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
+                class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition"
               />
             </div>
           </div>
         </div>
       </section>
 
-      <section class="rounded-xl border border-border bg-surface-raised p-6">
+      <section class="rounded border border-border bg-surface-raised p-6">
         <h2 class="text-sm font-semibold text-text-primary mb-3 mt-0">Connection Test</h2>
-        <p class="text-xs text-slate-400 -mt-1 mb-3">
+        <p class="text-xs text-text-muted -mt-1 mb-3">
           Run a connection test before saving to verify URL, auth, and datasource availability.
         </p>
         <div class="flex items-center gap-3 flex-wrap">
           <button
             type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-lg border border-border-strong px-4 py-2 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center justify-center gap-2 rounded-sm border border-border-strong px-4 py-2 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="testLoading || saveLoading"
             @click="handleTestConnection"
           >
@@ -934,7 +934,7 @@ watch(
             <HeartPulse v-else :size="16" />
             {{ testLoading ? 'Testing...' : 'Test Connection' }}
           </button>
-          <span v-if="testSuccess && !isTestStale" class="inline-flex items-center gap-1.5 rounded-lg bg-accent-muted border border-accent-border px-3 py-2 text-sm text-accent">
+          <span v-if="testSuccess && !isTestStale" class="inline-flex items-center gap-1.5 rounded-sm bg-accent-muted border border-accent-border px-3 py-2 text-sm text-accent">
             <CheckCircle2 :size="16" />
             {{ testSuccess }}
           </span>
@@ -942,26 +942,26 @@ watch(
             <CircleAlert :size="16" />
             Configuration changed since last successful test
           </span>
-          <span v-else-if="testError" class="inline-flex items-center gap-1.5 rounded-lg bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-sm text-rose-500">
+          <span v-else-if="testError" class="inline-flex items-center gap-1.5 rounded-sm bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-sm text-rose-500">
             <CircleAlert :size="16" />
             {{ testError }}
           </span>
         </div>
       </section>
 
-      <section class="rounded-xl border border-border bg-surface-raised px-6 py-4">
+      <section class="rounded border border-border bg-surface-raised px-6 py-4">
         <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-text-primary">
           <input type="checkbox" v-model="formIsDefault" :disabled="saveLoading" class="h-4 w-4" />
           Set as default data source
         </label>
       </section>
 
-      <div v-if="formError" class="rounded-lg bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-sm text-rose-500">{{ formError }}</div>
+      <div v-if="formError" class="rounded-sm bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-sm text-rose-500">{{ formError }}</div>
 
       <footer class="flex justify-end gap-2.5 max-md:flex-col-reverse">
         <button
           type="button"
-          class="inline-flex items-center justify-center gap-2 rounded-lg border border-border-strong px-4 py-2 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed max-md:w-full"
+          class="inline-flex items-center justify-center gap-2 rounded-sm border border-border-strong px-4 py-2 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed max-md:w-full"
           :disabled="saveLoading"
           @click="router.push('/datasources')"
         >
@@ -969,7 +969,7 @@ watch(
         </button>
         <button
           type="submit"
-          class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed max-md:w-full"
+          class="inline-flex items-center justify-center gap-2 rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed max-md:w-full"
           :disabled="saveLoading"
         >
           <Loader2 v-if="saveLoading" :size="16" class="animate-spin" />

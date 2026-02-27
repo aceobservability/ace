@@ -138,7 +138,7 @@ watch(
       </div>
       <div class="flex items-center gap-2.5">
         <button
-          class="inline-flex items-center justify-center gap-2 rounded-lg border border-border-strong px-4 py-2 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed min-w-[96px]"
+          class="inline-flex items-center justify-center gap-2 rounded-sm border border-border-strong px-4 py-2 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed min-w-[96px]"
           :disabled="datasources.length === 0 || testAllLoading"
           @click="testAllDatasources"
         >
@@ -147,7 +147,7 @@ watch(
           {{ testAllLoading ? 'Testing...' : 'Test All' }}
         </button>
         <button
-          class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center justify-center gap-2 rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="!canCreate"
           @click="openCreatePage"
         >
@@ -157,7 +157,7 @@ watch(
       </div>
     </header>
 
-    <div v-if="error" class="rounded-lg bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-sm text-rose-500 mb-6">{{ error }}</div>
+    <div v-if="error" class="rounded-sm bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-sm text-rose-500 mb-6">{{ error }}</div>
 
     <div v-if="loading && datasources.length === 0" class="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
       <div class="h-8 w-8 rounded-full border-3 border-border border-t-accent animate-spin"></div>
@@ -165,11 +165,11 @@ watch(
     </div>
 
     <div v-else-if="datasources.length === 0" class="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
-      <Database :size="48" class="text-slate-300" />
+      <Database :size="48" class="text-text-muted" />
       <h3 class="text-lg font-semibold text-text-primary m-0">No data sources configured</h3>
       <p class="text-sm text-text-muted m-0">Add a data source to start querying your monitoring systems.</p>
       <button
-        class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+        class="inline-flex items-center justify-center gap-2 rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="!canCreate"
         @click="openCreatePage"
       >
@@ -182,31 +182,31 @@ watch(
       <div
         v-for="ds in datasources"
         :key="ds.id"
-        class="rounded-xl border border-border bg-surface-raised transition hover:border-accent-border hover:shadow-md"
+        class="rounded border border-border bg-surface-raised transition hover:border-accent-border hover:shadow-md"
       >
         <div class="flex justify-between items-start p-4 pb-0 gap-3">
           <div class="flex items-start flex-wrap gap-2.5 min-w-0">
             <div
-              class="flex items-center gap-2.5 rounded-lg border px-3.5 py-1.5 min-w-0"
+              class="flex items-center gap-2.5 rounded-sm border px-3.5 py-1.5 min-w-0"
               :style="{ borderColor: getTypeColor(ds.type) + '4d', background: getTypeColor(ds.type) + '14' }"
             >
               <img v-if="getTypeLogo(ds.type)" :src="getTypeLogo(ds.type)" :alt="`${dataSourceTypeLabels[ds.type]} logo`" class="w-[26px] h-[26px] object-contain shrink-0" />
-              <Database v-else :size="26" class="shrink-0 text-slate-400" />
+              <Database v-else :size="26" class="shrink-0 text-text-muted" />
               <div class="flex flex-col gap-px min-w-0">
-                <span class="text-[0.64rem] tracking-[0.05em] uppercase text-slate-400">Source Type</span>
+                <span class="text-[0.64rem] tracking-[0.05em] uppercase text-text-muted">Source Type</span>
                 <strong class="text-sm font-bold text-text-primary leading-tight">{{ dataSourceTypeLabels[ds.type] }}</strong>
               </div>
             </div>
-            <span v-if="ds.is_default" class="inline-flex items-center gap-1 rounded-full bg-accent-muted text-accent px-2 py-0.5 text-xs font-medium">
+            <span v-if="ds.is_default" class="inline-flex items-center gap-1 rounded-sm bg-accent-muted text-accent px-2 py-0.5 text-xs font-medium">
               <Check :size="12" />
               Default
             </span>
           </div>
           <div class="flex gap-1">
-            <button class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-surface-overlay hover:text-text-secondary transition border-none bg-transparent cursor-pointer" @click="openEditPage(ds.id)" title="Edit">
+            <button class="flex items-center justify-center h-8 w-8 rounded-sm text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition border-none bg-transparent cursor-pointer" @click="openEditPage(ds.id)" title="Edit">
               <Pencil :size="16" />
             </button>
-            <button class="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:bg-rose-500/10 hover:text-rose-500 transition border-none bg-transparent cursor-pointer" @click="handleDelete(ds)" title="Delete">
+            <button class="flex items-center justify-center h-8 w-8 rounded-sm text-text-muted hover:bg-rose-500/10 hover:text-rose-500 transition border-none bg-transparent cursor-pointer" @click="handleDelete(ds)" title="Delete">
               <Trash2 :size="16" />
             </button>
           </div>
@@ -214,14 +214,14 @@ watch(
         <div class="flex flex-col gap-3 p-4">
           <div class="flex flex-col gap-2">
             <h3 class="text-sm font-semibold text-text-primary m-0">{{ ds.name }}</h3>
-            <div class="flex items-center gap-1.5 text-xs text-slate-400 break-all">
+            <div class="flex items-center gap-1.5 text-xs text-text-muted break-all">
               <ExternalLink :size="14" class="shrink-0" />
               <span class="truncate">{{ ds.url }}</span>
             </div>
           </div>
           <div class="flex items-center justify-between gap-3">
             <span
-              class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs border"
+              class="inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 text-xs border"
               :class="{
                 'text-text-muted bg-surface-overlay border-border': getHealthStatus(ds.id) === 'unknown',
                 'text-sky-600 bg-sky-50 border-sky-200': getHealthStatus(ds.id) === 'checking',
@@ -238,7 +238,7 @@ watch(
             </span>
 
             <button
-              class="inline-flex items-center justify-center gap-1.5 rounded-full border border-border-strong px-2.5 py-1 text-xs font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center justify-center gap-1.5 rounded-sm border border-border-strong px-2.5 py-1 text-xs font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="getHealthStatus(ds.id) === 'checking'"
               @click="testDatasource(ds)"
               title="Run connection test"

@@ -46,7 +46,7 @@ async function handleDisconnect() {
     <!-- Success toast -->
     <div
       v-if="showSuccessToast"
-      class="mb-4 flex items-center gap-2 rounded-xl border border-accent-border bg-accent-muted px-4 py-3 text-sm text-accent"
+      class="mb-4 flex items-center gap-2 rounded border border-accent-border bg-accent-muted px-4 py-3 text-sm text-accent"
     >
       <Check :size="16" />
       GitHub Copilot connected successfully!
@@ -54,7 +54,7 @@ async function handleDisconnect() {
 
     <div class="flex flex-col gap-6 max-w-2xl">
       <!-- Integrations section -->
-      <section class="rounded-xl border border-border bg-surface-raised">
+      <section class="rounded border border-border bg-surface-raised">
         <div class="border-b border-border px-6 py-4">
           <h2 class="text-lg font-semibold text-text-primary m-0">Integrations</h2>
           <p class="text-sm text-text-muted m-0 mt-1">Connect external services to enhance your experience.</p>
@@ -62,8 +62,8 @@ async function handleDisconnect() {
 
         <div class="p-6">
           <!-- GitHub Copilot card -->
-          <div class="flex items-start gap-4 rounded-xl border border-border p-4">
-            <div class="flex items-center justify-center h-10 w-10 shrink-0 rounded-lg bg-slate-900">
+          <div class="flex items-start gap-4 rounded border border-border p-4">
+            <div class="flex items-center justify-center h-10 w-10 shrink-0 rounded-sm bg-slate-900">
               <Github :size="20" class="text-white" />
             </div>
 
@@ -74,12 +74,12 @@ async function handleDisconnect() {
               </p>
 
               <div v-if="loading" class="flex items-center gap-2 mt-2">
-                <Loader2 :size="14" class="animate-spin text-slate-400" />
-                <span class="text-xs text-slate-400">Checking connection...</span>
+                <Loader2 :size="14" class="animate-spin text-text-muted" />
+                <span class="text-xs text-text-muted">Checking connection...</span>
               </div>
 
               <div v-else-if="isConnected" class="flex items-center gap-3 mt-2">
-                <span class="inline-flex items-center gap-1.5 rounded-full border border-accent-border bg-accent-muted px-2.5 py-0.5 text-xs font-medium text-accent">
+                <span class="inline-flex items-center gap-1.5 rounded-sm border border-accent-border bg-accent-muted px-2.5 py-0.5 text-xs font-medium text-accent">
                   <Check :size="12" />
                   Connected as {{ githubUsername }}
                 </span>
@@ -91,7 +91,7 @@ async function handleDisconnect() {
             <div class="shrink-0">
               <button
                 v-if="!loading && !isConnected"
-                class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white cursor-pointer border-none transition hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="inline-flex items-center gap-2 rounded-sm bg-slate-900 px-4 py-2 text-sm font-semibold text-white cursor-pointer border-none transition hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 :disabled="!currentOrgId"
                 @click="currentOrgId && connect(currentOrgId)"
               >
@@ -101,7 +101,7 @@ async function handleDisconnect() {
 
               <button
                 v-else-if="!loading && isConnected"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-xs font-medium text-text-secondary cursor-pointer transition hover:bg-rose-500/10 hover:border-rose-500/25 hover:text-rose-500"
+                class="inline-flex items-center gap-1.5 rounded-sm border border-border bg-surface-raised px-3 py-1.5 text-xs font-medium text-text-secondary cursor-pointer transition hover:bg-rose-500/10 hover:border-rose-500/25 hover:text-rose-500"
                 @click="handleDisconnect"
               >
                 <Unplug :size="12" />
