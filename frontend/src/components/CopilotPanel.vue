@@ -15,6 +15,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { type CopilotMessage, useCopilot } from '../composables/useCopilot'
 import { getVictoriaMetricsTools, useCopilotToolExecutor } from '../composables/useCopilotTools'
 import { useOrganization } from '../composables/useOrganization'
+import { initMarkdown, renderMarkdown } from '../utils/markdown'
 
 const props = defineProps<{
   datasourceType: string
@@ -54,8 +55,10 @@ const messages = ref<CopilotMessage[]>([])
 const inputText = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
 const modelSelectorRef = ref<HTMLElement | null>(null)
+const renderedHtml = ref<Record<number, string>>({})
 
 onMounted(async () => {
+  await initMarkdown()
   document.addEventListener('click', handleClickOutside)
   await checkConnection()
   if (isConnected.value && hasCopilot.value) {
@@ -200,19 +203,17 @@ function clearChat() {
   messages.value = []
 }
 
-function formatMessage(content: string): string {
-  // Replace code blocks with styled pre/code
-  return content
-    .replace(
-      /```(\w*)\n?([\s\S]*?)```/g,
-      '<pre class="rounded-sm bg-surface-overlay p-3 my-2 overflow-x-auto"><code class="text-xs font-mono text-accent whitespace-pre-wrap">$2</code></pre>',
-    )
-    .replace(
-      /`([^`]+)`/g,
-      '<code class="rounded bg-surface-overlay px-1.5 py-0.5 text-xs font-mono text-accent">$1</code>',
-    )
-    .replace(/\n/g, '<br />')
-}
+watch(
+  messages,
+  async (msgs) => {
+    for (let i = 0; i < msgs.length; i++) {
+      const msg = msgs[i]
+      if (msg.role !== 'assistant' || !msg.content) continue
+      renderedHtml.value[i] = await renderMarkdown(msg.content)
+    }
+  },
+  { deep: true },
+)
 
 const codeCopied = ref(false)
 
@@ -373,8 +374,9 @@ onBeforeUnmount(() => {
 
           <!-- Assistant message -->
           <div v-else class="self-start max-w-[95%]">
-            <div class="rounded bg-surface-overlay px-3 py-2 text-sm text-text-primary">
-              <div v-html="formatMessage(msg.content)" />
+            <div class="copilot-prose prose prose-sm max-w-none rounded bg-surface-overlay px-3 py-2 text-sm text-text-primary">
+              <div v-if="renderedHtml[index]" v-html="renderedHtml[index]" />
+              <span v-else>{{ msg.content }}</span>
             </div>
           </div>
         </div>
