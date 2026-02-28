@@ -1,6 +1,6 @@
 import { ref, watchEffect } from 'vue'
 
-export type ThemeMode = 'dark' | 'light' | 'system'
+type ThemeMode = 'dark' | 'light' | 'system'
 
 const STORAGE_KEY = 'ace-theme'
 const mode = ref<ThemeMode>((localStorage.getItem(STORAGE_KEY) as ThemeMode) || 'system')

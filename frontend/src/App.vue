@@ -23,7 +23,7 @@ const showSidebar = computed(() => {
 const mainMargin = computed(() => {
   if (!showSidebar.value) return {}
   const width = sidebarRef.value?.isPinned ? 220 : 48
-  return { marginLeft: width + 'px' }
+  return { marginLeft: `${width}px` }
 })
 
 const showCopilot = ref(false)
@@ -67,6 +67,7 @@ watch(
       class="fixed bottom-6 right-6 z-50 flex items-center justify-center h-12 w-12 rounded-full shadow-lg cursor-pointer border-none transition bg-surface-raised text-text-secondary border border-border hover:bg-surface-overlay hover:text-text-primary"
       @click="showCopilot = true"
       title="Toggle AI assistant"
+      data-testid="copilot-toggle-btn"
     >
       <Sparkles :size="20" />
     </button>

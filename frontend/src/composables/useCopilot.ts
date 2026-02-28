@@ -15,7 +15,7 @@ export interface CopilotMessage {
   content: string
 }
 
-export interface CopilotModel {
+interface CopilotModel {
   id: string
   name: string
   vendor: string
@@ -48,7 +48,7 @@ interface ToolMessage {
   content: string
 }
 
-export type ChatRequestMessage =
+type ChatRequestMessage =
   | { role: 'user' | 'assistant' | 'system'; content: string }
   | { role: 'assistant'; content: string | null; tool_calls: ToolCall[] }
   | ToolMessage

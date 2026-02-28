@@ -89,8 +89,8 @@ describe('StatPanel', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, label: 'CPU Usage' },
     })
-    expect(wrapper.find('.text-slate-500').exists()).toBe(true)
-    expect(wrapper.find('.text-slate-500').text()).toBe('CPU Usage')
+    expect(wrapper.find('.text-text-secondary').exists()).toBe(true)
+    expect(wrapper.find('.text-text-secondary').text()).toBe('CPU Usage')
   })
 
   it('does not display label when not provided', () => {
@@ -98,7 +98,7 @@ describe('StatPanel', () => {
       props: { value: 100 },
     })
     // No label element rendered
-    expect(wrapper.find('.text-slate-500').exists()).toBe(false)
+    expect(wrapper.find('.text-text-secondary').exists()).toBe(false)
   })
 
   it('shows upward trend when value is higher than previous', () => {

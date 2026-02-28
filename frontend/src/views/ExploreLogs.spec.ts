@@ -236,9 +236,9 @@ function findLiveButton(wrapper: ReturnType<typeof mount>) {
     .find((b) => b.text().includes('Start Live') || b.text().includes('Stop Live'))!
 }
 
-/** Find error display (use rounded-xl to distinguish from the health badge which uses rounded-full) */
+/** Find error display */
 function findError(wrapper: ReturnType<typeof mount>) {
-  return wrapper.find('.rounded-xl.text-rose-500')
+  return wrapper.find('.rounded.text-rose-500')
 }
 
 describe('ExploreLogs', () => {

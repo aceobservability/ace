@@ -2,11 +2,6 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "ignoreDependencies": ["@vitest/coverage-v8"],
   "ignore": [
-    "src/components/GitHubAppSettings.vue",
-    "src/composables/useAlertManager.ts",
-    "src/composables/useVMAlert.ts",
-    "src/views/AlertsView.vue",
-    "src/views/OrgBrandingSettings.vue",
     "src/views/UserSettingsView.vue"
   ],
   "rules": {

@@ -200,7 +200,7 @@ describe('QueryEditor', () => {
     await findRunButton(wrapper).trigger('click')
     await flushPromises()
 
-    const labels = wrapper.findAll('.font-mono.rounded-full')
+    const labels = wrapper.findAll('.font-mono.rounded-sm')
     expect(labels.length).toBeGreaterThan(0)
 
     const labelTexts = labels.map((l) => l.text())

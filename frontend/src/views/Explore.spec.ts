@@ -198,9 +198,9 @@ function findRunButton(wrapper: ReturnType<typeof mount>) {
     .find((b) => b.text().includes('Run Query') || b.text().includes('Running'))!
 }
 
-/** Find error display (use rounded-xl to distinguish from the health badge which uses rounded-full) */
+/** Find error display */
 function findError(wrapper: ReturnType<typeof mount>) {
-  return wrapper.find('.rounded-xl.text-rose-500')
+  return wrapper.find('.rounded.text-rose-500')
 }
 
 describe('Explore', () => {

@@ -36,6 +36,7 @@ describe('Sidebar', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   afterEach(() => {
@@ -63,21 +64,20 @@ describe('Sidebar', () => {
     })
 
     const aside = wrapper.find('aside')
-    // Collapsed: sidebar with w-16 (not expanded width)
-    expect(aside.classes()).toContain('w-16')
-    expect(aside.classes()).not.toContain('w-[232px]')
+    // Collapsed: sidebar with width 48px (not expanded width)
+    expect(aside.element.style.width).toBe('48px')
 
-    // Click toggle button (Expand/Collapse sidebar button)
-    const toggleBtn = wrapper
-      .findAll('button')
-      .find((b) => b.attributes('title') === 'Expand sidebar' || b.attributes('title') === 'Collapse sidebar')!
-    await toggleBtn.trigger('click')
+    // Click pin button to expand
+    const pinBtn = wrapper.find('[data-testid="sidebar-pin-btn"]')
+    await pinBtn.trigger('click')
 
-    // Expanded: sidebar with w-[232px]
-    expect(aside.classes()).toContain('w-[232px]')
+    // Expanded: sidebar with width 220px
+    expect(aside.element.style.width).toBe('220px')
   })
 
   it('temporarily expands when hovered while collapsed', async () => {
+    vi.useFakeTimers()
+
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,
       writable: true,
@@ -94,18 +94,20 @@ describe('Sidebar', () => {
     })
 
     const aside = wrapper.find('aside')
-    // Collapsed: sidebar with w-16 (not expanded width)
-    expect(aside.classes()).toContain('w-16')
-    expect(aside.classes()).not.toContain('w-[232px]')
+    // Collapsed: sidebar with width 48px (not expanded width)
+    expect(aside.element.style.width).toBe('48px')
 
     await aside.trigger('mouseenter')
 
-    // Hover-expanded: sidebar with w-[232px]
-    expect(aside.classes()).toContain('w-[232px]')
+    // Hover-expanded: sidebar with width 220px
+    expect(aside.element.style.width).toBe('220px')
 
     await aside.trigger('mouseleave')
+    await vi.advanceTimersByTimeAsync(200)
 
-    // Back to collapsed: sidebar with w-16
-    expect(aside.classes()).toContain('w-16')
+    // Back to collapsed: sidebar with width 48px
+    expect(aside.element.style.width).toBe('48px')
+
+    vi.useRealTimers()
   })
 })

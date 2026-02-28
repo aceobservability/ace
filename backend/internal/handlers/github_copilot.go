@@ -473,7 +473,7 @@ var premiumMultipliers = map[string]float64{
 	"gpt-4.1":     0,
 	"gpt-4o":      0,
 	"gpt-5-mini":  0,
-	"raptor-mini":  0,
+	"raptor-mini": 0,
 	// 0.25x
 	"grok-code-fast-1": 0.25,
 	// 0.33x
@@ -481,18 +481,18 @@ var premiumMultipliers = map[string]float64{
 	"gemini-3-flash":     0.33,
 	"gpt-5.1-codex-mini": 0.33,
 	// 1x Premium
-	"claude-sonnet-4":    1,
-	"claude-sonnet-4.5":  1,
-	"claude-sonnet-4.6":  1,
-	"gemini-2.5-pro":     1,
-	"gemini-3-pro":       1,
-	"gemini-3.1-pro":     1,
-	"gpt-5.1":            1,
-	"gpt-5.1-codex":      1,
-	"gpt-5.1-codex-max":  1,
-	"gpt-5.2":            1,
-	"gpt-5.2-codex":      1,
-	"gpt-5.3-codex":      1,
+	"claude-sonnet-4":   1,
+	"claude-sonnet-4.5": 1,
+	"claude-sonnet-4.6": 1,
+	"gemini-2.5-pro":    1,
+	"gemini-3-pro":      1,
+	"gemini-3.1-pro":    1,
+	"gpt-5.1":           1,
+	"gpt-5.1-codex":     1,
+	"gpt-5.1-codex-max": 1,
+	"gpt-5.2":           1,
+	"gpt-5.2-codex":     1,
+	"gpt-5.3-codex":     1,
 	// 3x
 	"claude-opus-4.5": 3,
 	"claude-opus-4.6": 3,
@@ -572,13 +572,13 @@ func (h *GitHubCopilotHandler) ListModels(w http.ResponseWriter, r *http.Request
 	// Parse the raw models response
 	var raw struct {
 		Data []struct {
-			ID                 string `json:"id"`
-			Name               string `json:"name"`
-			Vendor             string `json:"vendor"`
-			ModelPickerEnabled bool   `json:"model_picker_enabled"`
+			ID                  string `json:"id"`
+			Name                string `json:"name"`
+			Vendor              string `json:"vendor"`
+			ModelPickerEnabled  bool   `json:"model_picker_enabled"`
 			ModelPickerCategory string `json:"model_picker_category"`
-			Preview            bool   `json:"preview"`
-			Policy             struct {
+			Preview             bool   `json:"preview"`
+			Policy              struct {
 				State string `json:"state"`
 			} `json:"policy"`
 			SupportedEndpoints []string `json:"supported_endpoints"`
@@ -780,7 +780,6 @@ func (h *GitHubCopilotHandler) Chat(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-
 
 // ConfigureGitHubApp creates or updates GitHub OAuth App configuration for an organization.
 func (h *GitHubCopilotHandler) ConfigureGitHubApp(w http.ResponseWriter, r *http.Request) {

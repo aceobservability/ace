@@ -10,7 +10,7 @@ describe('LogViewer', () => {
       },
     })
 
-    expect(wrapper.find('.text-center.text-slate-400').exists()).toBe(true)
+    expect(wrapper.find('.text-center.text-text-muted').exists()).toBe(true)
     expect(wrapper.text()).toContain('No log entries')
   })
 
