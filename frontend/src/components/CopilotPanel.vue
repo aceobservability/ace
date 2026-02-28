@@ -53,6 +53,14 @@ const { currentOrgId } = useOrganization()
 
 const messages = ref<CopilotMessage[]>([])
 const inputText = ref('')
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
+
+function autoResizeTextarea() {
+  const el = textareaRef.value
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = el.scrollHeight + 'px'
+}
 const messagesContainer = ref<HTMLElement | null>(null)
 const modelSelectorRef = ref<HTMLElement | null>(null)
 const renderedHtml = ref<Record<number, string>>({})
@@ -140,6 +148,8 @@ function scrollToBottom() {
 function toolLabel(name: string): string {
   return name.replace(/_/g, ' ')
 }
+
+watch(inputText, () => nextTick(autoResizeTextarea))
 
 watch(messages, scrollToBottom, { deep: true })
 
@@ -302,6 +312,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div
+    data-testid="copilot-panel"
     class="relative flex flex-col h-screen shrink-0 bg-surface-raised border-l border-border sticky top-0"
     :style="{ width: panelWidth + 'px' }"
   >
@@ -319,6 +330,7 @@ onBeforeUnmount(() => {
       </div>
       <button
         class="flex items-center justify-center h-6 w-6 rounded bg-transparent border-none text-text-muted cursor-pointer hover:text-text-primary hover:bg-surface-overlay"
+        data-testid="copilot-close-btn"
         @click="emit('close')"
         title="Close panel"
       >
@@ -340,6 +352,7 @@ onBeforeUnmount(() => {
         <button
           class="flex items-center justify-center h-9 w-9 rounded-sm border border-border bg-surface-overlay cursor-pointer text-text-muted transition hover:text-text-primary hover:border-text-muted"
           title="Copy code"
+          data-testid="copilot-copy-code-btn"
           @click="copyCode"
         >
           <Check v-if="codeCopied" :size="14" class="text-emerald-500" />
@@ -349,6 +362,7 @@ onBeforeUnmount(() => {
 
       <button
         class="inline-flex items-center gap-2 rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white cursor-pointer border-none transition hover:bg-accent-hover"
+        data-testid="copilot-open-github-btn"
         @click="openGitHub"
       >
         <ExternalLink :size="14" />
@@ -362,6 +376,7 @@ onBeforeUnmount(() => {
 
       <button
         class="inline-flex items-center gap-1 text-xs text-text-muted cursor-pointer border-none bg-transparent hover:text-text-primary"
+        data-testid="copilot-cancel-device-flow-btn"
         @click="cancelDeviceFlow"
       >
         Cancel
@@ -377,6 +392,7 @@ onBeforeUnmount(() => {
       </div>
       <button
         class="inline-flex items-center gap-2 rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white cursor-pointer border-none transition hover:bg-accent-hover"
+        data-testid="copilot-connect-btn"
         :disabled="!currentOrgId"
         @click="currentOrgId && connect(currentOrgId)"
       >
@@ -403,6 +419,7 @@ onBeforeUnmount(() => {
       </div>
       <button
         class="inline-flex items-center gap-1 text-xs text-text-muted cursor-pointer border-none bg-transparent hover:text-text-primary"
+        data-testid="copilot-disconnect-no-sub-btn"
         @click="handleDisconnect"
       >
         <Unplug :size="12" />
@@ -460,10 +477,13 @@ onBeforeUnmount(() => {
       <div class="flex flex-col gap-2 border-t border-border p-3">
         <div class="flex gap-2">
           <textarea
+            ref="textareaRef"
             v-model="inputText"
-            class="flex-1 resize-none rounded-sm bg-surface-overlay border border-border px-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent min-h-[38px] max-h-[120px]"
+            class="flex-1 resize-none rounded-sm bg-surface-overlay border border-border px-3 py-2 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent leading-5 overflow-y-auto"
+            style="min-height: 38px; max-height: calc(5 * 1.25rem + 1rem);"
             placeholder="Ask about queries..."
             rows="1"
+            data-testid="copilot-chat-input"
             @keydown="handleKeydown"
             :disabled="isLoading"
           />
@@ -471,6 +491,7 @@ onBeforeUnmount(() => {
             class="flex items-center justify-center h-[38px] w-[38px] shrink-0 rounded-sm border-none cursor-pointer transition"
             :class="inputText.trim() && !isLoading ? 'bg-accent text-white hover:bg-accent-hover' : 'bg-surface-overlay text-text-muted cursor-not-allowed'"
             :disabled="!inputText.trim() || isLoading"
+            data-testid="copilot-send-btn"
             @click="handleSend"
             title="Send message"
           >
@@ -483,6 +504,7 @@ onBeforeUnmount(() => {
           <div v-if="models.length > 0" ref="modelSelectorRef" class="relative flex-1 min-w-0">
             <button
               class="inline-flex items-center gap-1 text-xs text-text-muted cursor-pointer border-none bg-transparent hover:text-text-primary w-full"
+              data-testid="copilot-model-selector-btn"
               @click="modelDropdownOpen = !modelDropdownOpen"
             >
               <span class="truncate">{{ selectedModelName() }}</span>
@@ -505,6 +527,7 @@ onBeforeUnmount(() => {
                 :key="model.id"
                 class="flex items-center justify-between w-full px-2.5 py-2 text-xs text-left cursor-pointer border-none transition"
                 :class="model.id === selectedModel ? 'bg-accent/10 text-accent' : 'bg-transparent text-text-primary hover:bg-surface-overlay'"
+                :data-testid="`copilot-model-item-${model.id}`"
                 @click="selectModel(model.id)"
               >
                 <div class="flex flex-col gap-0.5 min-w-0">
@@ -525,12 +548,14 @@ onBeforeUnmount(() => {
           <button
             v-if="messages.length > 0"
             class="inline-flex items-center gap-1 text-xs text-text-muted cursor-pointer border-none bg-transparent hover:text-text-primary shrink-0"
+            data-testid="copilot-clear-chat-btn"
             @click="clearChat"
           >
             <Trash2 :size="12" />
           </button>
           <button
             class="inline-flex items-center gap-1 text-xs text-text-muted cursor-pointer border-none bg-transparent hover:text-text-primary shrink-0"
+            data-testid="copilot-disconnect-btn"
             @click="handleDisconnect"
           >
             <Unplug :size="12" />
