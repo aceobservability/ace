@@ -420,14 +420,14 @@ jobs:
       - build-frontend-artifact
     steps:
       - name: Download backend packages
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: backend-package-*
           merge-multiple: true
           path: release-assets/backend
 
       - name: Download frontend package
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: frontend-package
           path: release-assets/frontend
@@ -454,32 +454,32 @@ jobs:
       - checksums
     steps:
       - name: Download backend packages
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: backend-package-*
           merge-multiple: true
           path: release-assets/backend
 
       - name: Download frontend package
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: frontend-package
           path: release-assets/frontend
 
       - name: Download checksums
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: release-checksums
           path: release-assets
 
       - name: Download backend image SBOM
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: sbom-backend-image
           path: release-assets/sbom
 
       - name: Download frontend image SBOM
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: sbom-frontend-image
           path: release-assets/sbom
