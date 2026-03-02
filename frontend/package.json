@@ -24,7 +24,7 @@
     "lucide-vue-next": "^0.575.0",
     "marked": "^17.0.3",
     "monaco-editor": "^0.55.1",
-    "posthog-js": "^1.352.0",
+    "posthog-js": "^1.356.1",
     "shiki": "^4.0.0",
     "vue": "^3.5.28",
     "vue-echarts": "^8.0.1",
