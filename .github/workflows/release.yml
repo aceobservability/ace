@@ -172,7 +172,7 @@ jobs:
         working-directory: backend
 
       - name: Upload backend package
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: backend-package-${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
@@ -215,7 +215,7 @@ jobs:
           tar -czf "dist-release/dash-frontend_${version}.tar.gz" -C frontend dist
 
       - name: Upload frontend package
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-package
           path: dist-release/*.tar.gz
@@ -311,7 +311,7 @@ jobs:
             -o spdx-json=sbom-backend-image-${RELEASE_TAG#v}.spdx.json
 
       - name: Upload backend image SBOM
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-backend-image
           path: sbom-backend-image-*.spdx.json
@@ -407,7 +407,7 @@ jobs:
             -o spdx-json=sbom-frontend-image-${RELEASE_TAG#v}.spdx.json
 
       - name: Upload frontend image SBOM
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-frontend-image
           path: sbom-frontend-image-*.spdx.json
@@ -438,7 +438,7 @@ jobs:
           sha256sum release-assets/backend/* release-assets/frontend/* > release-assets/checksums.txt
 
       - name: Upload checksums file
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: release-checksums
           path: release-assets/checksums.txt
