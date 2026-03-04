@@ -1,0 +1,156 @@
+# =============================================================================
+# Ace — Development Values
+# =============================================================================
+# Single replicas, small storage, short retention, no TLS.
+# Usage: helm install ace ./charts/ace -f charts/ace/values-dev.yaml
+# =============================================================================
+
+backend:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  pdb:
+    enabled: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+frontend:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
+ingress:
+  enabled: false
+
+networkPolicy:
+  enabled: false
+
+rbac:
+  create: true
+
+postgresql:
+  enabled: true
+  auth:
+    password: "dev-password-change-me"
+  primary:
+    persistence:
+      enabled: true
+      size: 1Gi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+victoria-metrics-k8s-stack:
+  enabled: true
+  vmsingle:
+    enabled: true
+    spec:
+      retentionPeriod: "7d"
+      storage:
+        resources:
+          requests:
+            storage: 5Gi
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+  vmagent:
+    enabled: true
+    spec:
+      scrapeInterval: "30s"
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+  vmalert:
+    enabled: true
+    spec:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+  alertmanager:
+    enabled: true
+    spec:
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          cpu: 50m
+          memory: 64Mi
+  grafana:
+    enabled: false
+  prometheus:
+    enabled: false
+  kube-state-metrics:
+    enabled: true
+  prometheus-node-exporter:
+    enabled: true
+
+victoria-logs-single:
+  enabled: true
+  server:
+    persistentVolume:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    extraArgs:
+      retentionPeriod: "3d"
+
+victoriatraces:
+  enabled: true
+
+vtraces:
+  server:
+    persistentVolume:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+vector:
+  enabled: true
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi

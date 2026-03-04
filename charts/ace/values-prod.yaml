@@ -1,0 +1,188 @@
+# =============================================================================
+# Ace — Production Values
+# =============================================================================
+# High-availability, generous storage, long retention, TLS enabled.
+# Usage: helm install ace ./charts/ace -f charts/ace/values-prod.yaml \
+#          --set postgresql.auth.password=STRONG_PASSWORD \
+#          --set backend.jwt.secret=STRONG_SECRET
+# =============================================================================
+
+backend:
+  replicaCount: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 65
+    targetMemoryUtilizationPercentage: 75
+  pdb:
+    enabled: true
+    minAvailable: 2
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  # Set these in production:
+  # baseURL: "https://ace.example.com"
+  # frontendURL: "https://ace.example.com"
+
+frontend:
+  replicaCount: 3
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+  hosts:
+    - host: ace.example.com
+  tls:
+    - secretName: ace-tls
+      hosts:
+        - ace.example.com
+
+networkPolicy:
+  enabled: true
+
+rbac:
+  create: true
+
+postgresql:
+  enabled: true
+  auth:
+    username: ace
+    password: ""  # MUST be set via --set or external secret
+    database: ace
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi
+      storageClass: ""  # Use default or specify gp3, etc.
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+
+victoria-metrics-k8s-stack:
+  enabled: true
+  vmsingle:
+    enabled: true
+    spec:
+      retentionPeriod: "180d"
+      storage:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 200Gi
+      resources:
+        requests:
+          cpu: 500m
+          memory: 2Gi
+        limits:
+          cpu: "4"
+          memory: 8Gi
+  vmagent:
+    enabled: true
+    spec:
+      scrapeInterval: "15s"
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: "1"
+          memory: 1Gi
+  vmalert:
+    enabled: true
+    spec:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+  alertmanager:
+    enabled: true
+    spec:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+  grafana:
+    enabled: false
+  prometheus:
+    enabled: false
+  kube-state-metrics:
+    enabled: true
+  prometheus-node-exporter:
+    enabled: true
+
+victoria-logs-single:
+  enabled: true
+  server:
+    persistentVolume:
+      enabled: true
+      size: 200Gi
+      storageClass: ""
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: "4"
+        memory: 8Gi
+    extraArgs:
+      retentionPeriod: "90d"
+
+victoriatraces:
+  enabled: true
+
+vtraces:
+  server:
+    persistentVolume:
+      enabled: true
+      size: 100Gi
+      storageClass: ""
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "4"
+        memory: 8Gi
+
+vector:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
