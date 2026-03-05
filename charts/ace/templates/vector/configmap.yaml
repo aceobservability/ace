@@ -1,0 +1,56 @@
+{{- if .Values.vector.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ace.fullname" . }}-vector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ace.labels" . | nindent 4 }}
+    app.kubernetes.io/component: vector
+data:
+  vector.yaml: |
+    api:
+      enabled: true
+      address: "0.0.0.0:8686"
+    sources:
+      kubernetes_logs:
+        type: kubernetes_logs
+        self_node_name: "${VECTOR_SELF_NODE_NAME}"
+    transforms:
+      remap_logs:
+        type: remap
+        inputs:
+          - kubernetes_logs
+        source: |
+          # Flatten Kubernetes metadata into top-level fields
+          .k8s_namespace = .kubernetes.pod_namespace
+          .k8s_pod = .kubernetes.pod_name
+          .k8s_container = .kubernetes.container_name
+          .k8s_node = .kubernetes.pod_node_name
+          del(.kubernetes)
+          del(.file)
+          del(.source_type)
+    sinks:
+      victoria_logs:
+        type: elasticsearch
+        inputs:
+          - remap_logs
+        endpoints:
+          {{- if (index .Values "victoria-logs-single" "enabled") }}
+          - {{ printf "http://%s-vlogs-victoria-logs-single-server:9428/insert/elasticsearch/" (include "ace.fullname" .) }}
+          {{- else }}
+          - {{ .Values.vector.sink.endpoint | quote }}
+          {{- end }}
+        api_version: v8
+        mode: bulk
+        healthcheck:
+          enabled: false
+        query:
+          _stream_fields: "k8s_namespace,k8s_pod,k8s_container"
+          _msg_field: "message"
+          _time_field: "timestamp"
+        request:
+          headers:
+            AccountID: "0"
+            ProjectID: "0"
+{{- end }}

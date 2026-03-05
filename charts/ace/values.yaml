@@ -1,0 +1,422 @@
+# =============================================================================
+# Ace Observability Platform — Helm Chart Values
+# =============================================================================
+# This file contains production-grade defaults with sane resource limits,
+# retention periods, and security settings. Override per-environment with
+# values-dev.yaml or values-prod.yaml.
+# =============================================================================
+
+# -- Override the chart name
+nameOverride: ""
+# -- Override the full release name
+fullnameOverride: ""
+
+global:
+  # -- Image pull secrets for private registries
+  imagePullSecrets: []
+
+# =============================================================================
+# Service Account
+# =============================================================================
+serviceAccount:
+  # -- Create a dedicated ServiceAccount
+  create: true
+  # -- Annotations (e.g., for IRSA on EKS)
+  annotations: {}
+  # -- Override the ServiceAccount name
+  name: ""
+  # -- Disable auto-mounting tokens unless needed
+  automountServiceAccountToken: false
+
+# =============================================================================
+# RBAC
+# =============================================================================
+rbac:
+  # -- Create ClusterRole/ClusterRoleBinding for metrics scraping
+  create: true
+
+# =============================================================================
+# Network Policy
+# =============================================================================
+networkPolicy:
+  # -- Enable NetworkPolicy resources
+  enabled: false
+  # -- Labels to match the ingress controller pods (for ingress allowlisting)
+  ingressControllerLabels:
+    app.kubernetes.io/name: ingress-nginx
+
+# =============================================================================
+# Ace Backend (Go API)
+# =============================================================================
+backend:
+  # -- Number of replicas (ignored when autoscaling is enabled)
+  replicaCount: 2
+
+  image:
+    repository: ghcr.io/janhoon/ace-backend
+    pullPolicy: IfNotPresent
+    # -- Overrides the image tag (default: Chart.appVersion)
+    tag: ""
+
+  service:
+    type: ClusterIP
+    port: 8080
+
+  # -- Pod annotations (e.g., Prometheus scrape config)
+  podAnnotations: {}
+  # -- Extra pod labels
+  podLabels: {}
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    fsGroup: 65534
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # -- HPA configuration
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  # -- PodDisruptionBudget
+  pdb:
+    enabled: true
+    minAvailable: 1
+
+  # -- Use an existing Secret instead of the chart-managed one.
+  # Must contain keys: database-password, jwt-secret, jwt-private-key, jwt-public-key
+  existingSecret: ""
+
+  # -- JWT configuration (stored in Secret)
+  jwt:
+    # -- HMAC secret for JWT signing (set one of secret OR privateKey/publicKey)
+    secret: ""
+    # -- RSA/ECDSA private key PEM (optional, for asymmetric JWT)
+    privateKey: ""
+    # -- RSA/ECDSA public key PEM (optional)
+    publicKey: ""
+
+  # -- Valkey (Redis-compatible) for refresh tokens
+  valkey:
+    url: ""
+
+  # -- OpenTelemetry tracing configuration
+  otlp:
+    # -- Enable OTLP trace export from the backend
+    enabled: true
+    # -- OTLP endpoint (auto-detected from VictoriaTraces subchart if empty)
+    endpoint: ""
+
+  # -- Prometheus/VictoriaMetrics query endpoint
+  prometheus:
+    # -- Override the metrics query URL (auto-detected from k8s-stack if empty)
+    url: ""
+
+  # -- VictoriaLogs query endpoint
+  victoriaLogs:
+    # -- Override the logs query URL (auto-detected from vlogs subchart if empty)
+    url: ""
+
+  # -- Backend base URL (for SSO callbacks)
+  baseURL: ""
+  # -- Frontend URL (for SSO redirects)
+  frontendURL: ""
+
+  # -- PostHog analytics (optional)
+  posthog:
+    enabled: false
+    host: ""
+    apiKey: ""
+
+  # -- Extra environment variables as key-value pairs
+  extraEnv: {}
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# =============================================================================
+# Ace Frontend (Vue 3 SPA via nginx)
+# =============================================================================
+frontend:
+  replicaCount: 2
+
+  image:
+    repository: ghcr.io/janhoon/ace-frontend
+    pullPolicy: IfNotPresent
+    tag: ""
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  podAnnotations: {}
+  podLabels: {}
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 101  # nginx user in nginxinc/nginx-unprivileged
+    fsGroup: 101
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false  # nginx needs to write temp files
+    capabilities:
+      drop: ["ALL"]
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  # -- Override the default nginx.conf from the container image
+  nginxConfigOverride: false
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# =============================================================================
+# Ingress
+# =============================================================================
+ingress:
+  enabled: false
+  # -- Ingress class name (e.g., nginx, traefik)
+  className: nginx
+  annotations:
+    # cert-manager TLS
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: ace.example.com
+  tls:
+    - secretName: ace-tls
+      hosts:
+        - ace.example.com
+
+# =============================================================================
+# External Database (when postgresql.enabled=false)
+# =============================================================================
+externalDatabase:
+  # -- Full connection string (overrides all other fields)
+  url: ""
+  # -- Password (stored in Secret; referenced by DATABASE_URL)
+  password: ""
+
+# =============================================================================
+# PostgreSQL (Bitnami subchart)
+# =============================================================================
+postgresql:
+  enabled: true
+  auth:
+    username: ace
+    password: ""  # Set via --set or external secret in production!
+    database: ace
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: ""
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: "1"
+        memory: 1Gi
+
+# =============================================================================
+# VictoriaMetrics K8s Stack (metrics, VMAgent, VMAlert, Alertmanager)
+# =============================================================================
+# Subchart: victoria-metrics-k8s-stack (alias: vmetrics)
+# Docs: https://docs.victoriametrics.com/helm/victoria-metrics-k8s-stack/
+# =============================================================================
+victoria-metrics-k8s-stack:
+  enabled: true
+
+  # -- VMSingle for metrics storage
+  vmsingle:
+    enabled: true
+    spec:
+      retentionPeriod: "90d"
+      storage:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: ""
+      resources:
+        requests:
+          cpu: 200m
+          memory: 512Mi
+        limits:
+          cpu: "2"
+          memory: 4Gi
+
+  # -- VMAgent for scraping Kubernetes metrics
+  vmagent:
+    enabled: true
+    spec:
+      scrapeInterval: "30s"
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+      # Pre-configured scrape configs for Kubernetes
+      # The k8s-stack chart auto-discovers pods, nodes, and services
+
+  # -- VMAlert for alerting rules evaluation
+  vmalert:
+    enabled: true
+    spec:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+
+  # -- Alertmanager for alert routing and notifications
+  alertmanager:
+    enabled: true
+    spec:
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+
+  # -- Disable Grafana (Ace is the UI)
+  grafana:
+    enabled: false
+
+  # -- Disable default Prometheus (we use VMSingle)
+  prometheus:
+    enabled: false
+
+  # -- kube-state-metrics for cluster state metrics
+  kube-state-metrics:
+    enabled: true
+
+  # -- node-exporter for node-level metrics
+  prometheus-node-exporter:
+    enabled: true
+
+# =============================================================================
+# VictoriaLogs Single (log storage)
+# =============================================================================
+# Subchart: victoria-logs-single (alias: vlogs)
+# Docs: https://docs.victoriametrics.com/helm/victoria-logs-single/
+# =============================================================================
+victoria-logs-single:
+  enabled: true
+
+  server:
+    persistentVolume:
+      enabled: true
+      size: 50Gi
+      storageClass: ""
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    # -- Log retention period
+    extraArgs:
+      retentionPeriod: "30d"
+
+# =============================================================================
+# VictoriaTraces (trace storage with OTLP ingestion)
+# =============================================================================
+# Uses victoria-metrics-single subchart (alias: vtraces) configured as a
+# trace-compatible backend. When a dedicated victoria-traces-single chart
+# becomes available, swap the dependency.
+# =============================================================================
+victoriatraces:
+  enabled: true
+
+# -- victoria-metrics-single subchart config (alias: vtraces)
+vtraces:
+  server:
+    image:
+      repository: victoriametrics/victoria-traces
+      tag: v1.8.0-victoriametrics
+    persistentVolume:
+      enabled: true
+      size: 30Gi
+      storageClass: ""
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    extraArgs:
+      # Expose OTLP endpoints for trace ingestion
+      opentelemetry.enabled: "true"
+    # Extra container ports for OTLP
+    extraContainerPorts:
+      - name: otlp-grpc
+        containerPort: 4317
+        protocol: TCP
+      - name: otlp-http
+        containerPort: 4318
+        protocol: TCP
+
+# =============================================================================
+# Vector (Log Shipper DaemonSet)
+# =============================================================================
+vector:
+  # -- Deploy Vector as a DaemonSet to ship logs to VictoriaLogs
+  enabled: true
+
+  image:
+    repository: timberio/vector
+    tag: "0.43.1-alpine"
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+  # -- Sink endpoint (only used when victoria-logs-single is disabled)
+  sink:
+    endpoint: "http://victoria-logs:9428/insert/elasticsearch/"
