@@ -22,7 +22,7 @@
     "dompurify": "^3.3.1",
     "echarts": "^6.0.0",
     "lucide-vue-next": "^0.575.0",
-    "marked": "^17.0.3",
+    "marked": "^17.0.4",
     "monaco-editor": "^0.55.1",
     "posthog-js": "^1.352.0",
     "shiki": "^4.0.0",
