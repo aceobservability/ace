@@ -21,6 +21,7 @@ jobs:
     name: Dependency Review
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    continue-on-error: true
     permissions:
       contents: read
       pull-requests: write
@@ -32,6 +33,12 @@ jobs:
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
+
+      - name: Explain unsupported dependency review
+        if: failure()
+        run: |
+          echo "Dependency Review is currently non-blocking because this repo does not have dependency graph support enabled yet."
+          echo "Enable it in GitHub repo settings to make this check enforceable again."
 
   codeql-go:
     name: CodeQL (Go)
@@ -111,6 +118,7 @@ jobs:
   secret-scan:
     name: Secret Scan (Gitleaks)
     runs-on: ubuntu-latest
+    if: ${{ secrets.GITLEAKS_LICENSE != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -121,3 +129,4 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
