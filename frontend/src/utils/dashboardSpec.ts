@@ -1,7 +1,11 @@
 import { createDashboard, deleteDashboard } from '../api/dashboards'
 import { createPanel } from '../api/panels'
+import type { GridPos } from '../types/panel'
 
 // --- Types ---
+
+const VALID_PANEL_TYPES = ['line_chart', 'bar_chart', 'gauge', 'stat', 'table', 'pie'] as const
+export type PanelType = (typeof VALID_PANEL_TYPES)[number]
 
 export interface DashboardSpec {
   title: string
@@ -11,8 +15,8 @@ export interface DashboardSpec {
 
 export interface PanelSpec {
   title: string
-  type: 'line_chart' | 'bar_chart' | 'gauge' | 'stat' | 'table' | 'pie'
-  grid_pos: { x: number; y: number; w: number; h: number }
+  type: PanelType
+  grid_pos: GridPos
   query: {
     datasource_id: string // injected by frontend, AI omits this
     expr: string
@@ -22,15 +26,6 @@ export interface PanelSpec {
 }
 
 // --- Validation ---
-
-const VALID_PANEL_TYPES: PanelSpec['type'][] = [
-  'line_chart',
-  'bar_chart',
-  'gauge',
-  'stat',
-  'table',
-  'pie',
-]
 
 const MAX_PANELS = 8
 const GRID_COLUMNS = 12
@@ -74,21 +69,25 @@ export function validateDashboardSpec(
       }
 
       // Grid position validation
-      const { x, y, w, h } = panel.grid_pos
-      if (x < 0) {
-        errors.push(`${prefix}: grid_pos.x must be >= 0, got ${x}`)
-      }
-      if (y < 0) {
-        errors.push(`${prefix}: grid_pos.y must be >= 0, got ${y}`)
-      }
-      if (w <= 0) {
-        errors.push(`${prefix}: grid_pos.w must be > 0, got ${w}`)
-      }
-      if (h <= 0) {
-        errors.push(`${prefix}: grid_pos.h must be > 0, got ${h}`)
-      }
-      if (x + w > GRID_COLUMNS) {
-        errors.push(`${prefix}: grid_pos.x + w must be <= ${GRID_COLUMNS}, got ${x + w}`)
+      if (!panel.grid_pos) {
+        errors.push(`${prefix}: grid_pos is required`)
+      } else {
+        const { x, y, w, h } = panel.grid_pos
+        if (x < 0) {
+          errors.push(`${prefix}: grid_pos.x must be >= 0, got ${x}`)
+        }
+        if (y < 0) {
+          errors.push(`${prefix}: grid_pos.y must be >= 0, got ${y}`)
+        }
+        if (w <= 0) {
+          errors.push(`${prefix}: grid_pos.w must be > 0, got ${w}`)
+        }
+        if (h <= 0) {
+          errors.push(`${prefix}: grid_pos.h must be > 0, got ${h}`)
+        }
+        if (x + w > GRID_COLUMNS) {
+          errors.push(`${prefix}: grid_pos.x + w must be <= ${GRID_COLUMNS}, got ${x + w}`)
+        }
       }
 
       // Query expression must be non-empty
@@ -110,6 +109,12 @@ export function validateDashboardSpec(
 
 // --- Converter ---
 
+/**
+ * Persist a DashboardSpec as a real dashboard with panels.
+ *
+ * Callers must run {@link validateDashboardSpec} before calling this function.
+ * No validation is performed here; invalid specs will result in API errors.
+ */
 export async function saveDashboardSpec(
   spec: DashboardSpec,
   orgId: string,
