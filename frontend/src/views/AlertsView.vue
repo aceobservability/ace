@@ -452,6 +452,7 @@ onUnmounted(() => {
       <div class="flex items-center gap-2">
         <select
           v-model="selectedDatasourceId"
+          data-testid="alerts-datasource-select"
           class="px-3 py-2 pr-8 bg-surface-overlay border border-border rounded-sm text-text-primary text-sm appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.65rem_center] focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
           :disabled="alertingDatasources.length === 0"
         >
@@ -468,6 +469,7 @@ onUnmounted(() => {
         </select>
         <button
           class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 bg-surface-overlay border border-border rounded-sm text-sm font-medium text-text-secondary cursor-pointer transition hover:bg-surface-overlay disabled:opacity-50 disabled:cursor-not-allowed"
+          data-testid="alerts-refresh-btn"
           :disabled="!selectedDatasourceId || loading"
           @click="loadData"
           title="Refresh"
@@ -478,6 +480,7 @@ onUnmounted(() => {
         <button
           class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-sm text-sm font-medium cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
           :class="autoRefresh ? 'bg-accent-muted border border-accent-border text-accent' : 'bg-surface-overlay border border-border text-text-primary hover:bg-surface-overlay'"
+          data-testid="alerts-auto-refresh-btn"
           :disabled="!selectedDatasourceId"
           @click="toggleAutoRefresh"
           title="Auto-refresh every 30s"
@@ -521,6 +524,7 @@ onUnmounted(() => {
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
           :class="activeTab === 'alerts' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
+          data-testid="alerts-tab-alerts"
           @click="activeTab = 'alerts'"
         >
           Active Alerts
@@ -529,6 +533,7 @@ onUnmounted(() => {
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
           :class="activeTab === 'groups' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
+          data-testid="alerts-tab-groups"
           @click="activeTab = 'groups'"
         >
           Rule Groups
@@ -666,6 +671,7 @@ onUnmounted(() => {
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
           :class="activeTab === 'am-alerts' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
+          data-testid="alerts-tab-am-alerts"
           @click="activeTab = 'am-alerts'"
         >
           Active Alerts
@@ -674,6 +680,7 @@ onUnmounted(() => {
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
           :class="activeTab === 'am-silences' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
+          data-testid="alerts-tab-am-silences"
           @click="activeTab = 'am-silences'"
         >
           Silences
@@ -682,6 +689,7 @@ onUnmounted(() => {
         <button
           class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
           :class="activeTab === 'am-receivers' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
+          data-testid="alerts-tab-am-receivers"
           @click="activeTab = 'am-receivers'"
         >
           Receivers
@@ -696,16 +704,19 @@ onUnmounted(() => {
           <button
             class="px-2.5 py-1 border rounded-sm text-xs cursor-pointer transition"
             :class="amFilterActive ? 'bg-accent-muted border-accent-border text-accent' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
+            data-testid="alerts-filter-active-btn"
             @click="amFilterActive = !amFilterActive"
           >Active</button>
           <button
             class="px-2.5 py-1 border rounded-sm text-xs cursor-pointer transition"
             :class="amFilterSilenced ? 'bg-accent-muted border-accent-border text-accent' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
+            data-testid="alerts-filter-silenced-btn"
             @click="amFilterSilenced = !amFilterSilenced"
           >Silenced</button>
           <button
             class="px-2.5 py-1 border rounded-sm text-xs cursor-pointer transition"
             :class="amFilterInhibited ? 'bg-accent-muted border-accent-border text-accent' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
+            data-testid="alerts-filter-inhibited-btn"
             @click="amFilterInhibited = !amFilterInhibited"
           >Inhibited</button>
         </div>
@@ -753,6 +764,7 @@ onUnmounted(() => {
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-sm font-semibold text-text-primary m-0">Silences</h3>
           <button
+            data-testid="alerts-new-silence-btn"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent text-white text-sm font-medium rounded-sm hover:bg-accent-hover transition cursor-pointer"
             @click="openSilenceModal"
           >
@@ -906,6 +918,7 @@ onUnmounted(() => {
                 <label for="silence-start" class="text-sm font-medium text-text-secondary">Start</label>
                 <input
                   id="silence-start"
+                  data-testid="silence-start-input"
                   v-model="silenceStart"
                   type="datetime-local"
                   class="px-3 py-2 bg-surface-overlay border border-border rounded-sm text-sm text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
@@ -915,6 +928,7 @@ onUnmounted(() => {
                 <label for="silence-end" class="text-sm font-medium text-text-secondary">End</label>
                 <input
                   id="silence-end"
+                  data-testid="silence-end-input"
                   v-model="silenceEnd"
                   type="datetime-local"
                   class="px-3 py-2 bg-surface-overlay border border-border rounded-sm text-sm text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
@@ -927,6 +941,7 @@ onUnmounted(() => {
               <label for="silence-created-by" class="text-sm font-medium text-text-secondary">Created By</label>
               <input
                 id="silence-created-by"
+                data-testid="silence-created-by-input"
                 v-model="silenceCreatedBy"
                 type="text"
                 placeholder="your-name@example.com"
@@ -939,6 +954,7 @@ onUnmounted(() => {
               <label for="silence-comment" class="text-sm font-medium text-text-secondary">Comment <span class="text-rose-500">*</span></label>
               <textarea
                 id="silence-comment"
+                data-testid="silence-comment-input"
                 v-model="silenceComment"
                 rows="3"
                 placeholder="Reason for silencing..."
@@ -956,6 +972,7 @@ onUnmounted(() => {
           <div class="flex justify-end gap-2.5 px-5 py-4 border-t border-border">
             <button
               class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-overlay border border-border rounded-sm text-sm font-medium text-text-secondary cursor-pointer transition hover:bg-surface-overlay disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="silence-cancel-btn"
               @click="closeSilenceModal"
               :disabled="silenceSaving"
             >
@@ -963,6 +980,7 @@ onUnmounted(() => {
             </button>
             <button
               class="inline-flex items-center gap-1.5 px-4 py-2 bg-accent border border-accent rounded-sm text-sm font-medium text-white cursor-pointer transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="silence-create-btn"
               @click="handleCreateSilence"
               :disabled="silenceSaving"
             >

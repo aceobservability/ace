@@ -139,6 +139,7 @@ async function handleSubmit() {
     >
       <div
         ref="modalRef"
+        data-testid="create-org-modal"
         class="w-full max-w-md m-4 rounded border border-border bg-surface-raised shadow-lg animate-[slideUp_0.3s_ease-out] max-sm:max-w-none max-sm:m-0 max-sm:h-full max-sm:rounded-none"
         role="dialog"
         aria-modal="true"
@@ -148,13 +149,14 @@ async function handleSubmit() {
           <h2 id="create-org-modal-title" class="text-lg font-semibold text-text-primary">Create Organization</h2>
           <button
             class="flex items-center justify-center h-8 w-8 rounded-sm text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer"
+            data-testid="create-org-close-btn"
             @click="closeModal"
           >
             <X :size="20" />
           </button>
         </header>
 
-        <form class="px-6 py-4 max-sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]" @submit.prevent="handleSubmit">
+        <form class="px-6 py-4 max-sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]" data-testid="create-org-form" @submit.prevent="handleSubmit">
           <div class="mb-5">
             <label for="name" class="block mb-2 text-sm font-medium text-text-primary">
               Organization Name <span class="text-red-500">*</span>
@@ -167,6 +169,7 @@ async function handleSubmit() {
               placeholder="My Organization"
               :disabled="loading"
               autocomplete="off"
+              data-testid="create-org-name-input"
               class="w-full rounded-sm border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary placeholder:text-text-muted transition focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
             />
           </div>
@@ -184,6 +187,7 @@ async function handleSubmit() {
                 placeholder="my-organization"
                 :disabled="loading"
                 autocomplete="off"
+                data-testid="create-org-slug-input"
                 class="w-full bg-transparent border-none pl-0 py-2 pr-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-0 disabled:text-text-muted disabled:cursor-not-allowed"
                 @input="handleSlugInput"
               />
@@ -193,6 +197,7 @@ async function handleSubmit() {
 
           <div
             v-if="error"
+            data-testid="create-org-error"
             class="mb-5 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600"
           >
             {{ error }}
@@ -203,6 +208,7 @@ async function handleSubmit() {
               type="button"
               class="inline-flex items-center justify-center rounded-sm border border-border px-4 py-2 text-sm font-medium text-text-muted hover:text-text-primary transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="loading"
+              data-testid="create-org-cancel-btn"
               @click="closeModal"
             >
               Cancel
@@ -211,6 +217,7 @@ async function handleSubmit() {
               type="submit"
               class="inline-flex items-center justify-center rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="loading"
+              data-testid="create-org-submit-btn"
             >
               {{ loading ? 'Creating...' : 'Create Organization' }}
             </button>

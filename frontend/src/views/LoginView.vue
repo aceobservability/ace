@@ -60,8 +60,8 @@ function switchMode() {
         </p>
       </div>
 
-      <form class="flex flex-col gap-5" @submit.prevent="handleSubmit">
-        <div v-if="error" class="flex items-center gap-2 rounded-sm bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-400">
+      <form class="flex flex-col gap-5" @submit.prevent="handleSubmit" data-testid="login-form">
+        <div v-if="error" class="flex items-center gap-2 rounded-sm bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-400" data-testid="login-error">
           <AlertCircle :size="16" class="shrink-0" />
           <span>{{ error }}</span>
         </div>
@@ -76,6 +76,7 @@ function switchMode() {
               type="text"
               placeholder="Your name (optional)"
               :disabled="loading"
+              data-testid="name-input"
               class="w-full rounded-sm border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
@@ -92,6 +93,7 @@ function switchMode() {
               placeholder="you@example.com"
               required
               :disabled="loading"
+              data-testid="email-input"
               class="w-full rounded-sm border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
@@ -108,6 +110,7 @@ function switchMode() {
               placeholder="Enter your password"
               required
               :disabled="loading"
+              data-testid="password-input"
               class="w-full rounded-sm border border-border bg-surface-input pl-11 pr-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
@@ -121,6 +124,7 @@ function switchMode() {
           class="flex w-full items-center justify-center gap-2 rounded-sm py-2.5 text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)"
           :disabled="loading"
+          data-testid="login-submit-btn"
         >
           <template v-if="loading">
             <span class="animate-spin h-4 w-4 rounded-full border-2 border-white/30 border-t-white"></span>
@@ -137,7 +141,7 @@ function switchMode() {
       <div class="mt-6 text-center">
         <p class="text-sm text-text-muted">
           {{ mode === 'login' ? "Don't have an account?" : 'Already have an account?' }}
-          <button type="button" class="ml-1 text-sm text-accent hover:underline cursor-pointer bg-transparent border-none p-0 font-medium" @click="switchMode">
+          <button type="button" class="ml-1 text-sm text-accent hover:underline cursor-pointer bg-transparent border-none p-0 font-medium" @click="switchMode" data-testid="auth-mode-switch-btn">
             {{ mode === 'login' ? 'Create one' : 'Sign in' }}
           </button>
         </p>

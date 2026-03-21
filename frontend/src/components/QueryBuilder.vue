@@ -152,6 +152,7 @@ function getLabelValues(labelName: string): string[] {
         type="button"
         class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-sm text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-text-primary"
         :class="{ 'bg-surface-raised text-text-primary shadow-sm': mode === 'builder' }"
+        data-testid="query-builder-mode-btn"
         @click="mode = 'builder'"
         :disabled="disabled || !builderAvailable"
         :title="!builderAvailable ? 'Query cannot be edited in builder mode' : ''"
@@ -163,6 +164,7 @@ function getLabelValues(labelName: string): string[] {
         type="button"
         class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-sm text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-text-primary"
         :class="{ 'bg-surface-raised text-text-primary shadow-sm': mode === 'code' }"
+        data-testid="query-code-mode-btn"
         @click="mode = 'code'"
         :disabled="disabled"
       >
@@ -182,6 +184,7 @@ function getLabelValues(labelName: string): string[] {
             <input
               v-model="metricSearch"
               type="text"
+              data-testid="query-metric-search-input"
               class="w-full rounded-sm border border-border bg-surface-overlay px-3 py-2 pl-9 text-sm text-text-primary transition-colors duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
               placeholder="Search metrics..."
               :disabled="disabled || loadingMetrics"
@@ -213,6 +216,7 @@ function getLabelValues(labelName: string): string[] {
           <button
             type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-border text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 hover:enabled:bg-surface-overlay hover:enabled:text-text-primary"
+            data-testid="query-add-filter-btn"
             @click="addLabelFilter"
             :disabled="disabled"
           >
@@ -298,6 +302,7 @@ function getLabelValues(labelName: string): string[] {
         <div class="flex gap-4 items-center">
           <select
             v-model="aggregation"
+            data-testid="query-aggregation-select"
             class="flex-1 max-w-[200px] rounded-sm border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer focus:outline-none focus:border-accent"
             :disabled="disabled"
           >
@@ -312,6 +317,7 @@ function getLabelValues(labelName: string): string[] {
             <input
               v-model="rangeInterval"
               type="text"
+              data-testid="query-range-input"
               class="w-20 rounded-sm border border-border bg-surface-overlay px-3 py-2 text-sm font-mono text-text-primary focus:outline-none focus:border-accent"
               placeholder="5m"
               :disabled="disabled"
@@ -325,6 +331,7 @@ function getLabelValues(labelName: string): string[] {
               v-model.number="kValue"
               type="number"
               min="1"
+              data-testid="query-k-input"
               class="w-[60px] rounded-sm border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
               :disabled="disabled"
             />

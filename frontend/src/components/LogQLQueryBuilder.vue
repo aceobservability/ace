@@ -321,6 +321,7 @@ watch(activeQuery, (newValue) => {
         type="button"
         class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-sm text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-text-primary"
         :class="{ 'bg-surface-raised text-text-primary shadow-sm': mode === 'builder' }"
+        data-testid="logql-builder-mode-btn"
         :disabled="props.disabled || !builderAvailable"
         :title="!builderAvailable ? 'Query cannot be edited in builder mode' : ''"
         @click="mode = 'builder'"
@@ -332,6 +333,7 @@ watch(activeQuery, (newValue) => {
         type="button"
         class="flex items-center gap-1.5 px-3 py-1.5 bg-transparent border-none rounded-sm text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-text-primary"
         :class="{ 'bg-surface-raised text-text-primary shadow-sm': mode === 'code' }"
+        data-testid="logql-code-mode-btn"
         :disabled="props.disabled"
         @click="mode = 'code'"
       >
@@ -347,6 +349,7 @@ watch(activeQuery, (newValue) => {
           <button
             type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-border text-xs font-medium text-text-secondary cursor-pointer transition-all duration-200 hover:enabled:bg-surface-overlay hover:enabled:text-text-primary"
+            data-testid="logql-add-filter-btn"
             :disabled="props.disabled"
             @click="addLabelFilter"
           >
@@ -425,6 +428,7 @@ watch(activeQuery, (newValue) => {
         <div class="flex items-center gap-2">
           <select
             v-model="lineFilterOperator"
+            data-testid="logql-line-filter-operator-select"
             class="w-[120px] flex-none rounded-sm border border-border bg-surface-overlay px-3 py-2 text-sm font-mono text-text-secondary cursor-pointer focus:outline-none focus:border-accent"
             :disabled="props.disabled"
           >
@@ -434,6 +438,7 @@ watch(activeQuery, (newValue) => {
           </select>
           <input
             v-model="lineFilterValue"
+            data-testid="logql-line-filter-value-input"
             class="flex-1 min-w-0 rounded-sm border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
             type="text"
             :placeholder="lineFilterPlaceholder"

@@ -50,6 +50,7 @@ function toggleSessionRecording(event: Event) {
           <span class="text-xs text-text-secondary mt-1">Anonymous usage events for page visits, dashboard actions, and settings interactions.</span>
         </div>
         <button
+          data-testid="analytics-consent-switch"
           class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition"
           :class="analyticsEnabled ? 'bg-accent' : 'bg-surface-overlay'"
           :disabled="dntEnabled"
@@ -71,6 +72,7 @@ function toggleSessionRecording(event: Event) {
           <span class="text-xs text-text-secondary mt-1">Optional replay sessions to debug UI flows. Requires analytics to be enabled.</span>
         </div>
         <button
+          data-testid="session-recording-switch"
           class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition"
           :class="sessionRecordingEnabled && analyticsEnabled ? 'bg-accent' : 'bg-surface-overlay'"
           :disabled="!analyticsEnabled"
@@ -111,6 +113,7 @@ function toggleSessionRecording(event: Event) {
     <!-- Save / back button -->
     <div class="flex items-center gap-3 mt-2">
       <button
+        data-testid="privacy-done-btn"
         class="rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover"
         @click="goBack"
       >

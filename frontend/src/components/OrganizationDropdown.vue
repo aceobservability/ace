@@ -51,6 +51,7 @@ function handleCreateOrg() {
   <div class="relative mx-2 my-2" ref="dropdownRef">
     <button
       @click="toggleDropdown"
+      data-testid="org-dropdown-btn"
       :class="[
         'flex items-center gap-2 rounded-sm border border-[#1a1a30] bg-[--color-surface-sidebar] px-2.5 py-1.5 text-sm text-[#c8cad4] transition hover:border-[#262644] hover:bg-[#14142a] w-full cursor-pointer',
         !expanded && 'mx-auto !w-9 justify-center !px-0'
@@ -69,7 +70,7 @@ function handleCreateOrg() {
     </button>
 
     <Teleport to="body">
-      <div v-if="dropdownOpen" class="absolute z-[60] w-64 rounded border border-border bg-surface-raised shadow-lg overflow-hidden animate-[fadeIn_0.15s_ease-out]" :style="{ position: 'fixed', left: (props.sidebarWidth ?? 220) + 'px', top: '64px', zIndex: 1000 }">
+      <div v-if="dropdownOpen" data-testid="org-dropdown-menu" class="absolute z-[60] w-64 rounded border border-border bg-surface-raised shadow-lg overflow-hidden animate-[fadeIn_0.15s_ease-out]" :style="{ position: 'fixed', left: (props.sidebarWidth ?? 220) + 'px', top: '64px', zIndex: 1000 }">
         <div class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Organizations</div>
 
         <div class="max-h-[200px] overflow-y-auto">
@@ -80,6 +81,7 @@ function handleCreateOrg() {
               'flex w-full items-center gap-3 px-4 py-2.5 text-sm text-text-primary transition hover:bg-surface-overlay cursor-pointer border-none bg-transparent',
               currentOrg?.id === org.id && 'bg-accent-muted text-accent'
             ]"
+            :data-testid="`org-dropdown-item-${org.id}`"
             @click="handleSelectOrg(org.id)"
           >
             <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-surface-overlay text-xs font-semibold text-text-secondary">
@@ -93,7 +95,7 @@ function handleCreateOrg() {
           </button>
         </div>
 
-        <button class="flex w-full items-center gap-2 border-t border-border px-4 py-3 text-sm font-medium text-accent transition hover:bg-accent-muted cursor-pointer bg-transparent" @click="handleCreateOrg">
+        <button class="flex w-full items-center gap-2 border-t border-border px-4 py-3 text-sm font-medium text-accent transition hover:bg-accent-muted cursor-pointer bg-transparent" data-testid="org-dropdown-create-btn" @click="handleCreateOrg">
           <Plus :size="16" />
           <span>Create Organization</span>
         </button>

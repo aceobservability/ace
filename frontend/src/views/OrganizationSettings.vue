@@ -765,6 +765,7 @@ function goBack() {
     <header class="flex items-center gap-4 mb-5 p-4 border border-border rounded bg-surface-raised">
       <button
         class="flex items-center justify-center w-10 h-10 bg-surface-overlay border border-border rounded text-text-secondary cursor-pointer transition-all duration-200 hover:bg-surface-overlay hover:text-text-primary"
+        data-testid="org-settings-back-btn"
         @click="goBack"
       >
         <ArrowLeft :size="20" />
@@ -803,6 +804,7 @@ function goBack() {
           <button
             v-if="isAdmin && !editMode"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-overlay text-text-primary border border-border rounded-sm text-[0.8125rem] font-medium cursor-pointer transition-all duration-200 hover:bg-surface-overlay hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="org-edit-btn"
             @click="startEdit"
           >
             <Edit2 :size="16" />
@@ -816,6 +818,7 @@ function goBack() {
             <input
               v-model="editName"
               type="text"
+              data-testid="org-name-input"
               class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-sm text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
               :disabled="editLoading"
             />
@@ -824,6 +827,7 @@ function goBack() {
             <label class="block mb-1.5 text-sm font-medium text-text-primary">URL Slug</label>
             <input
               v-model="editSlug"
+              data-testid="org-slug-input"
               type="text"
               class="w-full px-3 py-2.5 bg-surface-overlay border border-border rounded-sm text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
               :disabled="editLoading"
@@ -833,11 +837,13 @@ function goBack() {
           <div class="flex justify-end gap-3 mt-4">
             <button
               class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-surface-overlay text-text-primary border border-border rounded-sm text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-surface-overlay hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="org-edit-cancel-btn"
               @click="cancelEdit"
               :disabled="editLoading"
             >Cancel</button>
             <button
               class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-accent text-white border-none rounded-sm text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="org-edit-save-btn"
               @click="saveEdit"
               :disabled="editLoading"
             >
@@ -879,6 +885,7 @@ function goBack() {
           <button
             v-if="isAdmin"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent text-white border-none rounded-sm text-[0.8125rem] font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="org-invite-btn"
             @click="showInviteForm = !showInviteForm"
           >
             <UserPlus :size="16" />
@@ -893,11 +900,13 @@ function goBack() {
               v-model="inviteEmail"
               type="email"
               placeholder="Email address"
+              data-testid="org-invite-email-input"
               class="flex-1 px-3 py-2.5 bg-surface-overlay border border-border rounded-sm text-sm text-text-primary outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
               :disabled="inviteLoading"
             />
             <select
               v-model="inviteRole"
+              data-testid="org-invite-role-select"
               class="w-full md:w-[120px] px-3 py-2.5 bg-surface-overlay border border-border rounded-sm text-sm text-text-primary cursor-pointer outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
               :disabled="inviteLoading"
             >
@@ -907,6 +916,7 @@ function goBack() {
             </select>
             <button
               class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-accent text-white border-none rounded-sm text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="org-invite-submit-btn"
               @click="handleInvite"
               :disabled="inviteLoading"
             >
@@ -919,7 +929,7 @@ function goBack() {
 
         <!-- Members List -->
         <div class="flex flex-col gap-2">
-          <div v-for="member in members" :key="member.id" class="flex items-center gap-3 p-3 bg-surface-overlay rounded border border-border">
+          <div v-for="member in members" :key="member.id" :data-testid="`member-row-${member.id}`" class="flex items-center gap-3 p-3 bg-surface-overlay rounded border border-border">
             <div class="w-9 h-9 flex items-center justify-center bg-accent rounded-sm text-sm font-semibold text-white shrink-0">
               {{ (member.name || member.email).charAt(0).toUpperCase() }}
             </div>
@@ -931,6 +941,7 @@ function goBack() {
               <select
                 v-if="isAdmin"
                 :value="member.role"
+                :data-testid="`member-role-${member.id}`"
                 @change="handleRoleChange(member, ($event.target as HTMLSelectElement).value as MembershipRole)"
                 class="w-auto px-2 py-1.5 text-xs bg-surface-overlay border border-border rounded-sm text-text-primary cursor-pointer outline-none transition-colors focus:border-accent focus:ring-1 focus:ring-accent"
               >
@@ -950,6 +961,7 @@ function goBack() {
               <button
                 v-if="isAdmin"
                 class="flex items-center justify-center w-8 h-8 bg-transparent border-none rounded-sm text-text-secondary cursor-pointer transition-all duration-200 hover:bg-rose-500/15 hover:text-rose-500"
+                :data-testid="`member-remove-${member.id}`"
                 @click="handleRemoveMember(member)"
                 title="Remove member"
               >
@@ -1285,6 +1297,7 @@ function goBack() {
             </div>
             <button
               class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-rose-500 text-white border-none rounded-sm text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="org-delete-btn"
               @click="showDeleteConfirm = true"
             >Delete Organization</button>
           </div>
@@ -1294,7 +1307,7 @@ function goBack() {
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000]" @click.self="showDeleteConfirm = false">
+    <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000]" data-testid="org-delete-modal" @click.self="showDeleteConfirm = false">
       <div class="bg-surface-raised border border-border rounded p-6 max-w-[400px]">
         <h3 class="m-0 mb-3 text-lg font-semibold text-text-primary">Delete Organization?</h3>
         <p class="m-0 mb-6 text-sm text-text-secondary">
@@ -1304,6 +1317,7 @@ function goBack() {
         <div class="flex justify-end gap-3">
           <button
             class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-surface-overlay text-text-primary border border-border rounded-sm text-sm font-medium cursor-pointer transition-all duration-200 hover:bg-surface-overlay hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="org-delete-cancel-btn"
             @click="showDeleteConfirm = false"
             :disabled="deleteLoading"
           >
@@ -1311,6 +1325,7 @@ function goBack() {
           </button>
           <button
             class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-rose-500 text-white border-none rounded-sm text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="org-delete-confirm-btn"
             @click="handleDelete"
             :disabled="deleteLoading"
           >

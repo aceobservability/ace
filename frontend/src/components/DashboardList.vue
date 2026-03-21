@@ -810,6 +810,7 @@ onMounted(() => {
         </button>
         <button
           class="inline-flex items-center gap-2 rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer"
+          data-testid="new-dashboard-btn"
           @click="openCreateModal"
         >
           <Plus :size="18" />
@@ -1342,7 +1343,7 @@ onMounted(() => {
     />
 
     <!-- Delete confirmation modal -->
-    <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" @click.self="cancelDelete">
+    <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" data-testid="delete-dashboard-modal" @click.self="cancelDelete">
       <div class="w-full max-w-sm rounded border border-border bg-surface-raised p-8 text-center shadow-lg">
         <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-sm bg-rose-50 text-rose-600">
           <Trash2 :size="24" />
@@ -1353,12 +1354,14 @@ onMounted(() => {
         <div class="mt-5 flex justify-center gap-3">
           <button
             class="inline-flex items-center gap-2 rounded-sm border border-border bg-surface-raised px-4 py-2 text-sm font-medium text-text-primary transition hover:border-border-strong hover:bg-surface-overlay cursor-pointer"
+            data-testid="delete-dashboard-cancel-btn"
             @click="cancelDelete"
           >
             Cancel
           </button>
           <button
             class="inline-flex items-center gap-2 rounded-sm bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 cursor-pointer"
+            data-testid="delete-dashboard-confirm-btn"
             @click="handleDelete"
           >
             Delete

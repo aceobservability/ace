@@ -121,6 +121,7 @@ async function handleSave() {
             v-model="clientId"
             type="text"
             :disabled="saving"
+            data-testid="github-app-client-id-input"
             class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
           />
         </div>
@@ -131,6 +132,7 @@ async function handleSave() {
             type="password"
             :placeholder="configured ? '••••••••' : 'Enter client secret'"
             :disabled="saving"
+            data-testid="github-app-client-secret-input"
             class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-50"
           />
         </div>
@@ -140,6 +142,7 @@ async function handleSave() {
               v-model="enabled"
               type="checkbox"
               :disabled="saving"
+              data-testid="github-app-enabled-checkbox"
               class="rounded border-border-strong text-accent focus:ring-accent"
             />
             Enable GitHub Copilot
@@ -161,6 +164,7 @@ async function handleSave() {
           <button
             class="inline-flex items-center gap-1.5 rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="saving"
+            data-testid="github-app-save-btn"
             @click="handleSave"
           >
             {{ saving ? 'Saving...' : 'Save Credentials' }}

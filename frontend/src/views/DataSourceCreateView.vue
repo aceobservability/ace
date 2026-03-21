@@ -592,7 +592,7 @@ watch(
       {{ loadError }}
     </div>
 
-    <form v-else class="flex flex-col gap-4" @submit.prevent="handleSave">
+    <form v-else class="flex flex-col gap-4" data-testid="ds-create-form" @submit.prevent="handleSave">
       <section class="rounded border border-border bg-surface-raised p-6">
         <h2 class="text-sm font-semibold text-text-primary mb-3 mt-0">Basics</h2>
         <div class="grid grid-cols-2 gap-3 max-md:grid-cols-1">
@@ -600,6 +600,7 @@ watch(
             <label for="ds-name" class="block text-sm font-medium text-text-primary mb-1.5">Name <span class="text-rose-500">*</span></label>
             <input
               id="ds-name"
+              data-testid="ds-name-input"
               v-model="formName"
               type="text"
               placeholder="My Prometheus"
@@ -613,6 +614,7 @@ watch(
             <label for="ds-type" class="block text-sm font-medium text-text-primary mb-1.5">Type</label>
             <select
               id="ds-type"
+              data-testid="ds-type-select"
               v-model="formType"
               :disabled="saveLoading"
               class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
@@ -636,6 +638,7 @@ watch(
           <label for="ds-url" class="block text-sm font-medium text-text-primary mb-1.5">URL <span class="text-rose-500">*</span></label>
           <input
             id="ds-url"
+            data-testid="ds-url-input"
             v-model="formUrl"
             type="text"
             placeholder="http://localhost:9090"
@@ -653,6 +656,7 @@ watch(
             <label for="ds-cloudwatch-region" class="block text-sm font-medium text-text-primary mb-1.5">AWS Region <span class="text-rose-500">*</span></label>
             <input
               id="ds-cloudwatch-region"
+              data-testid="ds-cloudwatch-region-input"
               v-model="formCloudWatchRegion"
               type="text"
               placeholder="us-east-1"
@@ -735,6 +739,7 @@ watch(
           <label for="ds-database" class="block text-sm font-medium text-text-primary mb-1.5">Database (optional)</label>
           <input
             id="ds-database"
+            data-testid="ds-database-input"
             v-model="formDatabase"
             type="text"
             placeholder="default"
@@ -751,6 +756,7 @@ watch(
           <label for="ds-elasticsearch-index" class="block text-sm font-medium text-text-primary mb-1.5">Default Index Pattern (optional)</label>
           <input
             id="ds-elasticsearch-index"
+            data-testid="ds-elasticsearch-index-input"
             v-model="formElasticsearchIndex"
             type="text"
             placeholder="logs-*"
@@ -838,6 +844,7 @@ watch(
           <label for="ds-auth-type" class="block text-sm font-medium text-text-primary mb-1.5">Authentication</label>
           <select
             id="ds-auth-type"
+            data-testid="ds-auth-type-select"
             v-model="formAuthType"
             :disabled="saveLoading"
             class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.75rem_center] pr-9"
@@ -855,6 +862,7 @@ watch(
               <label for="ds-basic-username" class="block text-sm font-medium text-text-primary mb-1.5">Username <span class="text-rose-500">*</span></label>
               <input
                 id="ds-basic-username"
+                data-testid="ds-basic-username-input"
                 v-model="formBasicUsername"
                 type="text"
                 :disabled="saveLoading"
@@ -866,6 +874,7 @@ watch(
               <label for="ds-basic-password" class="block text-sm font-medium text-text-primary mb-1.5">Password</label>
               <input
                 id="ds-basic-password"
+                data-testid="ds-basic-password-input"
                 v-model="formBasicPassword"
                 type="password"
                 :disabled="saveLoading"
@@ -881,6 +890,7 @@ watch(
             <label for="ds-bearer-token" class="block text-sm font-medium text-text-primary mb-1.5">Bearer token <span class="text-rose-500">*</span></label>
             <input
               id="ds-bearer-token"
+              data-testid="ds-bearer-token-input"
               v-model="formBearerToken"
               type="password"
               :disabled="saveLoading"
@@ -896,6 +906,7 @@ watch(
               <label for="ds-api-header" class="block text-sm font-medium text-text-primary mb-1.5">Header name</label>
               <input
                 id="ds-api-header"
+                data-testid="ds-api-header-input"
                 v-model="formApiKeyHeader"
                 type="text"
                 :disabled="saveLoading"
@@ -907,6 +918,7 @@ watch(
               <label for="ds-api-value" class="block text-sm font-medium text-text-primary mb-1.5">API key <span class="text-rose-500">*</span></label>
               <input
                 id="ds-api-value"
+                data-testid="ds-api-value-input"
                 v-model="formApiKeyValue"
                 type="password"
                 :disabled="saveLoading"
@@ -927,6 +939,7 @@ watch(
           <button
             type="button"
             class="inline-flex items-center justify-center gap-2 rounded-sm border border-border-strong px-4 py-2 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="ds-test-btn"
             :disabled="testLoading || saveLoading"
             @click="handleTestConnection"
           >
@@ -951,7 +964,7 @@ watch(
 
       <section class="rounded border border-border bg-surface-raised px-6 py-4">
         <label class="inline-flex items-center gap-2 cursor-pointer text-sm text-text-primary">
-          <input type="checkbox" v-model="formIsDefault" :disabled="saveLoading" class="h-4 w-4" />
+          <input type="checkbox" v-model="formIsDefault" data-testid="ds-default-checkbox" :disabled="saveLoading" class="h-4 w-4" />
           Set as default data source
         </label>
       </section>
@@ -962,6 +975,7 @@ watch(
         <button
           type="button"
           class="inline-flex items-center justify-center gap-2 rounded-sm border border-border-strong px-4 py-2 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed max-md:w-full"
+          data-testid="ds-cancel-btn"
           :disabled="saveLoading"
           @click="router.push('/datasources')"
         >
@@ -969,6 +983,7 @@ watch(
         </button>
         <button
           type="submit"
+          data-testid="ds-save-btn"
           class="inline-flex items-center justify-center gap-2 rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed max-md:w-full"
           :disabled="saveLoading"
         >

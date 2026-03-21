@@ -139,6 +139,7 @@ watch(
       <div class="flex items-center gap-2.5">
         <button
           class="inline-flex items-center justify-center gap-2 rounded-sm border border-border-strong px-4 py-2 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed min-w-[96px]"
+          data-testid="ds-test-all-btn"
           :disabled="datasources.length === 0 || testAllLoading"
           @click="testAllDatasources"
         >
@@ -148,6 +149,7 @@ watch(
         </button>
         <button
           class="inline-flex items-center justify-center gap-2 rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          data-testid="ds-add-btn"
           :disabled="!canCreate"
           @click="openCreatePage"
         >
@@ -183,6 +185,7 @@ watch(
         v-for="ds in datasources"
         :key="ds.id"
         class="rounded border border-border bg-surface-raised transition hover:border-accent-border hover:shadow-md"
+        :data-testid="`ds-card-${ds.id}`"
       >
         <div class="flex justify-between items-start p-4 pb-0 gap-3">
           <div class="flex items-start flex-wrap gap-2.5 min-w-0">
@@ -203,10 +206,10 @@ watch(
             </span>
           </div>
           <div class="flex gap-1">
-            <button class="flex items-center justify-center h-8 w-8 rounded-sm text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition border-none bg-transparent cursor-pointer" @click="openEditPage(ds.id)" title="Edit">
+            <button class="flex items-center justify-center h-8 w-8 rounded-sm text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition border-none bg-transparent cursor-pointer" :data-testid="`ds-edit-${ds.id}`" @click="openEditPage(ds.id)" title="Edit">
               <Pencil :size="16" />
             </button>
-            <button class="flex items-center justify-center h-8 w-8 rounded-sm text-text-muted hover:bg-rose-500/10 hover:text-rose-500 transition border-none bg-transparent cursor-pointer" @click="handleDelete(ds)" title="Delete">
+            <button class="flex items-center justify-center h-8 w-8 rounded-sm text-text-muted hover:bg-rose-500/10 hover:text-rose-500 transition border-none bg-transparent cursor-pointer" :data-testid="`ds-delete-${ds.id}`" @click="handleDelete(ds)" title="Delete">
               <Trash2 :size="16" />
             </button>
           </div>
@@ -239,6 +242,7 @@ watch(
 
             <button
               class="inline-flex items-center justify-center gap-1.5 rounded-sm border border-border-strong px-2.5 py-1 text-xs font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed"
+              :data-testid="`ds-test-${ds.id}`"
               :disabled="getHealthStatus(ds.id) === 'checking'"
               @click="testDatasource(ds)"
               title="Run connection test"

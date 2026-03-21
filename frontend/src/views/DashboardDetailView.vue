@@ -368,6 +368,7 @@ onUnmounted(() => {
       <div class="flex items-center gap-4">
         <button
           class="flex h-[38px] w-[38px] items-center justify-center rounded-sm border border-border bg-surface-raised text-text-muted transition hover:bg-surface-overlay hover:text-text-primary"
+          data-testid="dashboard-back-btn"
           @click="goBack"
           title="Back to Dashboards"
         >
@@ -395,6 +396,7 @@ onUnmounted(() => {
         </button>
         <button
           class="inline-flex items-center gap-2 rounded-sm bg-accent px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+          data-testid="dashboard-add-panel-btn"
           @click="openAddPanel"
           :disabled="loading"
         >
@@ -484,6 +486,7 @@ onUnmounted(() => {
     <div
       v-if="showDeleteConfirm"
       class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
+      data-testid="delete-panel-modal"
       @click.self="cancelDelete"
     >
       <div class="w-full max-w-[400px] rounded border border-border bg-surface-raised p-8 text-center shadow-lg animate-slide-up">
@@ -496,10 +499,12 @@ onUnmounted(() => {
         <div class="mt-6 flex justify-center gap-3">
           <button
             class="inline-flex items-center gap-2 rounded-sm border border-border px-3 py-1.5 text-sm font-semibold text-text-secondary transition hover:bg-surface-overlay hover:text-text-primary"
+            data-testid="delete-panel-cancel-btn"
             @click="cancelDelete"
           >Cancel</button>
           <button
             class="inline-flex items-center gap-2 rounded-sm bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-rose-700"
+            data-testid="delete-panel-confirm-btn"
             @click="handleDeletePanel"
           >Delete</button>
         </div>

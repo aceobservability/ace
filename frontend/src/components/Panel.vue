@@ -514,6 +514,7 @@ function handleOpenTrace(traceId: string) {
       <div class="flex gap-1">
         <button
           class="flex items-center justify-center h-7 w-7 rounded-sm border-0 bg-transparent text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer"
+          data-testid="panel-edit-btn"
           @click="$emit('edit', panel)"
           title="Edit panel"
         >
@@ -521,6 +522,7 @@ function handleOpenTrace(traceId: string) {
         </button>
         <button
           class="flex items-center justify-center h-7 w-7 rounded-sm border-0 bg-transparent text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer"
+          data-testid="panel-delete-btn"
           @click="$emit('delete', panel)"
           title="Delete panel"
         >
@@ -534,6 +536,7 @@ function handleOpenTrace(traceId: string) {
         <p class="text-sm text-text-muted m-0">No query configured</p>
         <button
           class="px-4 py-2 bg-accent text-white border-0 rounded-sm text-sm font-medium cursor-pointer hover:-translate-y-px transition"
+          data-testid="panel-configure-btn"
           @click="$emit('edit', panel)"
         >
           Configure Panel

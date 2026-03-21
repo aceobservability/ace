@@ -892,6 +892,7 @@ watch(
               <button
                 type="button"
                 class="flex w-full items-center gap-3 rounded border border-border bg-surface-raised px-4 py-3 text-left cursor-pointer transition hover:border-border-strong hover:bg-surface-overlay disabled:opacity-60 disabled:cursor-not-allowed"
+                data-testid="explore-logs-datasource-btn"
                 :disabled="loading || !hasLogsDatasources"
                 @click="toggleDatasourceMenu"
                 :title="activeDatasource ? `Active datasource: ${activeDatasource.name}` : 'No logs datasource configured'"
@@ -998,6 +999,7 @@ watch(
           <!-- History button -->
           <div v-if="queryHistory.length > 0" class="relative">
             <button
+              data-testid="explore-logs-history-btn"
               class="flex items-center gap-1 text-sm text-text-muted hover:text-text-primary cursor-pointer"
               :class="{ 'text-text-primary': showHistory }"
               @click="showHistory = !showHistory"
@@ -1029,6 +1031,7 @@ watch(
 
         <div class="flex items-center gap-4 flex-wrap">
           <button
+            data-testid="explore-logs-run-query-btn"
             class="inline-flex items-center gap-2 rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             :disabled="loading || !query.trim() || !selectedDatasourceId || !hasLogsDatasources"
             @click="runQuery"
@@ -1042,6 +1045,7 @@ watch(
             :class="isLive
               ? 'border-accent-border bg-accent-muted text-accent hover:bg-accent-muted'
               : 'border-border bg-surface-raised text-text-primary hover:bg-surface-overlay hover:border-border-strong'"
+            data-testid="explore-logs-live-btn"
             :disabled="loading || !supportsLiveStreaming || (!isLive && (!query.trim() || !selectedDatasourceId || !hasLogsDatasources))"
             @click="toggleLive"
             :title="supportsLiveStreaming ? '' : 'Live streaming is only available for Loki and Victoria Logs datasources'"

@@ -780,6 +780,7 @@ onUnmounted(() => {
               <button
                 type="button"
                 class="flex w-full items-center gap-3 rounded border border-border bg-surface-raised px-4 py-3 text-left cursor-pointer transition hover:border-border-strong hover:bg-surface-overlay disabled:opacity-60 disabled:cursor-not-allowed"
+                data-testid="explore-traces-datasource-btn"
                 :disabled="!hasTracingDatasources"
                 @click="toggleDatasourceMenu"
               >
@@ -854,6 +855,7 @@ onUnmounted(() => {
               <span class="text-xs font-medium text-text-muted">Service</span>
               <select
                 v-model="selectedService"
+                data-testid="explore-traces-service-select"
                 :disabled="loadingServices || services.length === 0"
                 class="rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -866,6 +868,7 @@ onUnmounted(() => {
               <span class="text-xs font-medium text-text-muted">Limit</span>
               <select
                 v-model.number="limit"
+                data-testid="explore-traces-limit-select"
                 class="rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary"
               >
                 <option :value="10">10</option>
@@ -891,6 +894,7 @@ onUnmounted(() => {
           <input
             id="trace-search-query"
             v-model="query"
+            data-testid="explore-traces-search-input"
             type="text"
             class="rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary placeholder:text-text-muted"
             placeholder="service.name=api error=true"
@@ -900,6 +904,7 @@ onUnmounted(() => {
         <!-- Search button -->
         <div class="flex items-center gap-4">
           <button
+            data-testid="explore-traces-search-btn"
             class="inline-flex items-center gap-2 rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             :disabled="loadingSearch || !selectedDatasourceId || (isClickHouseDatasource && !query.trim())"
             @click="runSearch"
@@ -917,11 +922,13 @@ onUnmounted(() => {
             <input
               id="trace-id-input"
               v-model="traceIdInput"
+              data-testid="explore-traces-id-input"
               type="text"
               placeholder="Paste trace id"
               class="flex-1 rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary placeholder:text-text-muted"
             />
             <button
+              data-testid="explore-traces-open-btn"
               class="inline-flex items-center gap-2 rounded-sm border border-border bg-surface-overlay px-4 py-2 text-sm font-medium text-text-primary transition hover:bg-surface-overlay disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               :disabled="loadingTrace || !selectedDatasourceId || !traceIdInput.trim()"
               @click="lookupTraceById"

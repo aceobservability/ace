@@ -142,6 +142,7 @@ onUnmounted(() => {
       <!-- Time select row -->
       <div class="flex items-center gap-2" :class="props.stacked ? 'w-full' : ''">
         <button
+          data-testid="time-range-picker-btn"
           class="flex items-center gap-2 rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary transition cursor-pointer hover:border-border-strong hover:bg-surface-overlay"
           :class="[
             isOpen ? 'border-accent ring-1 ring-accent/20' : '',
@@ -161,6 +162,7 @@ onUnmounted(() => {
         :class="props.stacked ? 'w-full flex-wrap' : ''"
       >
         <button
+          data-testid="time-range-refresh-btn"
           class="flex items-center justify-center rounded-sm border border-border bg-surface-raised px-2 py-1.5 text-text-muted transition cursor-pointer hover:bg-surface-overlay hover:text-text-primary"
           :class="isRefreshing ? 'text-accent' : ''"
           @click="handleRefresh"
@@ -172,6 +174,7 @@ onUnmounted(() => {
         <div>
           <select
             :value="refreshIntervalValue"
+            data-testid="time-range-interval-select"
             @change="selectRefreshInterval(($event.target as HTMLSelectElement).value)"
             title="Auto-refresh interval"
             class="rounded-sm border border-border bg-surface-raised px-2 py-1.5 pr-7 text-xs font-medium text-text-secondary cursor-pointer transition appearance-none hover:border-border-strong focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 bg-[url('data:image/svg+xml,%3Csvg_xmlns=%27http://www.w3.org/2000/svg%27_width=%2712%27_height=%2712%27_viewBox=%270_0_24_24%27_fill=%27none%27_stroke=%27%2394a3b8%27_stroke-width=%272%27_stroke-linecap=%27round%27_stroke-linejoin=%27round%27%3E%3Cpath_d=%27m6_9_6_6_6-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.5rem_center]"
@@ -237,6 +240,7 @@ onUnmounted(() => {
           <label for="custom-from" class="block mb-1.5 text-xs font-medium text-text-muted">From</label>
           <input
             id="custom-from"
+            data-testid="time-range-custom-from-input"
             type="datetime-local"
             v-model="customFrom"
             class="w-full rounded-sm border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20"
@@ -247,6 +251,7 @@ onUnmounted(() => {
           <label for="custom-to" class="block mb-1.5 text-xs font-medium text-text-muted">To</label>
           <input
             id="custom-to"
+            data-testid="time-range-custom-to-input"
             type="datetime-local"
             v-model="customTo"
             class="w-full rounded-sm border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20"
@@ -262,12 +267,14 @@ onUnmounted(() => {
 
         <div class="flex justify-end gap-2">
           <button
+            data-testid="time-range-cancel-btn"
             class="rounded-sm px-4 py-2 text-sm font-medium border border-border bg-transparent text-text-secondary cursor-pointer transition hover:bg-surface-overlay"
             @click="cancelCustomRange"
           >
             Cancel
           </button>
           <button
+            data-testid="time-range-apply-btn"
             class="rounded-sm px-4 py-2 text-sm font-medium border border-accent bg-accent text-white cursor-pointer transition hover:bg-accent-hover hover:border-accent-hover"
             @click="applyCustomRange"
           >

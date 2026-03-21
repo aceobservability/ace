@@ -529,6 +529,7 @@ watch(selectedDatasourceId, () => {
               <button
                 type="button"
                 class="flex w-full items-center gap-3 rounded border border-border bg-surface-raised px-4 py-3 text-left cursor-pointer transition hover:border-border-strong hover:bg-surface-overlay disabled:opacity-60 disabled:cursor-not-allowed"
+                data-testid="explore-datasource-btn"
                 :disabled="loading || !hasMetricsDatasources"
                 @click="toggleDatasourceMenu"
                 :title="activeDatasource ? `Active datasource: ${activeDatasource.name}` : 'No metrics datasource configured'"
@@ -625,6 +626,7 @@ watch(selectedDatasourceId, () => {
           <!-- History button -->
           <div v-if="queryHistory.length > 0" class="relative">
             <button
+              data-testid="explore-history-btn"
               class="flex items-center gap-1 text-sm text-text-muted hover:text-text-primary cursor-pointer"
               :class="{ 'text-text-primary': showHistory }"
               @click="showHistory = !showHistory"
@@ -656,6 +658,7 @@ watch(selectedDatasourceId, () => {
 
         <div class="flex items-center gap-4">
           <button
+            data-testid="explore-run-query-btn"
             class="inline-flex items-center gap-2 rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             :disabled="loading || !query.trim() || !selectedDatasourceId || !hasMetricsDatasources"
             @click="runQuery"

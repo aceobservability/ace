@@ -40,18 +40,21 @@ function openPrivacySettings() {
     <div class="inline-flex items-center gap-2 flex-wrap justify-end max-md:justify-start">
       <button
         class="text-accent hover:text-accent underline text-sm px-4 py-2 rounded-sm transition"
+        data-testid="cookie-privacy-settings-btn"
         @click="openPrivacySettings"
       >
         Privacy settings
       </button>
       <button
         class="rounded-sm border border-border px-4 py-2 text-sm font-medium text-text-muted hover:text-text-primary transition"
+        data-testid="cookie-decline-btn"
         @click="declineAnalytics"
       >
         Decline
       </button>
       <button
         class="rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover"
+        data-testid="cookie-accept-btn"
         @click="acceptAnalytics"
       >
         Allow analytics

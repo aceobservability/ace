@@ -150,6 +150,7 @@ defineExpose({ isPinned, sidebarWidth })
 <template>
   <!-- Single sidebar that transitions width -->
   <aside
+    data-testid="sidebar"
     class="fixed left-0 top-0 bottom-0 z-50 overflow-hidden border-r border-[#12122a] transition-[width] duration-200 ease-out"
     :style="{ width: sidebarWidth + 'px' }"
     style="background: linear-gradient(180deg, #0a0a18 0%, #060610 100%)"
@@ -182,6 +183,7 @@ defineExpose({ isPinned, sidebarWidth })
           ]"
           :style="isPinned ? '' : 'background: transparent'"
           :title="isPinned ? 'Unpin sidebar' : 'Pin sidebar'"
+          data-testid="sidebar-pin-btn"
           @click="togglePin"
         >
           <PinOff v-if="isPinned" :size="14" />
@@ -209,6 +211,7 @@ defineExpose({ isPinned, sidebarWidth })
                   : 'text-[#555a6e] hover:text-[#c8cad4] hover:bg-[#14142a]'
               ]"
               :style="isActive(item) ? 'background: radial-gradient(circle at 24px center, rgba(52,211,153,0.10) 0%, transparent 70%)' : ''"
+              :data-testid="`nav-${item.id}`"
               @click="handleNavItemClick(item)"
             >
               <component :is="item.icon" :size="20" class="shrink-0" />
@@ -219,6 +222,7 @@ defineExpose({ isPinned, sidebarWidth })
               <span
                 v-if="item.children && isOpen"
                 class="ml-auto inline-flex items-center justify-center w-5 h-5 text-[#555a6e] rounded hover:text-[#c8cad4]"
+                :data-testid="`nav-${item.id}-toggle`"
                 @click.stop="toggleNavGroup(item.id)"
               >
                 <ChevronDown
@@ -248,6 +252,7 @@ defineExpose({ isPinned, sidebarWidth })
                     ? 'text-accent font-medium'
                     : 'text-[#555a6e] hover:text-[#c8cad4] hover:bg-[#14142a]'
                 ]"
+                :data-testid="`nav-${item.id}-${child.label.toLowerCase()}`"
                 @click="navigate(child.path)"
               >
                 <span class="text-xs">{{ child.label }}</span>
@@ -269,6 +274,7 @@ defineExpose({ isPinned, sidebarWidth })
                 ? 'text-accent before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-accent'
                 : 'text-[#555a6e] hover:text-[#c8cad4] hover:bg-[#14142a]'
             ]"
+            data-testid="nav-settings"
             @click="navigate(settingsPath)"
           >
             <Settings :size="20" class="shrink-0" />
@@ -289,6 +295,7 @@ defineExpose({ isPinned, sidebarWidth })
                 ? 'text-accent before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:rounded-r before:bg-accent'
                 : 'text-[#555a6e] hover:text-[#c8cad4] hover:bg-[#14142a]'
             ]"
+            data-testid="nav-privacy"
             @click="navigate(privacySettingsPath)"
           >
             <Shield :size="20" class="shrink-0" />
@@ -304,6 +311,7 @@ defineExpose({ isPinned, sidebarWidth })
 
           <button
             class="group relative flex h-9 items-center gap-3 px-[14px] rounded-sm text-[#555a6e] hover:text-[#c8cad4] hover:bg-[#14142a] transition-colors duration-150 cursor-pointer border-none"
+            data-testid="nav-theme"
             @click="cycle()"
             :title="`Theme: ${mode}`"
           >
@@ -322,6 +330,7 @@ defineExpose({ isPinned, sidebarWidth })
 
           <button
             class="group relative flex h-9 items-center gap-3 px-[14px] rounded-sm text-[#555a6e] hover:text-rose-500 hover:bg-rose-500/10 transition-colors duration-150 cursor-pointer border-none mb-2"
+            data-testid="nav-logout"
             @click="handleLogout"
           >
             <LogOut :size="20" class="shrink-0" />

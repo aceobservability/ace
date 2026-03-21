@@ -553,6 +553,7 @@ onMounted(async () => {
     <!-- Page header -->
     <button
       class="flex items-center gap-1 text-sm text-text-muted hover:text-text-primary transition mb-4"
+      data-testid="dashboard-settings-back-btn"
       @click="goBack"
       title="Back to Dashboard"
     >
@@ -602,6 +603,7 @@ onMounted(async () => {
               <label for="dashboard-name" class="text-sm font-medium text-text-secondary">Name</label>
               <input
                 id="dashboard-name"
+                data-testid="dashboard-name-input"
                 v-model="title"
                 type="text"
                 class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
@@ -614,6 +616,7 @@ onMounted(async () => {
               <label for="dashboard-description" class="text-sm font-medium text-text-secondary">Description</label>
               <textarea
                 id="dashboard-description"
+                data-testid="dashboard-description-input"
                 v-model="description"
                 rows="3"
                 class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition min-h-[100px] resize-y disabled:opacity-60 disabled:cursor-not-allowed"
@@ -626,6 +629,7 @@ onMounted(async () => {
               <label for="dashboard-time-range" class="text-sm font-medium text-text-secondary">Default time range</label>
               <select
                 id="dashboard-time-range"
+                data-testid="dashboard-time-range-select"
                 v-model="timeRangePreset"
                 class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
@@ -640,6 +644,7 @@ onMounted(async () => {
               <label for="dashboard-refresh" class="text-sm font-medium text-text-secondary">Refresh interval</label>
               <select
                 id="dashboard-refresh"
+                data-testid="dashboard-refresh-select"
                 v-model="refreshInterval"
                 class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none transition disabled:opacity-60 disabled:cursor-not-allowed"
                 :disabled="!canEdit || isSaving"
@@ -667,6 +672,7 @@ onMounted(async () => {
             <button
               type="button"
               class="inline-flex items-center gap-1.5 rounded-sm border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong"
+              data-testid="dashboard-export-yaml-btn"
               :disabled="isExporting"
               @click="exportSettings"
             >

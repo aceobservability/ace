@@ -53,6 +53,7 @@ function handleQueryInput(event: Event) {
       <select
         id="elasticsearch-signal"
         :value="props.signal"
+        data-testid="elasticsearch-signal-select"
         :disabled="props.disabled"
         class="w-full rounded-sm border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer transition-colors duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
         @change="handleSignalChange"
@@ -67,6 +68,7 @@ function handleQueryInput(event: Event) {
       <textarea
         id="elasticsearch-query"
         :value="props.modelValue"
+        data-testid="elasticsearch-query-input"
         :disabled="props.disabled"
         :placeholder="placeholder"
         rows="7"

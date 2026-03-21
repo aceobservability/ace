@@ -47,10 +47,10 @@ async function handleSubmit() {
 
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="emit('close')">
-    <div class="w-full max-w-lg rounded border border-border bg-surface-raised shadow-lg">
+    <div class="w-full max-w-lg rounded border border-border bg-surface-raised shadow-lg" data-testid="edit-dashboard-modal">
       <header class="flex items-center justify-between border-b border-border px-6 py-4">
         <h2 class="text-lg font-semibold text-text-primary">Edit Dashboard</h2>
-        <button class="flex items-center justify-center h-8 w-8 rounded-sm text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer" @click="emit('close')">
+        <button class="flex items-center justify-center h-8 w-8 rounded-sm text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer" data-testid="edit-dashboard-close-btn" @click="emit('close')">
           <X :size="20" />
         </button>
       </header>
@@ -65,6 +65,7 @@ async function handleSubmit() {
             placeholder="My Dashboard"
             :disabled="loading"
             autocomplete="off"
+            data-testid="edit-dashboard-title-input"
             class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
           />
         </div>
@@ -77,6 +78,7 @@ async function handleSubmit() {
             placeholder="Dashboard description (optional)"
             rows="3"
             :disabled="loading"
+            data-testid="edit-dashboard-description-input"
             class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed resize-vertical min-h-[80px]"
           ></textarea>
         </div>
@@ -87,6 +89,7 @@ async function handleSubmit() {
             id="folder"
             v-model="folderId"
             :disabled="loading"
+            data-testid="edit-dashboard-folder-select"
             class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
           >
             <option value="">Unfiled (Root)</option>
@@ -103,10 +106,10 @@ async function handleSubmit() {
         <div v-if="error" class="mb-5 rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{{ error }}</div>
 
         <div class="flex justify-end gap-3 border-t border-border pt-4">
-          <button type="button" class="rounded-sm border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" @click="emit('close')" :disabled="loading">
+          <button type="button" class="rounded-sm border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" data-testid="edit-dashboard-cancel-btn" @click="emit('close')" :disabled="loading">
             Cancel
           </button>
-          <button type="submit" class="rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" :disabled="loading">
+          <button type="submit" class="rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" data-testid="edit-dashboard-save-btn" :disabled="loading">
             {{ loading ? 'Saving...' : 'Save Changes' }}
           </button>
         </div>

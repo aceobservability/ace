@@ -125,6 +125,7 @@ async function handleSave() {
       <p class="m-0 mb-3 text-sm text-text-muted">Custom title replaces "Ace" in the sidebar header.</p>
       <input
         v-model="appTitle"
+        data-testid="branding-title-input"
         type="text"
         maxlength="100"
         placeholder="Ace"
@@ -140,12 +141,14 @@ async function handleSave() {
       <div class="flex items-center gap-3">
         <input
           v-model="primaryColor"
+          data-testid="branding-color-picker"
           type="color"
           :disabled="!isAdmin"
           class="h-10 w-12 cursor-pointer rounded border border-border bg-surface-raised p-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
         />
         <input
           v-model="primaryColor"
+          data-testid="branding-color-input"
           type="text"
           maxlength="7"
           placeholder="#10b981"
@@ -183,6 +186,7 @@ async function handleSave() {
         <img :src="logoDataURI" alt="Logo preview" class="h-14 w-14 rounded-sm border border-border object-contain bg-surface-overlay p-1" />
         <button
           v-if="isAdmin"
+          data-testid="branding-remove-logo-btn"
           class="inline-flex items-center gap-1.5 rounded-sm border border-rose-500/25 bg-surface-raised px-3 py-1.5 text-sm font-medium text-rose-500 transition hover:bg-rose-500/10 cursor-pointer"
           @click="removeLogo"
         >Remove logo</button>
@@ -190,6 +194,7 @@ async function handleSave() {
 
       <input
         type="file"
+        data-testid="branding-logo-upload"
         accept="image/png,image/jpeg,image/svg+xml,image/gif,image/webp"
         :disabled="!isAdmin"
         class="block w-full max-w-sm text-sm text-text-muted file:mr-3 file:rounded-sm file:border-0 file:bg-accent-muted file:px-4 file:py-2 file:text-sm file:font-semibold file:text-accent file:cursor-pointer hover:file:bg-accent-muted disabled:opacity-50"
@@ -241,6 +246,7 @@ async function handleSave() {
     <div class="flex items-center gap-3">
       <button
         v-if="isAdmin"
+        data-testid="branding-save-btn"
         class="inline-flex items-center gap-1.5 rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         :disabled="saving"
         @click="handleSave"
