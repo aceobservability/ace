@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"sort"
@@ -1106,7 +1107,13 @@ func parseTempoSpanSetCount(rawSpanSet interface{}) (int, bool) {
 	}
 
 	if matched, ok := anyToInt64(spanSetMap["matched"]); ok {
-		return max(int(matched), 0), true
+		if matched < 0 {
+			return 0, true
+		}
+		if matched > int64(math.MaxInt) {
+			return math.MaxInt, true
+		}
+		return int(matched), true
 	}
 
 	rawSpanList, ok := spanSetMap["spans"].([]interface{})
@@ -1131,7 +1138,13 @@ func parseTempoTraceSearchServiceStats(traceMap map[string]interface{}) (int, in
 		}
 
 		if errors, ok := anyToInt64(firstNonNil(statsMap["errorCount"], statsMap["errorSpanCount"], statsMap["errors"])); ok {
-			errorSpanCount += max(int(errors), 0)
+			if errors > 0 {
+				clamped := errors
+				if clamped > int64(math.MaxInt)-int64(errorSpanCount) {
+					clamped = int64(math.MaxInt) - int64(errorSpanCount)
+				}
+				errorSpanCount += int(clamped)
+			}
 		}
 	}
 

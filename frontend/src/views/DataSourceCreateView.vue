@@ -523,7 +523,8 @@ watch(formCloudWatchRegion, (region) => {
     return
   }
 
-  if (!formUrl.value.trim() || formUrl.value.includes('.amazonaws.com')) {
+  const hostname = (() => { try { return new URL(formUrl.value.trim()).hostname } catch { return '' } })()
+  if (!formUrl.value.trim() || hostname.endsWith('.amazonaws.com')) {
     const resolvedRegion = region.trim() || 'us-east-1'
     formUrl.value = `https://monitoring.${resolvedRegion}.amazonaws.com`
   }

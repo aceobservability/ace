@@ -226,7 +226,7 @@ externalDatabase:
   # -- Full connection string (overrides all other fields)
   url: ""
   # -- Password (stored in Secret; referenced by DATABASE_URL)
-  password: ""
+  password: null
 
 # =============================================================================
 # PostgreSQL (Bitnami subchart)
@@ -235,7 +235,7 @@ postgresql:
   enabled: true
   auth:
     username: ace
-    password: ""  # Set via --set or external secret in production!
+    password: null  # Set via --set or external secret in production!
     database: ace
   primary:
     persistence:

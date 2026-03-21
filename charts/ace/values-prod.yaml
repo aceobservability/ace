@@ -70,7 +70,7 @@ postgresql:
   enabled: true
   auth:
     username: ace
-    password: ""  # MUST be set via --set or external secret
+    password: null  # MUST be set via --set or external secret
     database: ace
   primary:
     persistence:

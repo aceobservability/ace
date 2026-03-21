@@ -197,6 +197,13 @@ func resolveHealthEndpoint(baseURL, endpoint string) (string, error) {
 		return "", fmt.Errorf("invalid datasource url: %w", err)
 	}
 
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return "", fmt.Errorf("unsupported datasource url scheme: %q", parsed.Scheme)
+	}
+	if parsed.Host == "" {
+		return "", fmt.Errorf("datasource url has no host")
+	}
+
 	resolved, err := url.Parse(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("invalid health endpoint %q: %w", endpoint, err)
