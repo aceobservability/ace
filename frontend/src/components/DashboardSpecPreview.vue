@@ -35,6 +35,7 @@ const { datasources } = useDatasource()
 // --- State ---
 
 const saving = ref(false)
+const saveSuccess = ref(false)
 const saveError = ref<string | null>(null)
 const savedDashboardId = ref<string | null>(null)
 const validationErrors = ref<string[]>([])
@@ -147,9 +148,12 @@ async function handleSave() {
   saveError.value = null
   try {
     const id = await saveDashboardSpec(props.spec, currentOrgId.value!)
-    savedDashboardId.value = id
-    // Show success state for 1 second, then emit
-    setTimeout(() => emit('saved', id), 1000)
+    // Show success state in button for 1 second before transitioning to post-save
+    saveSuccess.value = true
+    setTimeout(() => {
+      savedDashboardId.value = id
+      emit('saved', id)
+    }, 1000)
   } catch (e) {
     saveError.value = e instanceof Error ? e.message : 'Failed to save dashboard'
   } finally {
@@ -275,6 +279,14 @@ function dryRunDotClass(status: DryRunStatus): string {
           <ExternalLink :size="12" />
           Open dashboard
         </RouterLink>
+      </template>
+
+      <!-- Save success (intermediate, before post-save) -->
+      <template v-else-if="saveSuccess">
+        <span class="inline-flex items-center gap-1 text-emerald-500 text-sm font-semibold">
+          <Check :size="14" />
+          Dashboard saved
+        </span>
       </template>
 
       <!-- Save button -->
