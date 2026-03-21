@@ -46,16 +46,19 @@ Tag strategy:
 - **Database:** PostgreSQL (metadata storage)
 - **Data Source:** Prometheus
 
-## Features (Planned)
+## Features
 
-- Dashboard CRUD operations
-- Panel system with 12-column grid layout
-- Time range picker with presets and custom ranges
-- Prometheus data source integration
-- PromQL query editor
-- Line chart visualizations (ECharts)
-- Auto-refresh at configurable intervals
+- **AI-powered chat-to-dashboard** — type a natural language prompt, get a complete dashboard with the right queries and panels
+- **GitHub Copilot integration** — AI query assistant with tool-calling for metric discovery
+- Dashboard CRUD operations with 12-column grid layout
+- Multi-datasource support (VictoriaMetrics, Prometheus, ClickHouse, Elasticsearch, CloudWatch, Loki, Tempo)
+- PromQL/MetricsQL query editor with syntax highlighting
+- Line, bar, gauge, stat, pie, and table visualizations (ECharts)
+- Time range picker with presets, custom ranges, and auto-refresh
 - Drag-and-drop dashboard layout
+- Dark/light mode with organization-level theming
+- Log-to-trace correlation
+- Alert management (VMAlert, Alertmanager)
 
 ## Development
 
