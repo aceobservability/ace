@@ -1107,13 +1107,7 @@ func parseTempoSpanSetCount(rawSpanSet interface{}) (int, bool) {
 	}
 
 	if matched, ok := anyToInt64(spanSetMap["matched"]); ok {
-		if matched < 0 {
-			return 0, true
-		}
-		if matched > int64(math.MaxInt) {
-			return math.MaxInt, true
-		}
-		return int(matched), true
+		return safeInt64ToInt(matched), true
 	}
 
 	rawSpanList, ok := spanSetMap["spans"].([]interface{})
@@ -1138,12 +1132,9 @@ func parseTempoTraceSearchServiceStats(traceMap map[string]interface{}) (int, in
 		}
 
 		if errors, ok := anyToInt64(firstNonNil(statsMap["errorCount"], statsMap["errorSpanCount"], statsMap["errors"])); ok {
-			if errors > 0 {
-				clamped := errors
-				if clamped > int64(math.MaxInt)-int64(errorSpanCount) {
-					clamped = int64(math.MaxInt) - int64(errorSpanCount)
-				}
-				errorSpanCount += int(clamped)
+			errorSpanCount += safeInt64ToInt(errors)
+			if errorSpanCount < 0 {
+				errorSpanCount = math.MaxInt
 			}
 		}
 	}
@@ -1307,6 +1298,17 @@ func firstNonNil(values ...interface{}) interface{} {
 	}
 
 	return nil
+}
+
+// safeInt64ToInt converts an int64 to int, clamping to [0, math.MaxInt].
+func safeInt64ToInt(v int64) int {
+	if v < 0 {
+		return 0
+	}
+	if v > int64(math.MaxInt) {
+		return math.MaxInt
+	}
+	return int(v) //nolint:gosec // bounds checked above
 }
 
 func anyToString(value interface{}) string {
