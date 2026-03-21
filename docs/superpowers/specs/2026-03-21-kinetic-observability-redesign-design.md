@@ -6,7 +6,7 @@ Full UI replacement for the Ace observability platform. Replaces the current des
 
 - **Dark-only** — drop light mode entirely
 - **Big bang replacement** — rewrite all views in one pass, no phased migration
-- **7 views** — AI Command Center merged into omnipresent AI layer across all views
+- **8 views** — Home/Command Center as landing page + AI woven into all other views
 - **Stitch design system adopted wholesale** — Space Grotesk, Inter, JetBrains Mono, indigo primary, deep-space palette
 
 ## Stitch Reference
@@ -102,7 +102,7 @@ Each color carries meaning — use them consistently:
 ### Sidebar
 
 - **Width:** 240px expanded, 0px collapsed (fully hidden, no icon rail)
-- **Toggle:** `Cmd+B` keyboard shortcut, hamburger icon in top-left when collapsed
+- **Toggle:** `Cmd+B` keyboard shortcut. When collapsed: a floating 32px ghost hamburger icon in the top-left corner of the content area, overlaying content slightly. Semi-transparent by default (`outline` color at 50% opacity), opaque on hover. Disappears when sidebar opens.
 - **Animation:** 200ms ease-out slide, content area expands to fill
 - **Background:** `surface-container-low` (`#121316`)
 - **Logo:** Ace mark (gradient indigo square) + "Ace" wordmark in Space Grotesk 600
@@ -114,6 +114,7 @@ Each color carries meaning — use them consistently:
 ### Navigation Structure
 
 ```
+Home              (Sparkles icon) — default landing page
 Dashboards        (LayoutGrid icon)
 Services          (Activity icon)
 Alerts            (AlertTriangle icon)
@@ -251,6 +252,29 @@ Heights: 32px (compact, for dense data areas) / 36px (default).
 
 ## 5. Views
 
+### 5.0 Home / Command Center
+
+**Route:** `/app` (default landing page after login)
+**New view — references Stitch "AI Command Center" screen**
+
+The flight deck landing page. Aggregates the most important signals and puts the AI command front and center.
+
+**Visual hierarchy (top to bottom):**
+1. **AI Command Input** — prominent centered input ("Execute Prompt" / "Ask Ace anything"), Space Grotesk heading, glassmorphic container. This is the hero — the first thing you see. Functionally identical to Cmd+K but always visible on this page.
+2. **System Health Grid** — 4-6 service cards showing status (healthy/degraded/unstable), uptime %, and key metric. Uses the multi-color palette: green dots for healthy, amber for degraded, coral for critical. JetBrains Mono for all numbers.
+3. **Recent AI Insights** — 2-3 cards showing recent AI-generated discoveries/analyses: anomaly correlations, cost optimization findings, infrastructure topology changes. Each card has a timestamp, title, and 1-line summary. Glassmorphic AI styling (indigo tint, gradient icon).
+4. **Quick Links** — subtle row of links to dashboards, alerts, and recent activity.
+
+**AI surface:** The page IS the AI surface — the command input is the centerpiece.
+
+**First-time user:** A dismissible onboarding progress banner appears below the AI command input:
+- "Get started with Ace" heading, `surface-container-low` card
+- Three steps with checkmarks: "Connect a data source" → "Create your first dashboard" → "Set up alerts"
+- Completed steps show `secondary` checkmark, current step is highlighted with `primary`
+- Each step links to the relevant view
+- Dismiss with X button, stores dismissed state in localStorage
+- Disappears automatically once all three steps are completed
+
 ### 5.1 Dashboards Explorer
 
 **Route:** `/app/dashboards`
@@ -343,6 +367,62 @@ Dense forms, tonal section separators, monospace for config values.
 
 ---
 
+## 5.8 Interaction States
+
+Every view must handle these states. Engineers should not improvise — use these patterns:
+
+### Loading States
+
+All loading states use the shimmer animation (surface tier pulse). Never show a blank page.
+
+| View | Loading Pattern |
+|---|---|
+| Home | Skeleton cards for health grid + insight cards, AI input active immediately |
+| Dashboards Explorer | Skeleton card grid (3x2), search input active immediately |
+| Dashboard Detail | Panel frames visible with shimmer fill, time range picker active |
+| Services | Skeleton service cards with status dot placeholders |
+| Alerts | Table header visible, rows shimmer (5 placeholder rows) |
+| Explore | Monaco editor loads immediately, results area shows "Run a query to see results" |
+| Settings | Tab nav visible, form fields shimmer |
+| Dashboard Generation | Step indicator visible, AI input active |
+
+### Empty States
+
+Empty states are features, not errors. Each has: an icon, a message with warmth, and a primary action.
+
+| View | Empty State |
+|---|---|
+| Home (no services) | Sparkles icon + "Welcome to Ace" + "Connect your first data source to get started" + primary button "Add Data Source" |
+| Dashboards Explorer (no dashboards) | LayoutGrid icon + "No dashboards yet" + "Create your first dashboard or let AI build one for you" + two buttons: "Create Dashboard" (outlined) / "Generate with AI" (primary gradient) |
+| Dashboard Detail (no panels) | Plus icon + "This dashboard is empty" + "Add a panel to start visualizing your data" + "Add Panel" button |
+| Services (no services) | Activity icon + "No services discovered" + "Services will appear here once data sources are connected and sending metrics" |
+| Alerts (no alerts) | CheckCircle icon in `secondary` + "All clear — no alerts" + "Your systems are healthy. Alert rules can be configured in your dashboards." |
+| Alerts (no rules configured) | Bell icon + "No alert rules configured" + "Set up alerting in your dashboard panels or data source settings" |
+| Explore (no results) | Search icon + "Run a query to explore your data" + "Select a data source and enter a query above" |
+| Settings > Data Sources (none) | Database icon + "No data sources connected" + "Connect Prometheus, Loki, Tempo, or other sources to start monitoring" + "Add Data Source" button |
+
+### Error States
+
+Errors use `error` color sparingly — the message should be helpful, not alarming.
+
+| Scope | Pattern |
+|---|---|
+| Full page error | Centered: AlertTriangle icon in `error`, "Something went wrong" heading, `on-surface-variant` description of what failed, "Retry" button (outlined) |
+| Panel error | Within panel frame: small AlertTriangle icon + "Failed to load" in `on-surface-variant`, "Retry" ghost button. Panel frame stays visible. |
+| Inline error | Red text below the input/field that caused it. 12px Inter, `error` color. |
+| Network error | Toast notification (top-right): `surface-bright` bg, `error` left border, message + "Retry" link |
+| Query error | In Explore results area: monospace error message from the data source, `error` text on `error` at 5% opacity bg |
+
+### Partial / Degraded States
+
+| Scenario | Pattern |
+|---|---|
+| Some panels fail, others succeed | Failed panels show inline error, successful panels render normally. No full-page error. |
+| AI features unavailable | AI elements gracefully hide. Cmd+K still opens but shows "AI is currently unavailable" with retry. No broken UI. |
+| Data source unreachable | Dashboard cards show last-known values with a stale data indicator (clock icon + "Last updated 5m ago" in `tertiary`) |
+
+---
+
 ## 6. Transitions & Motion
 
 | Element | Duration | Easing | Effect |
@@ -359,6 +439,70 @@ Dense forms, tonal section separators, monospace for config values.
 - Motion is functional, not decorative — communicates state changes
 - Nothing exceeds 300ms
 - Respect `prefers-reduced-motion` — skip all non-essential animations
+
+---
+
+## 6.1 Responsive Behavior
+
+**Minimum supported width:** 1280px. No mobile or tablet layouts.
+
+| Viewport | Behavior |
+|---|---|
+| >= 1920px (ultrawide) | Sidebar expanded by default. Dashboard grids can use wider columns. Content max-width: none (fill available). |
+| 1440px-1919px | Standard desktop. Sidebar expanded by default. |
+| 1280px-1439px (laptop) | Sidebar auto-collapses on load (starts at 0px). Hamburger icon visible. Dashboard cards switch from 3-column to 2-column grid. |
+| < 1280px | Not supported. Show a "Best experienced on a wider screen" message if detected. |
+
+**Dashboard grid breakpoints:**
+- >= 1440px: 3+ column card grid (Dashboards Explorer, Home health grid)
+- 1280-1439px: 2-column card grid
+- Dashboard detail panels: `vue3-grid-layout-next` handles its own responsive behavior
+
+## 6.2 Accessibility
+
+### Keyboard Navigation
+
+| Pattern | Keys |
+|---|---|
+| Sidebar nav | `Tab` to enter sidebar, `Arrow Up/Down` to navigate items, `Enter` to select, `Escape` to return to content |
+| Cmd+K modal | `Cmd+K` to open, `Escape` to close, `Tab` to cycle action buttons, focus trapped inside modal |
+| Data tables | `Tab` to enter table, `Arrow Up/Down` to navigate rows, `Enter` to expand row, `Escape` to collapse |
+| Explore tabs | `Tab` to reach tab bar, `Arrow Left/Right` to switch tabs |
+| Dashboard panels | `Tab` to cycle panels in edit mode, `Enter` to open panel editor |
+| Modals | Focus trapped, `Escape` to close, first focusable element auto-focused on open |
+| Buttons | `Enter` or `Space` to activate |
+
+### Focus Indicators
+
+- Focus ring: 2px `primary` outline with 2px offset (visible on dark backgrounds)
+- Ghost buttons: focus shows `surface-container-high` background + `primary` outline
+- Inputs: focus border changes to `primary` (already specified)
+
+### ARIA Landmarks
+
+| Region | Landmark |
+|---|---|
+| Sidebar | `<nav aria-label="Main navigation">` |
+| Content area | `<main>` |
+| Cmd+K modal | `<dialog aria-label="AI Command">` with `aria-modal="true"` |
+| View header | `<header>` within main |
+| Alert table | `<table>` with `role="grid"` for keyboard nav |
+
+### Screen Reader
+
+- Route changes announce the new page title via a live region
+- Loading states announce "Loading [view name]" via `aria-live="polite"`
+- Error states announce the error message via `aria-live="assertive"`
+- Status dots use `aria-label` ("Healthy", "Warning", "Critical")
+
+### Contrast
+
+- Primary text (`#fdfbfe`) on base surface (`#0d0e10`): contrast ratio ~19:1 (passes AAA)
+- Secondary text (`#ababad`) on base surface: ~8:1 (passes AA)
+- `primary` (`#a3a6ff`) on base surface: ~7:1 (passes AA)
+- `secondary` (`#69f6b8`) on base surface: ~11:1 (passes AAA)
+- `error` (`#ff6e84`) on base surface: ~6:1 (passes AA)
+- All interactive elements: minimum 44px touch/click target height
 
 ---
 
