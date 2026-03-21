@@ -118,15 +118,17 @@ jobs:
   secret-scan:
     name: Secret Scan (Gitleaks)
     runs-on: ubuntu-latest
-    if: ${{ secrets.GITLEAKS_LICENSE != '' }}
     steps:
       - name: Checkout
+        if: ${{ env.GITLEAKS_LICENSE != '' }}
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Run gitleaks
+        if: ${{ env.GITLEAKS_LICENSE != '' }}
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+    env:
+      GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
