@@ -54,8 +54,11 @@ const knownDatasourceIds = computed(() => datasources.value.map((d) => d.id))
 
 const DEMO_METRIC_NAMES = [
   'http_requests_total',
+  'http_request_duration_seconds',
   'process_cpu_seconds',
+  'process_resident_memory_bytes',
   'node_cpu_seconds',
+  'node_memory_MemAvailable_bytes',
 ]
 
 const isDemoSpec = computed(() => {
