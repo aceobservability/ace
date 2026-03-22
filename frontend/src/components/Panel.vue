@@ -18,6 +18,7 @@ import TraceListPanel from './TraceListPanel.vue'
 
 const props = defineProps<{
   panel: Panel
+  anomaly?: string
 }>()
 
 const emit = defineEmits<{
@@ -508,12 +509,38 @@ function handleOpenTrace(traceId: string) {
 </script>
 
 <template>
-  <div class="flex h-full flex-col rounded border border-border bg-surface-raised overflow-hidden">
-    <div class="flex items-center justify-between border-b border-border px-4 py-2">
-      <h3 class="text-sm font-semibold text-text-primary truncate">{{ panel.title }}</h3>
-      <div class="flex gap-1">
+  <div
+    class="relative flex h-full flex-col rounded-lg overflow-hidden"
+    :style="{
+      backgroundColor: 'var(--color-surface-container-low)',
+    }"
+  >
+    <!-- Anomaly badge -->
+    <span
+      v-if="anomaly"
+      data-testid="panel-anomaly-dot"
+      :title="anomaly"
+      class="absolute top-2 right-2 z-10 h-3 w-3 rounded-full"
+      :style="{
+        backgroundColor: 'var(--color-primary-dim)',
+        animation: 'panelAnomalyPulse 2s ease-in-out infinite',
+      }"
+    />
+
+    <div
+      class="panel-header flex items-center justify-between px-4 py-2"
+      :style="{
+        borderBottom: '1px solid var(--color-outline-variant)',
+      }"
+    >
+      <h3
+        class="text-sm font-semibold truncate"
+        :style="{ color: 'var(--color-on-surface)' }"
+      >{{ panel.title }}</h3>
+      <div class="panel-actions flex gap-1">
         <button
-          class="flex items-center justify-center h-7 w-7 rounded-sm border-0 bg-transparent text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer"
+          class="flex items-center justify-center h-7 w-7 rounded-md border-0 bg-transparent transition cursor-pointer hover:opacity-80"
+          :style="{ color: 'var(--color-outline)' }"
           data-testid="panel-edit-btn"
           @click="$emit('edit', panel)"
           title="Edit panel"
@@ -521,7 +548,8 @@ function handleOpenTrace(traceId: string) {
           <Pencil :size="16" />
         </button>
         <button
-          class="flex items-center justify-center h-7 w-7 rounded-sm border-0 bg-transparent text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer"
+          class="flex items-center justify-center h-7 w-7 rounded-md border-0 bg-transparent transition cursor-pointer hover:opacity-80"
+          :style="{ color: 'var(--color-outline)' }"
           data-testid="panel-delete-btn"
           @click="$emit('delete', panel)"
           title="Delete panel"
@@ -531,11 +559,18 @@ function handleOpenTrace(traceId: string) {
       </div>
     </div>
     <div class="flex-1 overflow-hidden p-2 flex flex-col min-h-0">
-      <div v-if="!hasQuery" class="flex-1 flex flex-col items-center justify-center gap-3 text-text-muted">
-        <BarChart3 :size="48" class="text-text-muted" />
-        <p class="text-sm text-text-muted m-0">No query configured</p>
+      <div
+        v-if="!hasQuery"
+        class="flex-1 flex flex-col items-center justify-center gap-3"
+        :style="{ color: 'var(--color-outline)' }"
+      >
+        <BarChart3 :size="48" />
+        <p class="text-sm m-0">No query configured</p>
         <button
-          class="px-4 py-2 bg-accent text-white border-0 rounded-sm text-sm font-medium cursor-pointer hover:-translate-y-px transition"
+          class="px-4 py-2 text-white border-0 rounded-lg text-sm font-medium cursor-pointer hover:opacity-90 transition"
+          :style="{
+            background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
+          }"
           data-testid="panel-configure-btn"
           @click="$emit('edit', panel)"
         >
@@ -543,12 +578,18 @@ function handleOpenTrace(traceId: string) {
         </button>
       </div>
       <div v-else-if="loading" class="flex-1 flex flex-col items-center justify-center gap-3">
-        <div class="h-8 w-8 rounded-sm border-[3px] border-border border-t-accent animate-spin"></div>
-        <p class="text-sm text-text-muted m-0">Loading data...</p>
+        <div
+          class="h-8 w-8 rounded-full border-[3px] animate-spin"
+          :style="{
+            borderColor: 'var(--color-outline-variant)',
+            borderTopColor: 'var(--color-primary)',
+          }"
+        ></div>
+        <p class="text-sm m-0" :style="{ color: 'var(--color-on-surface-variant)' }">Loading data...</p>
       </div>
       <div v-else-if="error" class="flex-1 flex flex-col items-center justify-center gap-3">
-        <AlertCircle :size="48" class="text-rose-500" />
-        <p class="text-xs text-rose-500 p-2 m-0">{{ error }}</p>
+        <AlertCircle :size="48" :style="{ color: 'var(--color-error)' }" />
+        <p class="text-xs p-2 m-0" :style="{ color: 'var(--color-error)' }">{{ error }}</p>
       </div>
       <div v-else-if="isLineChart && chartSeries.length > 0" class="flex-1 min-h-0">
         <LineChart :series="chartSeries" />
@@ -601,11 +642,25 @@ function handleOpenTrace(traceId: string) {
       </div>
       <div
         v-else-if="chartSeries.length === 0 && logEntries.length === 0 && traceSummaries.length === 0"
-        class="flex-1 flex flex-col items-center justify-center gap-3 text-text-muted"
+        class="flex-1 flex flex-col items-center justify-center gap-3"
+        :style="{ color: 'var(--color-on-surface-variant)' }"
       >
-        <AlertCircle :size="48" class="text-amber-400" />
-        <p class="text-sm text-text-muted m-0">No data available</p>
+        <AlertCircle :size="48" :style="{ color: 'var(--color-tertiary)' }" />
+        <p class="text-sm m-0">No data available</p>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+@keyframes panelAnomalyPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+</style>

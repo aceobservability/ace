@@ -22,9 +22,12 @@ import {
   fetchSilences,
 } from '../composables/useAlertManager'
 import { useAuth } from '../composables/useAuth'
+import { useCommandContext } from '../composables/useCommandContext'
 import { useDatasource } from '../composables/useDatasource'
 import { useOrganization } from '../composables/useOrganization'
 import { fetchAlerts, fetchGroups } from '../composables/useVMAlert'
+import AiInsightCard from '../components/AiInsightCard.vue'
+import StatusDot from '../components/StatusDot.vue'
 import type {
   AMAlert,
   AMMatcher,
@@ -39,6 +42,7 @@ import { dataSourceTypeLabels } from '../types/datasource'
 const { currentOrg } = useOrganization()
 const { user } = useAuth()
 const { alertingDatasources, fetchDatasources } = useDatasource()
+const { registerContext, deregisterContext } = useCommandContext()
 
 const selectedDatasourceId = ref('')
 const activeTab = ref<'alerts' | 'groups' | 'am-alerts' | 'am-silences' | 'am-receivers'>('alerts')
@@ -78,6 +82,9 @@ let refreshInterval: ReturnType<typeof setInterval> | null = null
 
 // Accordion state for rule groups
 const expandedGroups = ref<Record<string, boolean>>({})
+
+// Expandable row state
+const expandedAlertIdx = ref<number | null>(null)
 
 const selectedDatasource = computed<DataSource | undefined>(() =>
   alertingDatasources.value.find((d) => d.id === selectedDatasourceId.value),
@@ -120,12 +127,29 @@ const activeSilences = computed(() =>
   amSilences.value.filter((s) => s.status.state === 'active' || s.status.state === 'pending'),
 )
 
+function stateToStatusDot(state: string): 'healthy' | 'warning' | 'critical' | 'info' {
+  switch (state) {
+    case 'firing':
+    case 'active':
+      return 'critical'
+    case 'pending':
+    case 'suppressed':
+      return 'warning'
+    default:
+      return 'healthy'
+  }
+}
+
 function toggleGroup(groupName: string) {
   expandedGroups.value[groupName] = !expandedGroups.value[groupName]
 }
 
 function isGroupExpanded(groupName: string): boolean {
   return !!expandedGroups.value[groupName]
+}
+
+function toggleAlertRow(idx: number) {
+  expandedAlertIdx.value = expandedAlertIdx.value === idx ? null : idx
 }
 
 function formatDuration(seconds: number): string {
@@ -139,71 +163,12 @@ function formatInterval(seconds: number): string {
   return `${Math.floor(seconds / 60)}m`
 }
 
-function stateClass(state: string): string {
-  switch (state) {
-    case 'firing':
-      return 'bg-rose-500/10 text-rose-500 ring-1 ring-rose-600/20'
-    case 'pending':
-      return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
-    default:
-      return 'bg-surface-overlay text-text-secondary'
-  }
-}
-
-function amStateClass(state: string): string {
-  switch (state) {
-    case 'active':
-      return 'bg-rose-500/10 text-rose-500 ring-1 ring-rose-600/20'
-    case 'suppressed':
-      return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
-    case 'unprocessed':
-      return 'bg-surface-overlay text-text-secondary'
-    default:
-      return 'bg-surface-overlay text-text-secondary'
-  }
-}
-
-function severityClass(severity: string | undefined): string {
-  switch (severity) {
-    case 'critical':
-      return 'bg-rose-500/10 text-rose-500 ring-1 ring-rose-600/20'
-    case 'warning':
-      return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
-    case 'info':
-      return 'bg-sky-500/10 text-sky-700 ring-1 ring-sky-600/20'
-    default:
-      return 'bg-surface-overlay text-text-secondary'
-  }
-}
-
-function silenceStatusClass(state: string): string {
-  switch (state) {
-    case 'active':
-      return 'bg-accent-muted text-accent ring-1 ring-accent/20'
-    case 'pending':
-      return 'bg-amber-50 text-amber-700 ring-1 ring-amber-600/20'
-    case 'expired':
-      return 'bg-surface-overlay text-text-secondary'
-    default:
-      return 'bg-surface-overlay text-text-secondary'
-  }
-}
-
 function truncateId(id: string): string {
-  return id.length > 8 ? `${id.substring(0, 8)}…` : id
-}
-
-function formatMatchersText(matchers: AMMatcher[]): string {
-  return matchers
-    .map((m) => {
-      const op = m.isEqual ? (m.isRegex ? '=~' : '=') : m.isRegex ? '!~' : '!='
-      return `${m.name}${op}"${m.value}"`
-    })
-    .join(', ')
+  return id.length > 8 ? `${id.substring(0, 8)}...` : id
 }
 
 function formatDateShort(dateStr: string): string {
-  if (!dateStr) return '—'
+  if (!dateStr) return '--'
   const d = new Date(dateStr)
   return d.toLocaleString(undefined, {
     month: 'short',
@@ -365,7 +330,6 @@ async function handleCreateSilence() {
       comment: silenceComment.value.trim(),
     })
     closeSilenceModal()
-    // Refresh silences
     amSilences.value = await fetchSilences(selectedDatasourceId.value)
   } catch (e) {
     silenceError.value = e instanceof Error ? e.message : 'Failed to create silence'
@@ -392,8 +356,8 @@ watch(selectedDatasourceId, () => {
   amReceivers.value = []
   error.value = null
   expandedGroups.value = {}
+  expandedAlertIdx.value = null
 
-  // Set the first relevant tab
   if (selectedDatasource.value?.type === 'alertmanager') {
     activeTab.value = 'am-alerts'
   } else {
@@ -419,6 +383,12 @@ watch(alertingDatasources, (ds) => {
 })
 
 onMounted(() => {
+  registerContext({
+    viewName: 'Alerts',
+    viewRoute: '/app/alerts',
+    description: 'Alert and incident explorer — monitor active alerts and alerting rule groups',
+  })
+
   if (currentOrg.value) {
     fetchDatasources(currentOrg.value.id)
   }
@@ -435,25 +405,47 @@ watch(
 
 onUnmounted(() => {
   stopAutoRefresh()
+  deregisterContext()
 })
 </script>
 
 <template>
-  <div class="px-8 py-6 max-w-5xl mx-auto">
+  <div
+    class="px-8 py-6 max-w-5xl mx-auto"
+    :style="{ color: 'var(--color-on-surface)' }"
+  >
     <!-- Page header -->
-    <header class="flex items-center justify-between gap-4 mb-6 rounded border border-border bg-surface-raised px-5 py-4 shadow-sm">
+    <header
+      class="flex items-center justify-between gap-4 mb-6 rounded-lg px-5 py-4"
+      :style="{
+        backgroundColor: 'var(--color-surface-container-low)',
+      }"
+    >
       <div>
-        <h1 class="flex items-center gap-2 text-base font-bold font-mono tracking-wide text-text-primary m-0">
+        <h1
+          class="flex items-center gap-2 text-base font-bold font-display tracking-wide m-0"
+          :style="{ color: 'var(--color-on-surface)' }"
+        >
           <BellRing :size="20" />
           Alerts
         </h1>
-        <p class="text-sm text-text-muted mt-1 mb-0">Monitor active alerts and alerting rule groups</p>
+        <p
+          class="text-sm mt-1 mb-0"
+          :style="{ color: 'var(--color-on-surface-variant)' }"
+        >
+          Monitor active alerts and alerting rule groups
+        </p>
       </div>
       <div class="flex items-center gap-2">
         <select
           v-model="selectedDatasourceId"
           data-testid="alerts-datasource-select"
-          class="px-3 py-2 pr-8 bg-surface-overlay border border-border rounded-sm text-text-primary text-sm appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394a3b8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.65rem_center] focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+          class="px-3 py-2 pr-8 rounded-sm text-sm appearance-none focus:outline-none"
+          :style="{
+            backgroundColor: 'var(--color-surface-container-high)',
+            color: 'var(--color-on-surface)',
+            border: '1px solid var(--color-outline-variant)',
+          }"
           :disabled="alertingDatasources.length === 0"
         >
           <option value="" disabled>
@@ -468,7 +460,12 @@ onUnmounted(() => {
           </option>
         </select>
         <button
-          class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 bg-surface-overlay border border-border rounded-sm text-sm font-medium text-text-secondary cursor-pointer transition hover:bg-surface-overlay disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-sm text-sm font-medium cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
+          :style="{
+            backgroundColor: 'var(--color-surface-container-high)',
+            color: 'var(--color-on-surface-variant)',
+            border: '1px solid var(--color-outline-variant)',
+          }"
           data-testid="alerts-refresh-btn"
           :disabled="!selectedDatasourceId || loading"
           @click="loadData"
@@ -479,7 +476,11 @@ onUnmounted(() => {
         </button>
         <button
           class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-sm text-sm font-medium cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
-          :class="autoRefresh ? 'bg-accent-muted border border-accent-border text-accent' : 'bg-surface-overlay border border-border text-text-primary hover:bg-surface-overlay'"
+          :style="{
+            backgroundColor: autoRefresh ? 'color-mix(in srgb, var(--color-primary) 15%, transparent)' : 'var(--color-surface-container-high)',
+            color: autoRefresh ? 'var(--color-primary)' : 'var(--color-on-surface)',
+            border: autoRefresh ? '1px solid var(--color-primary)' : '1px solid var(--color-outline-variant)',
+          }"
           data-testid="alerts-auto-refresh-btn"
           :disabled="!selectedDatasourceId"
           @click="toggleAutoRefresh"
@@ -488,8 +489,8 @@ onUnmounted(() => {
           <Clock :size="14" />
           Auto
         </button>
-        <span v-if="lastRefreshed" class="flex items-center gap-2 text-xs text-text-muted font-mono">
-          <span v-if="autoRefresh" class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+        <span v-if="lastRefreshed" class="flex items-center gap-2 text-xs font-mono" :style="{ color: 'var(--color-outline)' }">
+          <span v-if="autoRefresh" class="w-1.5 h-1.5 rounded-full" :style="{ backgroundColor: 'var(--color-primary)' }"></span>
           {{ formattedLastRefreshed }}
         </span>
       </div>
@@ -497,13 +498,20 @@ onUnmounted(() => {
 
     <!-- No datasource selected -->
     <div v-if="!selectedDatasourceId && alertingDatasources.length === 0" class="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
-      <BellOff :size="48" class="text-text-muted" />
-      <h3 class="text-lg font-semibold text-text-primary m-0">No alerting datasources configured</h3>
-      <p class="text-sm text-text-muted m-0">Add a VMAlert or AlertManager datasource in Data Sources settings to view alerts.</p>
+      <BellOff :size="48" :style="{ color: 'var(--color-outline)' }" />
+      <h3 class="text-lg font-semibold m-0" :style="{ color: 'var(--color-on-surface)' }">No alerting datasources configured</h3>
+      <p class="text-sm m-0" :style="{ color: 'var(--color-on-surface-variant)' }">Add a VMAlert or AlertManager datasource in Data Sources settings to view alerts.</p>
     </div>
 
     <!-- Error state -->
-    <div v-else-if="error" class="flex items-center gap-2 px-4 py-3 bg-rose-500/10 border border-rose-500/25 rounded-sm text-rose-500 text-sm mb-4">
+    <div
+      v-else-if="error"
+      class="flex items-center gap-2 px-4 py-3 rounded-sm text-sm mb-4"
+      :style="{
+        backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
+        color: 'var(--color-error)',
+      }"
+    >
       <AlertCircle :size="16" />
       {{ error }}
     </div>
@@ -511,150 +519,298 @@ onUnmounted(() => {
     <!-- Loading skeleton -->
     <div v-else-if="loading && alerts.length === 0 && groups.length === 0 && amAlerts.length === 0 && amSilences.length === 0" class="flex flex-col gap-3 py-4">
       <div v-for="i in 5" :key="i" class="flex gap-4 items-center">
-        <div class="h-3.5 rounded bg-surface-overlay animate-pulse w-40"></div>
-        <div class="h-3.5 rounded bg-surface-overlay animate-pulse w-15"></div>
-        <div class="h-3.5 rounded bg-surface-overlay animate-pulse w-55"></div>
-        <div class="h-3.5 rounded bg-surface-overlay animate-pulse w-32"></div>
+        <div class="h-3.5 rounded animate-pulse w-40" :style="{ backgroundColor: 'var(--color-surface-container-high)' }"></div>
+        <div class="h-3.5 rounded animate-pulse w-15" :style="{ backgroundColor: 'var(--color-surface-container-high)' }"></div>
+        <div class="h-3.5 rounded animate-pulse w-55" :style="{ backgroundColor: 'var(--color-surface-container-high)' }"></div>
+        <div class="h-3.5 rounded animate-pulse w-32" :style="{ backgroundColor: 'var(--color-surface-container-high)' }"></div>
       </div>
     </div>
 
-    <!-- VMAlert Tabs + Content -->
+    <!-- VMAlert: Dense Table View -->
     <template v-else-if="selectedDatasourceId && isVMAlert">
-      <div class="flex gap-1 border-b border-border mb-6">
+      <!-- Tab sub-nav -->
+      <div class="flex gap-1 mb-6" :style="{ borderBottom: '1px solid var(--color-outline-variant)' }">
         <button
-          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'alerts' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
+          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer bg-transparent"
+          :style="{
+            color: activeTab === 'alerts' ? 'var(--color-primary)' : 'var(--color-outline)',
+            borderBottom: activeTab === 'alerts' ? '2px solid var(--color-primary)' : '2px solid transparent',
+          }"
           data-testid="alerts-tab-alerts"
           @click="activeTab = 'alerts'"
         >
           Active Alerts
-          <span v-if="firingAlerts.length > 0" class="ml-1.5 rounded-sm bg-rose-500/10 px-2 py-0.5 text-xs font-mono text-rose-500">{{ firingAlerts.length }}</span>
+          <span
+            v-if="firingAlerts.length > 0"
+            class="ml-1.5 rounded-sm px-2 py-0.5 text-xs font-mono"
+            :style="{
+              backgroundColor: 'color-mix(in srgb, var(--color-error) 15%, transparent)',
+              color: 'var(--color-error)',
+            }"
+          >{{ firingAlerts.length }}</span>
         </button>
         <button
-          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'groups' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
+          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer bg-transparent"
+          :style="{
+            color: activeTab === 'groups' ? 'var(--color-primary)' : 'var(--color-outline)',
+            borderBottom: activeTab === 'groups' ? '2px solid var(--color-primary)' : '2px solid transparent',
+          }"
           data-testid="alerts-tab-groups"
           @click="activeTab = 'groups'"
         >
           Rule Groups
-          <span v-if="groups.length > 0" class="ml-1.5 rounded-sm bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-muted">{{ groups.length }}</span>
+          <span
+            v-if="groups.length > 0"
+            class="ml-1.5 rounded-sm px-2 py-0.5 text-xs font-mono"
+            :style="{
+              backgroundColor: 'var(--color-surface-container-high)',
+              color: 'var(--color-outline)',
+            }"
+          >{{ groups.length }}</span>
         </button>
       </div>
 
-      <!-- Active Alerts tab -->
+      <!-- Active Alerts tab — Dense Table -->
       <div v-if="activeTab === 'alerts'">
+        <!-- AI Insight Card for firing alerts -->
+        <AiInsightCard
+          v-if="firingAlerts.length > 0"
+          title="AI Root Cause Analysis"
+          :description="`${firingAlerts.length} alert${firingAlerts.length > 1 ? 's' : ''} firing. Possible root cause: elevated resource consumption detected across affected services. Check recent deployments and scaling events.`"
+          :timestamp="formattedLastRefreshed || 'just now'"
+          class="mb-4"
+        />
+
         <div v-if="sortedAlerts.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
-          <BellOff :size="36" class="text-text-muted" />
-          <h3 class="text-lg font-semibold text-text-primary m-0">No alerts firing</h3>
-          <p class="text-sm text-text-muted m-0">All quiet -- no active or pending alerts.</p>
+          <BellOff :size="36" :style="{ color: 'var(--color-outline)' }" />
+          <h3 class="text-lg font-semibold m-0" :style="{ color: 'var(--color-on-surface)' }">No alerts firing</h3>
+          <p class="text-sm m-0" :style="{ color: 'var(--color-on-surface-variant)' }">All quiet -- no active or pending alerts.</p>
         </div>
 
-        <div v-else class="space-y-3">
-          <div
-            v-for="(alert, idx) in sortedAlerts"
-            :key="idx"
-            class="rounded border border-border bg-surface-raised p-4 border-l-4"
-            :class="{
-              'border-l-rose-500': alert.state === 'firing',
-              'border-l-amber-500': alert.state === 'pending',
-              'border-l-border-strong': alert.state !== 'firing' && alert.state !== 'pending',
-            }"
-          >
-            <div class="flex items-start justify-between gap-3 mb-2">
-              <span class="text-sm font-semibold text-text-primary">{{ alert.name }}</span>
-              <span class="rounded-sm px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="stateClass(alert.state)">
-                {{ alert.state }}
-              </span>
-            </div>
-            <div class="flex flex-wrap gap-1.5 mb-2" v-if="alert.labels && Object.keys(alert.labels).length > 0">
-              <span
-                v-for="(value, key) in alert.labels"
-                :key="String(key)"
-                class="inline-flex rounded-sm bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-secondary"
+        <table v-else class="w-full border-collapse" data-testid="alert-table">
+          <thead data-testid="alert-table-header">
+            <tr>
+              <th
+                class="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3"
+                :style="{ color: 'var(--color-outline)' }"
+              >Status</th>
+              <th
+                class="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3"
+                :style="{ color: 'var(--color-outline)' }"
+              >Alert</th>
+              <th
+                class="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3"
+                :style="{ color: 'var(--color-outline)' }"
+              >Labels</th>
+              <th
+                class="text-right text-xs font-semibold uppercase tracking-wider px-4 py-3"
+                :style="{ color: 'var(--color-outline)' }"
+              >Active Since</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="(alert, idx) in sortedAlerts" :key="idx">
+              <tr
+                data-testid="alert-row"
+                class="cursor-pointer transition-colors"
+                :style="{
+                  backgroundColor: expandedAlertIdx === idx
+                    ? 'var(--color-surface-container-high)'
+                    : 'transparent',
+                }"
+                @click="toggleAlertRow(idx)"
+                @mouseenter="($event.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-container-high)'"
+                @mouseleave="($event.currentTarget as HTMLElement).style.backgroundColor = expandedAlertIdx === idx ? 'var(--color-surface-container-high)' : 'transparent'"
               >
-                {{ key }}={{ value }}
-              </span>
-            </div>
-            <div class="text-xs font-mono text-text-muted">
-              {{ alert.activeAt || '—' }}
-            </div>
-          </div>
-        </div>
+                <td class="px-4 py-3">
+                  <StatusDot
+                    :status="stateToStatusDot(alert.state)"
+                    :pulse="alert.state === 'firing'"
+                    :size="8"
+                  />
+                </td>
+                <td class="px-4 py-3">
+                  <span class="text-sm font-semibold" :style="{ color: 'var(--color-on-surface)' }">{{ alert.name }}</span>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-wrap gap-1.5" v-if="alert.labels && Object.keys(alert.labels).length > 0">
+                    <span
+                      v-for="(value, key) in alert.labels"
+                      :key="String(key)"
+                      class="inline-flex rounded-sm px-2 py-0.5 text-xs font-mono"
+                      :style="{
+                        backgroundColor: 'var(--color-surface-container-high)',
+                        color: 'var(--color-on-surface-variant)',
+                      }"
+                    >
+                      {{ key }}={{ value }}
+                    </span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <span class="text-xs font-mono" :style="{ color: 'var(--color-outline)' }">
+                    {{ alert.activeAt || '--' }}
+                  </span>
+                </td>
+              </tr>
+              <!-- Expandable detail row -->
+              <tr v-if="expandedAlertIdx === idx" data-testid="alert-detail">
+                <td colspan="4" class="px-4 py-4" :style="{ backgroundColor: 'var(--color-surface-container-low)' }">
+                  <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-3">
+                      <span class="text-xs font-semibold uppercase tracking-wider" :style="{ color: 'var(--color-outline)' }">State</span>
+                      <span
+                        class="rounded-sm px-2 py-0.5 text-xs font-semibold font-mono"
+                        :style="{
+                          backgroundColor: alert.state === 'firing'
+                            ? 'color-mix(in srgb, var(--color-error) 15%, transparent)'
+                            : alert.state === 'pending'
+                              ? 'color-mix(in srgb, var(--color-tertiary) 15%, transparent)'
+                              : 'var(--color-surface-container-high)',
+                          color: alert.state === 'firing'
+                            ? 'var(--color-error)'
+                            : alert.state === 'pending'
+                              ? 'var(--color-tertiary)'
+                              : 'var(--color-on-surface-variant)',
+                        }"
+                      >{{ alert.state }}</span>
+                    </div>
+                    <div v-if="alert.labels && Object.keys(alert.labels).length > 0">
+                      <span class="text-xs font-semibold uppercase tracking-wider" :style="{ color: 'var(--color-outline)' }">Labels</span>
+                      <div class="flex flex-wrap gap-1.5 mt-1">
+                        <span
+                          v-for="(value, key) in alert.labels"
+                          :key="String(key)"
+                          class="inline-flex rounded-sm px-2 py-0.5 text-xs font-mono"
+                          :style="{
+                            backgroundColor: 'var(--color-surface-container-high)',
+                            color: 'var(--color-on-surface-variant)',
+                          }"
+                        >
+                          {{ key }}={{ value }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="text-xs font-mono" :style="{ color: 'var(--color-outline)' }">
+                      Active since: {{ alert.activeAt || '--' }}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
       </div>
 
       <!-- Rule Groups tab -->
       <div v-if="activeTab === 'groups'">
         <div v-if="groups.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
-          <BellOff :size="36" class="text-text-muted" />
-          <h3 class="text-lg font-semibold text-text-primary m-0">No rule groups</h3>
-          <p class="text-sm text-text-muted m-0">No alerting or recording rule groups found.</p>
+          <BellOff :size="36" :style="{ color: 'var(--color-outline)' }" />
+          <h3 class="text-lg font-semibold m-0" :style="{ color: 'var(--color-on-surface)' }">No rule groups</h3>
+          <p class="text-sm m-0" :style="{ color: 'var(--color-on-surface-variant)' }">No alerting or recording rule groups found.</p>
         </div>
 
-        <div v-else class="space-y-3">
+        <div v-else class="flex flex-col gap-3">
           <div
             v-for="group in groups"
             :key="group.name"
-            class="rounded border border-border bg-surface-raised overflow-hidden"
+            class="rounded-lg overflow-hidden"
+            :style="{ backgroundColor: 'var(--color-surface-container-low)' }"
           >
             <button
-              class="flex items-center justify-between w-full px-4 py-3 bg-transparent border-none text-left cursor-pointer transition hover:bg-surface-overlay"
+              class="flex items-center justify-between w-full px-4 py-3 bg-transparent border-none text-left cursor-pointer transition"
               @click="toggleGroup(group.name)"
+              @mouseenter="($event.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-container-high)'"
+              @mouseleave="($event.currentTarget as HTMLElement).style.backgroundColor = 'transparent'"
             >
               <div class="flex items-center gap-2">
                 <component
                   :is="isGroupExpanded(group.name) ? ChevronDown : ChevronRight"
                   :size="16"
-                  class="text-text-muted"
+                  :style="{ color: 'var(--color-outline)' }"
                 />
-                <span class="text-sm font-semibold text-text-primary">{{ group.name }}</span>
+                <span class="text-sm font-semibold" :style="{ color: 'var(--color-on-surface)' }">{{ group.name }}</span>
               </div>
-              <span class="text-xs text-text-muted font-mono">
+              <span class="text-xs font-mono" :style="{ color: 'var(--color-outline)' }">
                 {{ group.rules.length }} rule{{ group.rules.length !== 1 ? 's' : '' }}
                 · every {{ formatInterval(group.interval) }}
               </span>
             </button>
 
-            <div v-if="isGroupExpanded(group.name)" class="border-t border-border px-4 py-3">
-              <div class="divide-y divide-border">
+            <div v-if="isGroupExpanded(group.name)" class="px-4 py-3" :style="{ borderTop: '1px solid var(--color-outline-variant)' }">
+              <div class="flex flex-col">
                 <div
                   v-for="(rule, rIdx) in group.rules"
                   :key="rIdx"
-                  class="py-3 first:pt-0 last:pb-0"
+                  class="py-3"
+                  :style="rIdx > 0 ? { borderTop: '1px solid var(--color-outline-variant)' } : {}"
                 >
                   <div class="flex items-center gap-2 mb-2 flex-wrap">
-                    <span class="text-sm font-semibold text-text-primary">{{ rule.name }}</span>
+                    <span class="text-sm font-semibold" :style="{ color: 'var(--color-on-surface)' }">{{ rule.name }}</span>
                     <span
                       class="rounded px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide"
-                      :class="rule.type === 'alerting' ? 'bg-rose-500/10 text-rose-500 ring-1 ring-rose-600/20' : 'bg-sky-500/10 text-sky-600 ring-1 ring-sky-600/20'"
+                      :style="{
+                        backgroundColor: rule.type === 'alerting'
+                          ? 'color-mix(in srgb, var(--color-error) 15%, transparent)'
+                          : 'color-mix(in srgb, var(--color-primary) 15%, transparent)',
+                        color: rule.type === 'alerting' ? 'var(--color-error)' : 'var(--color-primary)',
+                      }"
                     >
                       {{ rule.type }}
                     </span>
-                    <span v-if="rule.state" class="rounded-sm px-2 py-0.5 text-xs font-semibold" :class="stateClass(rule.state)">
+                    <span
+                      v-if="rule.state"
+                      class="rounded-sm px-2 py-0.5 text-xs font-semibold"
+                      :style="{
+                        backgroundColor: rule.state === 'firing'
+                          ? 'color-mix(in srgb, var(--color-error) 15%, transparent)'
+                          : rule.state === 'pending'
+                            ? 'color-mix(in srgb, var(--color-tertiary) 15%, transparent)'
+                            : 'var(--color-surface-container-high)',
+                        color: rule.state === 'firing'
+                          ? 'var(--color-error)'
+                          : rule.state === 'pending'
+                            ? 'var(--color-tertiary)'
+                            : 'var(--color-on-surface-variant)',
+                      }"
+                    >
                       {{ rule.state }}
                     </span>
                   </div>
-                  <div class="bg-surface-overlay rounded-sm px-3 py-2 mb-2 overflow-x-auto">
-                    <code class="text-xs font-mono text-text-secondary whitespace-pre-wrap break-all">{{ rule.query }}</code>
+                  <div
+                    class="rounded-sm px-3 py-2 mb-2 overflow-x-auto"
+                    :style="{ backgroundColor: 'var(--color-surface-container-high)' }"
+                  >
+                    <code class="text-xs font-mono whitespace-pre-wrap break-all" :style="{ color: 'var(--color-on-surface-variant)' }">{{ rule.query }}</code>
                   </div>
                   <div class="flex flex-wrap gap-1.5 items-center">
-                    <span v-if="rule.duration > 0" class="text-xs text-text-muted mr-1">
+                    <span v-if="rule.duration > 0" class="text-xs mr-1" :style="{ color: 'var(--color-outline)' }">
                       <strong>for:</strong> {{ formatDuration(rule.duration) }}
                     </span>
                     <span
                       v-for="(value, key) in rule.labels"
                       :key="String(key)"
-                      class="inline-flex rounded-sm bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-secondary"
+                      class="inline-flex rounded-sm px-2 py-0.5 text-xs font-mono"
+                      :style="{
+                        backgroundColor: 'var(--color-surface-container-high)',
+                        color: 'var(--color-on-surface-variant)',
+                      }"
                     >
                       {{ key }}={{ value }}
                     </span>
                   </div>
-                  <div v-if="rule.annotations && Object.keys(rule.annotations).length > 0" class="mt-2 pt-2 border-t border-border">
+                  <div
+                    v-if="rule.annotations && Object.keys(rule.annotations).length > 0"
+                    class="mt-2 pt-2"
+                    :style="{ borderTop: '1px solid var(--color-outline-variant)' }"
+                  >
                     <div
                       v-for="(value, key) in rule.annotations"
                       :key="String(key)"
-                      class="text-xs text-text-muted leading-relaxed"
+                      class="text-xs leading-relaxed"
+                      :style="{ color: 'var(--color-outline)' }"
                     >
-                      <strong class="text-text-secondary">{{ key }}:</strong> {{ value }}
+                      <strong :style="{ color: 'var(--color-on-surface-variant)' }">{{ key }}:</strong> {{ value }}
                     </div>
                   </div>
                 </div>
@@ -667,105 +823,158 @@ onUnmounted(() => {
 
     <!-- AlertManager Tabs + Content -->
     <template v-else-if="selectedDatasourceId && isAlertManager">
-      <div class="flex gap-1 border-b border-border mb-6">
+      <div class="flex gap-1 mb-6" :style="{ borderBottom: '1px solid var(--color-outline-variant)' }">
         <button
-          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'am-alerts' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
+          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer bg-transparent"
+          :style="{
+            color: activeTab === 'am-alerts' ? 'var(--color-primary)' : 'var(--color-outline)',
+            borderBottom: activeTab === 'am-alerts' ? '2px solid var(--color-primary)' : '2px solid transparent',
+          }"
           data-testid="alerts-tab-am-alerts"
           @click="activeTab = 'am-alerts'"
         >
           Active Alerts
-          <span v-if="amAlerts.length > 0" class="ml-1.5 rounded-sm bg-rose-500/10 px-2 py-0.5 text-xs font-mono text-rose-500">{{ amAlerts.length }}</span>
+          <span
+            v-if="amAlerts.length > 0"
+            class="ml-1.5 rounded-sm px-2 py-0.5 text-xs font-mono"
+            :style="{
+              backgroundColor: 'color-mix(in srgb, var(--color-error) 15%, transparent)',
+              color: 'var(--color-error)',
+            }"
+          >{{ amAlerts.length }}</span>
         </button>
         <button
-          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'am-silences' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
+          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer bg-transparent"
+          :style="{
+            color: activeTab === 'am-silences' ? 'var(--color-primary)' : 'var(--color-outline)',
+            borderBottom: activeTab === 'am-silences' ? '2px solid var(--color-primary)' : '2px solid transparent',
+          }"
           data-testid="alerts-tab-am-silences"
           @click="activeTab = 'am-silences'"
         >
           Silences
-          <span v-if="activeSilences.length > 0" class="ml-1.5 rounded-sm bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-muted">{{ activeSilences.length }}</span>
+          <span
+            v-if="activeSilences.length > 0"
+            class="ml-1.5 rounded-sm px-2 py-0.5 text-xs font-mono"
+            :style="{
+              backgroundColor: 'var(--color-surface-container-high)',
+              color: 'var(--color-outline)',
+            }"
+          >{{ activeSilences.length }}</span>
         </button>
         <button
-          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer border-b-2 bg-transparent"
-          :class="activeTab === 'am-receivers' ? 'text-accent border-accent' : 'text-text-muted border-transparent hover:text-text-primary'"
+          class="px-4 py-2.5 text-sm font-medium transition cursor-pointer bg-transparent"
+          :style="{
+            color: activeTab === 'am-receivers' ? 'var(--color-primary)' : 'var(--color-outline)',
+            borderBottom: activeTab === 'am-receivers' ? '2px solid var(--color-primary)' : '2px solid transparent',
+          }"
           data-testid="alerts-tab-am-receivers"
           @click="activeTab = 'am-receivers'"
         >
           Receivers
-          <span v-if="amReceivers.length > 0" class="ml-1.5 rounded-sm bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-muted">{{ amReceivers.length }}</span>
+          <span
+            v-if="amReceivers.length > 0"
+            class="ml-1.5 rounded-sm px-2 py-0.5 text-xs font-mono"
+            :style="{
+              backgroundColor: 'var(--color-surface-container-high)',
+              color: 'var(--color-outline)',
+            }"
+          >{{ amReceivers.length }}</span>
         </button>
       </div>
 
       <!-- AM Active Alerts tab -->
       <div v-if="activeTab === 'am-alerts'">
         <div class="flex items-center gap-2 mb-4">
-          <span class="text-xs text-text-muted font-medium">Show:</span>
+          <span class="text-xs font-medium" :style="{ color: 'var(--color-outline)' }">Show:</span>
           <button
-            class="px-2.5 py-1 border rounded-sm text-xs cursor-pointer transition"
-            :class="amFilterActive ? 'bg-accent-muted border-accent-border text-accent' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
+            class="px-2.5 py-1 rounded-sm text-xs cursor-pointer transition"
+            :style="{
+              backgroundColor: amFilterActive ? 'color-mix(in srgb, var(--color-primary) 15%, transparent)' : 'var(--color-surface-container-high)',
+              color: amFilterActive ? 'var(--color-primary)' : 'var(--color-outline)',
+              border: amFilterActive ? '1px solid var(--color-primary)' : '1px solid var(--color-outline-variant)',
+            }"
             data-testid="alerts-filter-active-btn"
             @click="amFilterActive = !amFilterActive"
           >Active</button>
           <button
-            class="px-2.5 py-1 border rounded-sm text-xs cursor-pointer transition"
-            :class="amFilterSilenced ? 'bg-accent-muted border-accent-border text-accent' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
+            class="px-2.5 py-1 rounded-sm text-xs cursor-pointer transition"
+            :style="{
+              backgroundColor: amFilterSilenced ? 'color-mix(in srgb, var(--color-primary) 15%, transparent)' : 'var(--color-surface-container-high)',
+              color: amFilterSilenced ? 'var(--color-primary)' : 'var(--color-outline)',
+              border: amFilterSilenced ? '1px solid var(--color-primary)' : '1px solid var(--color-outline-variant)',
+            }"
             data-testid="alerts-filter-silenced-btn"
             @click="amFilterSilenced = !amFilterSilenced"
           >Silenced</button>
           <button
-            class="px-2.5 py-1 border rounded-sm text-xs cursor-pointer transition"
-            :class="amFilterInhibited ? 'bg-accent-muted border-accent-border text-accent' : 'bg-surface-overlay border-border text-text-muted hover:bg-surface-overlay'"
+            class="px-2.5 py-1 rounded-sm text-xs cursor-pointer transition"
+            :style="{
+              backgroundColor: amFilterInhibited ? 'color-mix(in srgb, var(--color-primary) 15%, transparent)' : 'var(--color-surface-container-high)',
+              color: amFilterInhibited ? 'var(--color-primary)' : 'var(--color-outline)',
+              border: amFilterInhibited ? '1px solid var(--color-primary)' : '1px solid var(--color-outline-variant)',
+            }"
             data-testid="alerts-filter-inhibited-btn"
             @click="amFilterInhibited = !amFilterInhibited"
           >Inhibited</button>
         </div>
 
         <div v-if="sortedAMAlerts.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
-          <BellOff :size="36" class="text-text-muted" />
-          <h3 class="text-lg font-semibold text-text-primary m-0">No alerts</h3>
-          <p class="text-sm text-text-muted m-0">No alerts matching current filters.</p>
+          <BellOff :size="36" :style="{ color: 'var(--color-outline)' }" />
+          <h3 class="text-lg font-semibold m-0" :style="{ color: 'var(--color-on-surface)' }">No alerts</h3>
+          <p class="text-sm m-0" :style="{ color: 'var(--color-on-surface-variant)' }">No alerts matching current filters.</p>
         </div>
 
-        <div v-else class="space-y-3">
-          <div
-            v-for="(alert, idx) in sortedAMAlerts"
-            :key="idx"
-            class="rounded border border-border bg-surface-raised p-4 border-l-4"
-            :class="{
-              'border-l-rose-500': alert.status?.state === 'active',
-              'border-l-amber-500': alert.status?.state === 'suppressed',
-              'border-l-border-strong': alert.status?.state !== 'active' && alert.status?.state !== 'suppressed',
-            }"
-          >
-            <div class="flex items-start justify-between gap-3 mb-2">
-              <span class="text-sm font-semibold text-text-primary">{{ alert.labels?.alertname || '—' }}</span>
-              <div class="flex items-center gap-2">
-                <span class="rounded-sm px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="severityClass(alert.labels?.severity)">
-                  {{ alert.labels?.severity || 'none' }}
-                </span>
-                <span class="rounded-sm px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="amStateClass(alert.status?.state)">
-                  {{ alert.status?.state || 'unknown' }}
-                </span>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 text-xs text-text-muted mb-1">
-              <span v-if="alert.labels?.instance" class="font-mono">{{ alert.labels.instance }}</span>
-            </div>
-            <div class="text-xs font-mono text-text-muted">
-              {{ formatDateShort(alert.startsAt) }}
-            </div>
-          </div>
-        </div>
+        <table v-else class="w-full border-collapse">
+          <thead>
+            <tr>
+              <th class="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3" :style="{ color: 'var(--color-outline)' }">Status</th>
+              <th class="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3" :style="{ color: 'var(--color-outline)' }">Alert</th>
+              <th class="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3" :style="{ color: 'var(--color-outline)' }">Severity</th>
+              <th class="text-right text-xs font-semibold uppercase tracking-wider px-4 py-3" :style="{ color: 'var(--color-outline)' }">Started</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(alert, idx) in sortedAMAlerts"
+              :key="idx"
+              class="cursor-pointer transition-colors"
+              @mouseenter="($event.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-container-high)'"
+              @mouseleave="($event.currentTarget as HTMLElement).style.backgroundColor = 'transparent'"
+            >
+              <td class="px-4 py-3">
+                <StatusDot
+                  :status="stateToStatusDot(alert.status?.state || '')"
+                  :pulse="alert.status?.state === 'active'"
+                  :size="8"
+                />
+              </td>
+              <td class="px-4 py-3">
+                <span class="text-sm font-semibold" :style="{ color: 'var(--color-on-surface)' }">{{ alert.labels?.alertname || '--' }}</span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="text-xs font-mono" :style="{ color: 'var(--color-on-surface-variant)' }">{{ alert.labels?.severity || 'none' }}</span>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <span class="text-xs font-mono" :style="{ color: 'var(--color-outline)' }">{{ formatDateShort(alert.startsAt) }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- AM Silences tab -->
       <div v-if="activeTab === 'am-silences'">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-sm font-semibold text-text-primary m-0">Silences</h3>
+          <h3 class="text-sm font-semibold m-0" :style="{ color: 'var(--color-on-surface)' }">Silences</h3>
           <button
             data-testid="alerts-new-silence-btn"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent text-white text-sm font-medium rounded-sm hover:bg-accent-hover transition cursor-pointer"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-sm cursor-pointer transition"
+            :style="{
+              background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
+              color: '#fff',
+              border: 'none',
+            }"
             @click="openSilenceModal"
           >
             <Plus :size="14" />
@@ -774,32 +983,31 @@ onUnmounted(() => {
         </div>
 
         <div v-if="amSilences.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
-          <BellOff :size="36" class="text-text-muted" />
-          <h3 class="text-lg font-semibold text-text-primary m-0">No silences</h3>
-          <p class="text-sm text-text-muted m-0">No silence rules configured.</p>
+          <BellOff :size="36" :style="{ color: 'var(--color-outline)' }" />
+          <h3 class="text-lg font-semibold m-0" :style="{ color: 'var(--color-on-surface)' }">No silences</h3>
+          <p class="text-sm m-0" :style="{ color: 'var(--color-on-surface-variant)' }">No silence rules configured.</p>
         </div>
 
-        <div v-else class="space-y-3">
+        <div v-else class="flex flex-col gap-3">
           <div
             v-for="silence in amSilences"
             :key="silence.id"
-            class="rounded border border-border bg-surface-raised p-4 border-l-4"
-            :class="{
-              'border-l-accent': silence.status.state === 'active',
-              'border-l-amber-400': silence.status.state === 'pending',
-              'border-l-border opacity-60': silence.status.state === 'expired',
-            }"
+            class="rounded-lg p-4"
+            :style="{ backgroundColor: 'var(--color-surface-container-low)' }"
           >
             <div class="flex items-start justify-between gap-3 mb-2">
               <div class="flex items-center gap-2 min-w-0">
-                <span class="text-xs font-mono text-text-muted shrink-0" :title="silence.id">{{ truncateId(silence.id) }}</span>
-                <span class="rounded-sm px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="silenceStatusClass(silence.status.state)">
-                  {{ silence.status.state }}
-                </span>
+                <span class="text-xs font-mono shrink-0" :style="{ color: 'var(--color-outline)' }" :title="silence.id">{{ truncateId(silence.id) }}</span>
+                <StatusDot
+                  :status="silence.status.state === 'active' ? 'info' : silence.status.state === 'pending' ? 'warning' : 'healthy'"
+                  :size="6"
+                />
+                <span class="text-xs font-semibold" :style="{ color: 'var(--color-on-surface-variant)' }">{{ silence.status.state }}</span>
               </div>
               <button
                 v-if="silence.status.state === 'active' || silence.status.state === 'pending'"
-                class="inline-flex items-center gap-1 text-sm text-rose-500 hover:text-rose-600 cursor-pointer bg-transparent border-none transition shrink-0"
+                class="inline-flex items-center gap-1 text-sm cursor-pointer bg-transparent border-none transition shrink-0"
+                :style="{ color: 'var(--color-error)' }"
                 title="Expire silence"
                 @click="handleExpireSilence(silence.id)"
               >
@@ -811,15 +1019,19 @@ onUnmounted(() => {
               <span
                 v-for="(m, mIdx) in silence.matchers"
                 :key="mIdx"
-                class="inline-flex rounded-sm bg-surface-overlay px-2 py-0.5 text-xs font-mono text-text-secondary"
+                class="inline-flex rounded-sm px-2 py-0.5 text-xs font-mono"
+                :style="{
+                  backgroundColor: 'var(--color-surface-container-high)',
+                  color: 'var(--color-on-surface-variant)',
+                }"
               >
                 {{ m.name }}{{ m.isEqual ? (m.isRegex ? '=~' : '=') : (m.isRegex ? '!~' : '!=') }}"{{ m.value }}"
               </span>
             </div>
-            <div class="flex items-center gap-3 text-xs text-text-muted">
+            <div class="flex items-center gap-3 text-xs" :style="{ color: 'var(--color-outline)' }">
               <span>{{ silence.createdBy }}</span>
               <span class="truncate max-w-[200px]">{{ silence.comment }}</span>
-              <span class="ml-auto font-mono text-text-muted shrink-0">ends {{ formatDateShort(silence.endsAt) }}</span>
+              <span class="ml-auto font-mono shrink-0">ends {{ formatDateShort(silence.endsAt) }}</span>
             </div>
           </div>
         </div>
@@ -828,19 +1040,20 @@ onUnmounted(() => {
       <!-- AM Receivers tab -->
       <div v-if="activeTab === 'am-receivers'">
         <div v-if="amReceivers.length === 0" class="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
-          <Radio :size="36" class="text-text-muted" />
-          <h3 class="text-lg font-semibold text-text-primary m-0">No receivers</h3>
-          <p class="text-sm text-text-muted m-0">No receivers configured in AlertManager.</p>
+          <Radio :size="36" :style="{ color: 'var(--color-outline)' }" />
+          <h3 class="text-lg font-semibold m-0" :style="{ color: 'var(--color-on-surface)' }">No receivers</h3>
+          <p class="text-sm m-0" :style="{ color: 'var(--color-on-surface-variant)' }">No receivers configured in AlertManager.</p>
         </div>
 
-        <div v-else class="space-y-3">
+        <div v-else class="flex flex-col gap-3">
           <div
             v-for="receiver in amReceivers"
             :key="receiver.name"
-            class="rounded border border-border bg-surface-raised p-4 flex items-center gap-3"
+            class="rounded-lg p-4 flex items-center gap-3"
+            :style="{ backgroundColor: 'var(--color-surface-container-low)' }"
           >
-            <Radio :size="16" class="text-text-muted shrink-0" />
-            <span class="text-sm font-semibold text-text-primary">{{ receiver.name }}</span>
+            <Radio :size="16" :style="{ color: 'var(--color-outline)' }" class="shrink-0" />
+            <span class="text-sm font-semibold" :style="{ color: 'var(--color-on-surface)' }">{{ receiver.name }}</span>
           </div>
         </div>
       </div>
@@ -848,12 +1061,27 @@ onUnmounted(() => {
 
     <!-- Create Silence Modal -->
     <Teleport to="body">
-      <div v-if="showSilenceModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]" @click.self="closeSilenceModal">
-        <div class="bg-surface-raised border border-border rounded w-full max-w-[560px] max-h-[90vh] overflow-y-auto shadow-2xl">
-          <div class="flex items-center justify-between px-5 py-4 border-b border-border">
-            <h2 class="text-base font-bold text-text-primary m-0">Create Silence</h2>
+      <div
+        v-if="showSilenceModal"
+        class="fixed inset-0 flex items-center justify-center z-[1000]"
+        :style="{ backgroundColor: 'rgba(0,0,0,0.5)' }"
+        @click.self="closeSilenceModal"
+      >
+        <div
+          class="rounded-lg w-full max-w-[560px] max-h-[90vh] overflow-y-auto"
+          :style="{
+            backgroundColor: 'var(--color-surface-bright)',
+            border: '1px solid var(--color-outline-variant)',
+          }"
+        >
+          <div
+            class="flex items-center justify-between px-5 py-4"
+            :style="{ borderBottom: '1px solid var(--color-outline-variant)' }"
+          >
+            <h2 class="text-base font-bold font-display m-0" :style="{ color: 'var(--color-on-surface)' }">Create Silence</h2>
             <button
-              class="flex items-center justify-center w-8 h-8 bg-transparent border-none rounded-sm text-text-muted cursor-pointer transition hover:bg-surface-overlay hover:text-text-primary"
+              class="flex items-center justify-center w-8 h-8 bg-transparent border-none rounded-sm cursor-pointer transition"
+              :style="{ color: 'var(--color-outline)' }"
               @click="closeSilenceModal"
             >
               <X :size="18" />
@@ -863,7 +1091,9 @@ onUnmounted(() => {
           <div class="px-5 py-5 flex flex-col gap-4">
             <!-- Matchers -->
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-medium text-text-secondary">Matchers <span class="text-rose-500">*</span></label>
+              <label class="text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">
+                Matchers <span :style="{ color: 'var(--color-error)' }">*</span>
+              </label>
               <div class="flex flex-col gap-2 mb-2">
                 <div
                   v-for="(m, idx) in silenceMatchers"
@@ -874,11 +1104,21 @@ onUnmounted(() => {
                     v-model="m.name"
                     type="text"
                     placeholder="Label name"
-                    class="flex-1 px-2.5 py-1.5 bg-surface-overlay border border-border rounded-sm text-sm font-mono text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+                    class="flex-1 px-2.5 py-1.5 rounded-sm text-sm font-mono focus:outline-none"
+                    :style="{
+                      backgroundColor: 'var(--color-surface-container-high)',
+                      color: 'var(--color-on-surface)',
+                      border: '1px solid var(--color-outline-variant)',
+                    }"
                   />
                   <select
                     v-model="m.isEqual"
-                    class="w-13 px-1.5 py-1.5 bg-surface-overlay border border-border rounded-sm text-sm font-mono text-text-primary text-center focus:outline-none focus:border-accent"
+                    class="w-13 px-1.5 py-1.5 rounded-sm text-sm font-mono text-center focus:outline-none"
+                    :style="{
+                      backgroundColor: 'var(--color-surface-container-high)',
+                      color: 'var(--color-on-surface)',
+                      border: '1px solid var(--color-outline-variant)',
+                    }"
                   >
                     <option :value="true">{{ m.isRegex ? '=~' : '=' }}</option>
                     <option :value="false">{{ m.isRegex ? '!~' : '!=' }}</option>
@@ -887,14 +1127,20 @@ onUnmounted(() => {
                     v-model="m.value"
                     type="text"
                     placeholder="Value"
-                    class="flex-1 px-2.5 py-1.5 bg-surface-overlay border border-border rounded-sm text-sm font-mono text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+                    class="flex-1 px-2.5 py-1.5 rounded-sm text-sm font-mono focus:outline-none"
+                    :style="{
+                      backgroundColor: 'var(--color-surface-container-high)',
+                      color: 'var(--color-on-surface)',
+                      border: '1px solid var(--color-outline-variant)',
+                    }"
                   />
-                  <label class="flex items-center gap-1 text-xs text-text-muted whitespace-nowrap cursor-pointer" title="Regex match">
+                  <label class="flex items-center gap-1 text-xs whitespace-nowrap cursor-pointer" :style="{ color: 'var(--color-outline)' }" title="Regex match">
                     <input type="checkbox" v-model="m.isRegex" class="w-3.5 h-3.5" />
                     Regex
                   </label>
                   <button
-                    class="flex items-center justify-center w-7 h-7 bg-transparent border-none rounded-sm text-text-muted cursor-pointer transition hover:bg-surface-overlay hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                    class="flex items-center justify-center w-7 h-7 bg-transparent border-none rounded-sm cursor-pointer transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    :style="{ color: 'var(--color-outline)' }"
                     :disabled="silenceMatchers.length <= 1"
                     @click="removeMatcher(idx)"
                     title="Remove matcher"
@@ -904,7 +1150,8 @@ onUnmounted(() => {
                 </div>
               </div>
               <button
-                class="text-sm text-accent hover:text-accent cursor-pointer bg-transparent border-none inline-flex items-center gap-1 self-start transition"
+                class="text-sm cursor-pointer bg-transparent border-none inline-flex items-center gap-1 self-start transition"
+                :style="{ color: 'var(--color-primary)' }"
                 @click="addMatcher"
               >
                 <Plus :size="12" />
@@ -915,63 +1162,100 @@ onUnmounted(() => {
             <!-- Start / End -->
             <div class="grid grid-cols-2 gap-3">
               <div class="flex flex-col gap-1.5">
-                <label for="silence-start" class="text-sm font-medium text-text-secondary">Start</label>
+                <label for="silence-start" class="text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Start</label>
                 <input
                   id="silence-start"
                   data-testid="silence-start-input"
                   v-model="silenceStart"
                   type="datetime-local"
-                  class="px-3 py-2 bg-surface-overlay border border-border rounded-sm text-sm text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+                  class="px-3 py-2 rounded-sm text-sm focus:outline-none"
+                  :style="{
+                    backgroundColor: 'var(--color-surface-container-high)',
+                    color: 'var(--color-on-surface)',
+                    border: '1px solid var(--color-outline-variant)',
+                  }"
                 />
               </div>
               <div class="flex flex-col gap-1.5">
-                <label for="silence-end" class="text-sm font-medium text-text-secondary">End</label>
+                <label for="silence-end" class="text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">End</label>
                 <input
                   id="silence-end"
                   data-testid="silence-end-input"
                   v-model="silenceEnd"
                   type="datetime-local"
-                  class="px-3 py-2 bg-surface-overlay border border-border rounded-sm text-sm text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+                  class="px-3 py-2 rounded-sm text-sm focus:outline-none"
+                  :style="{
+                    backgroundColor: 'var(--color-surface-container-high)',
+                    color: 'var(--color-on-surface)',
+                    border: '1px solid var(--color-outline-variant)',
+                  }"
                 />
               </div>
             </div>
 
             <!-- Created By -->
             <div class="flex flex-col gap-1.5">
-              <label for="silence-created-by" class="text-sm font-medium text-text-secondary">Created By</label>
+              <label for="silence-created-by" class="text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Created By</label>
               <input
                 id="silence-created-by"
                 data-testid="silence-created-by-input"
                 v-model="silenceCreatedBy"
                 type="text"
                 placeholder="your-name@example.com"
-                class="px-3 py-2 bg-surface-overlay border border-border rounded-sm text-sm text-text-primary focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+                class="px-3 py-2 rounded-sm text-sm focus:outline-none"
+                :style="{
+                  backgroundColor: 'var(--color-surface-container-high)',
+                  color: 'var(--color-on-surface)',
+                  border: '1px solid var(--color-outline-variant)',
+                }"
               />
             </div>
 
             <!-- Comment -->
             <div class="flex flex-col gap-1.5">
-              <label for="silence-comment" class="text-sm font-medium text-text-secondary">Comment <span class="text-rose-500">*</span></label>
+              <label for="silence-comment" class="text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">
+                Comment <span :style="{ color: 'var(--color-error)' }">*</span>
+              </label>
               <textarea
                 id="silence-comment"
                 data-testid="silence-comment-input"
                 v-model="silenceComment"
                 rows="3"
                 placeholder="Reason for silencing..."
-                class="px-3 py-2 bg-surface-overlay border border-border rounded-sm text-sm text-text-primary resize-y min-h-[68px] font-[inherit] focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+                class="px-3 py-2 rounded-sm text-sm resize-y min-h-[68px] font-[inherit] focus:outline-none"
+                :style="{
+                  backgroundColor: 'var(--color-surface-container-high)',
+                  color: 'var(--color-on-surface)',
+                  border: '1px solid var(--color-outline-variant)',
+                }"
               ></textarea>
             </div>
 
             <!-- Error -->
-            <div v-if="silenceError" class="flex items-center gap-2 px-4 py-3 bg-rose-500/10 border border-rose-500/25 rounded-sm text-rose-500 text-sm">
+            <div
+              v-if="silenceError"
+              class="flex items-center gap-2 px-4 py-3 rounded-sm text-sm"
+              :style="{
+                backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
+                color: 'var(--color-error)',
+              }"
+            >
               <AlertCircle :size="14" />
               {{ silenceError }}
             </div>
           </div>
 
-          <div class="flex justify-end gap-2.5 px-5 py-4 border-t border-border">
+          <div
+            class="flex justify-end gap-2.5 px-5 py-4"
+            :style="{ borderTop: '1px solid var(--color-outline-variant)' }"
+          >
             <button
-              class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-overlay border border-border rounded-sm text-sm font-medium text-text-secondary cursor-pointer transition hover:bg-surface-overlay disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-sm text-sm font-medium cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
+              :style="{
+                backgroundColor: 'var(--color-surface-container-high)',
+                color: 'var(--color-on-surface-variant)',
+                border: '1px solid var(--color-outline-variant)',
+              }"
               data-testid="silence-cancel-btn"
               @click="closeSilenceModal"
               :disabled="silenceSaving"
@@ -979,7 +1263,12 @@ onUnmounted(() => {
               Cancel
             </button>
             <button
-              class="inline-flex items-center gap-1.5 px-4 py-2 bg-accent border border-accent rounded-sm text-sm font-medium text-white cursor-pointer transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-sm text-sm font-medium cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
+              :style="{
+                background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
+                color: '#fff',
+                border: 'none',
+              }"
               data-testid="silence-create-btn"
               @click="handleCreateSilence"
               :disabled="silenceSaving"

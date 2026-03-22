@@ -166,17 +166,17 @@ function openTrace(traceId: string) {
 </script>
 
 <template>
-  <div class="flex h-full flex-col gap-2.5 rounded border border-border bg-surface-raised p-4">
+  <div class="flex h-full flex-col gap-2.5 rounded bg-[var(--color-surface-container-low)] p-4">
     <div class="grid min-h-[150px] grid-cols-[auto_1fr] gap-2">
       <div class="grid grid-rows-[repeat(8,1fr)] gap-[3px]">
-        <span v-for="row in heatmapRows" :key="row.label" class="flex items-center justify-end whitespace-nowrap text-[0.65rem] text-text-muted">{{ row.label }}</span>
+        <span v-for="row in heatmapRows" :key="row.label" class="flex items-center justify-end whitespace-nowrap text-[0.65rem] text-[var(--color-outline)]">{{ row.label }}</span>
       </div>
       <div class="grid grid-rows-[repeat(8,1fr)] gap-[3px]">
         <div v-for="row in heatmapRows" :key="row.label" class="grid grid-cols-[repeat(12,1fr)] gap-[3px]">
           <div
             v-for="(count, cellIndex) in row.cells"
             :key="`${row.label}-${cellIndex}`"
-            class="min-h-4 rounded border border-accent-border"
+            class="min-h-4 rounded border border-[var(--color-primary)]/20"
             :style="{ backgroundColor: cellBg(count) }"
             :title="cellTitle(row.label, cellIndex, count)"
           ></div>
@@ -184,17 +184,17 @@ function openTrace(traceId: string) {
       </div>
     </div>
 
-    <div class="ml-[calc(3.9rem+0.45rem)] flex justify-between text-[0.65rem] text-text-muted">
+    <div class="ml-[calc(3.9rem+0.45rem)] flex justify-between text-[0.65rem] text-[var(--color-outline)]">
       <span v-for="(label, index) in timeLabels" :key="`${label}-${index}`">{{ label }}</span>
     </div>
 
-    <div class="border-t border-border pt-2">
-      <h4 class="m-0 mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Recent traces</h4>
+    <div class="border-t  pt-2">
+      <h4 class="m-0 mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]">Recent traces</h4>
       <ul class="m-0 grid list-none grid-cols-2 gap-x-2.5 gap-y-1.5 p-0">
         <li v-for="trace in recentTraces" :key="trace.traceId">
-          <button type="button" class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-sm border-none bg-accent-muted px-2.5 py-1.5 transition hover:bg-accent-muted" @click="openTrace(trace.traceId)">
-            <span class="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-text-primary">{{ trace.traceId }}</span>
-            <span class="text-xs text-text-muted">{{ formatDuration(trace.durationNano) }}</span>
+          <button type="button" class="flex w-full cursor-pointer items-center justify-between gap-2 rounded-sm border-none bg-[var(--color-primary)]/10 px-2.5 py-1.5 transition hover:bg-[var(--color-primary)]/10" @click="openTrace(trace.traceId)">
+            <span class="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-[var(--color-on-surface)]">{{ trace.traceId }}</span>
+            <span class="text-xs text-[var(--color-outline)]">{{ formatDuration(trace.durationNano) }}</span>
           </button>
         </li>
       </ul>

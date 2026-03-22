@@ -143,16 +143,20 @@ onUnmounted(() => {
       <div class="flex items-center gap-2" :class="props.stacked ? 'w-full' : ''">
         <button
           data-testid="time-range-picker-btn"
-          class="flex items-center gap-2 rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary transition cursor-pointer hover:border-border-strong hover:bg-surface-overlay"
+          class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition cursor-pointer hover:opacity-80"
+          :style="{
+            backgroundColor: 'var(--color-surface-container-high)',
+            color: 'var(--color-on-surface)',
+            border: isOpen ? '1px solid var(--color-primary)' : '1px solid transparent',
+          }"
           :class="[
-            isOpen ? 'border-accent ring-1 ring-accent/20' : '',
             props.stacked ? 'w-full justify-between' : ''
           ]"
           @click.stop="toggleDropdown"
         >
-          <Clock :size="16" class="text-text-muted" />
+          <Clock :size="16" :style="{ color: 'var(--color-outline)' }" />
           <span class="min-w-[100px] font-mono text-xs">{{ currentDisplayText }}</span>
-          <component :is="isOpen ? ChevronUp : ChevronDown" :size="14" class="text-text-muted" />
+          <component :is="isOpen ? ChevronUp : ChevronDown" :size="14" :style="{ color: 'var(--color-outline)' }" />
         </button>
       </div>
 
@@ -163,8 +167,12 @@ onUnmounted(() => {
       >
         <button
           data-testid="time-range-refresh-btn"
-          class="flex items-center justify-center rounded-sm border border-border bg-surface-raised px-2 py-1.5 text-text-muted transition cursor-pointer hover:bg-surface-overlay hover:text-text-primary"
-          :class="isRefreshing ? 'text-accent' : ''"
+          class="flex items-center justify-center rounded-lg px-2 py-1.5 transition cursor-pointer hover:opacity-80"
+          :style="{
+            backgroundColor: 'var(--color-surface-container-high)',
+            color: isRefreshing ? 'var(--color-primary)' : 'var(--color-outline)',
+            border: '1px solid transparent',
+          }"
           @click="handleRefresh"
           :title="'Last refresh: ' + formatLastRefresh()"
         >
@@ -174,10 +182,15 @@ onUnmounted(() => {
         <div>
           <select
             :value="refreshIntervalValue"
-            data-testid="time-range-interval-select"
+            data-testid="time-range-auto-refresh-select"
             @change="selectRefreshInterval(($event.target as HTMLSelectElement).value)"
             title="Auto-refresh interval"
-            class="rounded-sm border border-border bg-surface-raised px-2 py-1.5 pr-7 text-xs font-medium text-text-secondary cursor-pointer transition appearance-none hover:border-border-strong focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 bg-[url('data:image/svg+xml,%3Csvg_xmlns=%27http://www.w3.org/2000/svg%27_width=%2712%27_height=%2712%27_viewBox=%270_0_24_24%27_fill=%27none%27_stroke=%27%2394a3b8%27_stroke-width=%272%27_stroke-linecap=%27round%27_stroke-linejoin=%27round%27%3E%3Cpath_d=%27m6_9_6_6_6-6%27/%3E%3C/svg%3E')] bg-no-repeat bg-[right_0.5rem_center]"
+            class="rounded-lg px-2 py-1.5 pr-7 text-xs font-medium cursor-pointer transition appearance-none focus:outline-none"
+            :style="{
+              backgroundColor: 'var(--color-surface-container-high)',
+              color: 'var(--color-on-surface-variant)',
+              border: '1px solid transparent',
+            }"
           >
             <option
               v-for="interval in refreshIntervals"
@@ -191,7 +204,8 @@ onUnmounted(() => {
 
         <span
           v-if="refreshIntervalValue !== 'off'"
-          class="text-xs text-text-muted px-2"
+          class="text-xs px-2"
+          :style="{ color: 'var(--color-on-surface-variant)' }"
           :class="props.stacked ? 'px-0' : ''"
         >
           {{ isRefreshing ? 'Refreshing...' : formatLastRefresh() }}
@@ -202,29 +216,44 @@ onUnmounted(() => {
     <!-- Dropdown -->
     <div
       v-if="isOpen"
-      class="absolute top-[calc(100%+4px)] left-0 min-w-[220px] rounded-sm border border-border bg-surface-raised shadow-lg z-[1000] animate-fade-in"
+      class="absolute top-[calc(100%+4px)] left-0 min-w-[220px] rounded-lg shadow-lg z-[1000] animate-fade-in"
+      :style="{
+        backgroundColor: 'var(--color-surface-bright)',
+        border: '1px solid var(--color-outline-variant)',
+      }"
       @click.stop
     >
       <div v-if="!showCustomRange">
         <div class="py-2">
-          <div class="px-4 py-2 text-[0.6875rem] font-semibold text-text-muted uppercase tracking-wide">
+          <div
+            class="px-4 py-2 text-[0.6875rem] font-semibold uppercase tracking-wide"
+            :style="{ color: 'var(--color-outline)' }"
+          >
             Quick ranges
           </div>
           <button
             v-for="preset in presets"
             :key="preset.value"
-            class="block w-full px-4 py-2.5 border-0 bg-transparent text-left text-sm text-text-secondary cursor-pointer transition hover:bg-surface-overlay"
-            :class="!isCustomRange && selectedPreset === preset.value ? 'bg-accent-muted text-accent font-medium' : ''"
+            class="block w-full px-4 py-2.5 border-0 bg-transparent text-left text-sm cursor-pointer transition hover:opacity-80"
+            :class="!isCustomRange && selectedPreset === preset.value ? 'bg-[var(--color-primary)]/10 font-medium' : ''"
+            :style="{
+              color: !isCustomRange && selectedPreset === preset.value ? 'var(--color-primary)' : 'var(--color-on-surface-variant)',
+              backgroundColor: !isCustomRange && selectedPreset === preset.value ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)' : 'transparent',
+            }"
             @click="selectPreset(preset.value)"
           >
             {{ preset.label }}
           </button>
         </div>
 
-        <div class="h-px bg-border mx-0 my-1"></div>
+        <div
+          class="h-px mx-0 my-1"
+          :style="{ backgroundColor: 'var(--color-outline-variant)' }"
+        ></div>
 
         <button
-          class="block w-full px-4 py-2.5 border-0 bg-transparent text-left text-sm text-accent cursor-pointer transition hover:bg-surface-overlay"
+          class="block w-full px-4 py-2.5 border-0 bg-transparent text-left text-sm cursor-pointer transition hover:opacity-80"
+          :style="{ color: 'var(--color-primary)' }"
           @click="openCustomRange"
         >
           Custom range...
@@ -232,35 +261,60 @@ onUnmounted(() => {
       </div>
 
       <div v-else class="p-4">
-        <div class="px-0 py-2 text-[0.6875rem] font-semibold text-text-muted uppercase tracking-wide">
+        <div
+          class="px-0 py-2 text-[0.6875rem] font-semibold uppercase tracking-wide"
+          :style="{ color: 'var(--color-outline)' }"
+        >
           Custom time range
         </div>
 
         <div class="mb-3">
-          <label for="custom-from" class="block mb-1.5 text-xs font-medium text-text-muted">From</label>
+          <label
+            for="custom-from"
+            class="block mb-1.5 text-xs font-medium"
+            :style="{ color: 'var(--color-on-surface-variant)' }"
+          >From</label>
           <input
             id="custom-from"
             data-testid="time-range-custom-from-input"
             type="datetime-local"
             v-model="customFrom"
-            class="w-full rounded-sm border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20"
+            class="w-full rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2"
+            :style="{
+              backgroundColor: 'var(--color-surface-container-low)',
+              color: 'var(--color-on-surface)',
+              border: '1px solid var(--color-outline-variant)',
+            }"
           />
         </div>
 
         <div class="mb-3">
-          <label for="custom-to" class="block mb-1.5 text-xs font-medium text-text-muted">To</label>
+          <label
+            for="custom-to"
+            class="block mb-1.5 text-xs font-medium"
+            :style="{ color: 'var(--color-on-surface-variant)' }"
+          >To</label>
           <input
             id="custom-to"
             data-testid="time-range-custom-to-input"
             type="datetime-local"
             v-model="customTo"
-            class="w-full rounded-sm border border-border bg-surface-raised px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20"
+            class="w-full rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2"
+            :style="{
+              backgroundColor: 'var(--color-surface-container-low)',
+              color: 'var(--color-on-surface)',
+              border: '1px solid var(--color-outline-variant)',
+            }"
           />
         </div>
 
         <div
           v-if="customRangeError"
-          class="mb-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600"
+          class="mb-3 rounded-lg px-3 py-2 text-xs"
+          :style="{
+            backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
+            color: 'var(--color-error)',
+          }"
         >
           {{ customRangeError }}
         </div>
@@ -268,14 +322,22 @@ onUnmounted(() => {
         <div class="flex justify-end gap-2">
           <button
             data-testid="time-range-cancel-btn"
-            class="rounded-sm px-4 py-2 text-sm font-medium border border-border bg-transparent text-text-secondary cursor-pointer transition hover:bg-surface-overlay"
+            class="rounded-lg px-4 py-2 text-sm font-medium bg-transparent cursor-pointer transition hover:opacity-80"
+            :style="{
+              color: 'var(--color-on-surface-variant)',
+              border: '1px solid var(--color-outline-variant)',
+            }"
             @click="cancelCustomRange"
           >
             Cancel
           </button>
           <button
             data-testid="time-range-apply-btn"
-            class="rounded-sm px-4 py-2 text-sm font-medium border border-accent bg-accent text-white cursor-pointer transition hover:bg-accent-hover hover:border-accent-hover"
+            class="rounded-lg px-4 py-2 text-sm font-medium text-white cursor-pointer transition hover:opacity-90"
+            :style="{
+              background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
+              border: '1px solid transparent',
+            }"
             @click="applyCustomRange"
           >
             Apply

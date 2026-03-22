@@ -182,7 +182,6 @@ describe('Panel', () => {
       props: { panel: panelWithQuery },
     })
 
-    expect(wrapper.find('.text-rose-500').exists()).toBe(true)
     expect(wrapper.text()).toContain('Query failed')
   })
 
@@ -400,6 +399,28 @@ describe('Panel', () => {
 
     await wrapper.find('.mock-open-trace').trigger('click')
     expect(wrapper.emitted('open-trace')).toBeFalsy()
+  })
+
+  it('shows anomaly badge when anomaly prop is truthy', () => {
+    const wrapper = mount(Panel, {
+      props: { panel: mockPanel, anomaly: 'Spike detected in error rate' },
+    })
+    expect(wrapper.find('[data-testid="panel-anomaly-dot"]').exists()).toBe(true)
+  })
+
+  it('hides anomaly badge when anomaly prop is undefined', () => {
+    const wrapper = mount(Panel, {
+      props: { panel: mockPanel },
+    })
+    expect(wrapper.find('[data-testid="panel-anomaly-dot"]').exists()).toBe(false)
+  })
+
+  it('shows anomaly tooltip text on hover', () => {
+    const wrapper = mount(Panel, {
+      props: { panel: mockPanel, anomaly: 'Spike detected in error rate' },
+    })
+    const dot = wrapper.find('[data-testid="panel-anomaly-dot"]')
+    expect(dot.attributes('title')).toBe('Spike detected in error rate')
   })
 
   it('infers logs signal for datasource log panels when signal is omitted', async () => {

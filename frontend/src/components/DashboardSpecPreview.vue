@@ -185,11 +185,11 @@ function dryRunDotClass(status: DryRunStatus): string {
     case 'checking':
       return 'bg-text-muted animate-pulse'
     case 'success':
-      return 'bg-emerald-500'
+      return 'bg-[var(--color-secondary)]'
     case 'empty':
-      return 'bg-amber-500'
+      return 'bg-[var(--color-tertiary)]'
     case 'error':
-      return 'bg-rose-500'
+      return 'bg-[var(--color-error)]'
   }
 }
 </script>
@@ -198,18 +198,18 @@ function dryRunDotClass(status: DryRunStatus): string {
   <div
     role="region"
     :aria-label="`Dashboard preview: ${spec.title}, ${panelCount} panels`"
-    class="border border-border rounded-lg overflow-hidden"
+    class="border  rounded-lg overflow-hidden"
     :class="{ 'opacity-70': saving }"
   >
     <!-- Header -->
     <div class="px-3 py-2 flex items-center gap-2">
-      <span class="text-sm font-semibold text-text-primary truncate">{{ spec.title }}</span>
-      <span class="text-xs text-text-muted shrink-0">{{ panelCount }} panel{{ panelCount !== 1 ? 's' : '' }}</span>
+      <span class="text-sm font-semibold text-[var(--color-on-surface)] truncate">{{ spec.title }}</span>
+      <span class="text-xs text-[var(--color-outline)] shrink-0">{{ panelCount }} panel{{ panelCount !== 1 ? 's' : '' }}</span>
     </div>
 
     <!-- Demo badge -->
     <div v-if="isDemoSpec" class="px-3 pb-2">
-      <span class="text-amber-500 bg-amber-500/10 rounded px-2 py-1 text-xs">
+      <span class="text-[var(--color-tertiary)] bg-[var(--color-tertiary)]/10 rounded px-2 py-1 text-xs">
         Demo dashboard — connect a real datasource to see your data
       </span>
     </div>
@@ -231,7 +231,7 @@ function dryRunDotClass(status: DryRunStatus): string {
           :key="index"
           role="listitem"
           :aria-label="`${panel.title} (${panel.type})`"
-          class="bg-surface-raised rounded border border-border flex items-center gap-1 px-1.5 py-0.5 min-w-0 relative"
+          class="bg-[var(--color-surface-container-low)] rounded flex items-center gap-1 px-1.5 py-0.5 min-w-0 relative"
           :style="{
             gridColumn: `${(panel.grid_pos?.x ?? 0) + 1} / span ${panel.grid_pos?.w ?? 4}`,
             gridRow: `${(panel.grid_pos?.y ?? 0) + 1} / span ${panel.grid_pos?.h ?? 1}`,
@@ -240,9 +240,9 @@ function dryRunDotClass(status: DryRunStatus): string {
           <component
             :is="panelTypeIcons[panel.type] || TrendingUp"
             :size="10"
-            class="text-text-muted shrink-0"
+            class="text-[var(--color-outline)] shrink-0"
           />
-          <span class="text-[10px] text-text-muted truncate">{{ panel.title }}</span>
+          <span class="text-[10px] text-[var(--color-outline)] truncate">{{ panel.title }}</span>
           <!-- Dry-run status dot -->
           <span
             v-if="dryRunResults[index]"
@@ -255,14 +255,14 @@ function dryRunDotClass(status: DryRunStatus): string {
 
     <!-- Validation errors -->
     <div v-if="hasValidationErrors" class="px-3 pb-2">
-      <ul class="text-rose-500 bg-rose-500/10 rounded px-3 py-2 text-xs m-0 list-disc list-inside">
+      <ul class="text-[var(--color-error)] bg-[var(--color-error)]/10 rounded px-3 py-2 text-xs m-0 list-disc list-inside">
         <li v-for="(err, i) in validationErrors" :key="i">{{ err }}</li>
       </ul>
     </div>
 
     <!-- Save error -->
     <div v-if="saveError" class="px-3 pb-2" aria-live="polite">
-      <span class="text-rose-500 bg-rose-500/10 rounded px-2 py-1 text-xs">
+      <span class="text-[var(--color-error)] bg-[var(--color-error)]/10 rounded px-2 py-1 text-xs">
         {{ saveError }}
       </span>
     </div>
@@ -271,13 +271,13 @@ function dryRunDotClass(status: DryRunStatus): string {
     <div class="px-3 pb-3 flex items-center gap-3" aria-live="polite">
       <!-- Post-save state -->
       <template v-if="isSaved">
-        <span class="inline-flex items-center gap-1 text-emerald-500 text-sm font-semibold">
+        <span class="inline-flex items-center gap-1 text-[var(--color-secondary)] text-sm font-semibold">
           <Check :size="14" />
           Dashboard saved
         </span>
         <RouterLink
           :to="`/app/dashboards/${savedDashboardId}`"
-          class="inline-flex items-center gap-1 text-xs text-accent no-underline hover:underline"
+          class="inline-flex items-center gap-1 text-xs text-[var(--color-primary)] no-underline hover:underline"
         >
           <ExternalLink :size="12" />
           Open dashboard
@@ -286,7 +286,7 @@ function dryRunDotClass(status: DryRunStatus): string {
 
       <!-- Save success (intermediate, before post-save) -->
       <template v-else-if="saveSuccess">
-        <span class="inline-flex items-center gap-1 text-emerald-500 text-sm font-semibold">
+        <span class="inline-flex items-center gap-1 text-[var(--color-secondary)] text-sm font-semibold">
           <Check :size="14" />
           Dashboard saved
         </span>
@@ -295,7 +295,7 @@ function dryRunDotClass(status: DryRunStatus): string {
       <!-- Save button -->
       <template v-else>
         <button
-          class="inline-flex items-center gap-1.5 bg-accent text-white rounded-sm px-4 py-2 text-sm font-semibold border-none cursor-pointer transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center gap-1.5 bg-[var(--color-primary)] text-white rounded-sm px-4 py-2 text-sm font-semibold border-none cursor-pointer transition hover:bg-[var(--color-primary)]-hover disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="saving || hasValidationErrors"
           data-testid="spec-preview-save-btn"
           @click="handleSave"
@@ -307,7 +307,7 @@ function dryRunDotClass(status: DryRunStatus): string {
 
       <!-- View spec toggle -->
       <button
-        class="text-xs text-text-muted cursor-pointer border-none bg-transparent hover:text-text-primary ml-auto inline-flex items-center gap-0.5"
+        class="text-xs text-[var(--color-outline)] cursor-pointer border-none bg-transparent hover:text-[var(--color-on-surface)] ml-auto inline-flex items-center gap-0.5"
         :aria-expanded="specExpanded"
         data-testid="spec-preview-toggle-spec"
         @click="specExpanded = !specExpanded"
@@ -319,20 +319,20 @@ function dryRunDotClass(status: DryRunStatus): string {
     </div>
 
     <!-- Collapsible JSON spec -->
-    <div v-if="specExpanded" class="border-t border-border px-3 py-2">
+    <div v-if="specExpanded" class="border-t  px-3 py-2">
       <div class="flex items-center justify-between mb-1">
-        <span class="text-xs text-text-muted">Dashboard spec (JSON)</span>
+        <span class="text-xs text-[var(--color-outline)]">Dashboard spec (JSON)</span>
         <button
-          class="inline-flex items-center gap-1 text-xs text-text-muted cursor-pointer border-none bg-transparent hover:text-text-primary"
+          class="inline-flex items-center gap-1 text-xs text-[var(--color-outline)] cursor-pointer border-none bg-transparent hover:text-[var(--color-on-surface)]"
           data-testid="spec-preview-copy-btn"
           @click="copySpec"
         >
-          <Check v-if="specCopied" :size="12" class="text-emerald-500" />
+          <Check v-if="specCopied" :size="12" class="text-[var(--color-secondary)]" />
           <ClipboardCopy v-else :size="12" />
           {{ specCopied ? 'Copied' : 'Copy' }}
         </button>
       </div>
-      <pre class="text-[10px] text-text-secondary bg-surface-overlay rounded p-2 overflow-x-auto m-0 max-h-48 overflow-y-auto">{{ JSON.stringify(spec, null, 2) }}</pre>
+      <pre class="text-[10px] text-[var(--color-on-surface-variant)] bg-[var(--color-surface-container-high)] rounded p-2 overflow-x-auto m-0 max-h-48 overflow-y-auto">{{ JSON.stringify(spec, null, 2) }}</pre>
     </div>
   </div>
 </template>

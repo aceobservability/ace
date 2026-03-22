@@ -145,8 +145,8 @@ describe('GaugeChart', () => {
     const chart = wrapper.find('.echarts-mock')
     const option = JSON.parse(chart.attributes('data-option') || '{}')
 
-    // Should use default color
-    expect(option.series[0].itemStyle.color).toBe('#059669')
+    // Should use default color (Kinetic secondary)
+    expect(option.series[0].itemStyle.color).toBe('#69f6b8')
   })
 
   it('shows value above threshold in correct color', () => {
@@ -175,8 +175,8 @@ describe('GaugeChart', () => {
     const chart = wrapper.find('.echarts-mock')
     const option = JSON.parse(chart.attributes('data-option') || '{}')
 
-    // Value 30 is below all thresholds, so should be default green
-    expect(option.series[0].itemStyle.color).toBe('#059669')
+    // Value 30 is below all thresholds, so should be default (Kinetic secondary)
+    expect(option.series[0].itemStyle.color).toBe('#69f6b8')
   })
 
   it('handles large values with K suffix', () => {

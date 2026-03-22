@@ -89,55 +89,52 @@ describe('StatPanel', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, label: 'CPU Usage' },
     })
-    expect(wrapper.find('.text-text-secondary').exists()).toBe(true)
-    expect(wrapper.find('.text-text-secondary').text()).toBe('CPU Usage')
+    expect(wrapper.text()).toContain('CPU Usage')
   })
 
   it('does not display label when not provided', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100 },
     })
-    // No label element rendered
-    expect(wrapper.find('.text-text-secondary').exists()).toBe(false)
+    // Only the value and no label text should appear
+    expect(wrapper.text().trim()).toBe('100.00')
   })
 
   it('shows upward trend when value is higher than previous', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, previousValue: 80, showTrend: true },
     })
-    expect(wrapper.find('.text-accent').exists()).toBe(true)
+    expect(wrapper.html()).toContain('text-[var(--color-secondary)]')
   })
 
   it('shows downward trend when value is lower than previous', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 60, previousValue: 80, showTrend: true },
     })
-    expect(wrapper.find('.text-rose-500').exists()).toBe(true)
+    expect(wrapper.html()).toContain('text-[var(--color-error)]')
   })
 
   it('does not show trend when showTrend is false', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, previousValue: 80, showTrend: false },
     })
-    expect(wrapper.find('.text-accent').exists()).toBe(false)
-    expect(wrapper.find('.text-rose-500').exists()).toBe(false)
+    expect(wrapper.html()).not.toContain('text-[var(--color-secondary)]')
+    expect(wrapper.html()).not.toContain('text-[var(--color-error)]')
   })
 
   it('does not show trend when previousValue is not provided', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, showTrend: true },
     })
-    expect(wrapper.find('.text-accent').exists()).toBe(false)
-    expect(wrapper.find('.text-rose-500').exists()).toBe(false)
+    expect(wrapper.html()).not.toContain('text-[var(--color-secondary)]')
+    expect(wrapper.html()).not.toContain('text-[var(--color-error)]')
   })
 
   it('displays trend percentage', () => {
     const wrapper = mount(StatPanel, {
       props: { value: 100, previousValue: 80, showTrend: true },
     })
-    const trendValue = wrapper.find('.tabular-nums')
-    expect(trendValue.exists()).toBe(true)
-    expect(trendValue.text()).toContain('+25.0%')
+    expect(wrapper.text()).toContain('+25.0%')
   })
 
   it('shows sparkline when data is provided', () => {
@@ -191,7 +188,7 @@ describe('StatPanel', () => {
       props: { value: 30, thresholds },
     })
     const statValue = wrapper.find('.text-3xl')
-    expect(statValue.attributes('style')).toContain('color: #0f172a')
+    expect(statValue.attributes('style')).toContain('color: #fdfbfe')
   })
 
   it('applies custom height when provided', () => {

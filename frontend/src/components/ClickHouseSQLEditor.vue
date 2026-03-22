@@ -58,13 +58,13 @@ function handleQueryInput(event: Event) {
 <template>
   <div class="flex flex-col gap-3.5" :class="{ 'opacity-60 pointer-events-none': props.disabled }">
     <div class="flex flex-col gap-1.5">
-      <label for="clickhouse-signal" class="text-sm font-medium text-text-primary">Signal Type</label>
+      <label for="clickhouse-signal" class="text-sm font-medium text-[var(--color-on-surface)]">Signal Type</label>
       <select
         id="clickhouse-signal"
         :value="props.signal"
         data-testid="clickhouse-signal-select"
         :disabled="props.disabled"
-        class="w-full rounded-sm border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer transition-colors duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+        class="w-full rounded-sm bg-[var(--color-surface-container-high)] px-3 py-2 text-sm text-[var(--color-on-surface)] cursor-pointer transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:bg-[var(--color-surface-container-high)] disabled:text-[var(--color-outline)] disabled:cursor-not-allowed"
         @change="handleSignalChange"
       >
         <option value="logs">Logs</option>
@@ -74,7 +74,7 @@ function handleQueryInput(event: Event) {
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label for="clickhouse-query" class="text-sm font-medium text-text-primary">SQL</label>
+      <label for="clickhouse-query" class="text-sm font-medium text-[var(--color-on-surface)]">SQL</label>
       <textarea
         id="clickhouse-query"
         :value="props.modelValue"
@@ -83,17 +83,17 @@ function handleQueryInput(event: Event) {
         :placeholder="placeholder"
         rows="7"
         spellcheck="false"
-        class="w-full rounded-sm border border-border bg-surface-raised px-3.5 py-3 text-sm font-mono text-text-primary min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+        class="w-full rounded-sm bg-[var(--color-surface-container-low)] px-3.5 py-3 text-sm font-mono text-[var(--color-on-surface)] min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:bg-[var(--color-surface-container-high)] disabled:text-[var(--color-outline)] disabled:cursor-not-allowed"
         @input="handleQueryInput"
       />
     </div>
 
-    <div class="rounded-sm border border-border bg-surface-overlay px-3.5 py-3">
-      <p class="m-0 text-xs text-text-muted">Expected columns for {{ props.signal }} queries:</p>
+    <div class="rounded-sm bg-[var(--color-surface-container-high)] px-3.5 py-3">
+      <p class="m-0 text-xs text-[var(--color-outline)]">Expected columns for {{ props.signal }} queries:</p>
       <p class="mt-2 mb-0 flex flex-wrap gap-1.5">
-        <code v-for="column in expectedColumns" :key="column" class="inline-flex items-center px-1.5 py-0.5 rounded bg-accent-muted border border-accent-border text-xs text-text-secondary font-mono">{{ column }}</code>
+        <code v-for="column in expectedColumns" :key="column" class="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-xs text-[var(--color-on-surface-variant)] font-mono">{{ column }}</code>
       </p>
-      <p class="mt-2.5 mb-0 text-xs text-text-muted leading-relaxed">Time placeholders supported: <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-accent-muted border border-accent-border text-xs text-text-secondary font-mono">{start}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-accent-muted border border-accent-border text-xs text-text-secondary font-mono">{end}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-accent-muted border border-accent-border text-xs text-text-secondary font-mono">{step}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-accent-muted border border-accent-border text-xs text-text-secondary font-mono">{start_ms}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-accent-muted border border-accent-border text-xs text-text-secondary font-mono">{end_ms}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-accent-muted border border-accent-border text-xs text-text-secondary font-mono">{start_ns}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-accent-muted border border-accent-border text-xs text-text-secondary font-mono">{end_ns}</code>.</p>
+      <p class="mt-2.5 mb-0 text-xs text-[var(--color-outline)] leading-relaxed">Time placeholders supported: <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-xs text-[var(--color-on-surface-variant)] font-mono">{start}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-xs text-[var(--color-on-surface-variant)] font-mono">{end}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-xs text-[var(--color-on-surface-variant)] font-mono">{step}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-xs text-[var(--color-on-surface-variant)] font-mono">{start_ms}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-xs text-[var(--color-on-surface-variant)] font-mono">{end_ms}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-xs text-[var(--color-on-surface-variant)] font-mono">{start_ns}</code>, <code class="inline-flex items-center px-1.5 py-0.5 rounded bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 text-xs text-[var(--color-on-surface-variant)] font-mono">{end_ns}</code>.</p>
     </div>
   </div>
 </template>

@@ -56,16 +56,16 @@ interface DetectedField {
 function getLevelBadgeClasses(level?: string): string {
   switch (level) {
     case 'error':
-      return 'rounded-sm bg-rose-500/10 px-2 py-0.5 text-rose-500 ring-1 ring-rose-500/20 font-semibold'
+      return 'rounded-sm bg-[var(--color-error)]/10 px-2 py-0.5 text-[var(--color-error)] ring-1 ring-[var(--color-error)]/20 font-semibold'
     case 'warning':
     case 'warn':
-      return 'rounded-sm bg-amber-50 px-2 py-0.5 text-amber-700 ring-1 ring-amber-600/20 font-semibold'
+      return 'rounded-sm bg-[var(--color-tertiary)]/10 px-2 py-0.5 text-[var(--color-tertiary)] ring-1 ring-[var(--color-tertiary)]/20 font-semibold'
     case 'info':
-      return 'rounded-sm bg-sky-50 px-2 py-0.5 text-sky-700 ring-1 ring-sky-600/20 font-semibold'
+      return 'rounded-sm bg-[var(--color-primary)]/10 px-2 py-0.5 text-[var(--color-primary)] ring-1 ring-[var(--color-primary)]/20 font-semibold'
     case 'debug':
-      return 'rounded-sm bg-surface-overlay px-2 py-0.5 text-text-secondary'
+      return 'rounded-sm bg-[var(--color-surface-container-high)] px-2 py-0.5 text-[var(--color-on-surface-variant)]'
     default:
-      return 'rounded-sm bg-surface-overlay px-2 py-0.5 text-text-secondary'
+      return 'rounded-sm bg-[var(--color-surface-container-high)] px-2 py-0.5 text-[var(--color-on-surface-variant)]'
   }
 }
 
@@ -227,15 +227,15 @@ watch(displayLogs, () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full overflow-hidden rounded border border-border bg-surface-raised">
+  <div class="flex flex-col h-full overflow-hidden rounded bg-[var(--color-surface-container-low)]">
     <!-- Header -->
-    <div class="flex items-center gap-4 bg-surface-overlay px-4 py-2.5 font-mono text-xs uppercase tracking-[0.07em] text-text-secondary">
+    <div class="flex items-center gap-4 bg-[var(--color-surface-container-high)] px-4 py-2.5 font-mono text-xs uppercase tracking-[0.07em] text-[var(--color-on-surface-variant)]">
       <span class="shrink-0 w-44">Timestamp</span>
       <span class="shrink-0 w-20">Level</span>
       <span class="flex-1">Message</span>
     </div>
-    <div class="shrink-0 text-xs font-mono py-1 px-4 bg-surface-overlay border-b border-border">
-      <span class="text-text-muted">{{ logs.length }} log entries</span>
+    <div class="shrink-0 text-xs font-mono py-1 px-4 bg-[var(--color-surface-container-high)]">
+      <span class="text-[var(--color-outline)]">{{ logs.length }} log entries</span>
     </div>
 
     <!-- Log rows -->
@@ -243,14 +243,14 @@ watch(displayLogs, () => {
       <template v-for="(log, i) in displayLogs" :key="i">
         <div
           :class="[
-            'flex items-start gap-4 border-b border-border px-4 py-2 text-xs font-mono hover:bg-surface-overlay cursor-pointer transition',
-            isExpanded(i) ? 'bg-surface-overlay' : '',
+            'flex items-start gap-4 px-4 py-2 text-xs font-mono hover:bg-[var(--color-surface-container-high)] cursor-pointer transition',
+            isExpanded(i) ? 'bg-[var(--color-surface-container-high)]' : '',
             isHighlighted(log) ? 'animate-[row-highlight-fade_2.4s_ease-out]' : '',
           ]"
           @click="toggleRow(i)"
         >
           <!-- Timestamp -->
-          <span class="shrink-0 text-text-muted w-44">{{ formatTimestamp(log.timestamp) }}</span>
+          <span class="shrink-0 text-[var(--color-outline)] w-44">{{ formatTimestamp(log.timestamp) }}</span>
 
           <!-- Level badge -->
           <span class="shrink-0 w-20">
@@ -266,7 +266,7 @@ watch(displayLogs, () => {
           <span class="shrink-0 w-40">
             <button
               v-if="linkedTraceDatasourceId && extractTraceId(log)"
-              class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono bg-accent-muted text-accent hover:bg-accent-muted transition-colors cursor-pointer border border-accent-border"
+              class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono bg-[var(--color-primary)]/10 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 transition-colors cursor-pointer border border-[var(--color-primary)]/20"
               @click.stop="navigateToTrace(extractTraceId(log)!)"
               :title="`View trace ${extractTraceId(log)}`"
             >
@@ -276,16 +276,16 @@ watch(displayLogs, () => {
           </span>
 
           <!-- Message -->
-          <div class="flex-1 text-text-primary break-all">
+          <div class="flex-1 text-[var(--color-on-surface)] break-all">
             <div class="flex items-start gap-1.5">
-              <span class="shrink-0 text-text-muted text-[0.72rem] leading-[1.35] mt-px">{{ isExpanded(i) ? 'v' : '>' }}</span>
+              <span class="shrink-0 text-[var(--color-outline)] text-[0.72rem] leading-[1.35] mt-px">{{ isExpanded(i) ? 'v' : '>' }}</span>
               <span class="whitespace-pre-wrap">{{ log.line }}</span>
             </div>
             <div v-if="log.labels && Object.keys(log.labels).length > 0" class="mt-1 flex flex-wrap gap-1">
               <span
                 v-for="(value, key) in log.labels"
                 :key="String(key)"
-                class="inline-flex rounded-sm bg-surface-overlay px-2 py-0.5 text-xs text-text-secondary mr-1"
+                class="inline-flex rounded-sm bg-[var(--color-surface-container-high)] px-2 py-0.5 text-xs text-[var(--color-on-surface-variant)] mr-1"
               >
                 {{ key }}={{ value }}
               </span>
@@ -294,8 +294,8 @@ watch(displayLogs, () => {
         </div>
 
         <!-- Expanded detail row -->
-        <div v-if="isExpanded(i)" class="bg-surface-overlay px-6 py-4 text-xs font-mono border-b border-border">
-          <div class="text-[0.7rem] font-semibold uppercase tracking-[0.04em] text-text-muted mb-2">
+        <div v-if="isExpanded(i)" class="bg-[var(--color-surface-container-high)] px-6 py-4 text-xs font-mono">
+          <div class="text-[0.7rem] font-semibold uppercase tracking-[0.04em] text-[var(--color-outline)] mb-2">
             Detected Fields
           </div>
           <div v-if="detectedFieldsByRow[i]?.length" class="grid gap-1.5">
@@ -304,16 +304,16 @@ watch(displayLogs, () => {
               :key="field.key"
               class="grid grid-cols-[minmax(120px,220px)_1fr] gap-2.5 max-sm:grid-cols-1 max-sm:gap-1"
             >
-              <span class="text-text-muted break-words">{{ field.key }}</span>
-              <span class="text-text-primary whitespace-pre-wrap break-words">{{ field.value }}</span>
+              <span class="text-[var(--color-outline)] break-words">{{ field.key }}</span>
+              <span class="text-[var(--color-on-surface)] whitespace-pre-wrap break-words">{{ field.value }}</span>
             </div>
           </div>
-          <div v-else class="text-text-muted">No structured fields detected in this message.</div>
+          <div v-else class="text-[var(--color-outline)]">No structured fields detected in this message.</div>
         </div>
       </template>
 
       <!-- Empty state -->
-      <div v-if="logs.length === 0" class="text-center text-text-muted py-8 px-4 text-xs font-mono">
+      <div v-if="logs.length === 0" class="text-center text-[var(--color-outline)] py-8 px-4 text-xs font-mono">
         No log entries
       </div>
     </div>

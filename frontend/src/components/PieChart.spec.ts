@@ -188,10 +188,10 @@ describe('PieChart', () => {
     const chart = wrapper.find('.echarts-mock')
     const option = JSON.parse(chart.attributes('data-option') || '{}')
 
-    // Each data item should have a color from the palette
-    expect(option.series[0].data[0].itemStyle.color).toBe('#059669')
-    expect(option.series[0].data[1].itemStyle.color).toBe('#60A5FA')
-    expect(option.series[0].data[2].itemStyle.color).toBe('#64748b')
+    // Each data item should have a color from the Kinetic palette
+    expect(option.series[0].data[0].itemStyle.color).toBe('#a3a6ff')
+    expect(option.series[0].data[1].itemStyle.color).toBe('#69f6b8')
+    expect(option.series[0].data[2].itemStyle.color).toBe('#ffb148')
   })
 
   it('configures tooltip', () => {
@@ -217,7 +217,7 @@ describe('PieChart', () => {
 
     expect(option.series[0].data).toHaveLength(15)
     // Colors should cycle through the palette
-    expect(option.series[0].data[10].itemStyle.color).toBe('#059669') // Index 10 % 10 = 0
+    expect(option.series[0].data[10].itemStyle.color).toBe('#a3a6ff') // Index 10 % 10 = 0
   })
 
   it('handles zero values correctly', () => {

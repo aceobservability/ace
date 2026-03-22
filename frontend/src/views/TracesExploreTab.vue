@@ -129,7 +129,7 @@ const activeDatasourceHealthError = computed(() => {
   return datasourceHealthErrors.value[activeDatasource.value.id] || ''
 })
 
-function getTypeLogo(type_: DataSourceType): string {
+function getTypeLogo(type_: DataSourceType): string | undefined {
   return dataSourceTypeLogos[type_]
 }
 
@@ -759,27 +759,17 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex min-h-full">
-    <div class="flex flex-col flex-1 min-w-0 px-8 py-6 max-md:px-4 max-md:py-4">
-    <!-- Page header -->
-    <header class="flex items-center justify-between mb-6">
-      <div class="flex items-center flex-wrap gap-3">
-        <h1 class="text-2xl font-bold text-text-primary m-0">Explore</h1>
-        <span class="rounded-sm border border-accent-border bg-accent-muted px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">Tracing</span>
-      </div>
-    </header>
-
-    <div class="flex flex-col gap-6 flex-1">
+  <div class="flex flex-col gap-6 flex-1">
       <!-- Query / filter section -->
-      <div class="flex flex-col gap-4 rounded border border-border bg-surface-raised p-4">
+      <div class="flex flex-col gap-4 rounded bg-[var(--color-surface-container-low)] p-4">
         <!-- Datasource + time range row -->
         <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-end max-md:grid-cols-1">
           <div class="flex flex-col gap-2.5">
-            <label class="text-xs font-semibold uppercase tracking-wide text-text-muted">Data Source</label>
+            <label class="text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]">Data Source</label>
             <div ref="datasourceMenuRef" class="relative">
               <button
                 type="button"
-                class="flex w-full items-center gap-3 rounded border border-border bg-surface-raised px-4 py-3 text-left cursor-pointer transition hover:border-border-strong hover:bg-surface-overlay disabled:opacity-60 disabled:cursor-not-allowed"
+                class="flex w-full items-center gap-3 rounded bg-[var(--color-surface-container-low)] px-4 py-3 text-left cursor-pointer transition  hover:bg-[var(--color-surface-container-high)] disabled:opacity-60 disabled:cursor-not-allowed"
                 data-testid="explore-traces-datasource-btn"
                 :disabled="!hasTracingDatasources"
                 @click="toggleDatasourceMenu"
@@ -791,16 +781,16 @@ onUnmounted(() => {
                     class="h-7 w-7 shrink-0 object-contain"
                   />
                   <div class="flex flex-col min-w-0 gap-px">
-                    <span class="text-[0.68rem] uppercase tracking-wide text-text-muted">Active Source</span>
-                    <strong class="text-sm font-semibold text-text-primary truncate">{{ activeDatasource.name }}</strong>
-                    <span class="text-xs text-text-muted">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
+                    <span class="text-[0.68rem] uppercase tracking-wide text-[var(--color-outline)]">Active Source</span>
+                    <strong class="text-sm font-semibold text-[var(--color-on-surface)] truncate">{{ activeDatasource.name }}</strong>
+                    <span class="text-xs text-[var(--color-outline)]">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
                   </div>
                   <span
                     class="ml-auto inline-flex items-center gap-1.5 rounded-sm px-2.5 py-0.5 text-xs border"
                     :class="{
-                      'border-border text-text-muted': activeDatasourceHealth === 'checking' || activeDatasourceHealth === 'unknown',
-                      'border-accent-border bg-accent-muted text-accent': activeDatasourceHealth === 'healthy',
-                      'border-rose-500/25 bg-rose-500/10 text-rose-500': activeDatasourceHealth === 'unhealthy',
+                      ' text-[var(--color-outline)]': activeDatasourceHealth === 'checking' || activeDatasourceHealth === 'unknown',
+                      'border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)]': activeDatasourceHealth === 'healthy',
+                      'border-rose-500/25 bg-[var(--color-error)]/10 text-[var(--color-error)]': activeDatasourceHealth === 'unhealthy',
                     }"
                     :title="activeDatasourceHealthError || activeDatasourceHealthLabel"
                   >
@@ -810,21 +800,21 @@ onUnmounted(() => {
                     <span>{{ activeDatasourceHealthLabel }}</span>
                   </span>
                 </template>
-                <span v-else class="text-sm text-text-muted">No tracing datasource configured</span>
+                <span v-else class="text-sm text-[var(--color-outline)]">No tracing datasource configured</span>
                 <component
                   :is="showDatasourceMenu ? ChevronUp : ChevronDown"
                   :size="16"
-                  class="ml-1 shrink-0 text-text-muted"
+                  class="ml-1 shrink-0 text-[var(--color-outline)]"
                 />
               </button>
 
-              <div v-if="showDatasourceMenu && hasTracingDatasources" class="absolute left-0 right-0 top-full mt-1.5 z-[110] max-h-[280px] overflow-y-auto rounded border border-border bg-surface-raised shadow-lg">
+              <div v-if="showDatasourceMenu && hasTracingDatasources" class="absolute left-0 right-0 top-full mt-1.5 z-[110] max-h-[280px] overflow-y-auto rounded bg-[var(--color-surface-container-low)] shadow-lg">
                 <button
                   v-for="ds in tracingDatasources"
                   :key="ds.id"
                   type="button"
-                  class="flex w-full items-center gap-2.5 border-none bg-transparent px-3 py-2.5 text-left text-text-primary cursor-pointer hover:bg-surface-overlay"
-                  :class="{ 'bg-accent-muted': ds.id === selectedDatasourceId }"
+                  class="flex w-full items-center gap-2.5 border-none bg-transparent px-3 py-2.5 text-left text-[var(--color-on-surface)] cursor-pointer hover:bg-[var(--color-surface-container-high)]"
+                  :class="{ 'bg-[var(--color-primary)]/10': ds.id === selectedDatasourceId }"
                   @click="selectDatasource(ds.id)"
                 >
                   <img
@@ -833,17 +823,17 @@ onUnmounted(() => {
                     class="h-[18px] w-[18px] shrink-0 object-contain"
                   />
                   <div class="flex min-w-0 flex-col gap-px">
-                    <strong class="text-sm font-semibold text-text-primary">{{ ds.name }}</strong>
-                    <span class="text-xs text-text-muted">{{ dataSourceTypeLabels[ds.type] }}</span>
+                    <strong class="text-sm font-semibold text-[var(--color-on-surface)]">{{ ds.name }}</strong>
+                    <span class="text-xs text-[var(--color-outline)]">{{ dataSourceTypeLabels[ds.type] }}</span>
                   </div>
-                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="ml-auto text-accent" />
+                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="ml-auto text-[var(--color-primary)]" />
                 </button>
               </div>
             </div>
           </div>
 
           <div class="flex flex-col gap-2.5">
-            <label class="text-xs font-semibold uppercase tracking-wide text-text-muted">Search Range</label>
+            <label class="text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]">Search Range</label>
             <TimeRangePicker stacked />
           </div>
         </div>
@@ -852,12 +842,12 @@ onUnmounted(() => {
         <div class="flex flex-wrap gap-3">
           <template v-if="!isClickHouseDatasource">
             <label class="flex flex-col gap-2 min-w-[180px]">
-              <span class="text-xs font-medium text-text-muted">Service</span>
+              <span class="text-xs font-medium text-[var(--color-outline)]">Service</span>
               <select
                 v-model="selectedService"
                 data-testid="explore-traces-service-select"
                 :disabled="loadingServices || services.length === 0"
-                class="rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                class="rounded-sm bg-[var(--color-surface-container-low)] px-3 py-2 text-sm text-[var(--color-on-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="">All services</option>
                 <option v-for="service in services" :key="service" :value="service">{{ service }}</option>
@@ -865,11 +855,11 @@ onUnmounted(() => {
             </label>
 
             <label class="flex flex-col gap-2 min-w-[110px]">
-              <span class="text-xs font-medium text-text-muted">Limit</span>
+              <span class="text-xs font-medium text-[var(--color-outline)]">Limit</span>
               <select
                 v-model.number="limit"
                 data-testid="explore-traces-limit-select"
-                class="rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary"
+                class="rounded-sm bg-[var(--color-surface-container-low)] px-3 py-2 text-sm text-[var(--color-on-surface)]"
               >
                 <option :value="10">10</option>
                 <option :value="20">20</option>
@@ -890,13 +880,13 @@ onUnmounted(() => {
 
         <!-- Search query input (non-ClickHouse) -->
         <div v-if="!isClickHouseDatasource" class="flex flex-col gap-2">
-          <label for="trace-search-query" class="text-xs font-medium text-text-muted">Search Query</label>
+          <label for="trace-search-query" class="text-xs font-medium text-[var(--color-outline)]">Search Query</label>
           <input
             id="trace-search-query"
             v-model="query"
             data-testid="explore-traces-search-input"
             type="text"
-            class="rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary placeholder:text-text-muted"
+            class="rounded-sm bg-[var(--color-surface-container-low)] px-3 py-2 text-sm text-[var(--color-on-surface)] placeholder:text-[var(--color-outline)]"
             placeholder="service.name=api error=true"
           />
         </div>
@@ -905,7 +895,7 @@ onUnmounted(() => {
         <div class="flex items-center gap-4">
           <button
             data-testid="explore-traces-search-btn"
-            class="inline-flex items-center gap-2 rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            class="inline-flex items-center gap-2 rounded-sm bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white transition  disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             :disabled="loadingSearch || !selectedDatasourceId || (isClickHouseDatasource && !query.trim())"
             @click="runSearch"
           >
@@ -917,7 +907,7 @@ onUnmounted(() => {
 
         <!-- Open Trace ID row (non-ClickHouse) -->
         <div v-if="!isClickHouseDatasource" class="flex flex-col gap-2">
-          <label for="trace-id-input" class="text-xs font-medium text-text-muted">Open Trace ID</label>
+          <label for="trace-id-input" class="text-xs font-medium text-[var(--color-outline)]">Open Trace ID</label>
           <div class="flex gap-2.5 max-md:flex-col">
             <input
               id="trace-id-input"
@@ -925,11 +915,11 @@ onUnmounted(() => {
               data-testid="explore-traces-id-input"
               type="text"
               placeholder="Paste trace id"
-              class="flex-1 rounded-sm border border-border bg-surface-raised px-3 py-2 text-sm text-text-primary placeholder:text-text-muted"
+              class="flex-1 rounded-sm bg-[var(--color-surface-container-low)] px-3 py-2 text-sm text-[var(--color-on-surface)] placeholder:text-[var(--color-outline)]"
             />
             <button
               data-testid="explore-traces-open-btn"
-              class="inline-flex items-center gap-2 rounded-sm border border-border bg-surface-overlay px-4 py-2 text-sm font-medium text-text-primary transition hover:bg-surface-overlay disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              class="inline-flex items-center gap-2 rounded-sm bg-[var(--color-surface-container-high)] px-4 py-2 text-sm font-medium text-[var(--color-on-surface)] transition hover:bg-[var(--color-surface-container-high)] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               :disabled="loadingTrace || !selectedDatasourceId || !traceIdInput.trim()"
               @click="lookupTraceById"
             >
@@ -941,23 +931,23 @@ onUnmounted(() => {
         </div>
 
         <!-- Error -->
-        <div v-if="error" class="flex items-center gap-2 rounded border border-rose-500/25 bg-rose-500/10 p-4 text-sm text-rose-500">
+        <div v-if="error" class="flex items-center gap-2 rounded border border-rose-500/25 bg-[var(--color-error)]/10 p-4 text-sm text-[var(--color-error)]">
           <AlertCircle :size="16" />
           <span>{{ error }}</span>
         </div>
       </div>
 
       <!-- Results section -->
-      <div class="flex flex-1 flex-col rounded border border-border bg-surface-raised overflow-hidden min-h-[440px]">
+      <div class="flex flex-1 flex-col rounded bg-[var(--color-surface-container-low)] overflow-hidden min-h-[440px]">
         <!-- No datasources -->
-        <div v-if="!hasTracingDatasources" class="flex flex-col items-center justify-center py-12 text-center text-sm text-text-muted flex-1">
+        <div v-if="!hasTracingDatasources" class="flex flex-col items-center justify-center py-12 text-center text-sm text-[var(--color-outline)] flex-1">
           <p class="m-0">No tracing datasource configured.</p>
-          <p class="m-0 text-xs text-text-muted">Add a Tempo, VictoriaTraces, or ClickHouse datasource in Data Sources.</p>
+          <p class="m-0 text-xs text-[var(--color-outline)]">Add a Tempo, VictoriaTraces, or ClickHouse datasource in Data Sources.</p>
         </div>
 
         <!-- ClickHouse results layout -->
         <div v-else-if="isClickHouseDatasource" class="flex flex-1 min-h-[420px]">
-          <div v-if="loadingSearch" class="flex flex-col items-center justify-center gap-4 py-12 text-text-muted flex-1">
+          <div v-if="loadingSearch" class="flex flex-col items-center justify-center gap-4 py-12 text-[var(--color-outline)] flex-1">
             <Loader2 :size="18" class="animate-spin" />
             <span class="text-sm">Executing trace SQL...</span>
           </div>
@@ -966,22 +956,22 @@ onUnmounted(() => {
             <TraceListPanel :traces="traceSummaries" @open-trace="handleOpenTraceFromList" />
           </div>
 
-          <div v-else class="flex flex-col items-center justify-center py-12 text-center text-sm text-text-muted flex-1">
+          <div v-else class="flex flex-col items-center justify-center py-12 text-center text-sm text-[var(--color-outline)] flex-1">
             <p class="m-0">Run a ClickHouse SQL query to inspect traces.</p>
-            <p class="m-0 text-xs text-text-muted">Expected columns include span_id, operation_name, service_name, start_time_unix_nano, and duration_nano.</p>
+            <p class="m-0 text-xs text-[var(--color-outline)]">Expected columns include span_id, operation_name, service_name, start_time_unix_nano, and duration_nano.</p>
           </div>
         </div>
 
         <!-- Standard trace layout: list + detail -->
         <div v-else class="grid grid-cols-[320px_minmax(0,1fr)] min-h-[460px] flex-1 max-lg:grid-cols-1">
           <!-- Trace results sidebar -->
-          <aside class="flex flex-col border-r border-border max-lg:border-r-0 max-lg:border-b max-lg:max-h-[320px]">
-            <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-overlay">
-              <h2 class="m-0 text-xs font-semibold uppercase tracking-wide text-text-secondary">Matching traces</h2>
-              <span class="text-xs text-text-muted">{{ traceSummaries.length }} result{{ traceSummaries.length === 1 ? '' : 's' }}</span>
+          <aside class="flex flex-col max-lg:border-r-0 max-lg:border-b max-lg:max-h-[320px]">
+            <div class="flex items-center justify-between px-4 py-3 bg-[var(--color-surface-container-high)]">
+              <h2 class="m-0 text-xs font-semibold uppercase tracking-wide text-[var(--color-on-surface-variant)]">Matching traces</h2>
+              <span class="text-xs text-[var(--color-outline)]">{{ traceSummaries.length }} result{{ traceSummaries.length === 1 ? '' : 's' }}</span>
             </div>
 
-            <div v-if="loadingSearch" class="flex items-center justify-center gap-2 py-5 text-text-muted">
+            <div v-if="loadingSearch" class="flex items-center justify-center gap-2 py-5 text-[var(--color-outline)]">
               <Loader2 :size="16" class="animate-spin" />
               <span class="text-sm">Searching traces...</span>
             </div>
@@ -992,59 +982,59 @@ onUnmounted(() => {
                 :key="summary.traceId"
                 class="flex flex-col gap-1 text-left p-3 rounded-sm border cursor-pointer transition"
                 :class="selectedTraceId === summary.traceId
-                  ? 'border-accent-border bg-accent-muted'
-                  : 'border-border bg-surface-raised hover:border-border-strong hover:bg-surface-overlay'"
+                  ? 'border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10'
+                  : ' bg-[var(--color-surface-container-low)]  hover:bg-[var(--color-surface-container-high)]'"
                 @click="loadTrace(summary.traceId)"
               >
-                <code class="text-xs font-mono text-accent break-all">{{ summary.traceId }}</code>
-                <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-text-muted">
+                <code class="text-xs font-mono text-[var(--color-primary)] break-all">{{ summary.traceId }}</code>
+                <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-[var(--color-outline)]">
                   <span>{{ summary.rootServiceName || 'unknown service' }}</span>
                   <span>{{ formatDurationNano(summary.durationNano) }}</span>
                   <span>{{ summary.spanCount }} spans</span>
-                  <span :class="summary.errorSpanCount > 0 ? 'text-rose-600 font-medium' : ''">{{ summary.errorSpanCount }} errors</span>
+                  <span :class="summary.errorSpanCount > 0 ? 'text-[var(--color-error)] font-medium' : ''">{{ summary.errorSpanCount }} errors</span>
                 </div>
-                <span class="text-[0.7rem] text-text-muted">{{ formatStart(summary.startTimeUnixNano) }}</span>
+                <span class="text-[0.7rem] text-[var(--color-outline)]">{{ formatStart(summary.startTimeUnixNano) }}</span>
               </button>
             </div>
 
-            <div v-else class="flex flex-col items-center justify-center py-8 text-center text-sm text-text-muted flex-1">
+            <div v-else class="flex flex-col items-center justify-center py-8 text-center text-sm text-[var(--color-outline)] flex-1">
               Run a trace search or open a trace ID directly.
             </div>
           </aside>
 
           <!-- Timeline / detail panel -->
           <section class="flex flex-col">
-            <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-overlay">
-              <h2 class="m-0 text-xs font-semibold uppercase tracking-wide text-text-secondary">Timeline waterfall</h2>
-              <span v-if="activeTrace" class="text-xs text-text-muted">{{ activeTrace.spans.length }} spans</span>
+            <div class="flex items-center justify-between px-4 py-3 bg-[var(--color-surface-container-high)]">
+              <h2 class="m-0 text-xs font-semibold uppercase tracking-wide text-[var(--color-on-surface-variant)]">Timeline waterfall</h2>
+              <span v-if="activeTrace" class="text-xs text-[var(--color-outline)]">{{ activeTrace.spans.length }} spans</span>
             </div>
 
-            <div v-if="loadingTrace" class="flex flex-col items-center justify-center gap-4 py-12 text-text-muted flex-1">
+            <div v-if="loadingTrace" class="flex flex-col items-center justify-center gap-4 py-12 text-[var(--color-outline)] flex-1">
               <Loader2 :size="18" class="animate-spin" />
               <span class="text-sm">Loading trace...</span>
             </div>
 
             <div v-else-if="activeTrace" class="flex flex-col gap-3.5 p-4">
               <!-- Trace summary bar -->
-              <div class="flex items-center gap-3 flex-wrap rounded-sm border border-border bg-surface-overlay px-3 py-2">
-                <code class="text-xs font-mono text-accent">{{ activeTrace.traceId }}</code>
-                <span class="text-xs text-text-muted">{{ formatDurationNano(activeTrace.durationNano) }}</span>
-                <span class="text-xs text-text-muted">{{ activeTrace.services.length }} services</span>
+              <div class="flex items-center gap-3 flex-wrap rounded-sm bg-[var(--color-surface-container-high)] px-3 py-2">
+                <code class="text-xs font-mono text-[var(--color-primary)]">{{ activeTrace.traceId }}</code>
+                <span class="text-xs text-[var(--color-outline)]">{{ formatDurationNano(activeTrace.durationNano) }}</span>
+                <span class="text-xs text-[var(--color-outline)]">{{ activeTrace.services.length }} services</span>
               </div>
 
               <!-- Service graph panel -->
-              <div class="rounded border border-border bg-surface-raised p-4 flex flex-col gap-2.5">
+              <div class="rounded bg-[var(--color-surface-container-low)] p-4 flex flex-col gap-2.5">
                 <div class="flex items-center justify-between">
-                  <h3 class="m-0 text-xs font-semibold uppercase tracking-wide text-text-muted">Service dependency graph</h3>
-                  <span v-if="activeServiceGraph" class="text-xs text-text-muted">{{ activeServiceGraph.edges.length }} edges</span>
+                  <h3 class="m-0 text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]">Service dependency graph</h3>
+                  <span v-if="activeServiceGraph" class="text-xs text-[var(--color-outline)]">{{ activeServiceGraph.edges.length }} edges</span>
                 </div>
 
-                <div v-if="loadingServiceGraph" class="flex items-center justify-center gap-2 py-5 text-text-muted">
+                <div v-if="loadingServiceGraph" class="flex items-center justify-center gap-2 py-5 text-[var(--color-outline)]">
                   <Loader2 :size="16" class="animate-spin" />
                   <span class="text-sm">Loading service graph...</span>
                 </div>
 
-                <div v-else-if="serviceGraphError" class="flex items-center gap-2 rounded-sm border border-rose-500/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-500">
+                <div v-else-if="serviceGraphError" class="flex items-center gap-2 rounded-sm border border-rose-500/25 bg-[var(--color-error)]/10 px-3 py-2 text-sm text-[var(--color-error)]">
                   <AlertCircle :size="14" />
                   <span>{{ serviceGraphError }}</span>
                 </div>
@@ -1056,7 +1046,7 @@ onUnmounted(() => {
                   @select-edge="handleSelectEdgeFromGraph"
                 />
 
-                <div v-else class="flex items-center gap-2 rounded-sm border border-dashed border-border bg-surface-overlay px-3 py-3 text-sm text-text-muted">
+                <div v-else class="flex items-center gap-2 rounded-sm bg-[var(--color-surface-container-high)] px-3 py-3 text-sm text-[var(--color-outline)]">
                   Not enough trace data to render service dependencies.
                 </div>
               </div>
@@ -1080,21 +1070,19 @@ onUnmounted(() => {
                   @open-service-metrics="openServiceMetrics"
                 />
 
-                <aside v-else class="flex flex-col gap-2 rounded border border-dashed border-border bg-surface-overlay p-4">
-                  <h3 class="m-0 text-xs font-semibold uppercase tracking-wide text-text-muted">Span details</h3>
-                  <p class="m-0 text-sm text-text-muted">Select a span in the timeline to inspect attributes, logs, and relationships.</p>
+                <aside v-else class="flex flex-col gap-2 rounded bg-[var(--color-surface-container-high)] p-4">
+                  <h3 class="m-0 text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]">Span details</h3>
+                  <p class="m-0 text-sm text-[var(--color-outline)]">Select a span in the timeline to inspect attributes, logs, and relationships.</p>
                 </aside>
               </div>
             </div>
 
-            <div v-else class="flex flex-col items-center justify-center py-12 text-center text-sm text-text-muted flex-1">
+            <div v-else class="flex flex-col items-center justify-center py-12 text-center text-sm text-[var(--color-outline)] flex-1">
               <p class="m-0">Select a trace result to view the waterfall timeline.</p>
-              <p class="m-0 text-xs text-text-muted">You can search by service/time range or open a known trace ID.</p>
+              <p class="m-0 text-xs text-[var(--color-outline)]">You can search by service/time range or open a known trace ID.</p>
             </div>
           </section>
         </div>
       </div>
     </div>
-    </div>
-  </div>
 </template>

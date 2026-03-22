@@ -8,7 +8,10 @@ import { getDashboard } from '../api/dashboards'
 import { deletePanel, listPanels, updatePanel } from '../api/panels'
 import Panel from '../components/Panel.vue'
 import PanelEditModal from '../components/PanelEditModal.vue'
+import RefreshIndicator from '../components/RefreshIndicator.vue'
 import TimeRangePicker from '../components/TimeRangePicker.vue'
+import { useCommandContext } from '../composables/useCommandContext'
+import { useFavorites } from '../composables/useFavorites'
 import { useOrganization } from '../composables/useOrganization'
 import { useTimeRange } from '../composables/useTimeRange'
 import type { Dashboard } from '../types/dashboard'
@@ -17,6 +20,8 @@ import type { Panel as PanelType } from '../types/panel'
 const route = useRoute()
 const router = useRouter()
 const { currentOrg, fetchOrganizations } = useOrganization()
+const { registerContext, deregisterContext } = useCommandContext()
+const { addRecent } = useFavorites()
 
 const dashboard = ref<Dashboard | null>(null)
 const panels = ref<PanelType[]>([])
@@ -44,6 +49,19 @@ const dashboardSettings = ref<DashboardViewSettings>({
   refreshInterval: 'off',
   variables: [],
 })
+
+// RefreshIndicator state
+const lastRefreshed = ref<Date | null>(null)
+const autoRefreshMs = ref(0)
+
+function handleAutoRefreshChange(ms: number) {
+  autoRefreshMs.value = ms
+  if (ms > 0) {
+    setRefreshInterval(ms === 5000 ? '5s' : ms === 15000 ? '15s' : ms === 30000 ? '30s' : ms === 60000 ? '1m' : ms === 300000 ? '5m' : 'off')
+  } else {
+    setRefreshInterval('off')
+  }
+}
 
 function dashboardLoadErrorMessage(cause: unknown): string {
   if (cause instanceof Error && cause.message === 'Not a member of this organization') {
@@ -162,6 +180,7 @@ async function loadData() {
     await fetchPanels()
   }
   loading.value = false
+  lastRefreshed.value = new Date()
 }
 
 function openAddPanel() {
@@ -342,16 +361,35 @@ onMounted(async () => {
   if (!currentOrg.value) {
     await fetchOrganizations()
   }
-  loadData()
+
+  registerContext({
+    viewName: 'Dashboard Detail',
+    viewRoute: `/app/dashboards/${dashboardId}`,
+    description: 'Viewing dashboard detail',
+    dashboardId,
+  })
+
+  await loadData()
+
+  if (dashboard.value) {
+    addRecent({
+      id: dashboardId,
+      title: dashboard.value.title,
+      visitedAt: Date.now(),
+    })
+  }
+
   // Subscribe to time range changes to refetch panels
   unsubscribeRefresh = onRefresh(() => {
     // In the future, this will refetch panel data with the new time range
     // For now, we log the time range for debugging
     console.log('Time range updated:', timeRange.value)
+    lastRefreshed.value = new Date()
   })
 })
 
 onUnmounted(() => {
+  deregisterContext()
   if (unsubscribeRefresh) {
     unsubscribeRefresh()
   }
@@ -364,10 +402,19 @@ onUnmounted(() => {
 
 <template>
   <div class="mx-auto max-w-[1600px] px-6 py-5">
-    <header class="relative z-20 mb-4 flex flex-col gap-3 rounded border border-border bg-surface-raised px-6 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <header
+      class="relative z-20 mb-4 flex flex-col gap-3 rounded-lg px-6 py-3 sm:flex-row sm:items-center sm:justify-between"
+      :style="{
+        backgroundColor: 'var(--color-surface-container-low)',
+      }"
+    >
       <div class="flex items-center gap-4">
         <button
-          class="flex h-[38px] w-[38px] items-center justify-center rounded-sm border border-border bg-surface-raised text-text-muted transition hover:bg-surface-overlay hover:text-text-primary"
+          class="flex h-[38px] w-[38px] items-center justify-center rounded-lg transition hover:opacity-80"
+          :style="{
+            backgroundColor: 'var(--color-surface-container-high)',
+            color: 'var(--color-on-surface-variant)',
+          }"
           data-testid="dashboard-back-btn"
           @click="goBack"
           title="Back to Dashboards"
@@ -375,8 +422,17 @@ onUnmounted(() => {
           <ArrowLeft :size="20" />
         </button>
         <div v-if="dashboard">
-          <h1 class="mb-0.5 font-mono text-lg font-semibold tracking-wide text-text-primary">{{ dashboard.title }}</h1>
-          <p v-if="dashboard.description" class="text-sm text-text-muted">
+          <h1
+            class="mb-0.5 font-display text-lg font-semibold tracking-wide"
+            :style="{ color: 'var(--color-on-surface)' }"
+          >
+            {{ dashboard.title }}
+          </h1>
+          <p
+            v-if="dashboard.description"
+            class="text-sm"
+            :style="{ color: 'var(--color-on-surface-variant)' }"
+          >
             {{ dashboard.description }}
           </p>
         </div>
@@ -384,10 +440,19 @@ onUnmounted(() => {
       <div class="flex flex-wrap items-center gap-3">
         <div class="flex items-center gap-2">
           <TimeRangePicker />
+          <RefreshIndicator
+            :last-refreshed="lastRefreshed"
+            :auto-refresh-interval="autoRefreshMs"
+            :on-interval-change="handleAutoRefreshChange"
+          />
         </div>
         <button
           v-if="dashboard"
-          class="inline-flex items-center gap-2 rounded-sm border border-border px-3 py-1.5 text-sm font-semibold text-text-secondary transition hover:bg-surface-overlay hover:text-text-primary"
+          class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition hover:opacity-80"
+          :style="{
+            backgroundColor: 'var(--color-surface-container-high)',
+            color: 'var(--color-on-surface-variant)',
+          }"
           data-testid="dashboard-settings-button"
           @click="openDashboardSettings"
         >
@@ -395,7 +460,10 @@ onUnmounted(() => {
           <span>Settings</span>
         </button>
         <button
-          class="inline-flex items-center gap-2 rounded-sm bg-accent px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
+          class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          :style="{
+            background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
+          }"
           data-testid="dashboard-add-panel-btn"
           @click="openAddPanel"
           :disabled="loading"
@@ -406,29 +474,72 @@ onUnmounted(() => {
       </div>
     </header>
 
-    <div v-if="loading" class="flex min-h-[320px] flex-col items-center justify-center rounded border border-border bg-surface-raised py-20 text-center text-text-muted">
-      <div class="mb-4 h-10 w-10 animate-spin rounded-sm border-3 border-border border-t-accent"></div>
+    <div
+      v-if="loading"
+      class="flex min-h-[320px] flex-col items-center justify-center rounded-lg py-20 text-center"
+      :style="{
+        backgroundColor: 'var(--color-surface-container-low)',
+        color: 'var(--color-on-surface-variant)',
+      }"
+    >
+      <div
+        class="mb-4 h-10 w-10 animate-spin rounded-full border-3"
+        :style="{
+          borderColor: 'var(--color-outline-variant)',
+          borderTopColor: 'var(--color-primary)',
+        }"
+      ></div>
       <p>Loading dashboard...</p>
     </div>
 
-    <div v-else-if="error" class="flex min-h-[320px] flex-col items-center justify-center rounded border border-rose-500/25 bg-rose-500/10 p-4 text-center text-sm text-rose-500">
+    <div
+      v-else-if="error"
+      class="flex min-h-[320px] flex-col items-center justify-center rounded-lg p-4 text-center text-sm"
+      :style="{
+        backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
+        color: 'var(--color-error)',
+      }"
+    >
       <AlertCircle :size="48" />
       <p class="mb-4 mt-4">{{ error }}</p>
       <button
-        class="inline-flex items-center gap-2 rounded-sm border border-border px-3 py-1.5 text-sm font-semibold text-text-secondary transition hover:bg-surface-overlay hover:text-text-primary"
+        class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition hover:opacity-80"
+        :style="{
+          backgroundColor: 'var(--color-surface-container-high)',
+          color: 'var(--color-on-surface-variant)',
+        }"
         @click="goBack"
       >Back to Dashboards</button>
     </div>
 
     <template v-else>
-      <div v-if="panels.length === 0" class="flex min-h-[320px] flex-col items-center justify-center rounded border border-border bg-surface-raised px-8 py-16 text-center text-text-muted">
-        <div class="mb-4 flex h-[120px] w-[120px] items-center justify-center rounded border border-border bg-surface-overlay text-text-muted">
+      <div
+        v-if="panels.length === 0"
+        class="flex min-h-[320px] flex-col items-center justify-center rounded-lg px-8 py-16 text-center"
+        :style="{
+          backgroundColor: 'var(--color-surface-container-low)',
+          color: 'var(--color-on-surface-variant)',
+        }"
+      >
+        <div
+          class="mb-4 flex h-[120px] w-[120px] items-center justify-center rounded-lg"
+          :style="{
+            backgroundColor: 'var(--color-surface-container-high)',
+            color: 'var(--color-outline)',
+          }"
+        >
           <LayoutGrid :size="64" />
         </div>
-        <h2 class="mb-2 mt-4 text-text-primary">No panels yet</h2>
+        <h2
+          class="mb-2 mt-4 font-display"
+          :style="{ color: 'var(--color-on-surface)' }"
+        >No panels yet</h2>
         <p class="mb-6">Add your first panel to start visualizing data</p>
         <button
-          class="inline-flex items-center gap-2 rounded-sm bg-accent px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-accent-hover"
+          class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90"
+          :style="{
+            background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
+          }"
           @click="openAddPanel"
         >
           <Plus :size="18" />
@@ -489,21 +600,47 @@ onUnmounted(() => {
       data-testid="delete-panel-modal"
       @click.self="cancelDelete"
     >
-      <div class="w-full max-w-[400px] rounded border border-border bg-surface-raised p-8 text-center shadow-lg animate-slide-up">
-        <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-sm bg-rose-500/10 text-rose-500">
+      <div
+        class="w-full max-w-[400px] rounded-lg p-8 text-center shadow-lg animate-slide-up"
+        :style="{
+          backgroundColor: 'var(--color-surface-bright)',
+          backdropFilter: 'blur(20px)',
+        }"
+      >
+        <div
+          class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg"
+          :style="{
+            backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
+            color: 'var(--color-error)',
+          }"
+        >
           <Trash2 :size="24" />
         </div>
-        <h2 class="mb-2 text-text-primary">Delete Panel</h2>
-        <p class="mb-1 text-text-muted">Are you sure you want to delete "{{ deletingPanel?.title }}"?</p>
-        <p class="text-sm text-rose-500">This action cannot be undone.</p>
+        <h2
+          class="mb-2 font-display"
+          :style="{ color: 'var(--color-on-surface)' }"
+        >Delete Panel</h2>
+        <p
+          class="mb-1"
+          :style="{ color: 'var(--color-on-surface-variant)' }"
+        >Are you sure you want to delete "{{ deletingPanel?.title }}"?</p>
+        <p
+          class="text-sm"
+          :style="{ color: 'var(--color-error)' }"
+        >This action cannot be undone.</p>
         <div class="mt-6 flex justify-center gap-3">
           <button
-            class="inline-flex items-center gap-2 rounded-sm border border-border px-3 py-1.5 text-sm font-semibold text-text-secondary transition hover:bg-surface-overlay hover:text-text-primary"
+            class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition hover:opacity-80"
+            :style="{
+              backgroundColor: 'var(--color-surface-container-high)',
+              color: 'var(--color-on-surface-variant)',
+            }"
             data-testid="delete-panel-cancel-btn"
             @click="cancelDelete"
           >Cancel</button>
           <button
-            class="inline-flex items-center gap-2 rounded-sm bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-rose-700"
+            class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90"
+            :style="{ backgroundColor: 'var(--color-error)' }"
             data-testid="delete-panel-confirm-btn"
             @click="handleDeletePanel"
           >Delete</button>
@@ -524,8 +661,8 @@ onUnmounted(() => {
 }
 
 .vue-grid-item.vue-grid-placeholder {
-  background: oklch(92.4% .12 165 / 0.18);
-  border: 2px dashed #059669;
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  border: 2px dashed var(--color-primary-dim);
   border-radius: 8px;
 }
 
@@ -536,7 +673,7 @@ onUnmounted(() => {
   bottom: 0;
   right: 0;
   cursor: se-resize;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 6' fill='%2394a3b8'%3E%3Cpolygon points='6 0 0 6 6 6'/%3E%3C/svg%3E") no-repeat;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 6' fill='%23757578'%3E%3Cpolygon points='6 0 0 6 6 6'/%3E%3C/svg%3E") no-repeat;
   background-position: bottom right;
   padding: 0 3px 3px 0;
   background-repeat: no-repeat;

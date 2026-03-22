@@ -15,6 +15,30 @@ vi.mock('vue-router', () => ({
   }),
 }))
 
+// Mock useCommandContext
+const mockRegisterContext = vi.fn()
+const mockDeregisterContext = vi.fn()
+vi.mock('../composables/useCommandContext', () => ({
+  useCommandContext: () => ({
+    currentContext: { value: null },
+    registerContext: mockRegisterContext,
+    deregisterContext: mockDeregisterContext,
+  }),
+}))
+
+// Mock useFavorites
+const mockAddRecent = vi.fn()
+vi.mock('../composables/useFavorites', () => ({
+  useFavorites: () => ({
+    favorites: { value: [] },
+    recentDashboards: { value: [] },
+    toggleFavorite: vi.fn(),
+    isFavorite: vi.fn(() => false),
+    addRecent: mockAddRecent,
+    _reset: vi.fn(),
+  }),
+}))
+
 // Mock api functions
 const mockDashboard = {
   id: 'test-dashboard-id',
@@ -319,5 +343,44 @@ describe('DashboardDetailView', () => {
       traceId: 'trace-abc',
       createdAt: Date.now(),
     })
+  })
+
+  it('renders RefreshIndicator component', async () => {
+    const wrapper = mount(DashboardDetailView)
+    await flushPromises()
+
+    expect(wrapper.findComponent({ name: 'RefreshIndicator' }).exists()).toBe(true)
+  })
+
+  it('registers command context on mount', async () => {
+    mount(DashboardDetailView)
+    await flushPromises()
+
+    expect(mockRegisterContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        viewName: 'Dashboard Detail',
+        dashboardId: 'test-dashboard-id',
+      }),
+    )
+  })
+
+  it('adds dashboard to recents on mount', async () => {
+    mount(DashboardDetailView)
+    await flushPromises()
+
+    expect(mockAddRecent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'test-dashboard-id',
+        title: 'Test Dashboard',
+      }),
+    )
+  })
+
+  it('uses font-display for dashboard title', async () => {
+    const wrapper = mount(DashboardDetailView)
+    await flushPromises()
+
+    const h1 = wrapper.find('h1')
+    expect(h1.classes()).toContain('font-display')
   })
 })

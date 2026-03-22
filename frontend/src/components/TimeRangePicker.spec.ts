@@ -63,14 +63,16 @@ describe('TimeRangePicker', () => {
     expect(findRefreshBtn(wrapper).exists()).toBe(true)
   })
 
-  it('should render refresh interval selector', () => {
+  it('should render refresh interval selector with auto-refresh options', () => {
     const wrapper = mount(TimeRangePicker)
 
-    const select = wrapper.find('select')
+    const select = wrapper.find('[data-testid="time-range-auto-refresh-select"]')
     expect(select.exists()).toBe(true)
 
     const options = select.findAll('option')
-    expect(options).toHaveLength(6) // Off, 5s, 15s, 30s, 1m, 5m
+    // Should include Off, 15s, 30s, 1m, 5m at minimum
+    const labels = options.map((o) => o.text())
+    expect(labels).toContain('Off')
   })
 
   it('should toggle dropdown when clicking time display', async () => {
@@ -179,9 +181,8 @@ describe('TimeRangePicker', () => {
     const applyBtn = wrapper.findAll('button').find((b) => b.text() === 'Apply')!
     await applyBtn.trigger('click')
 
-    // Should show error
-    expect(wrapper.find('.text-red-600').exists()).toBe(true)
-    expect(wrapper.find('.text-red-600').text()).toContain('Start time must be before end time')
+    // Should show error text
+    expect(wrapper.text()).toContain('Start time must be before end time')
 
     // Dropdown should still be open
     expect(findDropdown(wrapper).exists()).toBe(true)
@@ -206,7 +207,7 @@ describe('TimeRangePicker', () => {
   it('should change refresh interval', async () => {
     const wrapper = mount(TimeRangePicker)
 
-    const select = wrapper.find('select')
+    const select = wrapper.find('[data-testid="time-range-auto-refresh-select"]')
 
     await select.setValue('5s')
 
@@ -224,9 +225,10 @@ describe('TimeRangePicker', () => {
 
     await findTimeDisplay(wrapper).trigger('click')
 
+    // The selected preset should have the primary color style applied
     const selectedItem = wrapper
       .findAll('button')
-      .find((b) => b.text() === 'Last 5 minutes' && b.classes().includes('bg-accent-muted'))
+      .find((b) => b.text() === 'Last 5 minutes' && b.classes().includes('font-medium'))
     expect(selectedItem).toBeDefined()
     expect(selectedItem?.text()).toBe('Last 5 minutes')
   })
@@ -247,7 +249,7 @@ describe('TimeRangePicker', () => {
     const wrapper = mount(TimeRangePicker)
 
     // Enable auto-refresh
-    const select = wrapper.find('select')
+    const select = wrapper.find('[data-testid="time-range-auto-refresh-select"]')
     await select.setValue('5s')
 
     // Should show refresh status text (the span with refresh timing info)

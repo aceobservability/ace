@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { EChartsOption } from 'echarts'
 import { LineChart as EChartsLineChart } from 'echarts/charts'
 import {
   GridComponent,
@@ -11,7 +10,6 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import VChart from 'vue-echarts'
-import { useTheme } from '../composables/useTheme'
 
 // Register ECharts components
 use([
@@ -52,24 +50,23 @@ const props = withDefaults(
 )
 
 const chartRef = ref<typeof VChart | null>(null)
-const { isDark } = useTheme()
 
-const gridColor = computed(() => isDark.value ? '#1a1a30' : '#e2e8f0')
-const labelColor = computed(() => isDark.value ? '#8b8fa2' : '#64748b')
-const textColor = computed(() => isDark.value ? '#eaeaf0' : '#334155')
-const tooltipBg = computed(() => isDark.value ? '#0f0f1a' : '#fff')
-const tooltipBorder = computed(() => isDark.value ? '#1a1a30' : '#e2e8f0')
+// Stitch Kinetic palette
+const gridColor = 'rgba(71,72,74,0.15)' // outline-variant at 15%
+const labelColor = '#757578' // outline
+const textColor = '#ababad' // on-surface-variant
+const tooltipBg = '#2b2c2f' // surface-bright
+const tooltipBorder = 'rgba(71,72,74,0.15)'
 
 // Dashboard palette for line series
 const lineColors = [
-  '#059669',
-  '#60A5FA',
-  '#64748b',
-  '#fb7185',
-  '#22d3ee',
-  '#a3e635',
-  '#f59e0b',
-  '#e11d48',
+  '#a3a6ff', // primary
+  '#69f6b8', // secondary
+  '#ffb148', // tertiary
+  '#ff6e84', // error
+  '#6063ee', // primary-dim
+  '#58e7ab', // secondary-dim
+  '#e79400', // tertiary-dim
 ]
 
 // Format timestamp for display (compact format for axis labels)
@@ -91,7 +88,7 @@ function formatFullDateTime(timestamp: number): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
-const chartOption = computed<EChartsOption>(() => {
+const chartOption = computed(() => {
   const seriesData = props.series.map((s, index) => ({
     name: s.name,
     type: 'line' as const,
@@ -127,32 +124,33 @@ const chartOption = computed<EChartsOption>(() => {
           text: props.title,
           left: 'center',
           textStyle: {
-            color: textColor.value,
+            color: textColor,
             fontSize: 13,
             fontWeight: 500,
+            fontFamily: 'Space Grotesk, Inter, sans-serif',
           },
         }
       : undefined,
     tooltip: {
       trigger: 'axis',
-      backgroundColor: tooltipBg.value,
-      borderColor: tooltipBorder.value,
+      backgroundColor: tooltipBg,
+      borderColor: tooltipBorder,
       borderWidth: 1,
       textStyle: {
-        color: textColor.value,
+        color: textColor,
         fontSize: 12,
       },
       formatter: (params: TooltipParam[]) => {
         if (!Array.isArray(params) || params.length === 0) return ''
         const timestamp = params[0].data[0]
         const timeStr = formatFullDateTime(timestamp / 1000)
-        let result = `<div style="font-weight: 500; margin-bottom: 6px; color: ${labelColor.value}; font-size: 11px;">${timeStr}</div>`
+        let result = `<div style="font-weight: 500; margin-bottom: 6px; color: ${labelColor}; font-size: 11px;">${timeStr}</div>`
         for (const param of params) {
           const value = typeof param.data[1] === 'number' ? param.data[1].toFixed(4) : param.data[1]
           result += `<div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
             <span style="display: inline-block; width: 8px; height: 8px; background: ${param.color}; border-radius: 50%;"></span>
-            <span style="color: ${labelColor.value}; font-size: 12px;">${param.seriesName}:</span>
-            <span style="font-weight: 600; color: ${textColor.value};">${value}</span>
+            <span style="color: ${labelColor}; font-size: 12px;">${param.seriesName}:</span>
+            <span style="font-weight: 600; font-family: JetBrains Mono, monospace; color: #fdfbfe;">${value}</span>
           </div>`
         }
         return result
@@ -162,7 +160,7 @@ const chartOption = computed<EChartsOption>(() => {
       show: props.series.length > 1,
       bottom: 0,
       textStyle: {
-        color: labelColor.value,
+        color: labelColor,
         fontSize: 11,
       },
       itemWidth: 16,
@@ -180,14 +178,14 @@ const chartOption = computed<EChartsOption>(() => {
       axisLine: {
         show: true,
         lineStyle: {
-          color: gridColor.value,
+          color: gridColor,
         },
       },
       axisTick: {
         show: false,
       },
       axisLabel: {
-        color: labelColor.value,
+        color: labelColor,
         fontSize: 10,
         hideOverlap: true,
         formatter: (value: number) => formatTime(value / 1000),
@@ -195,7 +193,7 @@ const chartOption = computed<EChartsOption>(() => {
       splitLine: {
         show: true,
         lineStyle: {
-          color: gridColor.value,
+          color: gridColor,
           type: 'solid',
         },
       },
@@ -205,20 +203,20 @@ const chartOption = computed<EChartsOption>(() => {
       axisLine: {
         show: true,
         lineStyle: {
-          color: gridColor.value,
+          color: gridColor,
         },
       },
       axisTick: {
         show: false,
       },
       axisLabel: {
-        color: labelColor.value,
+        color: labelColor,
         fontSize: 10,
       },
       splitLine: {
         show: true,
         lineStyle: {
-          color: gridColor.value,
+          color: gridColor,
           type: 'solid',
         },
       },
