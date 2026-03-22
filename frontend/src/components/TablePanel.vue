@@ -71,11 +71,11 @@ function getValue(seriesIndex: number, timestamp: number): number | undefined {
 
 <template>
   <div
-    class="h-full overflow-auto rounded border border-border bg-surface-raised"
+    class="h-full overflow-auto rounded-lg bg-[var(--color-surface-container-low)]"
     :style="{ height: typeof height === 'number' ? `${height}px` : height }"
   >
     <table class="w-full text-left">
-      <thead class="sticky top-0 z-10 bg-surface-overlay font-mono text-xs uppercase tracking-[0.07em] text-text-secondary">
+      <thead class="sticky top-0 z-10 bg-[var(--color-surface-container-high)] font-mono text-xs uppercase tracking-[0.07em] text-[var(--color-on-surface-variant)]">
         <tr>
           <th class="min-w-[140px] px-4 py-3 font-semibold">Time</th>
           <th
@@ -91,19 +91,19 @@ function getValue(seriesIndex: number, timestamp: number): number | undefined {
         <tr
           v-for="ts in timestamps"
           :key="ts"
-          class="border-b border-border text-sm text-text-secondary hover:bg-surface-overlay"
+          class="text-sm text-[var(--color-on-surface-variant)] hover:bg-[var(--color-surface-container-high)] transition-colors"
         >
-          <td class="min-w-[140px] px-4 py-3 text-text-muted">{{ formatTimestamp(ts) }}</td>
+          <td class="min-w-[140px] px-4 py-3 text-[var(--color-outline)]">{{ formatTimestamp(ts) }}</td>
           <td
             v-for="(_, idx) in series"
             :key="idx"
-            class="min-w-[100px] px-4 py-3 text-right tabular-nums text-text-primary"
+            class="min-w-[100px] px-4 py-3 text-right font-mono tabular-nums text-[var(--color-on-surface)]"
           >
             {{ formatValue(getValue(idx, ts)) }}
           </td>
         </tr>
         <tr v-if="timestamps.length === 0">
-          <td :colspan="series.length + 1" class="py-8 text-center text-sm text-text-muted">
+          <td :colspan="series.length + 1" class="py-8 text-center text-sm text-[var(--color-outline)]">
             No data available
           </td>
         </tr>

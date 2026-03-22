@@ -67,11 +67,11 @@ function formatValue(value: number): string {
 // Get the color based on thresholds
 function getValueColor(): string {
   if (!props.thresholds || props.thresholds.length === 0) {
-    return '#0f172a' // Default text color (slate-900)
+    return '#fdfbfe' // on-surface (default primary text)
   }
 
   const sortedThresholds = [...props.thresholds].sort((a, b) => a.value - b.value)
-  let color = '#0f172a' // Default (slate-900)
+  let color = '#fdfbfe' // on-surface
 
   for (const threshold of sortedThresholds) {
     if (props.value >= threshold.value) {
@@ -217,12 +217,12 @@ onUnmounted(() => {
     }"
   >
     <div class="z-10 flex flex-col items-center gap-1">
-      <div class="text-center text-3xl font-bold leading-tight" :style="{ color: valueColor }">
+      <div class="text-center text-3xl font-bold font-mono leading-tight tabular-nums" :style="{ color: valueColor }">
         {{ formattedValue }}
-        <span v-if="unit" class="ml-1 text-lg font-medium text-text-muted">{{ unit }}</span>
+        <span v-if="unit" class="ml-1 text-lg font-medium text-[var(--color-outline)]">{{ unit }}</span>
       </div>
 
-      <div v-if="label" class="mt-1 max-w-full truncate text-sm text-text-secondary">
+      <div v-if="label" class="mt-1 max-w-full truncate text-sm text-[var(--color-on-surface-variant)]">
         {{ label }}
       </div>
 
@@ -230,9 +230,9 @@ onUnmounted(() => {
         v-if="showTrend && trend !== 'neutral'"
         class="mt-1 flex items-center gap-1 text-xs font-medium"
         :class="{
-          'text-accent': trend === 'up',
-          'text-rose-500': trend === 'down',
-          'text-text-muted': trend === 'neutral',
+          'text-[var(--color-secondary)]': trend === 'up',
+          'text-[var(--color-error)]': trend === 'down',
+          'text-[var(--color-outline)]': trend === 'neutral',
         }"
       >
         <TrendingUp v-if="trend === 'up'" :size="16" />

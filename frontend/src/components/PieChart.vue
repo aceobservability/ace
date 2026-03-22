@@ -41,18 +41,25 @@ interface PieFormatterParam {
   color?: string
 }
 
-// Color palette matching the dashboard theme
+// Stitch Kinetic palette
+const labelColor = '#757578' // outline
+const textColor = '#ababad' // on-surface-variant
+const tooltipBg = '#2b2c2f' // surface-bright
+const tooltipBorder = 'rgba(71,72,74,0.15)'
+const surfaceLow = '#121316' // surface-container-low
+
+// Color palette matching the Stitch theme
 const pieColors = [
-  '#059669',
-  '#60A5FA',
-  '#64748b',
-  '#fb7185',
-  '#22d3ee',
-  '#a3e635',
-  '#f59e0b',
-  '#e11d48',
-  '#14b8a6',
-  '#8b5cf6',
+  '#a3a6ff', // primary
+  '#69f6b8', // secondary
+  '#ffb148', // tertiary
+  '#ff6e84', // error
+  '#6063ee', // primary-dim
+  '#58e7ab', // secondary-dim
+  '#e79400', // tertiary-dim
+  '#a3a6ff', // wrap
+  '#69f6b8',
+  '#ffb148',
 ]
 
 // Calculate total for percentage display
@@ -74,28 +81,29 @@ const chartOption = computed<EChartsOption>(() => {
           text: props.title,
           left: 'center',
           textStyle: {
-            color: '#334155',
+            color: textColor,
             fontSize: 13,
             fontWeight: 500,
+            fontFamily: 'Space Grotesk, Inter, sans-serif',
           },
         }
       : undefined,
     tooltip: {
       trigger: 'item',
-      backgroundColor: '#fff',
-      borderColor: '#e2e8f0',
+      backgroundColor: tooltipBg,
+      borderColor: tooltipBorder,
       borderWidth: 1,
       textStyle: {
-        color: '#334155',
+        color: textColor,
         fontSize: 12,
       },
       formatter: (params: PieFormatterParam) => {
         const percent = getPercentage(params.value)
         return `<div style="display: flex; align-items: center; gap: 8px;">
-          <span style="display: inline-block; width: 10px; height: 10px; background: ${params.color || '#059669'}; border-radius: 50%;"></span>
-          <span style="color: #64748b;">${params.name}</span>
+          <span style="display: inline-block; width: 10px; height: 10px; background: ${params.color || '#a3a6ff'}; border-radius: 50%;"></span>
+          <span style="color: ${labelColor};">${params.name}</span>
         </div>
-        <div style="margin-top: 4px; font-weight: 600; color: #334155;">
+        <div style="margin-top: 4px; font-weight: 600; font-family: JetBrains Mono, monospace; color: #fdfbfe;">
           ${params.value.toLocaleString()} (${percent})
         </div>`
       },
@@ -105,7 +113,7 @@ const chartOption = computed<EChartsOption>(() => {
       orient: 'horizontal',
       bottom: 0,
       textStyle: {
-        color: '#64748b',
+        color: labelColor,
         fontSize: 11,
       },
       itemWidth: 12,
@@ -119,13 +127,13 @@ const chartOption = computed<EChartsOption>(() => {
         avoidLabelOverlap: true,
         itemStyle: {
           borderRadius: 4,
-          borderColor: '#fff',
+          borderColor: surfaceLow,
           borderWidth: 2,
         },
         label: {
           show: props.showLabels,
           position: 'outside',
-          color: '#64748b',
+          color: labelColor,
           fontSize: 11,
           formatter: (params: PieFormatterParam) => {
             const percent = getPercentage(params.value)
@@ -135,20 +143,20 @@ const chartOption = computed<EChartsOption>(() => {
         labelLine: {
           show: props.showLabels,
           lineStyle: {
-            color: '#cbd5e1',
+            color: 'rgba(71,72,74,0.3)',
           },
         },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
             shadowOffsetX: 0,
-            shadowColor: 'rgba(0, 0, 0, 0.15)',
+            shadowColor: 'rgba(0, 0, 0, 0.3)',
           },
           label: {
             show: true,
             fontSize: 12,
             fontWeight: 600,
-            color: '#334155',
+            color: '#fdfbfe',
           },
         },
         data: props.data.map((item, index) => ({
