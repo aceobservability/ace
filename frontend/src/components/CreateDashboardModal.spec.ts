@@ -4,6 +4,14 @@ import * as converterApi from '../api/converter'
 import * as api from '../api/dashboards'
 import CreateDashboardModal from './CreateDashboardModal.vue'
 
+const mockPush = vi.fn()
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({
+    push: mockPush,
+  }),
+}))
+
 vi.mock('../api/dashboards')
 vi.mock('../api/converter')
 vi.mock('../composables/useOrganization', () => ({
@@ -17,28 +25,54 @@ describe('CreateDashboardModal', () => {
     vi.clearAllMocks()
   })
 
-  it('renders form fields', () => {
+  it('shows both Blank Dashboard and Generate with AI options', () => {
     const wrapper = mount(CreateDashboardModal)
+
+    const buttons = wrapper.findAll('button')
+    const blankBtn = buttons.find((b) => b.text().includes('Blank Dashboard'))
+    const aiBtn = buttons.find((b) => b.text().includes('Generate with AI'))
+
+    expect(blankBtn).toBeDefined()
+    expect(aiBtn).toBeDefined()
+  })
+
+  it('navigates to AI generation route on Generate with AI click', async () => {
+    const wrapper = mount(CreateDashboardModal)
+
+    const aiBtn = wrapper.findAll('button').find((b) => b.text().includes('Generate with AI'))
+    await aiBtn?.trigger('click')
+
+    expect(mockPush).toHaveBeenCalledWith('/app/dashboards/new/ai')
+  })
+
+  it('renders form fields when Blank Dashboard is selected', async () => {
+    const wrapper = mount(CreateDashboardModal)
+
+    // Click "Blank Dashboard" to enter create mode
+    const blankBtn = wrapper.findAll('button').find((b) => b.text().includes('Blank Dashboard'))
+    await blankBtn?.trigger('click')
+
     expect(wrapper.find('input#title').exists()).toBe(true)
     expect(wrapper.find('textarea#description').exists()).toBe(true)
   })
 
-  it('emits close event when cancel is clicked', async () => {
+  it('emits close event when close button is clicked', async () => {
     const wrapper = mount(CreateDashboardModal)
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text() === 'Cancel')
-      ?.trigger('click')
+    await wrapper.get('[data-testid="create-dashboard-close-btn"]').trigger('click')
     expect(wrapper.emitted('close')).toBeTruthy()
   })
 
-  it('shows error when title is empty', async () => {
+  it('shows error when title is empty on blank dashboard submit', async () => {
     const wrapper = mount(CreateDashboardModal)
+
+    const blankBtn = wrapper.findAll('button').find((b) => b.text().includes('Blank Dashboard'))
+    await blankBtn?.trigger('click')
+
     await wrapper.find('form').trigger('submit')
     expect(wrapper.text()).toContain('Title is required')
   })
 
-  it('calls createDashboard API on submit', async () => {
+  it('calls createDashboard API on blank dashboard submit', async () => {
     vi.mocked(api.createDashboard).mockResolvedValue({
       id: '123',
       title: 'New Dashboard',
@@ -47,6 +81,10 @@ describe('CreateDashboardModal', () => {
     })
 
     const wrapper = mount(CreateDashboardModal)
+
+    const blankBtn = wrapper.findAll('button').find((b) => b.text().includes('Blank Dashboard'))
+    await blankBtn?.trigger('click')
+
     await wrapper.find('input#title').setValue('New Dashboard')
     await wrapper.find('textarea#description').setValue('Description')
     await wrapper.find('form').trigger('submit')
@@ -63,6 +101,10 @@ describe('CreateDashboardModal', () => {
     vi.mocked(api.createDashboard).mockRejectedValue(new Error('Failed to create dashboard'))
 
     const wrapper = mount(CreateDashboardModal)
+
+    const blankBtn = wrapper.findAll('button').find((b) => b.text().includes('Blank Dashboard'))
+    await blankBtn?.trigger('click')
+
     await wrapper.find('input#title').setValue('New Dashboard')
     await wrapper.find('form').trigger('submit')
     await flushPromises()
@@ -79,6 +121,11 @@ describe('CreateDashboardModal', () => {
     })
 
     const wrapper = mount(CreateDashboardModal)
+
+    // Switch to Import YAML mode
+    const blankBtn = wrapper.findAll('button').find((b) => b.text().includes('Blank Dashboard'))
+    await blankBtn?.trigger('click')
+
     await wrapper
       .findAll('button')
       .find((button) => button.text() === 'Import YAML')
@@ -114,6 +161,10 @@ describe('CreateDashboardModal', () => {
 
   it('rejects invalid file extension in import mode', async () => {
     const wrapper = mount(CreateDashboardModal)
+
+    const blankBtn = wrapper.findAll('button').find((b) => b.text().includes('Blank Dashboard'))
+    await blankBtn?.trigger('click')
+
     await wrapper
       .findAll('button')
       .find((button) => button.text() === 'Import YAML')
@@ -134,6 +185,10 @@ describe('CreateDashboardModal', () => {
 
   it('shows validation error for invalid dashboard yaml shape', async () => {
     const wrapper = mount(CreateDashboardModal)
+
+    const blankBtn = wrapper.findAll('button').find((b) => b.text().includes('Blank Dashboard'))
+    await blankBtn?.trigger('click')
+
     await wrapper
       .findAll('button')
       .find((button) => button.text() === 'Import YAML')
@@ -183,6 +238,10 @@ describe('CreateDashboardModal', () => {
     })
 
     const wrapper = mount(CreateDashboardModal)
+
+    const blankBtn = wrapper.findAll('button').find((b) => b.text().includes('Blank Dashboard'))
+    await blankBtn?.trigger('click')
+
     await wrapper
       .findAll('button')
       .find((button) => button.text() === 'Import Grafana')
@@ -218,6 +277,10 @@ describe('CreateDashboardModal', () => {
     )
 
     const wrapper = mount(CreateDashboardModal)
+
+    const blankBtn = wrapper.findAll('button').find((b) => b.text().includes('Blank Dashboard'))
+    await blankBtn?.trigger('click')
+
     await wrapper
       .findAll('button')
       .find((button) => button.text() === 'Import Grafana')
@@ -227,5 +290,11 @@ describe('CreateDashboardModal', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('invalid grafana dashboard JSON')
+  })
+
+  it('has glassmorphic modal styling', () => {
+    const wrapper = mount(CreateDashboardModal)
+    const modal = wrapper.get('[data-testid="create-dashboard-modal"]')
+    expect(modal.exists()).toBe(true)
   })
 })
