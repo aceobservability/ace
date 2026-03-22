@@ -235,7 +235,7 @@ onUnmounted(() => {
             v-for="preset in presets"
             :key="preset.value"
             class="block w-full px-4 py-2.5 border-0 bg-transparent text-left text-sm cursor-pointer transition hover:opacity-80"
-            :class="!isCustomRange && selectedPreset === preset.value ? 'bg-accent-muted font-medium' : ''"
+            :class="!isCustomRange && selectedPreset === preset.value ? 'bg-[var(--color-primary)]/10 font-medium' : ''"
             :style="{
               color: !isCustomRange && selectedPreset === preset.value ? 'var(--color-primary)' : 'var(--color-on-surface-variant)',
               backgroundColor: !isCustomRange && selectedPreset === preset.value ? 'color-mix(in srgb, var(--color-primary) 10%, transparent)' : 'transparent',

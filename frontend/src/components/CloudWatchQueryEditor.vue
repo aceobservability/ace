@@ -49,13 +49,13 @@ function handleQueryInput(event: Event) {
 <template>
   <div class="flex flex-col gap-3.5" :class="{ 'opacity-60 pointer-events-none': props.disabled }">
     <div v-if="props.showSignalSelector" class="flex flex-col gap-1.5">
-      <label for="cloudwatch-signal" class="text-sm font-medium text-text-primary">Signal Type</label>
+      <label for="cloudwatch-signal" class="text-sm font-medium text-[var(--color-on-surface)]">Signal Type</label>
       <select
         id="cloudwatch-signal"
         :value="props.signal"
         data-testid="cloudwatch-signal-select"
         :disabled="props.disabled"
-        class="w-full rounded-sm border border-border bg-surface-overlay px-3 py-2 text-sm text-text-primary cursor-pointer transition-colors duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+        class="w-full rounded-sm bg-[var(--color-surface-container-high)] px-3 py-2 text-sm text-[var(--color-on-surface)] cursor-pointer transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:bg-[var(--color-surface-container-high)] disabled:text-[var(--color-outline)] disabled:cursor-not-allowed"
         @change="handleSignalChange"
       >
         <option value="metrics">Metrics</option>
@@ -64,7 +64,7 @@ function handleQueryInput(event: Event) {
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label for="cloudwatch-query" class="text-sm font-medium text-text-primary">Query</label>
+      <label for="cloudwatch-query" class="text-sm font-medium text-[var(--color-on-surface)]">Query</label>
       <textarea
         id="cloudwatch-query"
         :value="props.modelValue"
@@ -73,11 +73,11 @@ function handleQueryInput(event: Event) {
         :placeholder="placeholder"
         rows="7"
         spellcheck="false"
-        class="w-full rounded-sm border border-border bg-surface-raised px-3.5 py-3 text-sm font-mono text-text-primary min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+        class="w-full rounded-sm bg-[var(--color-surface-container-low)] px-3.5 py-3 text-sm font-mono text-[var(--color-on-surface)] min-h-[140px] resize-y leading-relaxed transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:bg-[var(--color-surface-container-high)] disabled:text-[var(--color-outline)] disabled:cursor-not-allowed"
         @input="handleQueryInput"
       />
     </div>
 
-    <p class="m-0 text-xs text-text-muted leading-relaxed">{{ helperText }}</p>
+    <p class="m-0 text-xs text-[var(--color-outline)] leading-relaxed">{{ helperText }}</p>
   </div>
 </template>

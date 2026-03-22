@@ -47,17 +47,17 @@ async function handleSubmit() {
 
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="emit('close')">
-    <div class="w-full max-w-lg rounded border border-border bg-surface-raised shadow-lg" data-testid="edit-dashboard-modal">
-      <header class="flex items-center justify-between border-b border-border px-6 py-4">
-        <h2 class="text-lg font-semibold text-text-primary">Edit Dashboard</h2>
-        <button class="flex items-center justify-center h-8 w-8 rounded-sm text-text-muted hover:bg-surface-overlay hover:text-text-secondary transition cursor-pointer" data-testid="edit-dashboard-close-btn" @click="emit('close')">
+    <div class="w-full max-w-lg rounded bg-[var(--color-surface-container-low)] shadow-lg" data-testid="edit-dashboard-modal">
+      <header class="flex items-center justify-between px-6 py-4">
+        <h2 class="text-lg font-semibold text-[var(--color-on-surface)]">Edit Dashboard</h2>
+        <button class="flex items-center justify-center h-8 w-8 rounded-sm text-[var(--color-outline)] hover:bg-[var(--color-surface-container-high)] hover:text-[var(--color-on-surface-variant)] transition cursor-pointer" data-testid="edit-dashboard-close-btn" @click="emit('close')">
           <X :size="20" />
         </button>
       </header>
 
       <form @submit.prevent="handleSubmit" class="px-6 py-4">
         <div class="mb-5">
-          <label for="title" class="block mb-2 text-sm font-medium text-text-primary">Title <span class="text-red-500">*</span></label>
+          <label for="title" class="block mb-2 text-sm font-medium text-[var(--color-on-surface)]">Title <span class="text-red-500">*</span></label>
           <input
             id="title"
             v-model="title"
@@ -66,12 +66,12 @@ async function handleSubmit() {
             :disabled="loading"
             autocomplete="off"
             data-testid="edit-dashboard-title-input"
-            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+            class="w-full rounded-sm bg-[var(--color-surface-container-low)] px-3 py-2.5 text-sm text-[var(--color-on-surface)] placeholder:text-[var(--color-outline)] transition focus:ring-1 focus:ring-[var(--color-primary)]/20 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-[var(--color-surface-container-high)] disabled:text-[var(--color-outline)] disabled:cursor-not-allowed"
           />
         </div>
 
         <div class="mb-5">
-          <label for="description" class="block mb-2 text-sm font-medium text-text-primary">Description</label>
+          <label for="description" class="block mb-2 text-sm font-medium text-[var(--color-on-surface)]">Description</label>
           <textarea
             id="description"
             v-model="description"
@@ -79,18 +79,18 @@ async function handleSubmit() {
             rows="3"
             :disabled="loading"
             data-testid="edit-dashboard-description-input"
-            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed resize-vertical min-h-[80px]"
+            class="w-full rounded-sm bg-[var(--color-surface-container-low)] px-3 py-2.5 text-sm text-[var(--color-on-surface)] placeholder:text-[var(--color-outline)] transition focus:ring-1 focus:ring-[var(--color-primary)]/20 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-[var(--color-surface-container-high)] disabled:text-[var(--color-outline)] disabled:cursor-not-allowed resize-vertical min-h-[80px]"
           ></textarea>
         </div>
 
         <div class="mb-5">
-          <label for="folder" class="block mb-2 text-sm font-medium text-text-primary">Folder</label>
+          <label for="folder" class="block mb-2 text-sm font-medium text-[var(--color-on-surface)]">Folder</label>
           <select
             id="folder"
             v-model="folderId"
             :disabled="loading"
             data-testid="edit-dashboard-folder-select"
-            class="w-full rounded-sm border border-border bg-surface-raised px-3 py-2.5 text-sm text-text-primary transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+            class="w-full rounded-sm bg-[var(--color-surface-container-low)] px-3 py-2.5 text-sm text-[var(--color-on-surface)] transition focus:ring-1 focus:ring-[var(--color-primary)]/20 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:bg-[var(--color-surface-container-high)] disabled:text-[var(--color-outline)] disabled:cursor-not-allowed"
           >
             <option value="">Unfiled (Root)</option>
             <option
@@ -105,11 +105,11 @@ async function handleSubmit() {
 
         <div v-if="error" class="mb-5 rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{{ error }}</div>
 
-        <div class="flex justify-end gap-3 border-t border-border pt-4">
-          <button type="button" class="rounded-sm border border-border-strong px-5 py-2.5 text-sm font-semibold text-text-primary transition hover:border-border-strong disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" data-testid="edit-dashboard-cancel-btn" @click="emit('close')" :disabled="loading">
+        <div class="flex justify-end gap-3 pt-4">
+          <button type="button" class="rounded-sm px-5 py-2.5 text-sm font-semibold text-[var(--color-on-surface)] transition hover:-strong disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" data-testid="edit-dashboard-cancel-btn" @click="emit('close')" :disabled="loading">
             Cancel
           </button>
-          <button type="submit" class="rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" data-testid="edit-dashboard-save-btn" :disabled="loading">
+          <button type="submit" class="rounded-sm bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--color-primary)]-hover disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" data-testid="edit-dashboard-save-btn" :disabled="loading">
             {{ loading ? 'Saving...' : 'Save Changes' }}
           </button>
         </div>

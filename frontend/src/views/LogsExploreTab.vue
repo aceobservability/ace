@@ -875,14 +875,14 @@ watch(
 
 <template>
   <div class="flex flex-col gap-6 flex-1">
-      <div class="flex flex-col gap-4 rounded border border-border bg-surface-raised p-4">
+      <div class="flex flex-col gap-4 rounded bg-[var(--color-surface-container-low)] p-4">
         <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-end max-md:grid-cols-1">
           <div class="flex flex-col gap-2.5">
-            <label class="text-xs font-semibold uppercase tracking-wide text-text-muted">Data Source</label>
+            <label class="text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]">Data Source</label>
             <div ref="datasourceMenuRef" class="relative">
               <button
                 type="button"
-                class="flex w-full items-center gap-3 rounded border border-border bg-surface-raised px-4 py-3 text-left cursor-pointer transition hover:border-border-strong hover:bg-surface-overlay disabled:opacity-60 disabled:cursor-not-allowed"
+                class="flex w-full items-center gap-3 rounded bg-[var(--color-surface-container-low)] px-4 py-3 text-left cursor-pointer transition  hover:bg-[var(--color-surface-container-high)] disabled:opacity-60 disabled:cursor-not-allowed"
                 data-testid="explore-logs-datasource-btn"
                 :disabled="loading || !hasLogsDatasources"
                 @click="toggleDatasourceMenu"
@@ -895,16 +895,16 @@ watch(
                     class="h-7 w-7 shrink-0 object-contain"
                   />
                   <div class="flex flex-col min-w-0 gap-px">
-                    <span class="text-[0.68rem] uppercase tracking-wide text-text-muted">Active Source</span>
-                    <strong class="text-sm font-semibold text-text-primary truncate">{{ activeDatasource.name }}</strong>
-                    <span class="font-mono text-xs uppercase tracking-[0.07em] text-text-muted">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
+                    <span class="text-[0.68rem] uppercase tracking-wide text-[var(--color-outline)]">Active Source</span>
+                    <strong class="text-sm font-semibold text-[var(--color-on-surface)] truncate">{{ activeDatasource.name }}</strong>
+                    <span class="font-mono text-xs uppercase tracking-[0.07em] text-[var(--color-outline)]">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
                   </div>
                   <span
                     class="ml-auto inline-flex items-center gap-1.5 rounded-sm px-2.5 py-0.5 text-xs border"
                     :class="{
-                      'border-border text-text-muted': activeDatasourceHealth === 'checking' || activeDatasourceHealth === 'unknown',
-                      'border-accent-border bg-accent-muted text-accent': activeDatasourceHealth === 'healthy',
-                      'border-rose-500/25 bg-rose-500/10 text-rose-500': activeDatasourceHealth === 'unhealthy',
+                      ' text-[var(--color-outline)]': activeDatasourceHealth === 'checking' || activeDatasourceHealth === 'unknown',
+                      'border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)]': activeDatasourceHealth === 'healthy',
+                      'border-rose-500/25 bg-[var(--color-error)]/10 text-[var(--color-error)]': activeDatasourceHealth === 'unhealthy',
                     }"
                     :title="activeDatasourceHealthError || activeDatasourceHealthLabel"
                   >
@@ -915,22 +915,22 @@ watch(
                   </span>
                 </template>
 
-                <span v-else class="text-sm text-text-muted">No logs datasource configured</span>
+                <span v-else class="text-sm text-[var(--color-outline)]">No logs datasource configured</span>
 
                 <component
                   :is="showDatasourceMenu ? ChevronUp : ChevronDown"
                   :size="16"
-                  class="ml-1 shrink-0 text-text-muted"
+                  class="ml-1 shrink-0 text-[var(--color-outline)]"
                 />
               </button>
 
-              <div v-if="showDatasourceMenu && hasLogsDatasources" class="absolute left-0 right-0 top-full mt-1.5 z-[110] max-h-[280px] overflow-y-auto rounded border border-border bg-surface-raised shadow-lg">
+              <div v-if="showDatasourceMenu && hasLogsDatasources" class="absolute left-0 right-0 top-full mt-1.5 z-[110] max-h-[280px] overflow-y-auto rounded bg-[var(--color-surface-container-low)] shadow-lg">
                 <button
                   v-for="ds in logsDatasources"
                   :key="ds.id"
                   type="button"
-                  class="flex w-full items-center gap-2.5 border-none bg-transparent px-3 py-2.5 text-left text-text-primary cursor-pointer hover:bg-surface-overlay"
-                  :class="{ 'bg-accent-muted': ds.id === selectedDatasourceId }"
+                  class="flex w-full items-center gap-2.5 border-none bg-transparent px-3 py-2.5 text-left text-[var(--color-on-surface)] cursor-pointer hover:bg-[var(--color-surface-container-high)]"
+                  :class="{ 'bg-[var(--color-primary)]/10': ds.id === selectedDatasourceId }"
                   @click="selectDatasource(ds.id)"
                 >
                   <img
@@ -939,17 +939,17 @@ watch(
                     class="h-[18px] w-[18px] shrink-0 object-contain"
                   />
                   <div class="flex min-w-0 flex-col gap-px">
-                    <strong class="text-sm font-semibold text-text-primary">{{ ds.name }}</strong>
-                    <span class="text-xs text-text-muted">{{ dataSourceTypeLabels[ds.type] }}</span>
+                    <strong class="text-sm font-semibold text-[var(--color-on-surface)]">{{ ds.name }}</strong>
+                    <span class="text-xs text-[var(--color-outline)]">{{ dataSourceTypeLabels[ds.type] }}</span>
                   </div>
-                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="ml-auto text-accent" />
+                  <Check v-if="ds.id === selectedDatasourceId" :size="14" class="ml-auto text-[var(--color-primary)]" />
                 </button>
               </div>
             </div>
           </div>
 
           <div class="flex flex-col gap-2.5">
-            <label class="text-xs font-semibold uppercase tracking-wide text-text-muted">Query Range</label>
+            <label class="text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]">Query Range</label>
             <TimeRangePicker stacked />
           </div>
         </div>
@@ -991,8 +991,8 @@ watch(
           <div v-if="queryHistory.length > 0" class="relative">
             <button
               data-testid="explore-logs-history-btn"
-              class="flex items-center gap-1 text-sm text-text-muted hover:text-text-primary cursor-pointer"
-              :class="{ 'text-text-primary': showHistory }"
+              class="flex items-center gap-1 text-sm text-[var(--color-outline)] hover:text-[var(--color-on-surface)] cursor-pointer"
+              :class="{ 'text-[var(--color-on-surface)]': showHistory }"
               @click="showHistory = !showHistory"
               title="Query history"
             >
@@ -1001,20 +1001,20 @@ watch(
             </button>
 
             <!-- Query history dropdown -->
-            <div v-if="showHistory" class="absolute left-0 top-full mt-1 z-10 w-80 max-h-[300px] overflow-y-auto rounded border border-border bg-surface-raised shadow-lg max-md:w-full">
-              <div class="flex items-center justify-between px-4 py-3 border-b border-border text-xs font-semibold uppercase tracking-wide text-text-muted">
+            <div v-if="showHistory" class="absolute left-0 top-full mt-1 z-10 w-80 max-h-[300px] overflow-y-auto rounded bg-[var(--color-surface-container-low)] shadow-lg max-md:w-full">
+              <div class="flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]">
                 <span>Recent Queries</span>
-                <button class="flex items-center justify-center h-6 w-6 rounded bg-transparent border-none text-text-muted cursor-pointer transition hover:bg-surface-overlay hover:text-rose-500" @click="clearHistory" title="Clear history">
+                <button class="flex items-center justify-center h-6 w-6 rounded bg-transparent border-none text-[var(--color-outline)] cursor-pointer transition hover:bg-[var(--color-surface-container-high)] hover:text-[var(--color-error)]" @click="clearHistory" title="Clear history">
                   <X :size="14" />
                 </button>
               </div>
               <button
                 v-for="(q, index) in queryHistory"
                 :key="index"
-                class="block w-full border-none bg-transparent px-4 py-2.5 text-left cursor-pointer border-b border-border hover:bg-surface-overlay"
+                class="block w-full border-none bg-transparent px-4 py-2.5 text-left cursor-pointer hover:bg-[var(--color-surface-container-high)]"
                 @click="selectHistoryQuery(q)"
               >
-                <code class="block font-mono text-xs text-text-secondary truncate">{{ q }}</code>
+                <code class="block font-mono text-xs text-[var(--color-on-surface-variant)] truncate">{{ q }}</code>
               </button>
             </div>
           </div>
@@ -1023,7 +1023,7 @@ watch(
         <div class="flex items-center gap-4 flex-wrap">
           <button
             data-testid="explore-logs-run-query-btn"
-            class="inline-flex items-center gap-2 rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            class="inline-flex items-center gap-2 rounded-sm bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white transition  disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             :disabled="loading || !query.trim() || !selectedDatasourceId || !hasLogsDatasources"
             @click="runQuery"
           >
@@ -1034,8 +1034,8 @@ watch(
           <button
             class="inline-flex items-center gap-2 rounded-sm border px-4 py-2.5 text-sm font-medium transition whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             :class="isLive
-              ? 'border-accent-border bg-accent-muted text-accent hover:bg-accent-muted'
-              : 'border-border bg-surface-raised text-text-primary hover:bg-surface-overlay hover:border-border-strong'"
+              ? 'border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10'
+              : ' bg-[var(--color-surface-container-low)] text-[var(--color-on-surface)] hover:bg-[var(--color-surface-container-high)] '"
             data-testid="explore-logs-live-btn"
             :disabled="loading || !supportsLiveStreaming || (!isLive && (!query.trim() || !selectedDatasourceId || !hasLogsDatasources))"
             @click="toggleLive"
@@ -1047,20 +1047,20 @@ watch(
             <span>{{ isLive ? 'Stop Live' : 'Start Live' }}</span>
           </button>
 
-          <span class="text-xs text-text-muted">Ctrl+Enter to run</span>
+          <span class="text-xs text-[var(--color-outline)]">Ctrl+Enter to run</span>
 
           <span
             v-if="liveStatusLabel"
             class="inline-flex items-center rounded-sm px-2.5 py-0.5 text-xs border"
             :class="{
-              'border-accent-border bg-accent-muted text-accent': liveState === 'connected',
-              'border-border bg-surface-base text-text-muted': liveState === 'connecting' || liveState === 'reconnecting',
+              'border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)]': liveState === 'connected',
+              ' bg-[var(--color-surface)] text-[var(--color-outline)]': liveState === 'connecting' || liveState === 'reconnecting',
             }"
           >{{ liveStatusLabel }}</span>
         </div>
 
         <!-- Error display -->
-        <div v-if="error" class="flex items-center gap-2 rounded border border-rose-500/25 bg-rose-500/10 p-4 text-sm text-rose-500">
+        <div v-if="error" class="flex items-center gap-2 rounded border border-rose-500/25 bg-[var(--color-error)]/10 p-4 text-sm text-[var(--color-error)]">
           <AlertCircle :size="16" />
           <span>{{ error }}</span>
         </div>
@@ -1072,21 +1072,21 @@ watch(
       </div>
 
       <!-- Results section -->
-      <div class="flex flex-1 flex-col rounded border border-border bg-surface-raised overflow-hidden min-h-[400px]">
-        <div v-if="loading" class="flex flex-col items-center justify-center gap-4 py-12 text-text-muted flex-1">
-          <div class="animate-spin h-8 w-8 rounded-full border-[3px] border-border border-t-accent"></div>
+      <div class="flex flex-1 flex-col rounded bg-[var(--color-surface-container-low)] overflow-hidden min-h-[400px]">
+        <div v-if="loading" class="flex flex-col items-center justify-center gap-4 py-12 text-[var(--color-outline)] flex-1">
+          <div class="animate-spin h-8 w-8 rounded-full border-[3px]  border-t-accent"></div>
           <span class="text-sm">Executing query...</span>
         </div>
 
         <div v-else-if="hasResults" class="flex flex-col flex-1 min-h-0">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-overlay">
-            <span class="text-sm text-text-muted">{{ logs.length }} {{ logs.length === 1 ? 'entry' : 'entries' }}</span>
+          <div class="flex items-center justify-between px-4 py-3 bg-[var(--color-surface-container-high)]">
+            <span class="text-sm text-[var(--color-outline)]">{{ logs.length }} {{ logs.length === 1 ? 'entry' : 'entries' }}</span>
             <span
               v-if="liveStatusLabel"
               class="inline-flex items-center gap-1.5 rounded-sm px-2.5 py-0.5 text-xs border"
               :class="{
-                'border-accent-border bg-accent-muted text-accent': liveState === 'connected',
-                'border-border bg-surface-base text-text-muted': liveState === 'connecting' || liveState === 'reconnecting',
+                'border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)]': liveState === 'connected',
+                ' bg-[var(--color-surface)] text-[var(--color-outline)]': liveState === 'connecting' || liveState === 'reconnecting',
               }"
             >
               <span
@@ -1106,16 +1106,16 @@ watch(
           </div>
         </div>
 
-        <div v-else-if="hasSuccessfulQuery && logs.length === 0" class="flex flex-col items-center justify-center py-12 text-center text-sm text-text-muted flex-1">
+        <div v-else-if="hasSuccessfulQuery && logs.length === 0" class="flex flex-col items-center justify-center py-12 text-center text-sm text-[var(--color-outline)] flex-1">
           <p class="m-0">No logs returned for the selected time range.</p>
         </div>
 
-        <div v-else-if="!hasLogsDatasources" class="flex flex-col items-center justify-center py-12 text-center text-sm text-text-muted flex-1">
+        <div v-else-if="!hasLogsDatasources" class="flex flex-col items-center justify-center py-12 text-center text-sm text-[var(--color-outline)] flex-1">
           <p class="m-0">No logs datasource configured.</p>
-          <p class="m-0 text-xs text-text-muted">Add a Loki, Victoria Logs, CloudWatch, or Elasticsearch datasource in Data Sources.</p>
+          <p class="m-0 text-xs text-[var(--color-outline)]">Add a Loki, Victoria Logs, CloudWatch, or Elasticsearch datasource in Data Sources.</p>
         </div>
 
-        <div v-else class="flex flex-col items-center justify-center py-12 text-center text-sm text-text-muted flex-1">
+        <div v-else class="flex flex-col items-center justify-center py-12 text-center text-sm text-[var(--color-outline)] flex-1">
           <p class="m-0">
             {{
               isClickHouseDatasource
@@ -1127,16 +1127,16 @@ watch(
                     : 'Write a log query and click "Run Query" to inspect logs.'
             }}
           </p>
-          <p v-if="isClickHouseDatasource" class="m-0 text-xs text-text-muted">
-            Examples: <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">SELECT timestamp, message, level FROM logs WHERE timestamp &gt;= toDateTime({start})</code>
+          <p v-if="isClickHouseDatasource" class="m-0 text-xs text-[var(--color-outline)]">
+            Examples: <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">SELECT timestamp, message, level FROM logs WHERE timestamp &gt;= toDateTime({start})</code>
           </p>
-          <p v-else-if="isCloudWatchDatasource" class="m-0 text-xs text-text-muted">
-            Example: <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">fields @timestamp, @message | filter @message like /error/ | sort @timestamp desc | limit 200</code>
+          <p v-else-if="isCloudWatchDatasource" class="m-0 text-xs text-[var(--color-outline)]">
+            Example: <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">fields @timestamp, @message | filter @message like /error/ | sort @timestamp desc | limit 200</code>
           </p>
-          <p v-else-if="isElasticsearchDatasource" class="m-0 text-xs text-text-muted">
-            Examples: <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">service.name:"api" AND level:error</code>, <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">{"index":"logs-*","query":{"query_string":{"query":"error"}}}</code>
+          <p v-else-if="isElasticsearchDatasource" class="m-0 text-xs text-[var(--color-outline)]">
+            Examples: <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">service.name:"api" AND level:error</code>, <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">{"index":"logs-*","query":{"query_string":{"query":"error"}}}</code>
           </p>
-          <p v-else class="m-0 text-xs text-text-muted">Examples: <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">{job=~".+"}</code>, <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">{app="api"} |= "error"</code>, <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">*</code></p>
+          <p v-else class="m-0 text-xs text-[var(--color-outline)]">Examples: <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">{job=~".+"}</code>, <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">{app="api"} |= "error"</code>, <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">*</code></p>
         </div>
       </div>
     </div>

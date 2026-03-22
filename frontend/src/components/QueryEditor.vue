@@ -92,7 +92,7 @@ const previewData = computed(() => {
 <template>
   <div class="flex flex-col gap-3">
     <div class="flex flex-col gap-2">
-      <label for="promql-query" class="text-sm font-medium text-text-primary">PromQL Query</label>
+      <label for="promql-query" class="text-sm font-medium text-[var(--color-on-surface)]">PromQL Query</label>
       <textarea
         id="promql-query"
         v-model="query"
@@ -100,13 +100,13 @@ const previewData = computed(() => {
         rows="3"
         :disabled="disabled || loading"
         data-testid="promql-query-input"
-        class="w-full rounded-sm border border-border bg-surface-raised px-4 py-3 font-mono text-sm text-text-primary resize-y min-h-[80px] transition-colors duration-200 placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-surface-overlay disabled:text-text-muted disabled:cursor-not-allowed"
+        class="w-full rounded-sm bg-[var(--color-surface-container-low)] px-4 py-3 font-mono text-sm text-[var(--color-on-surface)] resize-y min-h-[80px] transition-colors duration-200 placeholder:text-[var(--color-outline)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:bg-[var(--color-surface-container-high)] disabled:text-[var(--color-outline)] disabled:cursor-not-allowed"
         @keydown.ctrl.enter="runQuery"
       ></textarea>
       <div class="flex items-center gap-4">
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 px-4 py-2 bg-accent border border-accent rounded-sm text-white text-sm font-medium cursor-pointer transition-all duration-200 hover:enabled:bg-accent-hover hover:enabled:border-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-[var(--color-primary)] rounded-sm text-white text-sm font-medium cursor-pointer transition-all duration-200 hover:enabled:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="disabled || loading || !query.trim()"
           data-testid="promql-run-btn"
           @click="runQuery"
@@ -114,7 +114,7 @@ const previewData = computed(() => {
           <Play :size="14" />
           <span>{{ loading ? 'Running...' : 'Run Query' }}</span>
         </button>
-        <span class="text-xs text-text-muted">Ctrl+Enter to run</span>
+        <span class="text-xs text-[var(--color-outline)]">Ctrl+Enter to run</span>
       </div>
     </div>
 
@@ -122,16 +122,16 @@ const previewData = computed(() => {
       {{ error }}
     </div>
 
-    <div v-if="showPreview && result?.status === 'success'" class="border border-border rounded-sm overflow-hidden bg-surface-raised">
-      <div class="flex justify-between items-center px-4 py-3 bg-surface-overlay border-b border-border">
-        <h4 class="m-0 text-sm font-semibold text-text-primary">Query Results</h4>
-        <span class="text-xs text-text-muted bg-surface-overlay px-2 py-0.5 rounded">{{ result.data?.result?.length || 0 }} series</span>
+    <div v-if="showPreview && result?.status === 'success'" class="border  rounded-sm overflow-hidden bg-[var(--color-surface-container-low)]">
+      <div class="flex justify-between items-center px-4 py-3 bg-[var(--color-surface-container-high)]">
+        <h4 class="m-0 text-sm font-semibold text-[var(--color-on-surface)]">Query Results</h4>
+        <span class="text-xs text-[var(--color-outline)] bg-[var(--color-surface-container-high)] px-2 py-0.5 rounded">{{ result.data?.result?.length || 0 }} series</span>
       </div>
 
-      <div v-if="metricLabels.length > 0" class="flex items-center flex-wrap gap-2 px-4 py-3 border-b border-border text-sm">
-        <Tag :size="14" class="text-text-muted" />
-        <span class="text-text-muted font-medium">Labels:</span>
-        <span v-for="label in metricLabels" :key="label" class="rounded-sm bg-surface-overlay px-2 py-0.5 text-xs text-text-secondary font-mono">
+      <div v-if="metricLabels.length > 0" class="flex items-center flex-wrap gap-2 px-4 py-3 text-sm">
+        <Tag :size="14" class="text-[var(--color-outline)]" />
+        <span class="text-[var(--color-outline)] font-medium">Labels:</span>
+        <span v-for="label in metricLabels" :key="label" class="rounded-sm bg-[var(--color-surface-container-high)] px-2 py-0.5 text-xs text-[var(--color-on-surface-variant)] font-mono">
           {{ label }}
         </span>
       </div>
@@ -140,24 +140,24 @@ const previewData = computed(() => {
         <table class="w-full border-collapse text-sm">
           <thead>
             <tr>
-              <th class="px-4 py-2.5 text-left border-b border-border bg-surface-overlay font-medium sticky top-0 text-xs text-text-muted uppercase tracking-wide">Metric</th>
-              <th class="px-4 py-2.5 text-left border-b border-border bg-surface-overlay font-medium sticky top-0 text-xs text-text-muted uppercase tracking-wide">Latest Value</th>
-              <th class="px-4 py-2.5 text-left border-b border-border bg-surface-overlay font-medium sticky top-0 text-xs text-text-muted uppercase tracking-wide">Points</th>
+              <th class="px-4 py-2.5 text-left bg-[var(--color-surface-container-high)] font-medium sticky top-0 text-xs text-[var(--color-outline)] uppercase tracking-wide">Metric</th>
+              <th class="px-4 py-2.5 text-left bg-[var(--color-surface-container-high)] font-medium sticky top-0 text-xs text-[var(--color-outline)] uppercase tracking-wide">Latest Value</th>
+              <th class="px-4 py-2.5 text-left bg-[var(--color-surface-container-high)] font-medium sticky top-0 text-xs text-[var(--color-outline)] uppercase tracking-wide">Points</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(row, index) in previewData" :key="index" class="hover:bg-surface-overlay">
-              <td class="px-4 py-2.5 text-left border-b border-border text-text-primary max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap">
-                <code class="text-xs text-text-muted">{{ JSON.stringify(row.metric) }}</code>
+            <tr v-for="(row, index) in previewData" :key="index" class="hover:bg-[var(--color-surface-container-high)]">
+              <td class="px-4 py-2.5 text-left text-[var(--color-on-surface)] max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap">
+                <code class="text-xs text-[var(--color-outline)]">{{ JSON.stringify(row.metric) }}</code>
               </td>
-              <td class="px-4 py-2.5 text-left border-b border-border text-text-primary">{{ row.latestValue }}</td>
-              <td class="px-4 py-2.5 text-left border-b border-border text-text-primary">{{ row.valueCount }}</td>
+              <td class="px-4 py-2.5 text-left text-[var(--color-on-surface)]">{{ row.latestValue }}</td>
+              <td class="px-4 py-2.5 text-left text-[var(--color-on-surface)]">{{ row.valueCount }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div v-else class="py-6 text-center text-text-muted text-sm">
+      <div v-else class="py-6 text-center text-[var(--color-outline)] text-sm">
         No data returned for the selected time range.
       </div>
     </div>

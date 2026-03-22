@@ -208,128 +208,128 @@ function exportSpanJson() {
 </script>
 
 <template>
-  <aside class="flex min-w-0 flex-col gap-3 rounded border border-border bg-surface-raised p-4" aria-label="Span details panel">
-    <header class="flex items-start justify-between gap-3 border-b border-border pb-3">
+  <aside class="flex min-w-0 flex-col gap-3 rounded bg-[var(--color-surface-container-low)] p-4" aria-label="Span details panel">
+    <header class="flex items-start justify-between gap-3 pb-3">
       <div>
-        <h3 class="m-0 text-xs font-semibold uppercase tracking-wider text-text-muted">Span details</h3>
-        <p class="mt-1 text-sm font-semibold text-text-primary">{{ span.operationName || '(unnamed span)' }}</p>
+        <h3 class="m-0 text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">Span details</h3>
+        <p class="mt-1 text-sm font-semibold text-[var(--color-on-surface)]">{{ span.operationName || '(unnamed span)' }}</p>
       </div>
       <span
         class="shrink-0 rounded-sm px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide"
         :class="span.status === 'error'
-          ? 'border border-rose-200 bg-rose-50 text-rose-700'
-          : 'border border-accent-border bg-accent-muted text-accent'"
+          ? 'border border-[var(--color-error)]/20 bg-[var(--color-error)]/10 text-[var(--color-error)]'
+          : 'border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)]'"
       >
         {{ span.status === 'error' ? 'Error' : 'OK' }}
       </span>
     </header>
 
     <div class="flex flex-wrap gap-2">
-      <button type="button" class="cursor-pointer rounded-sm border border-border bg-surface-overlay px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent-border hover:text-accent" @click="copyToClipboard(span.spanId, 'Span ID')">
+      <button type="button" class="cursor-pointer rounded-sm bg-[var(--color-surface-container-high)] px-3 py-1.5 text-xs text-[var(--color-on-surface-variant)] transition hover:border-[var(--color-primary)]/20 hover:text-[var(--color-primary)]" @click="copyToClipboard(span.spanId, 'Span ID')">
         Copy span ID
       </button>
-      <button type="button" class="cursor-pointer rounded-sm border border-border bg-surface-overlay px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent-border hover:text-accent" @click="copyToClipboard(trace.traceId, 'Trace ID')">
+      <button type="button" class="cursor-pointer rounded-sm bg-[var(--color-surface-container-high)] px-3 py-1.5 text-xs text-[var(--color-on-surface-variant)] transition hover:border-[var(--color-primary)]/20 hover:text-[var(--color-primary)]" @click="copyToClipboard(trace.traceId, 'Trace ID')">
         Copy trace ID
       </button>
-      <button type="button" class="cursor-pointer rounded-sm border border-border bg-surface-overlay px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent-border hover:text-accent" @click="openTraceLogs">
+      <button type="button" class="cursor-pointer rounded-sm bg-[var(--color-surface-container-high)] px-3 py-1.5 text-xs text-[var(--color-on-surface-variant)] transition hover:border-[var(--color-primary)]/20 hover:text-[var(--color-primary)]" @click="openTraceLogs">
         View Logs
       </button>
-      <button type="button" class="cursor-pointer rounded-sm border border-border bg-surface-overlay px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent-border hover:text-accent" @click="openServiceMetrics">
+      <button type="button" class="cursor-pointer rounded-sm bg-[var(--color-surface-container-high)] px-3 py-1.5 text-xs text-[var(--color-on-surface-variant)] transition hover:border-[var(--color-primary)]/20 hover:text-[var(--color-primary)]" @click="openServiceMetrics">
         View Service Metrics
       </button>
-      <button type="button" class="cursor-pointer rounded-sm border border-border bg-surface-overlay px-3 py-1.5 text-xs text-text-secondary transition hover:border-accent-border hover:text-accent" @click="exportSpanJson">
+      <button type="button" class="cursor-pointer rounded-sm bg-[var(--color-surface-container-high)] px-3 py-1.5 text-xs text-[var(--color-on-surface-variant)] transition hover:border-[var(--color-primary)]/20 hover:text-[var(--color-primary)]" @click="exportSpanJson">
         Export JSON
       </button>
     </div>
-    <p v-if="feedbackMessage" class="-mt-1 text-xs font-medium text-accent">{{ feedbackMessage }}</p>
+    <p v-if="feedbackMessage" class="-mt-1 text-xs font-medium text-[var(--color-primary)]">{{ feedbackMessage }}</p>
 
-    <section class="grid grid-cols-2 gap-x-3 gap-y-2 rounded-sm border border-border p-3 max-md:grid-cols-1">
+    <section class="grid grid-cols-2 gap-x-3 gap-y-2 rounded-sm p-3 max-md:grid-cols-1">
       <div class="flex min-w-0 flex-col gap-0.5">
-        <span class="text-xs font-semibold uppercase tracking-wider text-text-muted">Service</span>
-        <code class="break-all font-mono text-sm text-text-primary">{{ span.serviceName || 'unknown' }}</code>
+        <span class="text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">Service</span>
+        <code class="break-all font-mono text-sm text-[var(--color-on-surface)]">{{ span.serviceName || 'unknown' }}</code>
       </div>
       <div class="flex min-w-0 flex-col gap-0.5">
-        <span class="text-xs font-semibold uppercase tracking-wider text-text-muted">Duration</span>
-        <code class="break-all font-mono text-sm text-text-primary">{{ formatDurationNano(span.durationNano) }}</code>
+        <span class="text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">Duration</span>
+        <code class="break-all font-mono text-sm text-[var(--color-on-surface)]">{{ formatDurationNano(span.durationNano) }}</code>
       </div>
       <div class="flex min-w-0 flex-col gap-0.5">
-        <span class="text-xs font-semibold uppercase tracking-wider text-text-muted">Start</span>
-        <span class="text-sm text-text-secondary">{{ formatTimestamp(span.startTimeUnixNano) }}</span>
+        <span class="text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">Start</span>
+        <span class="text-sm text-[var(--color-on-surface-variant)]">{{ formatTimestamp(span.startTimeUnixNano) }}</span>
       </div>
       <div class="flex min-w-0 flex-col gap-0.5">
-        <span class="text-xs font-semibold uppercase tracking-wider text-text-muted">End</span>
-        <span class="text-sm text-text-secondary">{{ formatTimestamp(span.startTimeUnixNano + span.durationNano) }}</span>
+        <span class="text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">End</span>
+        <span class="text-sm text-[var(--color-on-surface-variant)]">{{ formatTimestamp(span.startTimeUnixNano + span.durationNano) }}</span>
       </div>
       <div class="flex min-w-0 flex-col gap-0.5">
-        <span class="text-xs font-semibold uppercase tracking-wider text-text-muted">Offset</span>
-        <code class="break-all font-mono text-sm text-text-primary">{{ formatTraceOffset(span.startTimeUnixNano) }}</code>
+        <span class="text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">Offset</span>
+        <code class="break-all font-mono text-sm text-[var(--color-on-surface)]">{{ formatTraceOffset(span.startTimeUnixNano) }}</code>
       </div>
       <div class="flex min-w-0 flex-col gap-0.5">
-        <span class="text-xs font-semibold uppercase tracking-wider text-text-muted">Span ID</span>
-        <code class="break-all font-mono text-sm text-text-primary">{{ span.spanId }}</code>
+        <span class="text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">Span ID</span>
+        <code class="break-all font-mono text-sm text-[var(--color-on-surface)]">{{ span.spanId }}</code>
       </div>
     </section>
 
-    <section class="flex flex-col gap-2.5 rounded-sm border border-border p-3">
-      <h4 class="m-0 text-xs font-semibold uppercase tracking-wider text-text-muted">Relationships</h4>
+    <section class="flex flex-col gap-2.5 rounded-sm p-3">
+      <h4 class="m-0 text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">Relationships</h4>
       <div class="flex flex-col gap-1.5">
-        <span class="text-xs font-semibold uppercase tracking-wider text-text-muted">Parent</span>
+        <span class="text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">Parent</span>
         <button
           v-if="parentSpan"
           type="button"
-          class="cursor-pointer rounded-sm border border-accent-border bg-accent-muted px-3 py-1.5 text-left text-sm text-accent transition hover:border-accent-border hover:text-accent"
+          class="cursor-pointer rounded-sm border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-3 py-1.5 text-left text-sm text-[var(--color-primary)] transition hover:border-[var(--color-primary)]/20 hover:text-[var(--color-primary)]"
           @click="emit('select-span', parentSpan)"
         >
           {{ parentSpan.operationName || '(unnamed span)' }}
         </button>
-        <span v-else class="text-sm text-text-muted">Root span</span>
+        <span v-else class="text-sm text-[var(--color-outline)]">Root span</span>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <span class="text-xs font-semibold uppercase tracking-wider text-text-muted">Children</span>
+        <span class="text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">Children</span>
         <div v-if="childSpans.length > 0" class="flex flex-col gap-1">
           <button
             v-for="child in childSpans"
             :key="child.spanId"
             type="button"
-            class="cursor-pointer rounded-sm border border-accent-border bg-accent-muted px-3 py-1.5 text-left text-sm text-accent transition hover:border-accent-border hover:text-accent"
+            class="cursor-pointer rounded-sm border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 px-3 py-1.5 text-left text-sm text-[var(--color-primary)] transition hover:border-[var(--color-primary)]/20 hover:text-[var(--color-primary)]"
             @click="emit('select-span', child)"
           >
             {{ child.operationName || '(unnamed span)' }}
           </button>
         </div>
-        <span v-else class="text-sm text-text-muted">No child spans</span>
+        <span v-else class="text-sm text-[var(--color-outline)]">No child spans</span>
       </div>
     </section>
 
-    <section class="flex flex-col gap-2 rounded-sm border border-border p-3">
-      <h4 class="m-0 text-xs font-semibold uppercase tracking-wider text-text-muted">Attributes</h4>
+    <section class="flex flex-col gap-2 rounded-sm p-3">
+      <h4 class="m-0 text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">Attributes</h4>
       <table v-if="sortedTags.length > 0" class="w-full border-collapse text-sm">
         <thead>
           <tr>
-            <th class="border-b border-border pb-1.5 text-left text-xs text-text-muted">Key</th>
-            <th class="border-b border-border pb-1.5 text-left text-xs text-text-muted">Value</th>
+            <th class="border-b  pb-1.5 text-left text-xs text-[var(--color-outline)]">Key</th>
+            <th class="border-b  pb-1.5 text-left text-xs text-[var(--color-outline)]">Value</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="([key, value]) in sortedTags" :key="key">
-            <td class="border-b border-border py-1.5 align-top">
-              <code class="rounded-sm bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-muted">{{ key }}</code>
+            <td class="border-b  py-1.5 align-top">
+              <code class="rounded-sm bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-outline)]">{{ key }}</code>
             </td>
-            <td class="border-b border-border py-1.5 align-top">
-              <code class="rounded-sm bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-primary">{{ value }}</code>
+            <td class="border-b  py-1.5 align-top">
+              <code class="rounded-sm bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface)]">{{ value }}</code>
             </td>
           </tr>
         </tbody>
       </table>
-      <p v-else class="m-0 text-sm text-text-muted">No span attributes.</p>
+      <p v-else class="m-0 text-sm text-[var(--color-outline)]">No span attributes.</p>
     </section>
 
-    <section class="flex flex-col gap-2 rounded-sm border border-border p-3">
-      <h4 class="m-0 text-xs font-semibold uppercase tracking-wider text-text-muted">Logs and events</h4>
+    <section class="flex flex-col gap-2 rounded-sm p-3">
+      <h4 class="m-0 text-xs font-semibold uppercase tracking-wider text-[var(--color-outline)]">Logs and events</h4>
       <div v-if="sortedLogs.length > 0" class="flex flex-col gap-2">
-        <article v-for="(log, index) in sortedLogs" :key="`${log.timestampUnixNano}-${index}`" class="flex flex-col gap-2 rounded-sm border border-border p-2.5">
-          <div class="flex items-center justify-between gap-2 text-xs text-text-muted">
+        <article v-for="(log, index) in sortedLogs" :key="`${log.timestampUnixNano}-${index}`" class="flex flex-col gap-2 rounded-sm p-2.5">
+          <div class="flex items-center justify-between gap-2 text-xs text-[var(--color-outline)]">
             <span>{{ formatTimestamp(log.timestampUnixNano) }}</span>
             <code class="font-mono">{{ formatTraceOffset(log.timestampUnixNano) }}</code>
           </div>
@@ -339,14 +339,14 @@ function exportSpanJson() {
               :key="fieldKey"
               class="flex items-start gap-2"
             >
-              <code class="rounded-sm bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-muted">{{ fieldKey }}</code>
-              <code class="rounded-sm bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-primary">{{ fieldValue }}</code>
+              <code class="rounded-sm bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-outline)]">{{ fieldKey }}</code>
+              <code class="rounded-sm bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface)]">{{ fieldValue }}</code>
             </div>
           </div>
-          <p v-else class="m-0 text-sm text-text-muted">No log fields</p>
+          <p v-else class="m-0 text-sm text-[var(--color-outline)]">No log fields</p>
         </article>
       </div>
-      <p v-else class="m-0 text-sm text-text-muted">No logs or events for this span.</p>
+      <p v-else class="m-0 text-sm text-[var(--color-outline)]">No logs or events for this span.</p>
     </section>
   </aside>
 </template>
