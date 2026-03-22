@@ -1,62 +1,59 @@
 import { mount, VueWrapper } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, h, ref } from 'vue'
+import { ref } from 'vue'
 import AppSidebar from './AppSidebar.vue'
 
-// --- Mocks ---
-
-const mockIsOpen = ref(true)
-const mockOpen = vi.fn()
-const mockClose = vi.fn()
-const mockToggle = vi.fn()
+const mockHoveredSection = ref<string | null>(null)
+const mockPinnedSection = ref<string | null>(null)
+const mockIsPeeking = ref(false)
+const mockActiveFlyoutSection = ref<string | null>(null)
+const mockCurrentRouteSection = ref('dashboards')
+const mockHandleMouseEnter = vi.fn()
+const mockHandleMouseLeave = vi.fn()
+const mockPinSection = vi.fn()
+const mockCloseFlyout = vi.fn()
 
 vi.mock('../composables/useSidebar', () => ({
   useSidebar: () => ({
-    isOpen: mockIsOpen,
-    open: mockOpen,
-    close: mockClose,
-    toggle: mockToggle,
+    hoveredSection: mockHoveredSection,
+    pinnedSection: mockPinnedSection,
+    isPeeking: mockIsPeeking,
+    activeFlyoutSection: mockActiveFlyoutSection,
+    currentRouteSection: mockCurrentRouteSection,
+    handleMouseEnter: mockHandleMouseEnter,
+    handleMouseLeave: mockHandleMouseLeave,
+    pinSection: mockPinSection,
+    closeFlyout: mockCloseFlyout,
   }),
 }))
 
-const mockUser = ref<{ email: string; name?: string } | null>({
-  email: 'jane@example.com',
-  name: 'Jane Doe',
-})
-
+const mockUser = ref({ email: 'jane@example.com', name: 'Jane Doe' })
 vi.mock('../composables/useAuth', () => ({
-  useAuth: () => ({
-    user: mockUser,
-    isAuthenticated: { value: true },
-  }),
+  useAuth: () => ({ user: mockUser }),
 }))
 
-const mockCurrentOrg = ref({ id: 'org-1', name: 'Test Org' })
-
+const mockCurrentOrg = ref({ id: 'org-1', name: 'Test Org', role: 'admin' })
 vi.mock('../composables/useOrganization', () => ({
   useOrganization: () => ({
+    organizations: ref([mockCurrentOrg.value]),
     currentOrg: mockCurrentOrg,
-    currentOrgId: ref('org-1'),
+    selectOrganization: vi.fn(),
+  }),
+}))
+
+vi.mock('../composables/useFavorites', () => ({
+  useFavorites: () => ({
+    favorites: ref([]),
+    recentDashboards: ref([]),
+    isFavorite: () => false,
   }),
 }))
 
 const mockRoutePath = ref('/app/dashboards')
 const mockPush = vi.fn()
-
 vi.mock('vue-router', () => ({
-  useRoute: () => ({
-    path: mockRoutePath.value,
-  }),
-  useRouter: () => ({
-    push: mockPush,
-  }),
-  RouterLink: defineComponent({
-    name: 'RouterLink',
-    props: { to: { type: String, default: '' } },
-    setup(props, { slots }) {
-      return () => h('a', { href: props.to, 'data-to': props.to }, slots.default?.())
-    },
-  }),
+  useRoute: () => ({ path: mockRoutePath.value }),
+  useRouter: () => ({ push: mockPush }),
 }))
 
 describe('AppSidebar', () => {
@@ -66,14 +63,17 @@ describe('AppSidebar', () => {
     return mount(AppSidebar, {
       global: {
         stubs: {
-          // Stub lucide icons as simple spans
           Sparkles: { template: '<span class="icon-sparkles" />' },
           LayoutGrid: { template: '<span class="icon-layout-grid" />' },
           Activity: { template: '<span class="icon-activity" />' },
           AlertTriangle: { template: '<span class="icon-alert-triangle" />' },
           Search: { template: '<span class="icon-search" />' },
           Settings: { template: '<span class="icon-settings" />' },
-          Home: { template: '<span class="icon-home" />' },
+          X: { template: '<span class="icon-x" />' },
+          Star: { template: '<span class="icon-star" />' },
+          Check: { template: '<span class="icon-check" />' },
+          LogOut: { template: '<span class="icon-logout" />' },
+          Keyboard: { template: '<span class="icon-keyboard" />' },
         },
       },
     })
@@ -81,7 +81,11 @@ describe('AppSidebar', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockIsOpen.value = true
+    mockHoveredSection.value = null
+    mockPinnedSection.value = null
+    mockIsPeeking.value = false
+    mockActiveFlyoutSection.value = null
+    mockCurrentRouteSection.value = 'dashboards'
     mockRoutePath.value = '/app/dashboards'
     mockUser.value = { email: 'jane@example.com', name: 'Jane Doe' }
   })
@@ -90,158 +94,70 @@ describe('AppSidebar', () => {
     wrapper?.unmount()
   })
 
-  // --- 1. Renders all nav items ---
-  it('renders all nav items: Home, Dashboards, Services, Alerts, Explore, Settings', () => {
+  it('renders the sidebar rail', () => {
     wrapper = createWrapper()
-    const text = wrapper.text()
-    expect(text).toContain('Home')
-    expect(text).toContain('Dashboards')
-    expect(text).toContain('Services')
-    expect(text).toContain('Alerts')
-    expect(text).toContain('Explore')
-    expect(text).toContain('Settings')
+    expect(wrapper.find('[data-testid="sidebar-rail"]').exists()).toBe(true)
   })
 
-  // --- 2. Active route highlights correct nav item ---
-  it('active route highlights the correct nav item via aria-current', () => {
-    mockRoutePath.value = '/app/dashboards'
+  it('does not render flyout when no section is active', () => {
+    mockActiveFlyoutSection.value = null
     wrapper = createWrapper()
-
-    const dashboardsItem = wrapper.find('[data-testid="nav-dashboards"]')
-    expect(dashboardsItem.exists()).toBe(true)
-    expect(dashboardsItem.attributes('aria-current')).toBe('page')
-
-    // Other items should NOT have aria-current="page"
-    const homeItem = wrapper.find('[data-testid="nav-home"]')
-    expect(homeItem.attributes('aria-current')).toBeUndefined()
+    expect(wrapper.find('[data-testid="flyout-panel"]').exists()).toBe(false)
   })
 
-  it('highlights Home when route is /app', () => {
-    mockRoutePath.value = '/app'
-    wrapper = createWrapper()
-
-    const homeItem = wrapper.find('[data-testid="nav-home"]')
-    expect(homeItem.exists()).toBe(true)
-    expect(homeItem.attributes('aria-current')).toBe('page')
-  })
-
-  // --- 3. Explore children visible when Explore route is active ---
-  it('Explore children visible when Explore route is active', () => {
+  it('renders flyout when a section is active', () => {
+    mockActiveFlyoutSection.value = 'explore'
     mockRoutePath.value = '/app/explore/metrics'
     wrapper = createWrapper()
-
-    const text = wrapper.text()
-    expect(text).toContain('Metrics')
-    expect(text).toContain('Logs')
-    expect(text).toContain('Traces')
+    expect(wrapper.find('[data-testid="flyout-panel"]').exists()).toBe(true)
   })
 
-  it('Explore children are NOT visible when Explore is NOT active', () => {
-    mockRoutePath.value = '/app/dashboards'
+  it('does not render flyout for home section', () => {
+    mockActiveFlyoutSection.value = 'home'
     wrapper = createWrapper()
-
-    const metricsLink = wrapper.find('[data-testid="nav-explore-metrics"]')
-    expect(metricsLink.exists()).toBe(false)
+    expect(wrapper.find('[data-testid="flyout-panel"]').exists()).toBe(false)
   })
 
-  // --- 4. Accessibility: aria-label ---
-  it('has aria-label="Main navigation" on the nav element', () => {
+  it('passes activeSection to rail from currentRouteSection or pinnedSection', () => {
+    mockPinnedSection.value = 'explore'
+    mockActiveFlyoutSection.value = 'explore'
     wrapper = createWrapper()
-    const nav = wrapper.find('nav')
-    expect(nav.exists()).toBe(true)
-    expect(nav.attributes('aria-label')).toBe('Main navigation')
+    // The rail should show explore as active via the accent bar
+    const exploreRail = wrapper.find('[data-testid="rail-explore"]')
+    expect(exploreRail.find('[data-testid="rail-accent-bar"]').exists()).toBe(true)
   })
 
-  // --- 5. useSidebar().isOpen controls visibility ---
-  it('when isOpen is true, sidebar has translateX(0)', () => {
-    mockIsOpen.value = true
+  it('calls pinSection when rail icon is clicked', async () => {
     wrapper = createWrapper()
-
-    const aside = wrapper.find('aside')
-    expect(aside.exists()).toBe(true)
-    expect(aside.element.style.transform).toContain('translateX(0')
+    await wrapper.find('[data-testid="rail-dashboards"]').trigger('click')
+    expect(mockPinSection).toHaveBeenCalledWith('dashboards')
   })
 
-  it('when isOpen is false, sidebar has translateX(-100%)', () => {
-    mockIsOpen.value = false
+  it('calls handleMouseEnter when hovering rail icon', async () => {
     wrapper = createWrapper()
-
-    const aside = wrapper.find('aside')
-    expect(aside.element.style.transform).toContain('translateX(-100%)')
+    await wrapper.find('[data-testid="rail-explore"]').trigger('mouseenter')
+    expect(mockHandleMouseEnter).toHaveBeenCalledWith('explore')
   })
 
-  // --- 6. Shows user info at bottom ---
-  it('shows user name at bottom when available', () => {
-    wrapper = createWrapper()
-    const text = wrapper.text()
-    expect(text).toContain('Jane Doe')
-  })
-
-  it('shows user email when no name is available', () => {
-    mockUser.value = { email: 'jane@example.com' }
-    wrapper = createWrapper()
-    const text = wrapper.text()
-    expect(text).toContain('jane@example.com')
-  })
-
-  it('does not show user info when user is null', () => {
-    mockUser.value = null
-    wrapper = createWrapper()
-    // Should still render without errors
-    expect(wrapper.find('aside').exists()).toBe(true)
-  })
-
-  // --- 7. Nav items use data-testid attributes ---
-  it('nav items use data-testid attributes for each section', () => {
-    wrapper = createWrapper()
-
-    expect(wrapper.find('[data-testid="nav-home"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="nav-dashboards"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="nav-services"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="nav-alerts"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="nav-explore"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="nav-settings"]').exists()).toBe(true)
-  })
-
-  // --- Clicking nav items navigates ---
-  it('clicking a nav item navigates via router.push', async () => {
-    wrapper = createWrapper()
-
-    const homeLink = wrapper.find('[data-testid="nav-home"]')
-    expect(homeLink.exists()).toBe(true)
-    await homeLink.trigger('click')
-    expect(mockPush).toHaveBeenCalledWith('/app')
-  })
-
-  it('clicking Dashboards nav item navigates to /app/dashboards', async () => {
-    wrapper = createWrapper()
-
-    const item = wrapper.find('[data-testid="nav-dashboards"]')
-    await item.trigger('click')
-    expect(mockPush).toHaveBeenCalledWith('/app/dashboards')
-  })
-
-  // --- Explore children clicks ---
-  it('clicking an Explore child navigates to the child route', async () => {
+  it('navigates when flyout sub-nav item is clicked', async () => {
+    mockActiveFlyoutSection.value = 'explore'
     mockRoutePath.value = '/app/explore/metrics'
     wrapper = createWrapper()
-
-    const logsLink = wrapper.find('[data-testid="nav-explore-logs"]')
-    expect(logsLink.exists()).toBe(true)
-    await logsLink.trigger('click')
+    await wrapper.find('[data-testid="flyout-nav-logs"]').trigger('click')
     expect(mockPush).toHaveBeenCalledWith('/app/explore/logs')
   })
 
-  // --- Sidebar width ---
-  it('sidebar has 240px width', () => {
+  it('calls closeFlyout when flyout close button is clicked', async () => {
+    mockActiveFlyoutSection.value = 'explore'
+    mockRoutePath.value = '/app/explore/metrics'
     wrapper = createWrapper()
-    const aside = wrapper.find('aside')
-    expect(aside.element.style.width).toBe('240px')
+    await wrapper.find('[data-testid="flyout-close"]').trigger('click')
+    expect(mockCloseFlyout).toHaveBeenCalled()
   })
 
-  // --- Org name displayed ---
-  it('displays organization name', () => {
+  it('has aria-label on the nav landmark', () => {
     wrapper = createWrapper()
-    expect(wrapper.text()).toContain('Test Org')
+    const nav = wrapper.find('nav')
+    expect(nav.attributes('aria-label')).toBe('Main navigation')
   })
 })
