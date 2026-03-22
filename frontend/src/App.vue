@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Menu } from 'lucide-vue-next'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppSidebar from './components/AppSidebar.vue'
 import CmdKModal from './components/CmdKModal.vue'
@@ -8,8 +8,10 @@ import CookieConsentBanner from './components/CookieConsentBanner.vue'
 import ShortcutsOverlay from './components/ShortcutsOverlay.vue'
 import ToastNotification from './components/ToastNotification.vue'
 import { useAuth } from './composables/useAuth'
+import { useDatasource } from './composables/useDatasource'
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts'
 import { useOrgBranding } from './composables/useOrgBranding'
+import { useOrganization } from './composables/useOrganization'
 import { useSidebar } from './composables/useSidebar'
 
 const route = useRoute()
@@ -17,6 +19,8 @@ const router = useRouter()
 const { isAuthenticated } = useAuth()
 const { isOpen, open: openSidebar } = useSidebar()
 const { register } = useKeyboardShortcuts()
+const { currentOrg, fetchOrganizations } = useOrganization()
+const { fetchDatasources } = useDatasource()
 useOrgBranding()
 
 const showSidebar = computed(() => {
@@ -47,6 +51,20 @@ function checkViewport() {
 onMounted(() => {
   checkViewport()
   window.addEventListener('resize', checkViewport)
+})
+
+// Fetch organizations when authenticated (handles both immediate and delayed auth)
+watch(isAuthenticated, async (authenticated) => {
+  if (authenticated) {
+    await fetchOrganizations()
+  }
+}, { immediate: true })
+
+// Fetch datasources when org changes
+watch(() => currentOrg.value?.id, async (newOrgId) => {
+  if (newOrgId) {
+    await fetchDatasources(newOrgId)
+  }
 })
 
 onUnmounted(() => {
