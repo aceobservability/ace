@@ -4,13 +4,23 @@ import { useAuth } from '../composables/useAuth'
 const defaultDescription =
   'Ace Observability is an open-source monitoring dashboard with multi-datasource support for Prometheus, Loki, Tempo, and VictoriaMetrics.'
 
+// Lazy-loaded views (new — files created in subsequent tasks)
+const HomeView = () => import('../views/HomeView.vue')
+const ServicesView = () => import('../views/ServicesView.vue')
+const DashboardGenView = () => import('../views/DashboardGenView.vue')
+const UnifiedExploreView = () => import('../views/UnifiedExploreView.vue')
+const UnifiedSettingsView = () => import('../views/UnifiedSettingsView.vue')
+
 const routes: RouteRecordRaw[] = [
+  // Default redirect: / → /app (Home)
   {
     path: '/',
     redirect: {
-      path: '/app/dashboards',
+      path: '/app',
     },
   },
+
+  // Login
   {
     path: '/login',
     name: 'login',
@@ -21,12 +31,20 @@ const routes: RouteRecordRaw[] = [
       description: 'Sign in to Ace to manage dashboards, alerts, and observability workflows.',
     },
   },
+
+  // Home — the landing page
   {
     path: '/app',
-    redirect: {
-      path: '/app/dashboards',
+    name: 'home',
+    component: HomeView,
+    meta: {
+      appLayout: 'app',
+      title: 'Ace — Command Center',
+      description: 'Your observability command center — dashboards, services, alerts, and insights at a glance.',
     },
   },
+
+  // Dashboards
   {
     path: '/app/dashboards',
     name: 'dashboards',
@@ -36,6 +54,17 @@ const routes: RouteRecordRaw[] = [
       appLayout: 'app',
       title: 'Dashboards | Ace',
       description: 'Browse and organize dashboards in Ace.',
+    },
+  },
+  // AI dashboard generation — MUST be before :id route
+  {
+    path: '/app/dashboards/new/ai',
+    name: 'dashboard-gen',
+    component: DashboardGenView,
+    meta: {
+      appLayout: 'app',
+      title: 'Generate Dashboard — Ace',
+      description: 'Generate a new dashboard using AI from a natural-language prompt.',
     },
   },
   {
@@ -74,6 +103,20 @@ const routes: RouteRecordRaw[] = [
       description: 'Configure dashboard settings, YAML, and permissions.',
     },
   },
+
+  // Services
+  {
+    path: '/app/services',
+    name: 'services',
+    component: ServicesView,
+    meta: {
+      appLayout: 'app',
+      title: 'Services — Ace',
+      description: 'Monitor service health, latency, and error rates across your infrastructure.',
+    },
+  },
+
+  // Alerts
   {
     path: '/app/alerts',
     name: 'alerts',
@@ -85,6 +128,8 @@ const routes: RouteRecordRaw[] = [
       description: 'Manage and monitor alert rules and notifications.',
     },
   },
+
+  // Unified Explore (metrics, logs, traces via :type param)
   {
     path: '/app/explore',
     redirect: {
@@ -98,74 +143,69 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/app/explore/metrics',
-    name: 'explore-metrics',
-    component: () => import('../views/Explore.vue'),
-    alias: '/explore/metrics',
+    path: '/app/explore/:type',
+    name: 'explore',
+    component: UnifiedExploreView,
+    alias: '/explore/:type',
     meta: {
       appLayout: 'app',
-      title: 'Explore Metrics | Ace',
-      description: 'Query and visualize metrics from connected datasources.',
+      title: 'Explore — Ace',
+      description: 'Query and visualize metrics, logs, and traces from connected datasources.',
     },
   },
+
+  // Unified Settings
   {
-    path: '/app/explore/logs',
-    name: 'explore-logs',
-    component: () => import('../views/ExploreLogs.vue'),
-    alias: '/explore/logs',
-    meta: {
-      appLayout: 'app',
-      title: 'Explore Logs | Ace',
-      description: 'Search and analyze logs with Ace Explore.',
+    path: '/app/settings',
+    redirect: {
+      path: '/app/settings/general',
     },
   },
-  {
-    path: '/app/explore/traces',
-    name: 'explore-traces',
-    component: () => import('../views/ExploreTraces.vue'),
-    alias: '/explore/traces',
-    meta: {
-      appLayout: 'app',
-      title: 'Explore Traces | Ace',
-      description: 'Investigate trace timelines, spans, and service dependencies.',
-    },
-  },
+  // Backward compat: old org settings → unified settings
   {
     path: '/app/settings/org/:id',
     redirect: to => ({
-      path: `/app/settings/org/${to.params.id}/general`,
+      path: '/app/settings/general',
       query: to.query,
     }),
   },
   {
     path: '/settings/org/:id',
     redirect: to => ({
-      path: `/app/settings/org/${to.params.id}/general`,
+      path: '/app/settings/general',
       query: to.query,
     }),
   },
   {
     path: '/app/settings/org/:id/:section',
-    name: 'org-settings',
-    component: () => import('../views/OrganizationSettings.vue'),
-    alias: '/settings/org/:id/:section',
+    redirect: to => ({
+      path: `/app/settings/${to.params.section}`,
+      query: to.query,
+    }),
+  },
+  {
+    path: '/settings/org/:id/:section',
+    redirect: to => ({
+      path: `/app/settings/${to.params.section}`,
+      query: to.query,
+    }),
+  },
+  {
+    path: '/app/settings/:section',
+    name: 'settings',
+    component: UnifiedSettingsView,
     meta: {
       appLayout: 'app',
-      title: 'Organization Settings | Ace',
-      description: 'Manage organization profile, members, groups, and authentication providers.',
+      title: 'Settings — Ace',
+      description: 'Manage organization profile, members, datasources, and preferences.',
     },
   },
-  { path: '/app/datasources', redirect: '/app/settings' },
+
+  // Datasources — backward compat redirects
+  { path: '/app/datasources', redirect: '/app/settings/datasources' },
   {
     path: '/app/datasources/new',
-    name: 'datasource-create',
-    component: () => import('../views/DataSourceCreateView.vue'),
-    alias: '/datasources/new',
-    meta: {
-      appLayout: 'app',
-      title: 'Add Data Source | Dash',
-      description: 'Configure and test a datasource before saving it to your organization.',
-    },
+    redirect: '/app/settings/datasources',
   },
   {
     path: '/app/datasources/:id/edit',
@@ -174,21 +214,12 @@ const routes: RouteRecordRaw[] = [
     alias: '/datasources/:id/edit',
     meta: {
       appLayout: 'app',
-      title: 'Edit Data Source | Dash',
+      title: 'Edit Data Source | Ace',
       description: 'Update and validate datasource settings before saving changes.',
     },
   },
-  {
-    path: '/app/settings/privacy',
-    name: 'privacy-settings',
-    component: () => import('../views/PrivacySettingsView.vue'),
-    alias: '/settings/privacy',
-    meta: {
-      appLayout: 'app',
-      title: 'Privacy Settings | Ace',
-      description: 'Manage analytics, consent, session recording, and feature flag preferences.',
-    },
-  },
+
+  // Grafana conversion (low priority reskin)
   {
     path: '/convert/grafana',
     redirect: {
@@ -252,9 +283,9 @@ router.beforeEach(async (to, _from, next) => {
 
   // Allow access to public routes
   if (to.meta.public) {
-    // If authenticated and going to login, redirect to dashboards
+    // If authenticated and going to login, redirect to home
     if (isAuthenticated.value && to.name === 'login') {
-      next('/app/dashboards')
+      next('/app')
       return
     }
     next()
