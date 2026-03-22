@@ -160,4 +160,21 @@ describe('AppSidebar', () => {
     const nav = wrapper.find('nav')
     expect(nav.attributes('aria-label')).toBe('Main navigation')
   })
+
+  it('clicking outside the flyout closes it when pinned', async () => {
+    mockPinnedSection.value = 'explore'
+    mockActiveFlyoutSection.value = 'explore'
+    mockRoutePath.value = '/app/explore/metrics'
+    wrapper = createWrapper()
+    const backdrop = wrapper.find('[data-testid="flyout-backdrop"]')
+    expect(backdrop.exists()).toBe(true)
+    await backdrop.trigger('click')
+    expect(mockCloseFlyout).toHaveBeenCalled()
+  })
+
+  it('does not show backdrop when flyout is not pinned', () => {
+    mockPinnedSection.value = null
+    wrapper = createWrapper()
+    expect(wrapper.find('[data-testid="flyout-backdrop"]').exists()).toBe(false)
+  })
 })

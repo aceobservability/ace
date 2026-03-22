@@ -56,6 +56,15 @@ function railActiveSection(): string | null {
 
 <template>
   <nav aria-label="Main navigation">
+    <!-- Click-outside backdrop: closes flyout when clicking content area -->
+    <div
+      v-if="pinnedSection"
+      class="fixed inset-0 z-30"
+      data-testid="flyout-backdrop"
+      :style="{ left: '292px' }"
+      @click="closeFlyout"
+    />
+
     <SidebarRail
       :active-section="railActiveSection()"
       @hover="handleMouseEnter"
