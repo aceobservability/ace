@@ -874,16 +874,7 @@ watch(
 </script>
 
 <template>
-  <div class="flex min-h-full">
-    <div class="flex flex-col flex-1 min-w-0 px-8 py-6">
-    <header class="flex items-center justify-between mb-6">
-      <div class="flex items-center flex-wrap gap-3">
-        <h1 class="text-2xl font-bold text-text-primary m-0">Explore</h1>
-        <span class="rounded-sm border border-accent-border bg-accent-muted px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">Logs</span>
-      </div>
-    </header>
-
-    <div class="flex flex-col gap-6 flex-1">
+  <div class="flex flex-col gap-6 flex-1">
       <div class="flex flex-col gap-4 rounded border border-border bg-surface-raised p-4">
         <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-4 items-end max-md:grid-cols-1">
           <div class="flex flex-col gap-2.5">
@@ -1148,7 +1139,6 @@ watch(
           <p v-else class="m-0 text-xs text-text-muted">Examples: <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">{job=~".+"}</code>, <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">{app="api"} |= "error"</code>, <code class="rounded bg-surface-overlay px-1.5 py-0.5 font-mono text-xs text-text-secondary">*</code></p>
         </div>
       </div>
-    </div>
     </div>
   </div>
 </template>

@@ -759,17 +759,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex min-h-full">
-    <div class="flex flex-col flex-1 min-w-0 px-8 py-6 max-md:px-4 max-md:py-4">
-    <!-- Page header -->
-    <header class="flex items-center justify-between mb-6">
-      <div class="flex items-center flex-wrap gap-3">
-        <h1 class="text-2xl font-bold text-text-primary m-0">Explore</h1>
-        <span class="rounded-sm border border-accent-border bg-accent-muted px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">Tracing</span>
-      </div>
-    </header>
-
-    <div class="flex flex-col gap-6 flex-1">
+  <div class="flex flex-col gap-6 flex-1">
       <!-- Query / filter section -->
       <div class="flex flex-col gap-4 rounded border border-border bg-surface-raised p-4">
         <!-- Datasource + time range row -->
@@ -1094,7 +1084,6 @@ onUnmounted(() => {
           </section>
         </div>
       </div>
-    </div>
     </div>
   </div>
 </template>
