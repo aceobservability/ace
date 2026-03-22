@@ -1,145 +1,76 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap");
 
-@variant dark (&:where(.dark, .dark *));
-
-/* Semantic colour tokens — light (default) */
+/* ─── Design tokens: Stitch "Deep Space" palette (dark-only) ─── */
 :root {
-  /* Surface */
-  --color-surface-base:    #f9fafb;   /* gray-50 — page background */
-  --color-surface-raised:  #ffffff;   /* white — cards, panels */
-  --color-surface-overlay: #f3f4f6;   /* gray-100 — hover, subtle panels */
-  --color-surface-input:   #ffffff;   /* input backgrounds */
-  --color-surface-sidebar: #111118;   /* sidebar stays dark in both modes */
+  /* Surface hierarchy */
+  --color-surface:                    #0d0e10; /* page canvas */
+  --color-surface-container-low:      #121316; /* cards, panels */
+  --color-surface-container-high:     #1e2022; /* hover, active, sidebar */
+  --color-surface-bright:             #2b2c2f; /* modals, command bar, dropdowns */
+  --color-surface-container-highest:  #242629; /* glassmorphic overlays */
 
-  /* Text */
-  --color-text-primary:    #111827;   /* gray-900 */
-  --color-text-secondary:  #4b5563;   /* gray-600 */
-  --color-text-muted:      #9ca3af;   /* gray-400 */
-  --color-text-inverse:    #f9fafb;   /* for use on dark surfaces */
+  /* Primary (AI, active nav, links) */
+  --color-primary:          #a3a6ff;
+  --color-primary-dim:      #6063ee; /* gradient endpoints */
 
-  /* Border */
-  --color-border:          #e5e7eb;   /* gray-200 */
-  --color-border-strong:   #d1d5db;   /* gray-300 */
+  /* Secondary (healthy, success, progress) */
+  --color-secondary:        #69f6b8;
+  --color-secondary-dim:    #58e7ab;
 
-  /* Accent (same in both modes) */
-  --color-accent:          #10b981;   /* emerald-500 */
-  --color-accent-muted:    rgba(16,185,129,0.15);
-  --color-accent-border:   rgba(16,185,129,0.25);
-  --color-accent-hover:    color-mix(in srgb, var(--color-accent) 85%, black);
+  /* Tertiary (warning, edit, labels) */
+  --color-tertiary:         #ffb148;
+  --color-tertiary-dim:     #e79400;
 
-  /* Amber (Ace's primary CTA accent) */
-  --color-amber:           #f59e0b;
-  --color-amber-muted:     rgba(245,158,11,0.15);
+  /* Error (critical, destructive) */
+  --color-error:            #ff6e84;
 
-  /* Info */
-  --color-info:            #3b82f6;
-  --color-info-muted:      rgba(59, 130, 246, 0.15);
-
-  /* Status */
-  --color-danger:          #f43f5e;   /* rose-500 */
-  --color-warning:         #f59e0b;
-  --color-success:         #10b981;
-
-  /* Aliases — used by scoped component styles (Sidebar, OrgSettings, etc.) */
-  --border-primary:        var(--color-border);
-  --border-secondary:      var(--color-border-strong);
-  --text-primary:          var(--color-text-primary);
-  --text-secondary:        var(--color-text-secondary);
-  --text-tertiary:         var(--color-text-muted);
-  --accent-primary:        #10b981;   /* emerald-500 */
-  --accent-primary-hover:  #059669;   /* emerald-600 */
-  --accent-danger:         var(--color-danger);
-  --accent-success:        var(--color-success);
-  --accent-warning:        var(--color-warning);
-  --surface-1:             var(--color-surface-raised);
-  --surface-2:             var(--color-surface-overlay);
-  --bg-hover:              #f1f5f9;   /* slate-100 */
-  --bg-secondary:          #f8fafc;   /* slate-50 */
-}
-
-.dark {
-  /* Surface — rich near-blacks with subtle violet undertone for depth */
-  --color-surface-base:    #08080e;   /* deep near-black */
-  --color-surface-raised:  #0f0f1a;   /* raised — violet tint gives life */
-  --color-surface-overlay: #171728;   /* overlay — perceptible warmth */
-  --color-surface-input:   #0c0c16;
-  --color-surface-sidebar: #060610;
-
-  /* Text — warm whites, not clinical gray */
-  --color-text-primary:    #eaeaf0;   /* warm off-white */
-  --color-text-secondary:  #8b8fa2;   /* with blue undertone */
-  --color-text-muted:      #484c5e;   /* rich muted */
-  --color-text-inverse:    #111827;
-
-  /* Border — luminous edges, not dead lines */
-  --color-border:          #1a1a30;   /* violet-tinted border */
-  --color-border-strong:   #262644;   /* luminous strong border */
-
-  /* Accents — deeper in dark for white-text contrast */
-  --color-accent:          #059669;   /* emerald-600, readable with white text */
-  --color-accent-muted:    rgba(5,150,105,0.12);
-  --color-accent-border:   rgba(5,150,105,0.20);
-  --color-accent-hover:    #047857;   /* emerald-700 */
-  --color-amber:           #fbbf24;   /* amber-400 */
-  --color-amber-muted:     rgba(251,191,36,0.12);
-  --color-info:            #60a5fa;   /* blue-400 */
-  --color-info-muted:      rgba(96, 165, 250, 0.12);
-  --color-danger:          #fb7185;   /* rose-400 */
-  --color-warning:         #fbbf24;
-  --color-success:         #34d399;
-
-  /* Aliases — dark overrides */
-  --border-primary:        var(--color-border);
-  --border-secondary:      var(--color-border-strong);
-  --text-primary:          var(--color-text-primary);
-  --text-secondary:        var(--color-text-secondary);
-  --text-tertiary:         var(--color-text-muted);
-  --accent-primary:        #059669;
-  --accent-primary-hover:  #047857;
-  --accent-danger:         var(--color-danger);
-  --accent-success:        var(--color-success);
-  --accent-warning:        var(--color-warning);
-  --surface-1:             var(--color-surface-raised);
-  --surface-2:             var(--color-surface-overlay);
-  --bg-hover:              #161628;   /* violet-tinted hover */
-  --bg-secondary:          #111120;   /* subtle secondary */
+  /* On-surface text */
+  --color-on-surface:         #fdfbfe; /* primary text */
+  --color-on-surface-variant: #ababad; /* secondary text */
+  --color-outline:            #757578; /* tertiary text, placeholders */
+  --color-outline-variant:    #47484a; /* ghost borders at 15% opacity */
 }
 
 @theme {
-  --font-sans: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Cascadia Mono", monospace;
+  --font-sans:  "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-mono:  "JetBrains Mono", "Cascadia Mono", monospace;
 
-  --color-surface-base: var(--color-surface-base);
-  --color-surface-raised: var(--color-surface-raised);
-  --color-surface-overlay: var(--color-surface-overlay);
-  --color-surface-input: var(--color-surface-input);
-  --color-surface-sidebar: var(--color-surface-sidebar);
-  --color-text-primary: var(--color-text-primary);
-  --color-text-secondary: var(--color-text-secondary);
-  --color-text-muted: var(--color-text-muted);
-  --color-text-inverse: var(--color-text-inverse);
-  --color-border: var(--color-border);
-  --color-border-strong: var(--color-border-strong);
-  --color-accent: var(--color-accent);
-  --color-accent-muted: var(--color-accent-muted);
-  --color-accent-border: var(--color-accent-border);
-  --color-accent-hover: var(--color-accent-hover);
-  --color-info: var(--color-info);
-  --color-info-muted: var(--color-info-muted);
+  /* Surface */
+  --color-surface:                   var(--color-surface);
+  --color-surface-container-low:     var(--color-surface-container-low);
+  --color-surface-container-high:    var(--color-surface-container-high);
+  --color-surface-bright:            var(--color-surface-bright);
+  --color-surface-container-highest: var(--color-surface-container-highest);
+
+  /* Primary / Secondary / Tertiary / Error */
+  --color-primary:        var(--color-primary);
+  --color-primary-dim:    var(--color-primary-dim);
+  --color-secondary:      var(--color-secondary);
+  --color-secondary-dim:  var(--color-secondary-dim);
+  --color-tertiary:       var(--color-tertiary);
+  --color-tertiary-dim:   var(--color-tertiary-dim);
+  --color-error:          var(--color-error);
+
+  /* Text / Outline */
+  --color-on-surface:         var(--color-on-surface);
+  --color-on-surface-variant: var(--color-on-surface-variant);
+  --color-outline:            var(--color-outline);
+  --color-outline-variant:    var(--color-outline-variant);
 }
 
-/* Base styles */
+/* ─── Base styles ─── */
 @layer base {
   * {
     box-sizing: border-box;
   }
 
   *::selection {
-    background: oklch(92.4% 0.12 165);
-    color: #0f172a;
+    background: oklch(72% 0.18 274);
+    color: #fdfbfe;
   }
 
   html,
@@ -153,21 +84,12 @@
     font-family: var(--font-sans);
     line-height: 1.5;
     font-weight: 400;
-    color: var(--color-text-primary);
-    background-color: var(--color-surface-base);
-    transition: background-color 0.15s ease, color 0.15s ease;
+    color: var(--color-on-surface);
+    background-color: var(--color-surface);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Dark mode atmospheric background — subtle accent glow from top */
-  .dark body {
-    background:
-      radial-gradient(ellipse 80% 40% at 50% -10%, rgba(52,211,153,0.04) 0%, transparent 70%),
-      radial-gradient(ellipse 60% 30% at 80% 100%, rgba(99,102,241,0.03) 0%, transparent 60%),
-      var(--color-surface-base);
   }
 
   #app {
@@ -182,8 +104,10 @@
   h4,
   h5,
   h6 {
-    color: var(--color-text-primary);
+    font-family: var(--font-display);
+    color: var(--color-on-surface);
     font-weight: 600;
+    letter-spacing: -0.02em;
     margin: 0;
   }
 
@@ -191,7 +115,6 @@
     font-size: 1.5rem;
     font-weight: 700;
     line-height: 1.2;
-    letter-spacing: -0.01em;
   }
   h2 {
     font-size: 1.125rem;
@@ -208,7 +131,7 @@
   }
 
   p {
-    color: var(--color-text-secondary);
+    color: var(--color-on-surface-variant);
     margin: 0;
   }
 
@@ -220,12 +143,12 @@
 
   a {
     font-weight: 500;
-    color: #059669;
+    color: var(--color-primary);
     text-decoration: none;
     transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
   }
   a:hover {
-    color: #047857;
+    color: color-mix(in srgb, var(--color-primary) 80%, white);
   }
 
   button {
@@ -233,7 +156,7 @@
     cursor: pointer;
   }
 
-  /* Scrollbar — light theme */
+  /* Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -242,26 +165,15 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: var(--color-surface-container-high);
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-  }
-
-  /* Scrollbar — dark theme */
-  .dark ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .dark ::-webkit-scrollbar-thumb {
-    background: #1a1a30;
-  }
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: #262644;
+    background: var(--color-surface-bright);
   }
 }
 
-/* Utility animations */
+/* ─── Utility animations ─── */
 @layer utilities {
   .animate-fade-in {
     animation: fadeIn 0.25s ease-out;
@@ -271,6 +183,9 @@
   }
   .animate-spin {
     animation: spin 1s linear infinite;
+  }
+  .animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
   }
 }
 
@@ -303,15 +218,6 @@
   }
 }
 
-@keyframes row-highlight-fade {
-  0% {
-    background: rgba(245, 158, 11, 0.28);
-  }
-  100% {
-    background: transparent;
-  }
-}
-
 @keyframes pulse-glow {
   0%, 100% {
     opacity: 0.6;
@@ -321,89 +227,23 @@
   }
 }
 
-/* Copilot message prose overrides — outside @layer so they beat Typography defaults */
-.copilot-prose {
-  --tw-prose-body: var(--color-text-primary);
-  --tw-prose-headings: var(--color-text-primary);
-  --tw-prose-bold: var(--color-text-primary);
-  --tw-prose-links: var(--color-accent);
-  --tw-prose-code: var(--color-accent);
-  --tw-prose-pre-bg: var(--color-surface-base);
-  --tw-prose-pre-code: var(--color-text-primary);
-  --tw-prose-quotes: var(--color-text-secondary);
-  --tw-prose-quote-borders: var(--color-border-strong);
-  --tw-prose-counters: var(--color-text-muted);
-  --tw-prose-bullets: var(--color-text-muted);
-  --tw-prose-th-borders: var(--color-border-strong);
-  --tw-prose-td-borders: var(--color-border);
-  --tw-prose-hr: var(--color-border);
+@keyframes shimmer {
+  0%, 100% {
+    background-color: var(--color-surface-container-low);
+  }
+  50% {
+    background-color: var(--color-surface-container-high);
+  }
 }
 
-.copilot-prose :is(strong, b) {
-  color: var(--color-text-primary);
-}
-
-.copilot-prose code:not(pre code) {
-  background: var(--color-surface-overlay);
-  color: var(--color-accent);
-  border-radius: 0.25rem;
-  padding: 0.125rem 0.375rem;
-  font-size: 0.8em;
-  font-weight: 500;
-}
-
-.copilot-prose code:not(pre code)::before,
-.copilot-prose code:not(pre code)::after {
-  content: none;
-}
-
-.copilot-prose pre {
-  border: 1px solid var(--color-border);
-  border-radius: 0.375rem;
-}
-
-.copilot-prose table {
-  font-size: 0.8rem;
-}
-
-.copilot-prose img {
-  border-radius: 0.375rem;
-}
-
-/* Tool call indicator chips */
-.tool-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px 3px 7px;
-  font-size: 10.5px;
-  font-family: var(--font-mono);
-  letter-spacing: 0.015em;
-  color: var(--color-text-secondary);
-  background: var(--color-surface-overlay);
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  white-space: nowrap;
-  animation: slideUp 0.2s ease-out;
-}
-
-.tool-chip-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.tool-chip-dot--running {
-  background: var(--color-amber);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--color-amber) 40%, transparent);
-  animation: pulse-glow 1.5s ease-in-out infinite;
-}
-
-.tool-chip-dot--complete {
-  background: var(--color-success);
-}
-
-.tool-chip-dot--error {
-  background: var(--color-danger);
+/* ─── Reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
 }
