@@ -11,6 +11,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   navigate: [path: string]
+  hover: []
+  hoverEnd: []
 }>()
 
 const route = useRoute()
