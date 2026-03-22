@@ -508,6 +508,43 @@ Errors use `error` color sparingly — the message should be helpful, not alarmi
 
 ---
 
+## 6.3 Keyboard Shortcuts (CEO review expansion)
+
+Unified shortcut system via `useKeyboardShortcuts()` composable. SRE power users live on keyboard.
+
+| Shortcut | Action |
+|---|---|
+| `Cmd+K` | Open AI command modal |
+| `Cmd+B` | Toggle sidebar |
+| `Cmd+/` | Show keyboard shortcuts overlay |
+| `Cmd+1` through `Cmd+5` | Jump to nav items (Home, Dashboards, Services, Alerts, Explore) |
+| `Cmd+Shift+N` | New dashboard |
+| `Cmd+E` | Jump to Explore |
+| `Cmd+P` or typing in Cmd+K | Fuzzy search across dashboards, alerts, data sources, settings |
+| `Escape` | Close any modal/overlay |
+
+**Help overlay:** `Cmd+/` opens a centered modal listing all shortcuts, grouped by category. Same glassmorphic treatment as Cmd+K.
+
+**Cmd+K dual mode:** Typing a search term (dashboard name, alert name) triggers fuzzy search. Typing a natural language question activates AI mode. Heuristic: if input looks like a name/keyword, search; if it looks like a sentence, AI. User can force mode with `/ai` or `/search` prefix.
+
+## 6.4 Dashboard Favorites & Recents (CEO review expansion)
+
+- **Favorite icon:** Star icon on each dashboard card in the Explorer. Click to pin/unpin.
+- **Storage:** Favorites stored in localStorage per user (`ace-favorites`).
+- **Home integration:** Favorited dashboards appear in a "Pinned Dashboards" row on the Home page, between the Health Grid and AI Insights.
+- **Recent dashboards:** Track last 10 visited dashboards in-memory (sessionStorage). Show as "Recently Viewed" row on Home page below pinned.
+
+## 6.5 Auto-Refresh & Freshness Indicator (CEO review expansion)
+
+Dashboard detail views show real-time data freshness:
+
+- **Auto-refresh toggle:** Dropdown in the dashboard header next to time range picker. Options: 15s, 30s, 1m, 5m, Off.
+- **Freshness indicator:** "Last refreshed Xs ago" text in `on-surface-variant`, updates every second.
+- **Status dot:** Green pulsing dot when auto-refreshing, gray static dot when paused.
+- **Stale warning:** If data is older than 2x the refresh interval, indicator turns `tertiary` (amber) with "Data may be stale."
+
+---
+
 ## 7. What Gets Deleted
 
 The following current files/patterns are replaced entirely:
