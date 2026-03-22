@@ -27,17 +27,30 @@ const labelMap: Record<string, string> = {
   info: 'Info',
 }
 
-const dotStyle = computed(() => ({
-  width: `${props.size}px`,
-  height: `${props.size}px`,
-  backgroundColor: colorMap[props.status],
-  borderRadius: '9999px',
-  display: 'inline-block',
-  flexShrink: 0,
-  ...(props.pulse
-    ? { animation: 'statusDotPulse 2s ease-in-out infinite' }
-    : {}),
-}))
+const glowAnimationMap: Record<string, string> = {
+  critical: 'pulse-critical 2s ease-in-out infinite',
+  warning: 'pulse-warning 2s ease-in-out infinite',
+}
+
+const dotStyle = computed(() => {
+  const animations: string[] = []
+  if (props.pulse) {
+    animations.push('statusDotPulse 2s ease-in-out infinite')
+  }
+  if (glowAnimationMap[props.status]) {
+    animations.push(glowAnimationMap[props.status])
+  }
+
+  return {
+    width: `${props.size}px`,
+    height: `${props.size}px`,
+    backgroundColor: colorMap[props.status],
+    borderRadius: '9999px',
+    display: 'inline-block',
+    flexShrink: 0,
+    ...(animations.length > 0 ? { animation: animations.join(', ') } : {}),
+  }
+})
 </script>
 
 <template>
@@ -56,5 +69,15 @@ const dotStyle = computed(() => ({
   50% {
     opacity: 0.4;
   }
+}
+
+@keyframes pulse-critical {
+  0%, 100% { box-shadow: 0 0 4px rgba(239,68,68,0.4); }
+  50% { box-shadow: 0 0 10px rgba(239,68,68,0.7); }
+}
+
+@keyframes pulse-warning {
+  0%, 100% { box-shadow: 0 0 4px rgba(249,115,22,0.4); }
+  50% { box-shadow: 0 0 10px rgba(249,115,22,0.7); }
 }
 </style>

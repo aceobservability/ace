@@ -49,4 +49,42 @@ describe('StatusDot', () => {
     const dot = wrapper.find('[role="status"]')
     expect(dot.attributes('style')).toContain('8px')
   })
+
+  it('applies glow animation for critical status', () => {
+    const wrapper = mount(StatusDot, {
+      props: { status: 'critical' },
+    })
+
+    const dot = wrapper.find('[role="status"]')
+    expect(dot.attributes('style')).toContain('pulse-critical')
+  })
+
+  it('applies glow animation for warning status', () => {
+    const wrapper = mount(StatusDot, {
+      props: { status: 'warning' },
+    })
+
+    const dot = wrapper.find('[role="status"]')
+    expect(dot.attributes('style')).toContain('pulse-warning')
+  })
+
+  it('does NOT apply glow animation for healthy status', () => {
+    const wrapper = mount(StatusDot, {
+      props: { status: 'healthy' },
+    })
+
+    const dot = wrapper.find('[role="status"]')
+    expect(dot.attributes('style')).not.toContain('pulse-')
+  })
+
+  it('applies both opacity pulse and glow when pulse prop is true on critical status', () => {
+    const wrapper = mount(StatusDot, {
+      props: { status: 'critical', pulse: true },
+    })
+
+    const dot = wrapper.find('[role="status"]')
+    const style = dot.attributes('style') || ''
+    expect(style).toContain('statusDotPulse')
+    expect(style).toContain('pulse-critical')
+  })
 })
