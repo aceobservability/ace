@@ -1,0 +1,153 @@
+<h2>Overall Layout Structure</h2>
+<p class="subtitle">How the app shell organizes sidebar, content, and AI elements</p>
+
+<div class="cards">
+  <!-- Layout mockup -->
+  <div class="card" style="grid-column: 1 / -1; cursor: default;">
+    <div class="card-body" style="padding: 0;">
+      <div style="display: flex; height: 520px; background: #0d0e10; border-radius: 8px; overflow: hidden; font-family: 'Inter', sans-serif; font-size: 12px; position: relative;">
+
+        <!-- Sidebar expanded -->
+        <div style="width: 240px; background: #121316; display: flex; flex-direction: column; padding: 16px 0; flex-shrink: 0; transition: width 0.2s;">
+          <!-- Logo -->
+          <div style="padding: 0 20px 20px; display: flex; align-items: center; gap: 10px;">
+            <div style="width: 28px; height: 28px; background: linear-gradient(135deg, #a3a6ff, #6063ee); border-radius: 6px;"></div>
+            <span style="color: #fdfbfe; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: -0.02em;">Ace</span>
+          </div>
+
+          <!-- Nav items -->
+          <div style="flex: 1; padding: 0 8px;">
+            <div style="padding: 8px 12px; background: #1e2022; border-radius: 6px; color: #a3a6ff; display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              <span style="font-size: 13px; font-weight: 500;">Dashboards</span>
+            </div>
+            <div style="padding: 8px 12px; color: #ababad; display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span style="font-size: 13px;">Alerts</span>
+            </div>
+            <div style="padding: 8px 12px; color: #ababad; display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <span style="font-size: 13px;">Explore</span>
+            </div>
+            <div style="padding: 8px 12px; color: #ababad; display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <span style="font-size: 13px;">Services</span>
+            </div>
+            <div style="padding: 8px 12px; color: #ababad; display: flex; align-items: center; gap: 10px; margin-bottom: 2px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              <span style="font-size: 13px;">Data Sources</span>
+            </div>
+          </div>
+
+          <!-- Bottom section -->
+          <div style="padding: 0 8px; border-top: 1px solid #1e2022; padding-top: 12px; margin-top: 8px;">
+            <div style="padding: 8px 12px; color: #ababad; display: flex; align-items: center; gap: 10px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+              <span style="font-size: 13px;">Settings</span>
+            </div>
+            <div style="padding: 8px 12px; display: flex; align-items: center; gap: 10px;">
+              <div style="width: 24px; height: 24px; border-radius: 6px; background: #6063ee; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 600;">JH</div>
+              <span style="color: #ababad; font-size: 13px;">janhoon</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main content area -->
+        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+          <!-- Content header area -->
+          <div style="padding: 20px 24px 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3 style="color: #fdfbfe; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin: 0;">Dashboards</h3>
+              <p style="color: #ababad; font-size: 12px; margin: 4px 0 0;">7 dashboards across 3 folders</p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <div style="padding: 6px 16px; background: #181a1c; border-radius: 4px; color: #ababad; font-size: 12px;">Search...</div>
+              <div style="padding: 6px 16px; background: linear-gradient(135deg, #a3a6ff, #6063ee); border-radius: 4px; color: white; font-size: 12px; font-weight: 500;">+ New</div>
+            </div>
+          </div>
+
+          <!-- Content body -->
+          <div style="flex: 1; padding: 0 24px; overflow: hidden;">
+            <!-- Dashboard cards mockup -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+              <div style="background: #121316; border-radius: 6px; padding: 16px; height: 140px;">
+                <div style="font-size: 12px; color: #ababad; margin-bottom: 8px;">Production</div>
+                <div style="font-family: 'Space Grotesk', sans-serif; color: #fdfbfe; font-size: 14px; font-weight: 500;">API Gateway Overview</div>
+                <div style="margin-top: 12px; display: flex; gap: 16px;">
+                  <div><span style="color: #69f6b8; font-family: monospace; font-size: 18px; font-weight: 600;">99.7%</span><br><span style="color: #757578; font-size: 10px;">UPTIME</span></div>
+                  <div><span style="color: #fdfbfe; font-family: monospace; font-size: 18px; font-weight: 600;">142ms</span><br><span style="color: #757578; font-size: 10px;">P95 LAT</span></div>
+                </div>
+              </div>
+              <div style="background: #121316; border-radius: 6px; padding: 16px; height: 140px;">
+                <div style="font-size: 12px; color: #ababad; margin-bottom: 8px;">Infrastructure</div>
+                <div style="font-family: 'Space Grotesk', sans-serif; color: #fdfbfe; font-size: 14px; font-weight: 500;">K8s Cluster Health</div>
+                <div style="margin-top: 12px; display: flex; gap: 16px;">
+                  <div><span style="color: #ffb148; font-family: monospace; font-size: 18px; font-weight: 600;">78%</span><br><span style="color: #757578; font-size: 10px;">CPU</span></div>
+                  <div><span style="color: #69f6b8; font-family: monospace; font-size: 18px; font-weight: 600;">54%</span><br><span style="color: #757578; font-size: 10px;">MEM</span></div>
+                </div>
+              </div>
+              <div style="background: #121316; border-radius: 6px; padding: 16px; height: 140px;">
+                <div style="font-size: 12px; color: #ababad; margin-bottom: 8px;">Application</div>
+                <div style="font-family: 'Space Grotesk', sans-serif; color: #fdfbfe; font-size: 14px; font-weight: 500;">Error Tracking</div>
+                <div style="margin-top: 12px; display: flex; gap: 16px;">
+                  <div><span style="color: #ff6e84; font-family: monospace; font-size: 18px; font-weight: 600;">23</span><br><span style="color: #757578; font-size: 10px;">ERRORS/MIN</span></div>
+                  <div><span style="color: #fdfbfe; font-family: monospace; font-size: 18px; font-weight: 600;">3</span><br><span style="color: #757578; font-size: 10px;">CRITICAL</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Command Bar (bottom) -->
+          <div style="padding: 12px 24px;">
+            <div style="background: #2b2c2f; border-radius: 8px; padding: 10px 16px; display: flex; align-items: center; gap: 10px; backdrop-filter: blur(20px);">
+              <div style="width: 18px; height: 18px; background: linear-gradient(135deg, #a3a6ff, #6063ee); border-radius: 4px; flex-shrink: 0;"></div>
+              <span style="color: #757578; font-size: 13px; flex: 1;">Ask Ace AI anything... generate a dashboard, query metrics, explain an alert</span>
+              <span style="color: #47484a; font-size: 11px; font-family: monospace; background: #1e2022; padding: 2px 6px; border-radius: 3px;">Cmd+K</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collapsed state indicator -->
+        <div style="position: absolute; top: 12px; right: 12px; background: #1e2022; border-radius: 4px; padding: 4px 8px; color: #757578; font-size: 10px; font-family: monospace;">
+          Sidebar: Cmd+B to toggle
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top: 32px;">Key Layout Decisions</h3>
+<p class="subtitle">Click to confirm or flag items you want to change</p>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="sidebar" onclick="toggleSelect(this)">
+    <div class="letter">1</div>
+    <div class="content">
+      <h3>Full sidebar (240px) collapses to 0px</h3>
+      <p>Toggle with Cmd+B. No icon rail — fully hidden when collapsed. Content reclaims full width.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="ai-bar" onclick="toggleSelect(this)">
+    <div class="letter">2</div>
+    <div class="content">
+      <h3>AI Command Bar fixed at bottom of every view</h3>
+      <p>Persistent Cmd+K bar for natural language queries, dashboard generation, and contextual AI. Expands into a chat panel when active.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tonal" onclick="toggleSelect(this)">
+    <div class="letter">3</div>
+    <div class="content">
+      <h3>Tonal layering instead of borders</h3>
+      <p>Following the "No-Line Rule" — surface hierarchy (#0d0e10 → #121316 → #1e2022 → #2b2c2f) defines structure. Ghost borders only where accessibility requires it.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="density" onclick="toggleSelect(this)">
+    <div class="letter">4</div>
+    <div class="content">
+      <h3>High-density "flight deck" aesthetic</h3>
+      <p>Compact spacing, monospace metrics, small labels, sparklines. Optimized for information density, not whitespace.</p>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top: 16px; color: #888; font-size: 14px;">Select all items that look right. Flag anything you'd change in the terminal.</p>

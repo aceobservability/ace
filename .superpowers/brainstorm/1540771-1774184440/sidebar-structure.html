@@ -1,0 +1,36 @@
+<h2>Sidebar Structure</h2>
+<p class="subtitle">What layout pattern fits Ace best?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Icon Rail + Flyout</h3>
+      <p>Narrow icon strip (48-56px) always visible. Hovering or clicking expands a flyout panel with labels and sub-navigation. Maximizes content space. Think: VS Code, Linear, Figma.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Collapsible Sidebar</h3>
+      <p>Toggle between a slim icon-only mode (~56px) and a full expanded mode (~220px). User controls when to expand/collapse. Similar to current behavior but with a proper collapsed state instead of fully hiding. Think: Grafana, GitHub.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Fixed Full Sidebar</h3>
+      <p>Always-visible sidebar at ~200-240px. No collapse, no toggle. Clean and simple — the content area adjusts. Relies on the 1280px+ viewport requirement you already enforce. Think: Datadog, Notion.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="d" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Two-Level Sidebar</h3>
+      <p>Narrow primary rail with top-level sections, plus a secondary panel that slides out to show sub-navigation for the selected section. Good for deep navigation trees. Think: Azure Portal, Jira.</p>
+    </div>
+  </div>
+</div>

@@ -3,14 +3,19 @@ import { describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import App from './App.vue'
 
-// Mock composables
-const mockIsOpen = ref(true)
+// Mock composables — useSidebar no longer exports isOpen/open/close/toggle
 vi.mock('./composables/useSidebar', () => ({
   useSidebar: () => ({
-    isOpen: mockIsOpen,
-    open: vi.fn(),
-    close: vi.fn(),
-    toggle: vi.fn(),
+    hoveredSection: ref(null),
+    pinnedSection: ref(null),
+    isPeeking: ref(false),
+    activeFlyoutSection: ref(null),
+    currentRouteSection: ref('dashboards'),
+    handleMouseEnter: vi.fn(),
+    handleMouseLeave: vi.fn(),
+    pinSection: vi.fn(),
+    closeFlyout: vi.fn(),
+    _reset: vi.fn(),
   }),
 }))
 
@@ -135,8 +140,7 @@ describe('App', () => {
     expect(wrapper.findComponent({ name: 'CmdKModal' }).exists()).toBe(true)
   })
 
-  it('shows hamburger button when sidebar is closed', async () => {
-    mockIsOpen.value = false
+  it('applies 52px left margin when sidebar is shown', () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
@@ -146,11 +150,10 @@ describe('App', () => {
           ShortcutsOverlay: true,
           ToastNotification: true,
           CookieConsentBanner: true,
-          Menu: { template: '<span />' },
         },
       },
     })
-    expect(wrapper.find('[data-testid="sidebar-hamburger"]').exists()).toBe(true)
-    mockIsOpen.value = true
+    const main = wrapper.find('main')
+    expect(main.element.style.marginLeft).toBe('52px')
   })
 })

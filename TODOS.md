@@ -62,18 +62,26 @@
 **Priority:** P3
 **Depends on:** Chat-to-dashboard MVP
 
-## Design
+## Sidebar
+
+### Extend useFavorites to non-dashboard sections
+
+**What:** Extend the `useFavorites` composable to support favorites for Services, Explore queries, and Alerts — not just dashboards.
+
+**Why:** The new sidebar flyout displays a Favorites section per nav section, but `useFavorites` currently only tracks dashboard IDs. Services, Explore, and Alerts flyouts will show the empty state hint ("Star items to pin them here") until this is implemented.
+
+**Pros:** Favorites become useful across all sections, making the flyout a power-user productivity tool.
+
+**Cons:** Requires defining what a "favorite" means for each section (service ID? query string? alert rule ID?) and extending the localStorage schema.
+
+**Context:** The sidebar flyout is display-only — it reads from `useFavorites` but doesn't write. The star/favorite action must be added to each view (ServicesView, UnifiedExploreView, AlertsView) individually. DashboardList already has starring.
+
+**Effort:** M
+**Priority:** P2
+**Depends on:** Sidebar redesign
+
+## Completed
 
 ### Create DESIGN.md
 
-**What:** Document the app's design system — color tokens, spacing scale, typography, component patterns, icon library.
-
-**Why:** The app has a consistent design language (semantic Tailwind tokens like `bg-surface-raised`, `text-text-primary`, `bg-accent`; Lucide icons; surface layering) but it's implicit in the code, not documented. New components risk visual drift without a reference. Run `/design-consultation` to generate it from the existing codebase patterns.
-
-**Context:** Key tokens to document: `bg-surface-raised`, `bg-surface-overlay`, `bg-accent`, `text-text-primary`, `text-text-muted`, `text-text-secondary`, `border-border`, `text-accent`, `bg-accent-hover`. Error pattern: `text-rose-500 bg-rose-500/10`. Success pattern: `text-emerald-500` + Check icon. Primary buttons: `bg-accent text-white`. Surface z-order: raised > overlay > base.
-
-**Effort:** S
-**Priority:** P3
-**Depends on:** None
-
-## Completed
+Created the "Kinetic" design system — warm amber palette, Satoshi/DM Sans typography, restrained color philosophy. Documented in DESIGN.md at project root.

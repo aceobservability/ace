@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Menu } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppSidebar from './components/AppSidebar.vue'
@@ -12,12 +11,10 @@ import { useDatasource } from './composables/useDatasource'
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts'
 import { useOrgBranding } from './composables/useOrgBranding'
 import { useOrganization } from './composables/useOrganization'
-import { useSidebar } from './composables/useSidebar'
 
 const route = useRoute()
 const router = useRouter()
 const { isAuthenticated } = useAuth()
-const { isOpen, open: openSidebar } = useSidebar()
 const { register } = useKeyboardShortcuts()
 const { currentOrg, fetchOrganizations } = useOrganization()
 const { fetchDatasources } = useDatasource()
@@ -29,7 +26,7 @@ const showSidebar = computed(() => {
 
 const mainMargin = computed(() => {
   if (!showSidebar.value) return {}
-  return { marginLeft: isOpen.value ? '240px' : '0px' }
+  return { marginLeft: '52px' }
 })
 
 // Cmd+K modal state
@@ -53,7 +50,7 @@ onMounted(() => {
   window.addEventListener('resize', checkViewport)
 })
 
-// Fetch organizations when authenticated (handles both immediate and delayed auth)
+// Fetch organizations when authenticated
 watch(isAuthenticated, async (authenticated) => {
   if (authenticated) {
     await fetchOrganizations()
@@ -71,32 +68,14 @@ onUnmounted(() => {
   window.removeEventListener('resize', checkViewport)
 })
 
-// Register global shortcuts
+// Register global shortcuts (only Cmd+K and Cmd+Shift+N remain here)
 const unregisterFns: (() => void)[] = []
 
 unregisterFns.push(
   register('Cmd+K', openCmdK, 'Open command palette', 'General'),
 )
 unregisterFns.push(
-  register('Cmd+1', () => router.push('/app'), 'Go to Home', 'Navigation'),
-)
-unregisterFns.push(
-  register('Cmd+2', () => router.push('/app/dashboards'), 'Go to Dashboards', 'Navigation'),
-)
-unregisterFns.push(
-  register('Cmd+3', () => router.push('/app/services'), 'Go to Services', 'Navigation'),
-)
-unregisterFns.push(
-  register('Cmd+4', () => router.push('/app/alerts'), 'Go to Alerts', 'Navigation'),
-)
-unregisterFns.push(
-  register('Cmd+5', () => router.push('/app/explore/metrics'), 'Go to Explore', 'Navigation'),
-)
-unregisterFns.push(
   register('Cmd+Shift+N', () => router.push('/app/dashboards?new=1'), 'New dashboard', 'Actions'),
-)
-unregisterFns.push(
-  register('Cmd+E', () => router.push('/app/explore/metrics'), 'Open Explore', 'Navigation'),
 )
 
 onUnmounted(() => {
@@ -110,26 +89,6 @@ onUnmounted(() => {
   <div class="relative flex min-h-screen w-full overflow-x-hidden">
     <!-- Sidebar -->
     <AppSidebar v-if="showSidebar" />
-
-    <!-- Hamburger button when sidebar is closed -->
-    <button
-      v-if="showSidebar && !isOpen"
-      class="fixed top-3 left-3 z-40 flex items-center justify-center rounded-md border-none cursor-pointer transition-opacity"
-      :style="{
-        width: '32px',
-        height: '32px',
-        backgroundColor: 'transparent',
-        color: 'var(--color-outline)',
-        opacity: 0.5,
-      }"
-      data-testid="sidebar-hamburger"
-      title="Open sidebar"
-      @click="openSidebar"
-      @mouseenter="($event.target as HTMLElement).style.opacity = '1'"
-      @mouseleave="($event.target as HTMLElement).style.opacity = '0.5'"
-    >
-      <Menu :size="20" />
-    </button>
 
     <!-- Main content -->
     <main

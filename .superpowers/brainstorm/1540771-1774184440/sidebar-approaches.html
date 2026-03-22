@@ -1,0 +1,134 @@
+<h2>Sidebar Redesign — Two Approaches</h2>
+<p class="subtitle">Both use: icon rail + flyout, hover-to-peek / click-to-pin, logo top / user bottom, popover user menu. The difference is visual weight and flyout behavior.</p>
+
+<div class="cards">
+  <!-- Approach A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 0; overflow: hidden;">
+      <div style="display: flex; height: 420px; font-family: 'Inter', system-ui, sans-serif; font-size: 13px;">
+        <!-- Icon Rail -->
+        <div style="width: 52px; background: #121316; display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 4px; border-right: 1px solid rgba(255,255,255,0.06);">
+          <!-- Logo -->
+          <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #E5A00D, #B8800A); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #0C0D0F; font-weight: 700; font-size: 14px; margin-bottom: 16px; font-family: 'Inter', sans-serif;">A</div>
+          <!-- Nav icons -->
+          <div style="width: 36px; height: 36px; background: rgba(229,160,13,0.12); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #E5A00D; font-size: 16px;">&#9733;</div>
+          <div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6B6B68; font-size: 16px;">&#9638;</div>
+          <div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6B6B68; font-size: 16px;">&#9672;</div>
+          <div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6B6B68; font-size: 16px;">&#9888;</div>
+          <div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6B6B68; font-size: 16px;">&#8981;</div>
+          <!-- Spacer -->
+          <div style="flex: 1;"></div>
+          <!-- Settings -->
+          <div style="width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #6B6B68; font-size: 16px;">&#9881;</div>
+          <!-- User avatar -->
+          <div style="width: 28px; height: 28px; background: #252830; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #A8A8A4; font-size: 11px; font-weight: 600; margin-top: 4px;">JH</div>
+        </div>
+        <!-- Flyout Panel -->
+        <div style="width: 220px; background: #141518; padding: 16px; border-right: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 12px;">
+          <div style="color: #6B6B68; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Explore</div>
+          <!-- Sub-nav -->
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <div style="padding: 8px 12px; background: rgba(229,160,13,0.12); border-radius: 6px; color: #E5A00D; font-weight: 500; font-size: 13px;">Metrics</div>
+            <div style="padding: 8px 12px; border-radius: 6px; color: #A8A8A4; font-size: 13px;">Logs</div>
+            <div style="padding: 8px 12px; border-radius: 6px; color: #A8A8A4; font-size: 13px;">Traces</div>
+          </div>
+          <!-- Recent -->
+          <div style="margin-top: 8px;">
+            <div style="color: #6B6B68; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Recent</div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="padding: 6px 12px; border-radius: 6px; color: #6B6B68; font-size: 12px;">cpu.usage.system</div>
+              <div style="padding: 6px 12px; border-radius: 6px; color: #6B6B68; font-size: 12px;">http.request.duration</div>
+            </div>
+          </div>
+        </div>
+        <!-- Content area hint -->
+        <div style="flex: 1; background: #0C0D0F; display: flex; align-items: center; justify-content: center; color: #4A4A48; font-size: 12px;">
+          Content area
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: Warm Minimal</h3>
+      <p>Clean lines, subtle surface layering, no borders except structural ones. Flyout uses the Kinetic warm palette — amber active states on dark warm neutrals. Rail icons get a soft rounded-square highlight. Feels calm and modern.</p>
+    </div>
+  </div>
+
+  <!-- Approach B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 0; overflow: hidden;">
+      <div style="display: flex; height: 420px; font-family: 'Inter', system-ui, sans-serif; font-size: 13px;">
+        <!-- Icon Rail -->
+        <div style="width: 52px; background: #0C0D0F; display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 4px;">
+          <!-- Logo -->
+          <div style="width: 32px; height: 32px; background: #E5A00D; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #0C0D0F; font-weight: 700; font-size: 14px; margin-bottom: 16px; font-family: 'Inter', sans-serif;">A</div>
+          <!-- Nav icons - active has left accent bar -->
+          <div style="width: 40px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6B6B68; font-size: 16px; position: relative;">&#9733;
+            <div style="position: absolute; left: -2px; top: 8px; bottom: 8px; width: 3px; background: transparent; border-radius: 2px;"></div>
+          </div>
+          <div style="width: 40px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6B6B68; font-size: 16px;">&#9638;</div>
+          <div style="width: 40px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6B6B68; font-size: 16px;">&#9672;</div>
+          <div style="width: 40px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6B6B68; font-size: 16px;">&#9888;</div>
+          <div style="width: 40px; height: 36px; background: rgba(229,160,13,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #E5A00D; font-size: 16px; position: relative;">&#8981;
+            <div style="position: absolute; left: -2px; top: 8px; bottom: 8px; width: 3px; background: #E5A00D; border-radius: 2px;"></div>
+          </div>
+          <!-- Spacer -->
+          <div style="flex: 1;"></div>
+          <!-- Settings -->
+          <div style="width: 40px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6B6B68; font-size: 16px;">&#9881;</div>
+          <!-- User avatar -->
+          <div style="width: 30px; height: 30px; background: #1C1E22; border: 1px solid rgba(255,255,255,0.06); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #A8A8A4; font-size: 11px; font-weight: 600; margin-top: 4px;">JH</div>
+        </div>
+        <!-- Flyout Panel -->
+        <div style="width: 240px; background: #141518; padding: 16px; border-left: 1px solid rgba(255,255,255,0.06); border-right: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; gap: 12px; box-shadow: 8px 0 24px rgba(0,0,0,0.3);">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="color: #F5F5F4; font-size: 13px; font-weight: 600; letter-spacing: -0.01em;">Explore</div>
+            <div style="color: #6B6B68; font-size: 18px; cursor: pointer; line-height: 1;">&#10005;</div>
+          </div>
+          <!-- Quick search -->
+          <div style="padding: 7px 10px; background: #1C1E22; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); color: #4A4A48; font-size: 12px;">Search explore...</div>
+          <!-- Sub-nav -->
+          <div style="display: flex; flex-direction: column; gap: 2px;">
+            <div style="padding: 8px 12px; border-radius: 6px; color: #A8A8A4; font-size: 13px;">Metrics</div>
+            <div style="padding: 8px 12px; border-radius: 6px; color: #A8A8A4; font-size: 13px;">Logs</div>
+            <div style="padding: 8px 12px; background: rgba(229,160,13,0.10); border-radius: 6px; color: #E5A00D; font-weight: 500; font-size: 13px; border-left: 2px solid #E5A00D; padding-left: 10px;">Traces</div>
+          </div>
+          <!-- Favorites -->
+          <div style="margin-top: 8px;">
+            <div style="color: #6B6B68; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Favorites</div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="padding: 6px 12px; border-radius: 6px; color: #6B6B68; font-size: 12px; display: flex; align-items: center; gap: 6px;"><span style="color: #E5A00D; font-size: 10px;">&#9733;</span> api-gateway traces</div>
+              <div style="padding: 6px 12px; border-radius: 6px; color: #6B6B68; font-size: 12px; display: flex; align-items: center; gap: 6px;"><span style="color: #E5A00D; font-size: 10px;">&#9733;</span> checkout-flow</div>
+            </div>
+          </div>
+          <!-- Recent -->
+          <div style="margin-top: 4px;">
+            <div style="color: #6B6B68; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Recent</div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="padding: 6px 12px; border-radius: 6px; color: #6B6B68; font-size: 12px;">payment-service</div>
+            </div>
+          </div>
+        </div>
+        <!-- Content area hint -->
+        <div style="flex: 1; background: #0C0D0F; display: flex; align-items: center; justify-content: center; color: #4A4A48; font-size: 12px;">
+          Content area
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: Mission Control</h3>
+      <p>More structured — active item gets a left accent bar, flyout has a header with close button, inline search per section, favorites + recents. Slightly heavier but more feature-rich. Drop shadow on the flyout gives it panel depth. Feels like a proper cockpit.</p>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 24px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+  <h3 style="margin-bottom: 8px;">Both approaches share:</h3>
+  <ul style="color: #aaa; font-size: 13px; line-height: 1.8; margin: 0; padding-left: 20px;">
+    <li>52px icon rail, always visible</li>
+    <li>Ace logo mark (amber) at top of rail</li>
+    <li>Hover-to-peek, click-to-pin flyout</li>
+    <li>User avatar at bottom with popover menu</li>
+    <li>Kinetic warm palette (amber primary, warm neutrals)</li>
+    <li>Settings icon pinned to bottom of rail</li>
+  </ul>
+</div>

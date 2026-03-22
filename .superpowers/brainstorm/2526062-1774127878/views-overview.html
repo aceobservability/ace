@@ -1,0 +1,76 @@
+<h2>The 7 Views</h2>
+<p class="subtitle">Overview of each screen's purpose and key components</p>
+
+<div class="options">
+  <div class="option" style="cursor: default;">
+    <div class="letter" style="background: linear-gradient(135deg, #a3a6ff, #6063ee); color: white;">1</div>
+    <div class="content">
+      <h3>Dashboards Explorer</h3>
+      <p><strong>Route:</strong> /app/dashboards</p>
+      <p>Browse, search, and organize dashboards. Card grid with live metric previews (sparklines, key stats). Folder hierarchy. "New Dashboard" button opens choice: blank or AI-generated. Search with filters (folder, tag, data source).</p>
+      <p style="color: #69f6b8; font-size: 12px;">Replaces: DashboardsView + DashboardList</p>
+    </div>
+  </div>
+
+  <div class="option" style="cursor: default;">
+    <div class="letter" style="background: linear-gradient(135deg, #a3a6ff, #6063ee); color: white;">2</div>
+    <div class="content">
+      <h3>Dynamic Dashboard (Detail)</h3>
+      <p><strong>Route:</strong> /app/dashboards/:id</p>
+      <p>The dashboard itself. Draggable grid of panels (line charts, gauges, tables, stats, heatmaps, traces). Time range picker top-right. Edit mode toggle. Panel types: stat, line, bar, pie, gauge, table, log viewer, trace timeline. Inline AI insights — anomaly badges on panels, AI-suggested correlations between metrics. Panel edit modal for query building.</p>
+      <p style="color: #69f6b8; font-size: 12px;">Replaces: DashboardDetailView</p>
+    </div>
+  </div>
+
+  <div class="option" style="cursor: default;">
+    <div class="letter" style="background: linear-gradient(135deg, #a3a6ff, #6063ee); color: white;">3</div>
+    <div class="content">
+      <h3>Services Overview</h3>
+      <p><strong>Route:</strong> /app/services</p>
+      <p>High-level service health at a glance. Service cards showing status (healthy/degraded/down), key metrics (latency, error rate, throughput), and dependency map. Click into a service to see its related dashboards and alerts. This is the "flight deck" — dense, scannable, monospace metrics everywhere.</p>
+      <p style="color: #ffb148; font-size: 12px;">New view — scaffold without backend wiring</p>
+    </div>
+  </div>
+
+  <div class="option" style="cursor: default;">
+    <div class="letter" style="background: linear-gradient(135deg, #a3a6ff, #6063ee); color: white;">4</div>
+    <div class="content">
+      <h3>Alert & Incident Explorer</h3>
+      <p><strong>Route:</strong> /app/alerts</p>
+      <p>All alerts in a dense, filterable table. Columns: severity, name, source, status (firing/resolved/silenced), duration, last triggered. Expandable rows for alert detail + history. Firing alerts surface AI-generated root cause suggestions inline. Incident grouping — related alerts clustered together. Silence/acknowledge actions.</p>
+      <p style="color: #69f6b8; font-size: 12px;">Replaces: AlertsView</p>
+    </div>
+  </div>
+
+  <div class="option" style="cursor: default;">
+    <div class="letter" style="background: linear-gradient(135deg, #a3a6ff, #6063ee); color: white;">5</div>
+    <div class="content">
+      <h3>Explore (Metrics / Logs / Traces)</h3>
+      <p><strong>Route:</strong> /app/explore/:type</p>
+      <p>Unified explore view with sub-nav tabs (Metrics, Logs, Traces). Query builder with Monaco editor, data source selector, time range. Results below: line charts for metrics, log stream for logs, trace waterfall + service graph for traces. AI assists: natural language → query translation, anomaly highlighting in results.</p>
+      <p style="color: #69f6b8; font-size: 12px;">Replaces: Explore, ExploreLogs, ExploreTraces</p>
+    </div>
+  </div>
+
+  <div class="option" style="cursor: default;">
+    <div class="letter" style="background: linear-gradient(135deg, #a3a6ff, #6063ee); color: white;">6</div>
+    <div class="content">
+      <h3>Dashboard Generation Flow</h3>
+      <p><strong>Route:</strong> /app/dashboards/new/ai</p>
+      <p>Guided AI dashboard creation. Step 1: Describe what you want to monitor (rich text input with suggestions). Step 2: AI generates spec — shows preview of proposed panels, data sources, layout. Step 3: User reviews, adjusts, confirms. Step 4: Dashboard materializes with generating animation. Also accessible via Cmd+K shortcut.</p>
+      <p style="color: #ffb148; font-size: 12px;">Enhances: existing chat-to-dashboard feature</p>
+    </div>
+  </div>
+
+  <div class="option" style="cursor: default;">
+    <div class="letter" style="background: linear-gradient(135deg, #a3a6ff, #6063ee); color: white;">7</div>
+    <div class="content">
+      <h3>Settings</h3>
+      <p><strong>Route:</strong> /app/settings/:section</p>
+      <p>Vertical tab layout (left nav within content area). Sections: General (org name, branding), Members, Groups & Permissions, Data Sources (moved here from top nav), AI Configuration, SSO/Auth. Dense forms, tonal section separators, monospace for config values.</p>
+      <p style="color: #69f6b8; font-size: 12px;">Replaces: OrganizationSettings + DataSourceSettings</p>
+    </div>
+  </div>
+</div>
+
+<p style="margin-top: 20px; color: #888; font-size: 14px;">Review each view's scope. Flag anything that's missing, wrong, or should change — respond in the terminal.</p>
