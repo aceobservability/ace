@@ -27,7 +27,7 @@ describe('AiInsightCard', () => {
 
     const card = wrapper.find('[data-testid="ai-insight-card"]')
     const style = card.attributes('style') || ''
-    expect(style).toContain('#E5A00D')
+    expect(style).toContain('#C9960F')
     expect(style).toContain('border-left')
   })
 
@@ -38,7 +38,7 @@ describe('AiInsightCard', () => {
 
     const card = wrapper.find('[data-testid="ai-insight-card"]')
     const style = card.attributes('style') || ''
-    expect(style).toContain('#60A5FA')
+    expect(style).toContain('#4D8BBD')
   })
 
   it('applies orange left border for forecast type', () => {
@@ -48,7 +48,7 @@ describe('AiInsightCard', () => {
 
     const card = wrapper.find('[data-testid="ai-insight-card"]')
     const style = card.attributes('style') || ''
-    expect(style).toContain('#F97316')
+    expect(style).toContain('#D4A11E')
   })
 
   it('sets datetime attribute on the <time> element', () => {

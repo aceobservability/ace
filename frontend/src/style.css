@@ -1,48 +1,98 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-@import url("https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap");
 
 /* ─── Design tokens: Kinetic palette (dark-only) ─── */
 :root {
   /* Surface hierarchy */
-  --color-surface:                    #0C0D0F;
-  --color-surface-container-low:      #141518;
-  --color-surface-container-high:     #1C1E22;
-  --color-surface-bright:             #252830;
-  --color-surface-container-highest:  #242629;
-  --color-surface-hover:              #2E3138;
+  --color-surface:                    #0B0D0F;
+  --color-surface-container-low:      #111417;
+  --color-surface-container-high:     #171B1F;
+  --color-surface-bright:             #1E2429;
+  --color-surface-container-highest:  #1E2429;
+  --color-surface-hover:              #283038;
 
   /* Primary (active nav, links, brand accent) */
-  --color-primary:          #E5A00D;
-  --color-primary-dim:      #B8800A;
-  --color-primary-muted:    rgba(229,160,13,0.12);
+  --color-primary:          #C9960F;
+  --color-primary-dim:      #A67D0B;
+  --color-primary-muted:    rgba(201,150,15,0.12);
 
   /* Secondary (healthy, success, progress) */
-  --color-secondary:        #34D399;
-  --color-secondary-dim:    #2AB880;
+  --color-secondary:        #4FAF78;
+  --color-secondary-dim:    #3D9062;
 
   /* Tertiary (warning, edit, labels) */
-  --color-tertiary:         #F97316;
-  --color-tertiary-dim:     #e79400;
+  --color-tertiary:         #D4A11E;
+  --color-tertiary-dim:     #B8860B;
 
   /* Error (critical, destructive) */
-  --color-error:            #EF4444;
+  --color-error:            #D95C54;
 
   /* Info (informational, non-urgent) */
-  --color-info:             #60A5FA;
+  --color-info:             #4D8BBD;
 
   /* On-surface text */
-  --color-on-surface:         #F5F5F4;
-  --color-on-surface-variant: #A8A8A4;
-  --color-outline:            #757578;
-  --color-outline-variant:    #47484a;
+  --color-on-surface:         #F3F1EA;
+  --color-on-surface-variant: #B8B2A7;
+  --color-outline:            #8A847A;
+  --color-outline-variant:    #3A444E;
+
+  /* Stroke tokens */
+  --color-stroke-subtle: #2A3138;
+  --color-stroke-strong: #3A444E;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.24), 0 1px 2px rgba(0,0,0,0.16);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.32), 0 2px 4px rgba(0,0,0,0.20);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.40), 0 4px 8px rgba(0,0,0,0.24);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.48), 0 8px 16px rgba(0,0,0,0.28);
+  --shadow-glow: 0 0 20px rgba(201,150,15,0.15);
+  --shadow-focus: 0 0 0 1px rgba(201,150,15,0.55), 0 0 0 4px rgba(201,150,15,0.16);
+
+  /* Overlays */
+  --overlay-scrim: rgba(8,10,12,0.72);
+  --overlay-hover: rgba(255,255,255,0.04);
+  --overlay-press: rgba(255,255,255,0.08);
+  --overlay-focus: rgba(201,150,15,0.16);
+  --selected-fill: rgba(201,150,15,0.14);
+
+  /* Data visualization palette */
+  --color-viz-0: #4D8BBD;
+  --color-viz-1: #C65D3A;
+  --color-viz-2: #7A9E46;
+  --color-viz-3: #8B6FB3;
+  --color-viz-4: #D4A11E;
+  --color-viz-5: #3FA7A3;
+  --color-viz-6: #CB6F8A;
+  --color-viz-7: #A7B0BA;
+  --color-viz-8: #6C7C94;
+  --color-viz-9: #E07B39;
+
+  /* Layout tokens */
+  --sidebar-rail-width: 52px;
+  --sidebar-flyout-width: 240px;
+  --content-inset-left: 52px;
+  --control-height-sm: 28px;
+  --control-height-md: 36px;
+  --control-height-lg: 44px;
+  --panel-padding: 16px;
+  --dense-panel-padding: 12px;
+  --page-padding: 20px;
+  --section-gap: 24px;
+
+  /* Motion tokens */
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 240ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 
 @theme {
   --font-sans:  "DM Sans", "Segoe UI", system-ui, sans-serif;
-  --font-display: "Satoshi", "DM Sans", sans-serif;
+  --font-display: "Space Grotesk", "DM Sans", sans-serif;
   --font-mono:  "JetBrains Mono", "Cascadia Mono", monospace;
 
   /* Surface */
@@ -51,24 +101,67 @@
   --color-surface-container-high:    var(--color-surface-container-high);
   --color-surface-bright:            var(--color-surface-bright);
   --color-surface-container-highest: var(--color-surface-container-highest);
+  --color-surface-hover:             var(--color-surface-hover);
 
-  /* Primary / Secondary / Tertiary / Error */
+  /* Primary / Secondary / Tertiary / Error / Info */
   --color-primary:        var(--color-primary);
   --color-primary-dim:    var(--color-primary-dim);
+  --color-primary-muted:  var(--color-primary-muted);
   --color-secondary:      var(--color-secondary);
   --color-secondary-dim:  var(--color-secondary-dim);
   --color-tertiary:       var(--color-tertiary);
   --color-tertiary-dim:   var(--color-tertiary-dim);
   --color-error:          var(--color-error);
-  --color-primary-muted:    var(--color-primary-muted);
-  --color-surface-hover:    var(--color-surface-hover);
-  --color-info:             var(--color-info);
+  --color-info:           var(--color-info);
 
   /* Text / Outline */
   --color-on-surface:         var(--color-on-surface);
   --color-on-surface-variant: var(--color-on-surface-variant);
   --color-outline:            var(--color-outline);
   --color-outline-variant:    var(--color-outline-variant);
+
+  /* Stroke */
+  --color-stroke-subtle: var(--color-stroke-subtle);
+  --color-stroke-strong: var(--color-stroke-strong);
+
+  /* Shadows */
+  --shadow-sm:    var(--shadow-sm);
+  --shadow-md:    var(--shadow-md);
+  --shadow-lg:    var(--shadow-lg);
+  --shadow-xl:    var(--shadow-xl);
+  --shadow-glow:  var(--shadow-glow);
+  --shadow-focus: var(--shadow-focus);
+
+  /* Overlays */
+  --overlay-scrim: var(--overlay-scrim);
+  --overlay-hover: var(--overlay-hover);
+  --overlay-press: var(--overlay-press);
+  --overlay-focus: var(--overlay-focus);
+  --selected-fill: var(--selected-fill);
+
+  /* Data visualization palette */
+  --color-viz-0: var(--color-viz-0);
+  --color-viz-1: var(--color-viz-1);
+  --color-viz-2: var(--color-viz-2);
+  --color-viz-3: var(--color-viz-3);
+  --color-viz-4: var(--color-viz-4);
+  --color-viz-5: var(--color-viz-5);
+  --color-viz-6: var(--color-viz-6);
+  --color-viz-7: var(--color-viz-7);
+  --color-viz-8: var(--color-viz-8);
+  --color-viz-9: var(--color-viz-9);
+
+  /* Layout tokens */
+  --sidebar-rail-width: var(--sidebar-rail-width);
+  --sidebar-flyout-width: var(--sidebar-flyout-width);
+  --content-inset-left: var(--content-inset-left);
+  --control-height-sm: var(--control-height-sm);
+  --control-height-md: var(--control-height-md);
+  --control-height-lg: var(--control-height-lg);
+  --panel-padding: var(--panel-padding);
+  --dense-panel-padding: var(--dense-panel-padding);
+  --page-padding: var(--page-padding);
+  --section-gap: var(--section-gap);
 }
 
 /* ─── Base styles ─── */
@@ -79,7 +172,7 @@
 
   *::selection {
     background: var(--color-primary);
-    color: #0C0D0F;
+    color: #0B0D0F;
   }
 
   html,
@@ -124,6 +217,7 @@
     font-size: 1.5rem;
     font-weight: 700;
     line-height: 1.2;
+    letter-spacing: -0.03em;
   }
   h2 {
     font-size: 1.125rem;
@@ -196,6 +290,12 @@
   .animate-shimmer {
     animation: shimmer 1.5s ease-in-out infinite;
   }
+  .animate-data-pulse {
+    animation: data-pulse 300ms cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  }
+  .animate-stagger-enter {
+    animation: stagger-enter var(--motion-slow) var(--ease-standard) forwards;
+  }
 }
 
 @keyframes fadeIn {
@@ -243,6 +343,16 @@
   50% {
     background-color: var(--color-surface-container-high);
   }
+}
+
+@keyframes data-pulse {
+  0%   { box-shadow: inset 0 0 0 1px rgba(201,150,15,0.4); }
+  100% { box-shadow: inset 0 0 0 1px rgba(201,150,15,0); }
+}
+
+@keyframes stagger-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ─── Reduced motion ─── */

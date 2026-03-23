@@ -7,14 +7,14 @@ import {
 import type { ToolCall, ToolDefinition } from './useCopilot'
 import { useQueryEditor } from './useQueryEditor'
 
-export function getVictoriaMetricsTools(): ToolDefinition[] {
+export function getMetricsTools(): ToolDefinition[] {
   return [
     {
       type: 'function',
       function: {
         name: 'get_metrics',
         description:
-          'List available metric names from VictoriaMetrics. Use this to discover what metrics exist before writing a query.',
+          'List available metric names from the datasource. Use this to discover what metrics exist before writing a query.',
         parameters: {
           type: 'object',
           properties: {
@@ -31,7 +31,7 @@ export function getVictoriaMetricsTools(): ToolDefinition[] {
       function: {
         name: 'get_labels',
         description:
-          'List available label names from VictoriaMetrics. Optionally filter to labels for a specific metric.',
+          'List available label names from the datasource. Optionally filter to labels for a specific metric.',
         parameters: {
           type: 'object',
           properties: {
@@ -48,7 +48,7 @@ export function getVictoriaMetricsTools(): ToolDefinition[] {
       function: {
         name: 'get_label_values',
         description:
-          'List values for a specific label from VictoriaMetrics. Optionally filter to values for a specific metric.',
+          'List values for a specific label from the datasource. Optionally filter to values for a specific metric.',
         parameters: {
           type: 'object',
           properties: {
@@ -70,13 +70,13 @@ export function getVictoriaMetricsTools(): ToolDefinition[] {
       function: {
         name: 'write_query',
         description:
-          'Write a MetricsQL query into the query editor on the current page. The user can then review it before running.',
+          'Write a PromQL/MetricsQL query into the query editor on the current page. The user can then review it before running.',
         parameters: {
           type: 'object',
           properties: {
             query: {
               type: 'string',
-              description: 'The MetricsQL query expression to write',
+              description: 'The PromQL/MetricsQL query expression to write',
             },
           },
           required: ['query'],

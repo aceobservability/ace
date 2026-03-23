@@ -84,7 +84,7 @@ const showGrafanaReplace = ref(false)
 
 const dashboardId = computed(() => route.params.id as string)
 const canManagePermissions = computed(() =>
-  Boolean(currentOrg.value && currentOrg.value.role !== 'viewer'),
+  Boolean(currentOrg.value && (currentOrg.value.role === 'admin' || currentOrg.value.role === 'editor')),
 )
 const canEdit = computed(() =>
   Boolean(

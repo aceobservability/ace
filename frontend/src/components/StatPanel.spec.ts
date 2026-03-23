@@ -188,7 +188,7 @@ describe('StatPanel', () => {
       props: { value: 30, thresholds },
     })
     const statValue = wrapper.find('.text-3xl')
-    expect(statValue.attributes('style')).toContain('color: #fdfbfe')
+    expect(statValue.attributes('style')).toContain('color: #F3F1EA')
   })
 
   it('applies custom height when provided', () => {

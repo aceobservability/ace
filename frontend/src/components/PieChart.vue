@@ -5,6 +5,7 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import VChart from 'vue-echarts'
+import { chartPalette, chartColors } from '../utils/chartTheme'
 
 // Register ECharts components
 use([CanvasRenderer, EChartsPieChart, TitleComponent, TooltipComponent, LegendComponent])
@@ -40,27 +41,6 @@ interface PieFormatterParam {
   color?: string
 }
 
-// Stitch Kinetic palette
-const labelColor = '#757578' // outline
-const textColor = '#ababad' // on-surface-variant
-const tooltipBg = '#2b2c2f' // surface-bright
-const tooltipBorder = 'rgba(71,72,74,0.15)'
-const surfaceLow = '#121316' // surface-container-low
-
-// Color palette matching the Stitch theme
-const pieColors = [
-  '#a3a6ff', // primary
-  '#69f6b8', // secondary
-  '#ffb148', // tertiary
-  '#ff6e84', // error
-  '#6063ee', // primary-dim
-  '#58e7ab', // secondary-dim
-  '#e79400', // tertiary-dim
-  '#a3a6ff', // wrap
-  '#69f6b8',
-  '#ffb148',
-]
-
 // Calculate total for percentage display
 const total = computed(() => props.data.reduce((sum, item) => sum + item.value, 0))
 
@@ -80,29 +60,29 @@ const chartOption = computed(() => {
           text: props.title,
           left: 'center',
           textStyle: {
-            color: textColor,
+            color: chartColors.text,
             fontSize: 13,
             fontWeight: 500,
-            fontFamily: 'Space Grotesk, Inter, sans-serif',
+            fontFamily: chartColors.fontDisplay,
           },
         }
       : undefined,
     tooltip: {
       trigger: 'item',
-      backgroundColor: tooltipBg,
-      borderColor: tooltipBorder,
+      backgroundColor: chartColors.tooltipBg,
+      borderColor: chartColors.tooltipBorder,
       borderWidth: 1,
       textStyle: {
-        color: textColor,
+        color: chartColors.text,
         fontSize: 12,
       },
       formatter: (params: PieFormatterParam) => {
         const percent = getPercentage(params.value)
         return `<div style="display: flex; align-items: center; gap: 8px;">
-          <span style="display: inline-block; width: 10px; height: 10px; background: ${params.color || '#a3a6ff'}; border-radius: 50%;"></span>
-          <span style="color: ${labelColor};">${params.name}</span>
+          <span style="display: inline-block; width: 10px; height: 10px; background: ${params.color || chartPalette[0]}; border-radius: 50%;"></span>
+          <span style="color: ${chartColors.label};">${params.name}</span>
         </div>
-        <div style="margin-top: 4px; font-weight: 600; font-family: JetBrains Mono, monospace; color: #fdfbfe;">
+        <div style="margin-top: 4px; font-weight: 600; font-family: ${chartColors.fontMono}; color: #F3F1EA;">
           ${params.value.toLocaleString()} (${percent})
         </div>`
       },
@@ -112,7 +92,7 @@ const chartOption = computed(() => {
       orient: 'horizontal',
       bottom: 0,
       textStyle: {
-        color: labelColor,
+        color: chartColors.label,
         fontSize: 11,
       },
       itemWidth: 12,
@@ -126,13 +106,13 @@ const chartOption = computed(() => {
         avoidLabelOverlap: true,
         itemStyle: {
           borderRadius: 4,
-          borderColor: surfaceLow,
+          borderColor: chartColors.surface,
           borderWidth: 2,
         },
         label: {
           show: props.showLabels,
           position: 'outside',
-          color: labelColor,
+          color: chartColors.label,
           fontSize: 11,
           formatter: (params: PieFormatterParam) => {
             const percent = getPercentage(params.value)
@@ -155,13 +135,13 @@ const chartOption = computed(() => {
             show: true,
             fontSize: 12,
             fontWeight: 600,
-            color: '#fdfbfe',
+            color: '#F3F1EA',
           },
         },
         data: props.data.map((item, index) => ({
           ...item,
           itemStyle: {
-            color: pieColors[index % pieColors.length],
+            color: chartPalette[index % chartPalette.length],
           },
         })),
       },

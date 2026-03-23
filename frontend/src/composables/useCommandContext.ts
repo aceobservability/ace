@@ -6,6 +6,8 @@ export interface CommandContext {
   viewRoute: string
   description: string
   datasourceId?: string
+  datasourceType?: string
+  datasourceName?: string
   dashboardId?: string
 }
 

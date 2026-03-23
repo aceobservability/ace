@@ -113,9 +113,9 @@ describe('SidebarRail', () => {
     expect(avatar.text()).toBe('J')
   })
 
-  it('rail has 52px width', () => {
+  it('rail has tokenized width', () => {
     wrapper = createWrapper()
     const rail = wrapper.find('[data-testid="sidebar-rail"]')
-    expect(rail.element.style.width).toBe('52px')
+    expect(rail.element.style.width).toBe('var(--sidebar-rail-width)')
   })
 })

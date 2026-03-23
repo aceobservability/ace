@@ -1,14 +1,8 @@
 <script setup lang="ts">
-import {
-  Activity,
-  AlertTriangle,
-  LayoutGrid,
-  Search,
-  Settings,
-  Sparkles,
-} from 'lucide-vue-next'
+import { Activity, AlertTriangle, LayoutGrid, Search, Settings, Sparkles } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useAuth } from '../composables/useAuth'
+import { useOrganization } from '../composables/useOrganization'
 
 const props = defineProps<{
   activeSection: string | null
@@ -19,9 +13,16 @@ const emit = defineEmits<{
   hoverEnd: []
   select: [sectionId: string]
   avatarClick: []
+  orgClick: []
 }>()
 
 const { user } = useAuth()
+const { currentOrg } = useOrganization()
+
+const orgInitial = computed(() => {
+  if (!currentOrg.value?.name) return '?'
+  return currentOrg.value.name.charAt(0).toUpperCase()
+})
 
 interface RailItem {
   id: string
@@ -60,7 +61,7 @@ function isActive(id: string): boolean {
     data-testid="sidebar-rail"
     class="fixed left-0 top-0 bottom-0 z-50 flex flex-col items-center py-3 gap-1"
     :style="{
-      width: '52px',
+      width: 'var(--sidebar-rail-width)',
       backgroundColor: 'var(--color-surface)',
     }"
   >
@@ -73,12 +74,31 @@ function isActive(id: string): boolean {
         height: '32px',
         background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
         borderRadius: '8px',
-        color: '#0C0D0F',
+        color: '#0B0D0F',
         fontWeight: '700',
         fontSize: '14px',
         fontFamily: 'var(--font-display)',
       }"
     >A</div>
+
+    <!-- Org selector -->
+    <button
+      data-testid="rail-org-selector"
+      class="flex items-center justify-center shrink-0 cursor-pointer mb-2 transition-colors duration-150"
+      :style="{
+        width: '32px',
+        height: '32px',
+        borderRadius: '6px',
+        backgroundColor: 'var(--color-surface-container-high)',
+        border: '1px solid var(--color-outline-variant)',
+        color: 'var(--color-on-surface-variant)',
+        fontSize: '12px',
+        fontWeight: '600',
+        fontFamily: 'var(--font-display)',
+      }"
+      :title="currentOrg?.name || 'Select organization'"
+      @click="emit('orgClick')"
+    >{{ orgInitial }}</button>
 
     <!-- Nav icons -->
     <button

@@ -50,7 +50,7 @@ func (h *AuditHandler) checkOrgAuditAccess(w http.ResponseWriter, r *http.Reques
 		return "", false
 	}
 
-	if role == "editor" || role == "viewer" {
+	if role != "admin" && role != "auditor" {
 		http.Error(w, `{"error":"admin or auditor access required"}`, http.StatusForbidden)
 		return "", false
 	}
@@ -243,7 +243,8 @@ func (h *AuditHandler) ExportAuditLog(w http.ResponseWriter, r *http.Request) {
 		                    outcome, ip_address, created_at
 		             FROM audit_log
 		             WHERE %s
-		             ORDER BY created_at DESC`, where),
+		             ORDER BY created_at DESC
+		             LIMIT 100000`, where),
 		args...,
 	)
 	if err != nil {

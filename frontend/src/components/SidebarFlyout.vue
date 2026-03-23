@@ -89,12 +89,12 @@ const searchPlaceholder = computed(() => {
     data-testid="flyout-panel"
     class="fixed top-0 bottom-0 z-40 flex flex-col overflow-hidden animate-fade-in"
     :style="{
-      left: '52px',
-      width: '240px',
+      left: 'var(--sidebar-rail-width)',
+      width: 'var(--sidebar-flyout-width)',
       backgroundColor: 'var(--color-surface-container-low)',
       borderLeft: '1px solid var(--color-outline-variant)',
       borderRight: '1px solid var(--color-outline-variant)',
-      boxShadow: '8px 0 24px rgba(0,0,0,0.3)',
+      boxShadow: 'var(--shadow-lg)',
     }"
     @mouseenter="$emit('hover')"
     @mouseleave="$emit('hoverEnd')"

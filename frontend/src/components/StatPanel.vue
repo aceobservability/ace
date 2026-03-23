@@ -67,11 +67,11 @@ function formatValue(value: number): string {
 // Get the color based on thresholds
 function getValueColor(): string {
   if (!props.thresholds || props.thresholds.length === 0) {
-    return '#fdfbfe' // on-surface (default primary text)
+    return '#F3F1EA' // on-surface (default primary text)
   }
 
   const sortedThresholds = [...props.thresholds].sort((a, b) => a.value - b.value)
-  let color = '#fdfbfe' // on-surface
+  let color = '#F3F1EA' // on-surface
 
   for (const threshold of sortedThresholds) {
     if (props.value >= threshold.value) {

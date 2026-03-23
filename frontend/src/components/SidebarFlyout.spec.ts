@@ -102,7 +102,7 @@ describe('SidebarFlyout', () => {
   it('renders flyout at 240px width', () => {
     wrapper = createWrapper({ section: 'explore' })
     const panel = wrapper.find('[data-testid="flyout-panel"]')
-    expect(panel.element.style.width).toBe('240px')
+    expect(panel.element.style.width).toBe('var(--sidebar-flyout-width)')
   })
 
   it('renders settings sub-nav items', () => {

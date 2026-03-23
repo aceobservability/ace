@@ -75,8 +75,8 @@ func (h *DashboardHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Only admin and editor can create dashboards
-	if role == "viewer" {
-		http.Error(w, `{"error":"viewers cannot create dashboards"}`, http.StatusForbidden)
+	if role != "admin" && role != "editor" {
+		http.Error(w, `{"error":"only admins and editors can create dashboards"}`, http.StatusForbidden)
 		return
 	}
 

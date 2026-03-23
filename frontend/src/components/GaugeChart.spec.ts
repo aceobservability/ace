@@ -146,7 +146,7 @@ describe('GaugeChart', () => {
     const option = JSON.parse(chart.attributes('data-option') || '{}')
 
     // Should use default color (Kinetic secondary)
-    expect(option.series[0].itemStyle.color).toBe('#69f6b8')
+    expect(option.series[0].itemStyle.color).toBe('#4D8BBD')
   })
 
   it('shows value above threshold in correct color', () => {
@@ -176,7 +176,7 @@ describe('GaugeChart', () => {
     const option = JSON.parse(chart.attributes('data-option') || '{}')
 
     // Value 30 is below all thresholds, so should be default (Kinetic secondary)
-    expect(option.series[0].itemStyle.color).toBe('#69f6b8')
+    expect(option.series[0].itemStyle.color).toBe('#4D8BBD')
   })
 
   it('handles large values with K suffix', () => {

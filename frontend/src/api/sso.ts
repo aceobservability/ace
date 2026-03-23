@@ -1,7 +1,5 @@
 import { trackEvent } from '../analytics'
 import type {
-  ConfigureGitHubAppRequest,
-  GitHubAppConfig,
   GoogleSSOConfig,
   MicrosoftSSOConfig,
   UpdateGoogleSSOConfigRequest,
@@ -117,49 +115,3 @@ export async function updateMicrosoftSSOConfig(
   return config
 }
 
-export async function getGitHubAppConfig(orgId: string): Promise<GitHubAppConfig> {
-  const response = await fetch(`${API_BASE}/api/orgs/${orgId}/github-app`, {
-    headers: getAuthHeaders(),
-  })
-
-  if (!response.ok) {
-    if (response.status === 403) {
-      throw new Error('Admin access required')
-    }
-    if (response.status === 404) {
-      throw new Error('GitHub Copilot not configured')
-    }
-    throw new Error(await getErrorMessage(response, 'Failed to fetch GitHub App config'))
-  }
-
-  return response.json()
-}
-
-export async function configureGitHubApp(
-  orgId: string,
-  data: ConfigureGitHubAppRequest,
-): Promise<GitHubAppConfig> {
-  const response = await fetch(`${API_BASE}/api/orgs/${orgId}/github-app`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(data),
-  })
-
-  if (!response.ok) {
-    trackEvent('settings_github_app_update_failed', {
-      org_id: orgId,
-      status_code: response.status,
-    })
-    if (response.status === 403) {
-      throw new Error('Admin access required')
-    }
-    throw new Error(await getErrorMessage(response, 'Failed to save GitHub App config'))
-  }
-
-  const config = await response.json()
-  trackEvent('settings_github_app_updated', {
-    org_id: orgId,
-    enabled: config.enabled,
-  })
-  return config
-}

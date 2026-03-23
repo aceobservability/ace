@@ -9,9 +9,9 @@ const props = defineProps<{
 }>()
 
 const colorMap = {
-  anomaly: { border: '#E5A00D', bg: 'rgba(229,160,13,0.05)' },
-  optimization: { border: '#60A5FA', bg: 'rgba(96,165,250,0.05)' },
-  forecast: { border: '#F97316', bg: 'rgba(249,115,22,0.05)' },
+  anomaly: { border: '#C9960F', bg: 'rgba(201,150,15,0.05)' },
+  optimization: { border: '#4D8BBD', bg: 'rgba(77,139,189,0.05)' },
+  forecast: { border: '#D4A11E', bg: 'rgba(212,161,30,0.05)' },
 }
 
 const cardStyle = computed(() => {

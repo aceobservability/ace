@@ -6,6 +6,7 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import VChart from 'vue-echarts'
+import { chartPalette, chartColors } from '../utils/chartTheme'
 
 // Register ECharts components
 use([CanvasRenderer, EChartsGaugeChart, TitleComponent, TooltipComponent])
@@ -39,15 +40,6 @@ const props = withDefaults(
 
 const chartRef = ref<typeof VChart | null>(null)
 
-// Stitch Kinetic palette
-const labelColor = '#757578' // outline
-const tooltipBg = '#2b2c2f' // surface-bright
-const tooltipBorder = 'rgba(71,72,74,0.15)'
-const textColor = '#ababad' // on-surface-variant
-const onSurface = '#fdfbfe' // on-surface (primary text)
-const gridLineColor = 'rgba(71,72,74,0.15)'
-const defaultGaugeColor = '#69f6b8' // secondary (healthy green)
-
 // Format value with decimals and unit
 function formatValue(value: number): string {
   // Handle very large numbers
@@ -63,7 +55,7 @@ function formatValue(value: number): string {
 // Build color stops for gauge based on thresholds
 function buildAxisLineColors(): Array<[number, string]> {
   if (!props.thresholds || props.thresholds.length === 0) {
-    return [[1, defaultGaugeColor]]
+    return [[1, chartPalette[0]]]
   }
 
   const range = props.max - props.min
@@ -72,7 +64,7 @@ function buildAxisLineColors(): Array<[number, string]> {
 
   // Add segments based on thresholds
   let prevStop = 0
-  let prevColor = defaultGaugeColor
+  let prevColor = chartPalette[0]
 
   for (const threshold of sortedThresholds) {
     const stop = (threshold.value - props.min) / range
@@ -88,19 +80,19 @@ function buildAxisLineColors(): Array<[number, string]> {
     colors.push([1, prevColor])
   }
 
-  return colors.length > 0 ? colors : [[1, defaultGaugeColor]]
+  return colors.length > 0 ? colors : [[1, chartPalette[0]]]
 }
 
 // Get color for current value
 function getValueColor(): string {
   if (!props.thresholds || props.thresholds.length === 0) {
-    return defaultGaugeColor
+    return chartPalette[0]
   }
 
   const sortedThresholds = [...props.thresholds].sort((a, b) => a.value - b.value)
 
   // Find the highest threshold that is below or equal to the value
-  let color = defaultGaugeColor
+  let color = chartPalette[0]
   for (const threshold of sortedThresholds) {
     if (props.value >= threshold.value) {
       color = threshold.color
@@ -114,15 +106,15 @@ const chartOption = computed<EChartsOption>(() => {
     backgroundColor: 'transparent',
     tooltip: {
       show: true,
-      backgroundColor: tooltipBg,
-      borderColor: tooltipBorder,
+      backgroundColor: chartColors.tooltipBg,
+      borderColor: chartColors.tooltipBorder,
       borderWidth: 1,
       textStyle: {
-        color: textColor,
+        color: chartColors.text,
         fontSize: 12,
       },
       formatter: () => {
-        return `<div style="font-weight: 600; font-family: JetBrains Mono, monospace; color: #fdfbfe;">${formatValue(props.value)}</div>`
+        return `<div style="font-weight: 600; font-family: JetBrains Mono, monospace; color: #F3F1EA;">${formatValue(props.value)}</div>`
       },
     },
     series: [
@@ -150,7 +142,7 @@ const chartOption = computed<EChartsOption>(() => {
           length: '60%',
           width: 6,
           itemStyle: {
-            color: onSurface,
+            color: '#F3F1EA',
           },
         },
         axisLine: {
@@ -163,7 +155,7 @@ const chartOption = computed<EChartsOption>(() => {
           show: true,
           distance: -30,
           lineStyle: {
-            color: gridLineColor,
+            color: chartColors.grid,
             width: 1,
           },
         },
@@ -172,14 +164,14 @@ const chartOption = computed<EChartsOption>(() => {
           distance: -35,
           length: 10,
           lineStyle: {
-            color: gridLineColor,
+            color: chartColors.grid,
             width: 2,
           },
         },
         axisLabel: {
           show: true,
           distance: 10,
-          color: labelColor,
+          color: chartColors.label,
           fontSize: 10,
           formatter: (value: number) => {
             if (Math.abs(value) >= 1000) {
@@ -200,7 +192,7 @@ const chartOption = computed<EChartsOption>(() => {
         title: {
           show: !!props.title,
           offsetCenter: [0, '80%'],
-          color: labelColor,
+          color: chartColors.label,
           fontSize: 12,
           fontWeight: 500,
         },
@@ -215,7 +207,7 @@ const chartOption = computed<EChartsOption>(() => {
           fontWeight: 600,
           fontFamily: 'JetBrains Mono, monospace',
           formatter: () => formatValue(props.value),
-          color: onSurface,
+          color: '#F3F1EA',
         },
         data: [
           {

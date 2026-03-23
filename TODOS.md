@@ -2,18 +2,6 @@
 
 ## Copilot
 
-### Extend chat-to-dashboard to Prometheus datasources
-
-**What:** Add tool definitions and system prompt for Prometheus datasource type so chat-to-dashboard works beyond VictoriaMetrics.
-
-**Why:** Currently gated on `datasourceType === 'victoriametrics'` (CopilotPanel.vue:174). Prometheus users get streaming-only mode with no dashboard generation. The VictoriaMetrics tools (get_metrics, get_labels, get_label_values) use the same datasource API endpoints, so tool implementations may be reusable — the gate at line 174 just needs to accept both types.
-
-**Context:** After chat-to-dashboard MVP ships, the simplest path is to rename `getVictoriaMetricsTools()` to `getMetricsTools()` and return it for both `victoriametrics` and `prometheus` datasource types. The system prompt in `github_copilot.go` already has a `"prometheus"` entry that needs the same dashboard generation instructions added to it.
-
-**Effort:** S
-**Priority:** P1
-**Depends on:** Chat-to-dashboard MVP
-
 ### Add iterative spec refinement
 
 **What:** After generating a dashboard spec, let the user refine it via follow-up chat messages (add/remove/modify panels) without starting a new conversation.
@@ -131,6 +119,12 @@
 **Depends on:** Enterprise Auth Phase 1
 
 ## Completed
+
+### Extend chat-to-dashboard to Prometheus datasources
+
+Renamed `getVictoriaMetricsTools()` to `getMetricsTools()`, removed datasource type gate, genericized tool descriptions. Both VictoriaMetrics and Prometheus datasources now get full tool support including dashboard generation.
+
+**Completed:** v0.7.0 (2026-03-23)
 
 ### Create DESIGN.md
 

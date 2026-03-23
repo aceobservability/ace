@@ -19,6 +19,7 @@ import {
   updateMicrosoftSSOConfig,
 } from '../api/sso'
 import DataSourceSettingsPanel from '../components/DataSourceSettingsPanel.vue'
+import CopilotConnectionPanel from '../components/CopilotConnectionPanel.vue'
 import GitHubAppSettings from '../components/GitHubAppSettings.vue'
 import { useCommandContext } from '../composables/useCommandContext'
 import { useOrganization } from '../composables/useOrganization'
@@ -781,7 +782,7 @@ async function handleSaveMicrosoftSSO() {
           <div class="rounded-lg p-6" :style="{ backgroundColor: 'var(--color-surface-container-low)' }">
             <h2 class="flex items-center gap-2 m-0 mb-2 text-base font-semibold font-display" :style="{ color: 'var(--color-on-surface)' }"><Bot :size="20" /> AI Configuration</h2>
             <p class="m-0 mb-4 text-sm" :style="{ color: 'var(--color-on-surface-variant)' }">Configure AI assistant settings for automated insights and anomaly detection.</p>
-            <GitHubAppSettings v-if="orgId" :org-id="orgId" :is-admin="isAdmin ?? false" />
+            <CopilotConnectionPanel v-if="orgId" :org-id="orgId" />
           </div>
         </section>
 

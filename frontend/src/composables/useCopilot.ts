@@ -55,18 +55,19 @@ type ChatRequestMessage =
   | { role: 'assistant'; content: string | null; tool_calls: ToolCall[] }
   | ToolMessage
 
+// Module-level shared state — all callers see the same values
+const isConnected = ref(false)
+const githubUsername = ref('')
+const hasCopilot = ref(false)
+const isLoading = ref(false)
+const error = ref<string | null>(null)
+const models = ref<CopilotModel[]>([])
+const selectedModel = ref<string>('')
+const chatMessages = ref<CopilotMessage[]>([])
+let fetchingModels = false
+
 export function useCopilot() {
-  const isConnected = ref(false)
-  const githubUsername = ref('')
-  const hasCopilot = ref(false)
-  const isLoading = ref(false)
-  const error = ref<string | null>(null)
-
-  // Models state
-  const models = ref<CopilotModel[]>([])
-  const selectedModel = ref<string>('')
-
-  // Device flow state
+  // Device flow state — per-call, only one component uses it at a time
   const deviceFlowActive = ref(false)
   const userCode = ref('')
   const verificationUri = ref('')
@@ -93,7 +94,6 @@ export function useCopilot() {
     }
   }
 
-  let fetchingModels = false
   async function fetchModels() {
     if (fetchingModels) return
     fetchingModels = true
@@ -381,6 +381,7 @@ export function useCopilot() {
     error,
     models,
     selectedModel,
+    chatMessages,
     deviceFlowActive,
     userCode,
     verificationUri,

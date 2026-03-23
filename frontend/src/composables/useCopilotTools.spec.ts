@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { getVictoriaMetricsTools } from './useCopilotTools'
+import { getMetricsTools } from './useCopilotTools'
 
-describe('getVictoriaMetricsTools', () => {
-  // T14: getVictoriaMetricsTools includes generate_dashboard
+describe('getMetricsTools', () => {
+  // T14: getMetricsTools includes generate_dashboard
   it('includes a generate_dashboard tool definition', () => {
-    const tools = getVictoriaMetricsTools()
+    const tools = getMetricsTools()
 
     const generateDashboard = tools.find((t) => t.function.name === 'generate_dashboard')
     expect(generateDashboard).toBeDefined()
@@ -14,7 +14,7 @@ describe('getVictoriaMetricsTools', () => {
   })
 
   it('generate_dashboard tool requires title and panels parameters', () => {
-    const tools = getVictoriaMetricsTools()
+    const tools = getMetricsTools()
     const generateDashboard = tools.find((t) => t.function.name === 'generate_dashboard')
 
     const params = generateDashboard!.function.parameters as {
@@ -29,7 +29,7 @@ describe('getVictoriaMetricsTools', () => {
   })
 
   it('returns all expected tool names', () => {
-    const tools = getVictoriaMetricsTools()
+    const tools = getMetricsTools()
     const names = tools.map((t) => t.function.name)
 
     expect(names).toContain('get_metrics')

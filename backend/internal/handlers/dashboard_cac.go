@@ -169,8 +169,8 @@ func (h *DashboardHandler) Import(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"not a member of this organization"}`, http.StatusForbidden)
 		return
 	}
-	if role == "viewer" {
-		http.Error(w, `{"error":"viewers cannot import dashboards"}`, http.StatusForbidden)
+	if role != "admin" && role != "editor" {
+		http.Error(w, `{"error":"only admins and editors can import dashboards"}`, http.StatusForbidden)
 		return
 	}
 

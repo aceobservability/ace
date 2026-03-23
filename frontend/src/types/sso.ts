@@ -25,16 +25,3 @@ export interface UpdateMicrosoftSSOConfigRequest {
   client_secret: string
   enabled?: boolean
 }
-
-export interface GitHubAppConfig {
-  client_id: string
-  enabled: boolean
-  created_at: string
-  updated_at: string
-}
-
-export interface ConfigureGitHubAppRequest {
-  client_id: string
-  client_secret: string
-  enabled?: boolean
-}

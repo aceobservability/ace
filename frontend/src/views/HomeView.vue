@@ -88,7 +88,7 @@ onUnmounted(() => {
         transform: 'translateX(-50%)',
         width: '600px',
         height: '300px',
-        background: 'radial-gradient(ellipse 60% 50%, rgba(229,160,13,0.10), rgba(229,160,13,0.03) 50%, transparent 80%)',
+        background: 'radial-gradient(ellipse 60% 50%, rgba(201,150,15,0.10), rgba(201,150,15,0.03) 50%, transparent 80%)',
         zIndex: 0,
       }"
     />

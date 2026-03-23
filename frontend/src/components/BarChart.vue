@@ -10,6 +10,7 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import VChart from 'vue-echarts'
+import { chartPalette, chartColors } from '../utils/chartTheme'
 
 // Register ECharts components
 use([
@@ -51,24 +52,6 @@ const props = withDefaults(
 
 const chartRef = ref<typeof VChart | null>(null)
 
-// Stitch Kinetic palette
-const gridColor = 'rgba(71,72,74,0.15)' // outline-variant at 15%
-const labelColor = '#757578' // outline
-const textColor = '#ababad' // on-surface-variant
-const tooltipBg = '#2b2c2f' // surface-bright
-const tooltipBorder = 'rgba(71,72,74,0.15)'
-
-// Colors for the chart bars
-const barColors = [
-  '#a3a6ff', // primary
-  '#69f6b8', // secondary
-  '#ffb148', // tertiary
-  '#ff6e84', // error
-  '#6063ee', // primary-dim
-  '#58e7ab', // secondary-dim
-  '#e79400', // tertiary-dim
-]
-
 // Format timestamp for display (compact format for axis labels)
 function formatTime(timestamp: number): string {
   const date = new Date(timestamp * 1000)
@@ -101,15 +84,15 @@ const chartOption = computed(() => {
         x2: 0,
         y2: 1,
         colorStops: [
-          { offset: 0, color: barColors[index % barColors.length] },
-          { offset: 1, color: `${barColors[index % barColors.length]}88` },
+          { offset: 0, color: chartPalette[index % chartPalette.length] },
+          { offset: 1, color: `${chartPalette[index % chartPalette.length]}88` },
         ],
       },
       borderRadius: [3, 3, 0, 0],
     },
     emphasis: {
       itemStyle: {
-        color: barColors[index % barColors.length],
+        color: chartPalette[index % chartPalette.length],
       },
     },
     data: s.data.map((d) => [d.timestamp * 1000, d.value]),
@@ -122,33 +105,33 @@ const chartOption = computed(() => {
           text: props.title,
           left: 'center',
           textStyle: {
-            color: textColor,
+            color: chartColors.text,
             fontSize: 13,
             fontWeight: 500,
-            fontFamily: 'Space Grotesk, Inter, sans-serif',
+            fontFamily: chartColors.fontDisplay,
           },
         }
       : undefined,
     tooltip: {
       trigger: 'axis',
-      backgroundColor: tooltipBg,
-      borderColor: tooltipBorder,
+      backgroundColor: chartColors.tooltipBg,
+      borderColor: chartColors.tooltipBorder,
       borderWidth: 1,
       textStyle: {
-        color: textColor,
+        color: chartColors.text,
         fontSize: 12,
       },
       formatter: (params: TooltipParam[]) => {
         if (!Array.isArray(params) || params.length === 0) return ''
         const timestamp = params[0].data[0]
         const timeStr = formatFullDateTime(timestamp / 1000)
-        let result = `<div style="font-weight: 500; margin-bottom: 6px; color: ${labelColor}; font-size: 11px;">${timeStr}</div>`
+        let result = `<div style="font-weight: 500; margin-bottom: 6px; color: ${chartColors.label}; font-size: 11px;">${timeStr}</div>`
         for (const param of params) {
           const value = typeof param.data[1] === 'number' ? param.data[1].toFixed(4) : param.data[1]
           result += `<div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
             <span style="display: inline-block; width: 8px; height: 8px; background: ${param.color}; border-radius: 2px;"></span>
-            <span style="color: ${labelColor}; font-size: 12px;">${param.seriesName}:</span>
-            <span style="font-weight: 600; font-family: JetBrains Mono, monospace; color: #fdfbfe;">${value}</span>
+            <span style="color: ${chartColors.label}; font-size: 12px;">${param.seriesName}:</span>
+            <span style="font-weight: 600; font-family: JetBrains Mono, monospace; color: #F3F1EA;">${value}</span>
           </div>`
         }
         return result
@@ -158,7 +141,7 @@ const chartOption = computed(() => {
       show: props.series.length > 1,
       bottom: 0,
       textStyle: {
-        color: labelColor,
+        color: chartColors.label,
         fontSize: 11,
       },
       itemWidth: 16,
@@ -176,14 +159,14 @@ const chartOption = computed(() => {
       axisLine: {
         show: true,
         lineStyle: {
-          color: gridColor,
+          color: chartColors.grid,
         },
       },
       axisTick: {
         show: false,
       },
       axisLabel: {
-        color: labelColor,
+        color: chartColors.label,
         fontSize: 10,
         hideOverlap: true,
         formatter: (value: number) => formatTime(value / 1000),
@@ -191,7 +174,7 @@ const chartOption = computed(() => {
       splitLine: {
         show: true,
         lineStyle: {
-          color: gridColor,
+          color: chartColors.grid,
           type: 'solid',
         },
       },
@@ -201,20 +184,20 @@ const chartOption = computed(() => {
       axisLine: {
         show: true,
         lineStyle: {
-          color: gridColor,
+          color: chartColors.grid,
         },
       },
       axisTick: {
         show: false,
       },
       axisLabel: {
-        color: labelColor,
+        color: chartColors.label,
         fontSize: 10,
       },
       splitLine: {
         show: true,
         lineStyle: {
-          color: gridColor,
+          color: chartColors.grid,
           type: 'solid',
         },
       },

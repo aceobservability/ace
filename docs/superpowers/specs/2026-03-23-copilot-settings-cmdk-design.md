@@ -141,12 +141,6 @@ Chat history is cleared when:
 
 Chat history persists within an open chat session (supports multi-turn).
 
-## Accepted Expansions (from SELECTIVE EXPANSION review)
-
-- Model selector dropdown in Cmd+K chat mode (from `useCopilot.models`)
-- Extend tool support to Prometheus datasources (rename `getVictoriaMetricsTools` → `getMetricsTools`, accept both types)
-- Persist chat history across modal opens (module-level refs for messages)
-
 ## Files to change
 
 ### Create
@@ -155,21 +149,15 @@ Chat history persists within an open chat session (supports multi-turn).
 |---|---|
 | `frontend/src/components/CopilotConnectionPanel.vue` | Device flow connect/disconnect UI for settings |
 | `frontend/src/components/CopilotConnectionPanel.spec.ts` | Tests for connection panel |
-| `frontend/src/components/CmdKSearchResults.vue` | Dashboard search results with keyboard navigation |
-| `frontend/src/components/CmdKSearchResults.spec.ts` | Tests for search results |
-| `frontend/src/components/CmdKChatView.vue` | AI chat with tool calling loop + DashboardSpecPreview |
-| `frontend/src/components/CmdKChatView.spec.ts` | Tests for chat view |
 
 ### Modify
 
 | File | Change |
 |---|---|
 | `frontend/src/composables/useCopilot.ts` | Refactor to shared module-level refs so connection state is shared across consumers |
-| `frontend/src/composables/useCopilotTools.ts` | Rename `getVictoriaMetricsTools` → `getMetricsTools`, accept prometheus type |
-| `frontend/src/composables/useCopilotTools.spec.ts` | Update tests for renamed function |
 | `frontend/src/views/UnifiedSettingsView.vue` | Swap `GitHubAppSettings` import/usage for `CopilotConnectionPanel`, remove `isAdmin` prop on AI section |
-| `frontend/src/components/CmdKModal.vue` | Orchestrate mode switching between search and chat subcomponents |
-| `frontend/src/components/CmdKModal.spec.ts` | Extend existing tests with mode switching, not-connected state |
+| `frontend/src/components/CmdKModal.vue` | Add search results, AI chat mode, copilot integration |
+| `frontend/src/components/CmdKModal.spec.ts` | Extend existing tests with search filtering, keyboard nav, AI chat mode, not-connected state |
 
 ### Delete
 
@@ -192,41 +180,3 @@ All backend endpoints exist and work:
 - **CopilotConnectionPanel**: test all states (loading, not connected, device flow active, connected with/without subscription, error), connect/disconnect actions
 - **CmdKModal**: test search filtering, keyboard navigation, AI chat mode activation, not-connected state, tool call loop, DashboardSpecPreview rendering on `generate_dashboard`
 - **useCopilot refactor**: verify shared state works — connection in one consumer reflects in another
-
-<!-- /autoplan restore point: /home/janhoon/.gstack/projects/aceobservability-ace/master-autoplan-restore-20260323-210434.md -->
-
-<!-- AUTONOMOUS DECISION LOG -->
-## Decision Audit Trail
-
-| # | Phase | Decision | Principle | Rationale | Rejected |
-|---|-------|----------|-----------|-----------|----------|
-| 1 | CEO-0F | Mode: SELECTIVE EXPANSION | P3 (pragmatic) | Feature enhancement on existing system, not greenfield | EXPANSION, HOLD, REDUCTION |
-| 2 | CEO-0C-bis | Approach C: Split CmdKModal into subcomponents | P5 (explicit), P1 (complete) | Better testability, same scope as A but cleaner structure | A (monolithic modal), B (restore sidebar) |
-| 3 | CEO-cherry | Add model selector to Cmd+K | P2 (boil lakes) | In blast radius, 10 lines of UI, <1h CC effort | Skip |
-| 4 | CEO-cherry | Extend tools to Prometheus datasources | P2 (boil lakes) | In blast radius (same composable), S effort, P1 in TODOS | Skip, Defer |
-| 5 | CEO-cherry | Persist chat history across modal opens | P1 (completeness) | Module-level refs, better UX for accidental Escape | Skip |
-| 6 | CEO-cherry | Defer template gallery | P3 (pragmatic) | Outside blast radius, new UI surface | Add now |
-| 7 | CEO-cherry | Defer iterative spec refinement | P3 (pragmatic) | Significant complexity, outside blast radius | Add now |
-| 8 | CEO-S2 | Add error handling for JSON parse in generate_dashboard | P1 (completeness) | Parse can throw on malformed LLM output | Skip |
-| 9 | CEO-S2 | Add error handling for listDashboards failure | P1 (completeness) | Network errors should show empty, not crash | Skip |
-| 10 | CEO-S4 | Add empty state for search results | P1 (completeness) | "No results" is a real state users will hit | Skip |
-| 11 | CEO-S4 | Disable input during streaming | P1 (completeness) | Prevents double-send during active response | Skip |
-| 12 | Design | All 7 dimensions pass | P1 (completeness) | States, flows, DESIGN.md alignment all covered | N/A |
-| 13 | Design | Add focus trap in chat mode | P1 (completeness) | Tab should cycle within modal, not escape | Skip |
-| 14 | Design | Defer mobile Cmd+K | P3 (pragmatic) | Cmd+K is keyboard-triggered, desktop-focused | Add now |
-| 15 | Design | Add mode transition animation | P5 (explicit) | Crossfade between search/chat, 3 lines CSS | Skip |
-| 16 | Eng-0 | Accept 9-file scope (subcomponents) | P5 (explicit) | Slightly over 8-file threshold but justified by testability | Reduce scope |
-| 17 | Eng-S3 | 25 test gaps identified — all new code | P1 (completeness) | No regressions, all gaps from new components | Defer tests |
-| 18 | Eng-FM | Fix 2 critical gaps (JSON parse + listDashboards error) | P1 (completeness) | Silent failures prevented | Ignore |
-
-## GSTACK REVIEW REPORT
-
-| Review | Trigger | Why | Runs | Status | Findings |
-|--------|---------|-----|------|--------|----------|
-| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | CLEAR | 5 proposals, 3 accepted, 2 deferred |
-| Codex Review | `/codex review` | Independent 2nd opinion | 0 | -- | -- |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAR | 2 issues (critical gaps), 0 unresolved |
-| Design Review | `/plan-design-review` | UI/UX gaps | 1 | CLEAR | score: 8/10, 3 decisions |
-
-- **UNRESOLVED:** 0
-- **VERDICT:** CEO + ENG + DESIGN CLEARED -- ready to implement
