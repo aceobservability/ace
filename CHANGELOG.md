@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.7.0](https://github.com/aceobservability/ace/compare/v0.6.0...v0.7.0) (2026-03-23)
+
+
+### Features
+
+* Copilot device flow + Cmd+K search and AI chat ([#144](https://github.com/aceobservability/ace/issues/144)) ([630fbac](https://github.com/aceobservability/ace/commit/630fbac8ab9133620cadbbfe61d2e66ecb49c463))
+* **design:** add data viz palette tokens and chartTheme utility ([ad4c04e](https://github.com/aceobservability/ace/commit/ad4c04e1e24299ea42de285f2b3c0c4e46ed1f6e))
+* **design:** add Kinetic v2 motion tokens, data-pulse, and stagger-enter animations ([4133b3e](https://github.com/aceobservability/ace/commit/4133b3e10429e47b2368997394c38daeb94e3a19))
+* **design:** update core Kinetic v2 tokens — primary, surfaces, shadows, overlays ([4d5eed6](https://github.com/aceobservability/ace/commit/4d5eed6701e536f19a32b9f8f02545bf7c10071d))
+* **design:** update hardcoded colors in AiInsightCard and HomeView for Kinetic v2 ([c640344](https://github.com/aceobservability/ace/commit/c64034492e38fb96c6a406efa71e44b252f2480b))
+* **design:** update Monaco/PromQL theme to Kinetic v2 palette ([94c4673](https://github.com/aceobservability/ace/commit/94c4673a67cf4adb332c20346d9f8c6b67b08622))
+* implement Kinetic v2 design system ([bd821dc](https://github.com/aceobservability/ace/commit/bd821dc165792467a87f0c66dbafbfe92fc89e93))
+* implement Kinetic v2 design system ([#145](https://github.com/aceobservability/ace/issues/145)) ([bd821dc](https://github.com/aceobservability/ace/commit/bd821dc165792467a87f0c66dbafbfe92fc89e93))
+
+
+### Bug Fixes
+
+* address Greptile review comments ([178246a](https://github.com/aceobservability/ace/commit/178246ae710eb7483fef6b84735a852fdfc2aec9))
+* make bold text readable in Cmd+K chat panel ([a642696](https://github.com/aceobservability/ace/commit/a642696c2ac0d57bde47c057e0e3e5139e361b6e))
+* replace remaining #fdfbfe tooltip colors with #F3F1EA ([88d84af](https://github.com/aceobservability/ace/commit/88d84afe93ffd76e8b8273dca7310d5918ebe78c))
+* resolve CHANGELOG.md merge conflict with master ([1ba5d0b](https://github.com/aceobservability/ace/commit/1ba5d0bb12fb6e786ca55fcaf5cebd9d995074d7))
+* resolve lint warnings ([237dcc3](https://github.com/aceobservability/ace/commit/237dcc32018e7d17d0f3cbff852ca0ae7fce34a1))
+* restore org selector to sidebar rail ([8421f53](https://github.com/aceobservability/ace/commit/8421f530edfd60a56a679391898c71f5ab799c2c))
+
+
+### Refactoring
+
+* **charts:** use chartTheme in BarChart ([09c43f3](https://github.com/aceobservability/ace/commit/09c43f34c5676cd2b0aef4a77439df6539929fd3))
+* **charts:** use chartTheme in GaugeChart and StatPanel ([8a3a10d](https://github.com/aceobservability/ace/commit/8a3a10de6d2361c8e1f70f236a815c48fb03cba4))
+* **charts:** use chartTheme in LineChart ([b21fab2](https://github.com/aceobservability/ace/commit/b21fab2a124d6931d24f6f3330dbb9fc5a62f8df))
+* **charts:** use chartTheme in PieChart ([1b77c78](https://github.com/aceobservability/ace/commit/1b77c784a79e7380a7a0d20e8b196fd9711a6663))
+* **layout:** tokenize sidebar rail and flyout dimensions ([4811fff](https://github.com/aceobservability/ace/commit/4811fffb71359d04d070f8dfd5bf5c68cf00a853))
+
+
+### Documentation
+
+* add Copilot + Cmd+K implementation plan (8 tasks, TDD) ([8656172](https://github.com/aceobservability/ace/commit/86561722f29805b1d75347138131f614b746c939))
+* add Kinetic v2 design system implementation spec ([3db4c55](https://github.com/aceobservability/ace/commit/3db4c556888a1a609fe13093f1523b23c32d5f59))
+* add Kinetic v2 implementation plan ([9feb5ca](https://github.com/aceobservability/ace/commit/9feb5caa33eacd37d917412493f97f9f1141c191))
+* autoplan review complete — CEO + Eng + Design all cleared ([bd5bbdc](https://github.com/aceobservability/ace/commit/bd5bbdc296cc53f7a98d2913205c8d8fe7558e1b))
+* update spec with review fixes — shared state, tool loop, correct exports ([abd9abe](https://github.com/aceobservability/ace/commit/abd9abea8028406c7d81ae8c9eb8079cb776bcd2))
+
 ## [0.7.0] - 2026-03-23
 
 ### Added
