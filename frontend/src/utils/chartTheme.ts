@@ -19,7 +19,7 @@
  * - Signal Brass (index 4) is reserved for emphasis / thresholds; it should
  *   not be the first automatic color assigned to a new series.
  */
-export const chartPalette: string[] = [
+export const chartPalette = [
   '#4D8BBD', // 0 — Steel Blue         (default series 1)
   '#C65D3A', // 1 — Rust Orange
   '#7A9E46', // 2 — Machine Olive
@@ -30,17 +30,17 @@ export const chartPalette: string[] = [
   '#A7B0BA', // 7 — Alloy Silver       (supporting)
   '#6C7C94', // 8 — Slate Blue-Grey    (supporting)
   '#E07B39', // 9 — Heated Copper
-]
+] as const
 
 // ---------------------------------------------------------------------------
 // Threshold colors
 // ---------------------------------------------------------------------------
 
-export const thresholdColors: { good: string; warning: string; critical: string } = {
+export const thresholdColors = {
   good: '#4FAF78',
   warning: '#D4A11E',
   critical: '#D95C54',
-}
+} as const
 
 // ---------------------------------------------------------------------------
 // Shared ECharts style objects
@@ -54,7 +54,7 @@ export const chartGridStyle = {
 
 /** Shared tooltip appearance for all chart types. */
 export const chartTooltipStyle = {
-  backgroundColor: '#2b2c2f', // --color-surface-bright
+  backgroundColor: '#252830', // --color-surface-bright
   borderColor: 'rgba(71,72,74,0.15)',
   textStyle: {
     color: '#F5F5F4', // --color-on-surface
@@ -88,7 +88,7 @@ export const chartAxisStyle = {
 /** Shared legend style for all chart types. */
 export const chartLegendStyle = {
   textStyle: {
-    color: '#ababad', // --color-on-surface-variant
+    color: '#A8A8A4', // --color-on-surface-variant
     fontFamily: "'DM Sans', sans-serif",
     fontSize: 13,
   },

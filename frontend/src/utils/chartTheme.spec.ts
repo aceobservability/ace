@@ -132,7 +132,7 @@ describe('chartGridStyle', () => {
 describe('chartTooltipStyle', () => {
   it('has expected structure with DM Sans font', () => {
     expect(chartTooltipStyle).toMatchObject({
-      backgroundColor: '#2b2c2f',
+      backgroundColor: '#252830',
       borderColor: 'rgba(71,72,74,0.15)',
       textStyle: {
         color: '#F5F5F4',
@@ -142,8 +142,8 @@ describe('chartTooltipStyle', () => {
     })
   })
 
-  it('backgroundColor is surface-bright #2b2c2f', () => {
-    expect(chartTooltipStyle.backgroundColor).toBe('#2b2c2f')
+  it('backgroundColor is surface-bright #252830', () => {
+    expect(chartTooltipStyle.backgroundColor).toBe('#252830')
   })
 
   it('textStyle uses DM Sans', () => {
@@ -208,15 +208,15 @@ describe('chartLegendStyle', () => {
   it('has expected structure', () => {
     expect(chartLegendStyle).toMatchObject({
       textStyle: {
-        color: '#ababad',
+        color: '#A8A8A4',
         fontFamily: "'DM Sans', sans-serif",
         fontSize: 13,
       },
     })
   })
 
-  it('textStyle color is on-surface-variant #ababad', () => {
-    expect(chartLegendStyle.textStyle.color).toBe('#ababad')
+  it('textStyle color is on-surface-variant #A8A8A4', () => {
+    expect(chartLegendStyle.textStyle.color).toBe('#A8A8A4')
   })
 
   it('textStyle uses DM Sans', () => {
