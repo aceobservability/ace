@@ -153,9 +153,9 @@ function handleNavigate(path: string) {
       <CmdKChatView
         v-else-if="mode === 'chat'"
         :initial-query="chatQuery"
-        :datasource-type="currentOrg?.id ? 'victoriametrics' : 'victoriametrics'"
+        :datasource-type="'victoriametrics'"
         :datasource-name="'default'"
-        :datasource-id="''"
+        :datasource-id="currentContext?.datasourceId ?? ''"
         @exit-chat="handleExitChat"
       />
     </div>
