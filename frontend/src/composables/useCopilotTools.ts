@@ -7,7 +7,7 @@ import {
 import type { ToolCall, ToolDefinition } from './useCopilot'
 import { useQueryEditor } from './useQueryEditor'
 
-export function getVictoriaMetricsTools(): ToolDefinition[] {
+export function getMetricsTools(): ToolDefinition[] {
   return [
     {
       type: 'function',
@@ -154,6 +154,9 @@ export function getVictoriaMetricsTools(): ToolDefinition[] {
     },
   ]
 }
+
+/** @deprecated Use getMetricsTools instead */
+export const getVictoriaMetricsTools = getMetricsTools
 
 export function useCopilotToolExecutor(datasourceId: () => string) {
   const queryEditor = useQueryEditor()
