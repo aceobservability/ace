@@ -1,6 +1,8 @@
 # Multi-Provider AI Support
 
-Replace the Copilot-only chat system with a provider abstraction that supports OpenAI, Anthropic, OpenRouter, Ollama, vLLM, and any OpenAI-compatible endpoint — while keeping Copilot as a personal fallback.
+Replace the Copilot-only chat system with a provider abstraction that supports OpenAI, OpenRouter, Ollama, vLLM, and any OpenAI-compatible endpoint — while keeping Copilot as a personal fallback.
+
+Note: Anthropic's native API (`/v1/messages`) is not OpenAI-compatible — different request schema, auth header (`x-api-key`), and streaming format. To use Anthropic models, configure them through OpenRouter (which wraps Anthropic in an OpenAI-compatible API) or any other OpenAI-compatible gateway. This avoids needing a separate provider implementation for a single vendor's proprietary format.
 
 ## Provider Hierarchy
 
@@ -18,7 +20,7 @@ When org providers exist, Copilot does not appear in the provider list regardles
 CREATE TABLE ai_providers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    provider_type VARCHAR(50) NOT NULL,  -- 'openai', 'anthropic', 'openrouter', 'ollama', 'custom'
+    provider_type VARCHAR(50) NOT NULL,  -- 'openai', 'openrouter', 'ollama', 'custom'
     display_name VARCHAR(255) NOT NULL,
     base_url TEXT NOT NULL,              -- e.g. 'https://api.openai.com/v1'
     api_key TEXT,                        -- encrypted AES-GCM, nullable for local providers
@@ -33,7 +35,7 @@ CREATE TABLE ai_providers (
 ### Existing tables unchanged
 
 - `user_github_connections` — Copilot device flow auth (user-level)
-- `sso_configs` with `github_copilot` — org-level GitHub OAuth app config
+- `sso_configs` with `github_copilot` — stays as-is. These rows store org-level GitHub OAuth app credentials for the device flow (client_id/client_secret). They are independent of the AI provider system — they configure *how users authenticate with GitHub*, not which AI provider to use. The old `POST/GET /api/orgs/{id}/github-app` endpoints are removed; the same config can be managed via the existing `sso_configs` admin UI if needed in the future.
 
 ## Backend Provider Interface
 
@@ -44,50 +46,67 @@ type AIProvider interface {
 }
 
 type AIModel struct {
-    ID       string `json:"id"`
-    Name     string `json:"name"`
-    Vendor   string `json:"vendor"`
-    Category string `json:"category"`
+    ID       string                 `json:"id"`
+    Name     string                 `json:"name"`
+    Vendor   string                 `json:"vendor"`
+    Category string                 `json:"category"`
+    Meta     map[string]interface{} `json:"meta,omitempty"` // provider-specific (e.g. Copilot premium_multiplier, preview)
 }
 
 type ChatRequest struct {
-    Model    string        `json:"model"`
-    Messages []interface{} `json:"messages"`
-    Tools    []interface{} `json:"tools,omitempty"`
-    Stream   bool          `json:"stream"`
+    Model    string            `json:"model"`
+    Messages []json.RawMessage `json:"messages"`  // preserved as raw JSON for provider passthrough
+    Tools    []json.RawMessage `json:"tools,omitempty"`
+    Stream   bool              `json:"stream"`
 }
 ```
 
 ### Implementations
 
-**`OpenAICompatibleProvider`** — covers OpenAI, Anthropic, OpenRouter, Ollama, vLLM, custom. Needs `baseURL` + `apiKey`. Calls `baseURL/models` for discovery, `baseURL/chat/completions` for chat. Handles both SSE streaming and JSON non-streaming passthrough.
+**`OpenAICompatibleProvider`** — covers OpenAI, OpenRouter, Ollama, and any OpenAI-compatible endpoint (vLLM, LiteLLM, etc. use `provider_type = 'custom'`). Needs `baseURL` + `apiKey`. Calls `baseURL/models` for discovery, `baseURL/chat/completions` for chat. Handles both SSE streaming and JSON non-streaming passthrough.
 
 **`CopilotProvider`** — wraps existing Copilot token-fetching logic. `ListModels()` fetches a Copilot token then hits the models endpoint with special headers. `Chat()` does the same token dance then forwards to Copilot chat completions with `Editor-Version`, `Copilot-Integration-Id`, etc.
+
+### System Prompt Injection
+
+System prompts are injected at the orchestration layer *before* dispatching to any provider. The existing `copilotSystemPrompts` map (mapping `datasource_type` to expert prompts for PromQL, LogQL, TraceQL, etc.) moves out of `github_copilot.go` into a shared `system_prompts.go` file. The `AIHandler.Chat()` method prepends the appropriate system prompt to the messages array before calling `provider.Chat()`. This ensures all providers get the same datasource-specific expertise regardless of backend.
 
 ### Provider Resolution
 
 ```
-1. Query ai_providers WHERE organization_id = user's org AND enabled = true
+1. Query ai_providers WHERE organization_id = org_id (from URL) AND enabled = true
 2. If found -> return as available providers
 3. If none -> check user_github_connections for Copilot token
 4. If Copilot connected -> return CopilotProvider as sole provider
 5. If neither -> error
 ```
 
+### Copilot as provider_id
+
+When the user's Copilot fallback is active, it appears with `provider_id = "copilot"` (a reserved string). The backend routing logic: if `provider_id == "copilot"`, use `CopilotProvider` with the user's stored GitHub token; otherwise, parse as UUID and look up in `ai_providers`.
+
 ## API Endpoints
 
 ### New endpoints
 
+All AI endpoints are scoped to an org via the URL path. This is consistent with existing patterns (e.g., `/api/orgs/{id}/github-app`) and avoids ambiguity for users in multiple orgs. The frontend already tracks the current org via `useOrganization()`.
+
+**User-facing (any org member):**
+
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/ai/providers` | List available providers for current user (resolved) |
-| `GET` | `/api/ai/models` | List models across all available providers |
-| `POST` | `/api/ai/chat` | Chat request with `provider_id` routing |
-| `POST` | `/api/orgs/{id}/ai-providers` | Admin: create provider |
-| `GET` | `/api/orgs/{id}/ai-providers` | Admin: list org providers |
-| `PUT` | `/api/orgs/{id}/ai-providers/{pid}` | Admin: update provider |
-| `DELETE` | `/api/orgs/{id}/ai-providers/{pid}` | Admin: delete provider |
-| `POST` | `/api/orgs/{id}/ai-providers/{pid}/test` | Admin: test connection |
+| `GET` | `/api/orgs/{id}/ai/providers` | List available providers (resolved: org providers + Copilot fallback) |
+| `GET` | `/api/orgs/{id}/ai/models` | List models across available providers |
+| `POST` | `/api/orgs/{id}/ai/chat` | Chat request with `provider_id` routing |
+
+**Admin-only (org admin):**
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/orgs/{id}/ai/providers` | Create a provider |
+| `PUT` | `/api/orgs/{id}/ai/providers/{pid}` | Update a provider |
+| `DELETE` | `/api/orgs/{id}/ai/providers/{pid}` | Delete a provider |
+| `POST` | `/api/orgs/{id}/ai/providers/{pid}/test` | Test connection (hits `/models`) |
 
 ### Kept (Copilot auth is user-level)
 
@@ -100,9 +119,9 @@ type ChatRequest struct {
 
 ### Removed
 
-- `GET /api/copilot/models` -> replaced by `GET /api/ai/models`
-- `POST /api/copilot/chat` -> replaced by `POST /api/ai/chat`
-- `POST /api/orgs/{id}/github-app` and `GET /api/orgs/{id}/github-app` -> replaced by generic provider CRUD
+- `GET /api/copilot/models` -> replaced by `GET /api/orgs/{id}/ai/models`
+- `POST /api/copilot/chat` -> replaced by `POST /api/orgs/{id}/ai/chat`
+- `POST /api/orgs/{id}/github-app` and `GET /api/orgs/{id}/github-app` -> removed (sso_configs stays for GitHub OAuth credentials)
 
 ### Chat request body
 
@@ -131,11 +150,11 @@ const selectedProviderId = ref<string>('')    // uuid or 'copilot'
 const models = ref<AIModel[]>([])
 const selectedModel = ref<string>('')
 
-// Functions
-fetchProviders()     // GET /api/ai/providers
-fetchModels()        // GET /api/ai/models?provider_id=X
-sendMessage()        // POST /api/ai/chat with provider_id (SSE streaming)
-sendChatRequest()    // POST /api/ai/chat non-streaming (tool calling)
+// Functions (all org-scoped, orgId from useOrganization())
+fetchProviders()     // GET /api/orgs/{orgId}/ai/providers
+fetchModels()        // GET /api/orgs/{orgId}/ai/models?provider_id=X
+sendMessage()        // POST /api/orgs/{orgId}/ai/chat with provider_id (SSE streaming)
+sendChatRequest()    // POST /api/orgs/{orgId}/ai/chat non-streaming (tool calling)
 ```
 
 ### `useCopilotAuth.ts` (extracted)
@@ -156,8 +175,17 @@ Copilot-specific auth state: `isConnected`, `hasCopilot`, `githubUsername`, devi
 - **Copilot token expiry**: `fetchCopilotToken()` gets fresh token per request, no change needed.
 - **API key rotation**: admin updates via PUT, takes effect immediately (read per-request, not cached).
 - **Provider deleted mid-session**: next request returns "provider not found", frontend refreshes provider list.
-- **Model discovery fails**: fall back to `models_override` from DB. If empty, return provider with empty model list and warning.
+- **Model discovery fails**: fall back to `models_override` from DB for the model *listing* endpoint only. If `models_override` is also empty, return the provider with an empty model list and a warning. Note: a provider being unreachable for model listing likely means it will also fail for chat — but these are separate error paths. Chat errors are handled independently per the "provider unavailable" case above.
 - **Org providers exist + user has Copilot**: Copilot does NOT appear. Org providers take full precedence.
+
+## Deferred
+
+- **Rate limiting / usage tracking**: When an admin configures an API key for the org, all members share it. Per-user rate limiting and usage tracking are deferred to a future iteration. For now, the assumption is that org admins manage their API key quotas externally.
+- **Anthropic native API**: Anthropic's `/v1/messages` API is not OpenAI-compatible. Supporting it natively would require a separate provider implementation. Deferred — use OpenRouter or any OpenAI-compatible gateway for Anthropic models.
+
+## Route Registration
+
+New endpoints follow the same router registration pattern and `auth.RequireAuth` middleware as existing endpoints. Admin endpoints additionally check `role = 'admin'` in `organization_memberships` (same pattern as the existing `ConfigureGitHubApp` handler).
 
 ## Testing
 
