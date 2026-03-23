@@ -10,7 +10,7 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import VChart from 'vue-echarts'
-import { chartPalette, chartColors } from '@/utils/chartTheme'
+import { chartPalette, chartColors } from '../utils/chartTheme'
 
 // Register ECharts components
 use([
