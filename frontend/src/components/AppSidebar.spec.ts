@@ -33,11 +33,16 @@ vi.mock('../composables/useAuth', () => ({
 }))
 
 const mockCurrentOrg = ref({ id: 'org-1', name: 'Test Org', role: 'admin' })
+const mockOrganizations = ref([
+  { id: 'org-1', name: 'Test Org', role: 'admin' },
+  { id: 'org-2', name: 'Other Org', role: 'viewer' },
+])
+const mockSelectOrganization = vi.fn()
 vi.mock('../composables/useOrganization', () => ({
   useOrganization: () => ({
-    organizations: ref([mockCurrentOrg.value]),
+    organizations: mockOrganizations,
     currentOrg: mockCurrentOrg,
-    selectOrganization: vi.fn(),
+    selectOrganization: mockSelectOrganization,
   }),
 }))
 
@@ -86,6 +91,7 @@ describe('AppSidebar', () => {
     mockIsPeeking.value = false
     mockActiveFlyoutSection.value = null
     mockCurrentRouteSection.value = 'dashboards'
+    mockCurrentOrg.value = { id: 'org-1', name: 'Test Org', role: 'admin' }
     mockRoutePath.value = '/app/dashboards'
     mockUser.value = { email: 'jane@example.com', name: 'Jane Doe' }
   })
@@ -176,5 +182,59 @@ describe('AppSidebar', () => {
     mockPinnedSection.value = null
     wrapper = createWrapper()
     expect(wrapper.find('[data-testid="flyout-backdrop"]').exists()).toBe(false)
+  })
+
+  describe('org selector', () => {
+    it('renders the org selector button in the rail', () => {
+      wrapper = createWrapper()
+      const orgBtn = wrapper.find('[data-testid="rail-org-selector"]')
+      expect(orgBtn.exists()).toBe(true)
+      expect(orgBtn.text()).toBe('T')
+    })
+
+    it('opens org switcher popup when org button is clicked', async () => {
+      wrapper = createWrapper()
+      expect(wrapper.find('[data-testid="org-switcher-popup"]').exists()).toBe(false)
+      await wrapper.find('[data-testid="rail-org-selector"]').trigger('click')
+      expect(wrapper.find('[data-testid="org-switcher-popup"]').exists()).toBe(true)
+    })
+
+    it('lists all organizations in the popup', async () => {
+      wrapper = createWrapper()
+      await wrapper.find('[data-testid="rail-org-selector"]').trigger('click')
+      expect(wrapper.find('[data-testid="org-switcher-org-1"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="org-switcher-org-2"]').exists()).toBe(true)
+    })
+
+    it('calls selectOrganization when an org is clicked', async () => {
+      wrapper = createWrapper()
+      await wrapper.find('[data-testid="rail-org-selector"]').trigger('click')
+      await wrapper.find('[data-testid="org-switcher-org-2"]').trigger('click')
+      expect(mockSelectOrganization).toHaveBeenCalledWith('org-2')
+    })
+
+    it('closes the popup after selecting an org', async () => {
+      wrapper = createWrapper()
+      await wrapper.find('[data-testid="rail-org-selector"]').trigger('click')
+      expect(wrapper.find('[data-testid="org-switcher-popup"]').exists()).toBe(true)
+      await wrapper.find('[data-testid="org-switcher-org-2"]').trigger('click')
+      expect(wrapper.find('[data-testid="org-switcher-popup"]').exists()).toBe(false)
+    })
+
+    it('highlights the current org with primary color', async () => {
+      wrapper = createWrapper()
+      await wrapper.find('[data-testid="rail-org-selector"]').trigger('click')
+      const currentOrgBtn = wrapper.find('[data-testid="org-switcher-org-1"]')
+      expect(currentOrgBtn.attributes('style')).toContain('--color-primary')
+      const otherOrgBtn = wrapper.find('[data-testid="org-switcher-org-2"]')
+      expect(otherOrgBtn.attributes('style')).toContain('--color-on-surface')
+    })
+
+    it('shows ? when no org is selected', async () => {
+      mockCurrentOrg.value = null as unknown as typeof mockCurrentOrg.value
+      wrapper = createWrapper()
+      const orgBtn = wrapper.find('[data-testid="rail-org-selector"]')
+      expect(orgBtn.text()).toBe('?')
+    })
   })
 })

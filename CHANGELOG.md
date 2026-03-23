@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.1] - 2026-03-23
+
+### Fixed
+
+* Restore org selector to sidebar — the sidebar redesign accidentally removed the organization dropdown, leaving users with no visible way to switch orgs and causing dashboards to appear empty when no org was auto-selected
+
 ## [0.6.0](https://github.com/aceobservability/ace/compare/v0.5.0...v0.6.0) (2026-03-23)
 
 
