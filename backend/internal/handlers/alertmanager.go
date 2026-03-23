@@ -135,6 +135,21 @@ func (h *AlertManagerHandler) CreateSilence(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	userID, _ := auth.GetUserID(r.Context())
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	defer cancel()
+	var role string
+	h.pool.QueryRow(ctx,
+		`SELECT role FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
+		userID, ds.OrganizationID,
+	).Scan(&role)
+	if role == "auditor" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "auditors cannot modify alertmanager"})
+		return
+	}
+
 	client, err := datasource.NewAlertManagerClient(*ds)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -171,6 +186,21 @@ func (h *AlertManagerHandler) CreateSilence(w http.ResponseWriter, r *http.Reque
 func (h *AlertManagerHandler) ExpireSilence(w http.ResponseWriter, r *http.Request) {
 	ds, ok := h.resolveAlertManagerDatasource(w, r)
 	if !ok {
+		return
+	}
+
+	userID, _ := auth.GetUserID(r.Context())
+	ctx2, cancel2 := context.WithTimeout(r.Context(), 15*time.Second)
+	defer cancel2()
+	var role string
+	h.pool.QueryRow(ctx2,
+		`SELECT role FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
+		userID, ds.OrganizationID,
+	).Scan(&role)
+	if role == "auditor" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "auditors cannot modify alertmanager"})
 		return
 	}
 

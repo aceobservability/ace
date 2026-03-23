@@ -428,7 +428,7 @@ func (h *OrganizationHandler) CreateInvitation(w http.ResponseWriter, r *http.Re
 		req.Role = models.RoleViewer
 	}
 
-	if req.Role != models.RoleAdmin && req.Role != models.RoleEditor && req.Role != models.RoleViewer {
+	if req.Role != models.RoleAdmin && req.Role != models.RoleEditor && req.Role != models.RoleViewer && req.Role != models.RoleAuditor {
 		http.Error(w, `{"error":"invalid role"}`, http.StatusBadRequest)
 		return
 	}
@@ -658,7 +658,7 @@ func (h *OrganizationHandler) UpdateMemberRole(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if req.Role != models.RoleAdmin && req.Role != models.RoleEditor && req.Role != models.RoleViewer {
+	if req.Role != models.RoleAdmin && req.Role != models.RoleEditor && req.Role != models.RoleViewer && req.Role != models.RoleAuditor {
 		http.Error(w, `{"error":"invalid role"}`, http.StatusBadRequest)
 		return
 	}
