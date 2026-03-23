@@ -6,16 +6,14 @@ import StatusDot from '../components/StatusDot.vue'
 import AiInsightCard from '../components/AiInsightCard.vue'
 import OnboardingBanner from '../components/OnboardingBanner.vue'
 import { useCommandContext } from '../composables/useCommandContext'
+import { useDatasource } from '../composables/useDatasource'
 import { useFavorites } from '../composables/useFavorites'
 
 const { registerContext, deregisterContext } = useCommandContext()
+const { datasources } = useDatasource()
 const { favorites, recentDashboards } = useFavorites()
 
-// Data source flag — in a real app this would come from an API/store.
-// For now, check localStorage for a mock flag.
-const hasDataSources = computed(() => {
-  return localStorage.getItem('ace-has-datasources') === 'true'
-})
+const hasDataSources = computed(() => datasources.value.length > 0)
 
 // Onboarding banner visibility — check if user dismissed it
 const onboardingDismissed = computed(() => {
