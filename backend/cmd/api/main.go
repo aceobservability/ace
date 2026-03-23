@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/janhoon/dash/backend/internal/analytics"
+	"github.com/janhoon/dash/backend/internal/audit"
 	"github.com/janhoon/dash/backend/internal/auth"
 	"github.com/janhoon/dash/backend/internal/db"
 	"github.com/janhoon/dash/backend/internal/handlers"
@@ -135,6 +136,12 @@ func main() {
 	mux.HandleFunc("DELETE /api/orgs/{id}/members/{userId}", auth.RequireAuth(jwtManager, orgHandler.RemoveMember))
 	mux.HandleFunc("PUT /api/orgs/{id}/branding", auth.RequireAuth(jwtManager, orgHandler.UpdateBranding))
 
+	// Audit log routes
+	auditLogger := audit.NewLogger(pool)
+	auditHandler := handlers.NewAuditHandler(pool)
+	mux.HandleFunc("GET /api/orgs/{id}/audit-log", auth.RequireAuth(jwtManager, auditHandler.ListAuditLog))
+	mux.HandleFunc("GET /api/orgs/{id}/audit-log/export", auth.RequireAuth(jwtManager, auditHandler.ExportAuditLog))
+
 	// User group routes
 	groupHandler := handlers.NewGroupHandler(pool)
 	mux.HandleFunc("POST /api/orgs/{id}/groups", auth.RequireAuth(jwtManager, groupHandler.Create))
@@ -237,6 +244,7 @@ func main() {
 
 	// Apply middleware
 	handler := corsMiddleware(otelhttp.NewHandler(mux, "ace-api"))
+	handler = auditLogger.Middleware(handler)
 
 	// Create server
 	server := &http.Server{
