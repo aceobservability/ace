@@ -45,7 +45,7 @@
     "typescript": "~5.9.3",
     "vite": "^7.2.4",
     "vitest": "^4.0.18",
-    "vue-tsc": "^3.2.5"
+    "vue-tsc": "^3.2.6"
   },
   "overrides": {
     "dompurify": "^3.3.3"
