@@ -28,7 +28,7 @@
     "shiki": "^4.0.2",
     "vue": "^3.5.28",
     "vue-echarts": "^8.0.1",
-    "vue-router": "^5.0.3",
+    "vue-router": "^5.0.4",
     "vue3-grid-layout-next": "^1.0.6"
   },
   "devDependencies": {
