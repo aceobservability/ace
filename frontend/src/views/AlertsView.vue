@@ -575,8 +575,8 @@ onUnmounted(() => {
         <!-- AI Insight Card for firing alerts -->
         <AiInsightCard
           v-if="firingAlerts.length > 0"
-          title="AI Root Cause Analysis"
-          :description="`${firingAlerts.length} alert${firingAlerts.length > 1 ? 's' : ''} firing. Possible root cause: elevated resource consumption detected across affected services. Check recent deployments and scaling events.`"
+          title="AI Root Cause Analysis (placeholder)"
+          :description="`${firingAlerts.length} alert${firingAlerts.length > 1 ? 's' : ''} firing. Root cause analysis pending — connect an AI provider in Settings to enable live diagnostics.`"
           :timestamp="formattedLastRefreshed || 'just now'"
           type="anomaly"
           class="mb-4"

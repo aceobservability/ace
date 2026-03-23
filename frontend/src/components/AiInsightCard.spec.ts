@@ -51,6 +51,16 @@ describe('AiInsightCard', () => {
     expect(style).toContain('#F97316')
   })
 
+  it('sets datetime attribute on the <time> element', () => {
+    const wrapper = mount(AiInsightCard, {
+      props: defaultProps,
+    })
+
+    const timeEl = wrapper.find('time')
+    expect(timeEl.exists()).toBe(true)
+    expect(timeEl.attributes('datetime')).toBe('2 minutes ago')
+  })
+
   it('does not use backdrop-filter (old glassmorphic style removed)', () => {
     const wrapper = mount(AiInsightCard, {
       props: defaultProps,

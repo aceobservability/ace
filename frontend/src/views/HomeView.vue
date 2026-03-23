@@ -14,7 +14,7 @@ const { favorites, recentDashboards } = useFavorites()
 // Data source flag — in a real app this would come from an API/store.
 // For now, check localStorage for a mock flag.
 const hasDataSources = computed(() => {
-  return localStorage.getItem('ace-has-datasources') !== 'false'
+  return localStorage.getItem('ace-has-datasources') === 'true'
 })
 
 // Onboarding banner visibility — check if user dismissed it
@@ -304,7 +304,7 @@ onUnmounted(() => {
             class="text-[11px]"
             :style="{ color: 'var(--color-outline)' }"
           >
-            {{ aiInsights.length }} new
+            {{ aiInsights.length }} insights
           </span>
         </div>
         <div class="flex flex-col gap-2">

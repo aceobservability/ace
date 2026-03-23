@@ -32,13 +32,19 @@ const glowAnimationMap: Record<string, string> = {
   warning: 'pulse-warning 2s ease-in-out infinite',
 }
 
+const prefersReducedMotion =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 const dotStyle = computed(() => {
   const animations: string[] = []
-  if (props.pulse) {
-    animations.push('statusDotPulse 2s ease-in-out infinite')
-  }
-  if (glowAnimationMap[props.status]) {
-    animations.push(glowAnimationMap[props.status])
+  if (!prefersReducedMotion) {
+    if (props.pulse) {
+      animations.push('statusDotPulse 2s ease-in-out infinite')
+    }
+    if (glowAnimationMap[props.status]) {
+      animations.push(glowAnimationMap[props.status])
+    }
   }
 
   return {

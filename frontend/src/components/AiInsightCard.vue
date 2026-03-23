@@ -45,6 +45,7 @@ const cardStyle = computed(() => {
     <time
       class="mt-1 block text-xs"
       :style="{ color: 'var(--color-outline)' }"
+      :datetime="timestamp"
     >
       {{ timestamp }}
     </time>

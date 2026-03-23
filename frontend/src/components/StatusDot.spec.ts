@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import StatusDot from './StatusDot.vue'
 
 describe('StatusDot', () => {
@@ -86,5 +86,42 @@ describe('StatusDot', () => {
     const style = dot.attributes('style') || ''
     expect(style).toContain('statusDotPulse')
     expect(style).toContain('pulse-critical')
+  })
+
+  describe('prefers-reduced-motion', () => {
+    let matchMediaSpy: ReturnType<typeof vi.spyOn>
+
+    beforeEach(() => {
+      matchMediaSpy = vi.spyOn(window, 'matchMedia')
+    })
+
+    afterEach(() => {
+      matchMediaSpy.mockRestore()
+      vi.resetModules()
+    })
+
+    it('suppresses all animations when prefers-reduced-motion is enabled', async () => {
+      matchMediaSpy.mockImplementation((query: string) => ({
+        matches: query === '(prefers-reduced-motion: reduce)',
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }))
+
+      // Re-import the component so the module-level matchMedia check picks up the mock
+      const { default: StatusDotFresh } = await import('./StatusDot.vue')
+      const wrapper = mount(StatusDotFresh, {
+        props: { status: 'critical', pulse: true },
+      })
+
+      const dot = wrapper.find('[role="status"]')
+      const style = dot.attributes('style') || ''
+      expect(style).not.toContain('pulse-critical')
+      expect(style).not.toContain('statusDotPulse')
+    })
   })
 })
