@@ -1,19 +1,13 @@
 import type { Component } from 'vue'
+import type { RawQueryResult } from '../types/panel'
+
+export type { RawQueryResult }
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export type PanelCategory = 'charts' | 'stats' | 'observability' | 'widgets'
-
-export interface RawQueryResult {
-  series: Array<{
-    name: string
-    data: Array<{ timestamp: number; value: number }>
-  }>
-  logs?: unknown[]
-  traces?: unknown[]
-}
 
 export interface PanelRegistration {
   /** Unique identifier, e.g. 'heatmap' */
@@ -36,6 +30,8 @@ export interface PanelRegistration {
 // ---------------------------------------------------------------------------
 
 const registry = new Map<string, PanelRegistration>()
+
+const byLabel = (a: PanelRegistration, b: PanelRegistration) => a.label.localeCompare(b.label)
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -65,14 +61,14 @@ export function lookupPanel(type: string): PanelRegistration | null {
 export function getPanelsByCategory(category: PanelCategory): PanelRegistration[] {
   return Array.from(registry.values())
     .filter((p) => p.category === category)
-    .sort((a, b) => a.label.localeCompare(b.label))
+    .sort(byLabel)
 }
 
 /**
  * Returns all registered panels sorted alphabetically by label.
  */
 export function getAllPanels(): PanelRegistration[] {
-  return Array.from(registry.values()).sort((a, b) => a.label.localeCompare(b.label))
+  return Array.from(registry.values()).sort(byLabel)
 }
 
 /**
