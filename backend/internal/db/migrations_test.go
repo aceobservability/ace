@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -11,7 +12,7 @@ import (
 // This test requires a running PostgreSQL database
 func TestRunMigrations(t *testing.T) {
 	// Skip if no database URL is provided
-	databaseURL := "postgres://postgres:postgres@localhost:5432/dash_test?sslmode=disable"
+	databaseURL := "postgres://dash:dash@localhost:5432/dash_test?sslmode=disable"
 
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, databaseURL)
@@ -22,6 +23,7 @@ func TestRunMigrations(t *testing.T) {
 
 	// Clean up test database
 	cleanupSQL := `
+		DROP TABLE IF EXISTS audit_log CASCADE;
 		DROP TABLE IF EXISTS panels CASCADE;
 		DROP TABLE IF EXISTS dashboards CASCADE;
 		DROP TABLE IF EXISTS resource_permissions CASCADE;
@@ -36,6 +38,7 @@ func TestRunMigrations(t *testing.T) {
 		DROP TABLE IF EXISTS organization_memberships CASCADE;
 		DROP TABLE IF EXISTS users CASCADE;
 		DROP TABLE IF EXISTS organizations CASCADE;
+		DROP FUNCTION IF EXISTS audit_log_immutable() CASCADE;
 	`
 	_, err = pool.Exec(ctx, cleanupSQL)
 	if err != nil {
@@ -63,6 +66,7 @@ func TestRunMigrations(t *testing.T) {
 		"folders",
 		"dashboards",
 		"panels",
+		"audit_log",
 	}
 
 	for _, table := range tables {
@@ -113,8 +117,8 @@ func TestRunMigrations(t *testing.T) {
 		t.Fatalf("Could not create group member user: %v", err)
 	}
 
-	// Test valid roles
-	validRoles := []string{"admin", "editor", "viewer"}
+	// Test valid roles (auditor is now a valid role)
+	validRoles := []string{"admin", "editor", "viewer", "auditor"}
 	for _, role := range validRoles {
 		_, err = pool.Exec(ctx, `
 			DELETE FROM organization_memberships WHERE user_id = (SELECT id FROM users WHERE email = 'test@example.com')
@@ -226,18 +230,54 @@ func TestRunMigrations(t *testing.T) {
 		t.Error("Expected invalid permission to fail constraint check")
 	}
 
-	// Test cascade delete - delete organization should delete memberships
+	// Test audit_log: INSERT succeeds
+	_, err = pool.Exec(ctx, `
+		INSERT INTO audit_log (organization_id, actor_email, action, outcome)
+		SELECT o.id, 'test@example.com', 'dashboard.view', 'success'
+		FROM organizations o
+		WHERE o.slug = 'test-org'
+	`)
+	if err != nil {
+		t.Errorf("Expected audit_log INSERT to succeed, got error: %v", err)
+	}
+
+	// Test audit_log: UPDATE is blocked by immutability trigger
+	_, err = pool.Exec(ctx, `
+		UPDATE audit_log SET action = 'tampered' WHERE actor_email = 'test@example.com'
+	`)
+	if err == nil {
+		t.Error("Expected UPDATE on audit_log to be blocked by immutability trigger")
+	} else if !strings.Contains(err.Error(), "immutable") {
+		t.Errorf("Expected error to contain 'immutable', got: %v", err)
+	}
+
+	// Test audit_log: DELETE is blocked by immutability trigger
+	_, err = pool.Exec(ctx, `
+		DELETE FROM audit_log WHERE actor_email = 'test@example.com'
+	`)
+	if err == nil {
+		t.Error("Expected DELETE on audit_log to be blocked by immutability trigger")
+	} else if !strings.Contains(err.Error(), "immutable") {
+		t.Errorf("Expected error to contain 'immutable', got: %v", err)
+	}
+
+	// Test cascade delete - use a separate org with no audit_log entries so delete is not blocked
+	_, err = pool.Exec(ctx, `INSERT INTO organizations (name, slug) VALUES ('Cascade Test Org', 'cascade-test-org')`)
+	if err != nil {
+		t.Fatalf("Could not create cascade test organization: %v", err)
+	}
+
 	_, err = pool.Exec(ctx, `
 		INSERT INTO organization_memberships (organization_id, user_id, role)
 		SELECT o.id, u.id, 'viewer'
 		FROM organizations o, users u
-		WHERE o.slug = 'test-org' AND u.email = 'test@example.com'
+		WHERE o.slug = 'cascade-test-org' AND u.email = 'test@example.com'
 	`)
 	if err != nil {
 		t.Fatalf("Could not create test membership: %v", err)
 	}
 
-	_, err = pool.Exec(ctx, `DELETE FROM organizations WHERE slug = 'test-org'`)
+	_, err = pool.Exec(ctx, `DELETE FROM organizations WHERE slug = 'cascade-test-org'`)
 	if err != nil {
 		t.Fatalf("Could not delete test organization: %v", err)
 	}
@@ -258,7 +298,7 @@ func TestRunMigrations(t *testing.T) {
 // TestDownMigration tests that migrations can be reversed
 func TestDownMigration(t *testing.T) {
 	// Skip if no database URL is provided
-	databaseURL := "postgres://postgres:postgres@localhost:5432/dash_test?sslmode=disable"
+	databaseURL := "postgres://dash:dash@localhost:5432/dash_test?sslmode=disable"
 
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, databaseURL)
@@ -269,6 +309,7 @@ func TestDownMigration(t *testing.T) {
 
 	// First run up migrations
 	cleanupSQL := `
+		DROP TABLE IF EXISTS audit_log CASCADE;
 		DROP TABLE IF EXISTS panels CASCADE;
 		DROP TABLE IF EXISTS dashboards CASCADE;
 		DROP TABLE IF EXISTS resource_permissions CASCADE;
@@ -283,6 +324,7 @@ func TestDownMigration(t *testing.T) {
 		DROP TABLE IF EXISTS organization_memberships CASCADE;
 		DROP TABLE IF EXISTS users CASCADE;
 		DROP TABLE IF EXISTS organizations CASCADE;
+		DROP FUNCTION IF EXISTS audit_log_immutable() CASCADE;
 	`
 	_, err = pool.Exec(ctx, cleanupSQL)
 	if err != nil {
@@ -315,6 +357,7 @@ func TestDownMigration(t *testing.T) {
 		"folders",
 		"dashboards",
 		"panels",
+		"audit_log",
 	}
 
 	for _, table := range tables {

@@ -30,9 +30,10 @@ type UpdateUserRequest struct {
 type MembershipRole string
 
 const (
-	RoleAdmin  MembershipRole = "admin"
-	RoleEditor MembershipRole = "editor"
-	RoleViewer MembershipRole = "viewer"
+	RoleAdmin   MembershipRole = "admin"
+	RoleEditor  MembershipRole = "editor"
+	RoleViewer  MembershipRole = "viewer"
+	RoleAuditor MembershipRole = "auditor"
 )
 
 type OrganizationMembership struct {
