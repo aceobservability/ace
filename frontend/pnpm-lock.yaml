@@ -21,8 +21,8 @@ importers:
         specifier: ^0.577.0
         version: 0.577.0(vue@3.5.29(typescript@5.9.3))
       marked:
-        specifier: ^17.0.4
-        version: 17.0.4
+        specifier: ^17.0.5
+        version: 17.0.5
       monaco-editor:
         specifier: ^0.55.1
         version: 0.55.1
@@ -1491,8 +1491,8 @@ packages:
     engines: {node: '>= 18'}
     hasBin: true
 
-  marked@17.0.4:
-    resolution: {integrity: sha512-NOmVMM+KAokHMvjWmC5N/ZOvgmSWuqJB8FoYI019j4ogb/PeRMKoKIjReZ2w3376kkA8dSJIP8uD993Kxc0iRQ==}
+  marked@17.0.5:
+    resolution: {integrity: sha512-6hLvc0/JEbRjRgzI6wnT2P1XuM1/RrrDEX0kPt0N7jGm1133g6X7DlxFasUIx+72aKAr904GTxhSLDrd5DIlZg==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -3279,7 +3279,7 @@ snapshots:
 
   marked@14.0.0: {}
 
-  marked@17.0.4: {}
+  marked@17.0.5: {}
 
   mdast-util-to-hast@13.2.1:
     dependencies:
