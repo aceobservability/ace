@@ -69,6 +69,25 @@
   --color-viz-7: #A7B0BA;
   --color-viz-8: #6C7C94;
   --color-viz-9: #E07B39;
+
+  /* Layout tokens */
+  --sidebar-rail-width: 52px;
+  --sidebar-flyout-width: 240px;
+  --content-inset-left: 52px;
+  --control-height-sm: 28px;
+  --control-height-md: 36px;
+  --control-height-lg: 44px;
+  --panel-padding: 16px;
+  --dense-panel-padding: 12px;
+  --page-padding: 20px;
+  --section-gap: 24px;
+
+  /* Motion tokens */
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 240ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 
 @theme {
@@ -131,6 +150,18 @@
   --color-viz-7: var(--color-viz-7);
   --color-viz-8: var(--color-viz-8);
   --color-viz-9: var(--color-viz-9);
+
+  /* Layout tokens */
+  --sidebar-rail-width: var(--sidebar-rail-width);
+  --sidebar-flyout-width: var(--sidebar-flyout-width);
+  --content-inset-left: var(--content-inset-left);
+  --control-height-sm: var(--control-height-sm);
+  --control-height-md: var(--control-height-md);
+  --control-height-lg: var(--control-height-lg);
+  --panel-padding: var(--panel-padding);
+  --dense-panel-padding: var(--dense-panel-padding);
+  --page-padding: var(--page-padding);
+  --section-gap: var(--section-gap);
 }
 
 /* ─── Base styles ─── */
@@ -259,6 +290,12 @@
   .animate-shimmer {
     animation: shimmer 1.5s ease-in-out infinite;
   }
+  .animate-data-pulse {
+    animation: data-pulse 300ms cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  }
+  .animate-stagger-enter {
+    animation: stagger-enter var(--motion-slow) var(--ease-standard) forwards;
+  }
 }
 
 @keyframes fadeIn {
@@ -306,6 +343,16 @@
   50% {
     background-color: var(--color-surface-container-high);
   }
+}
+
+@keyframes data-pulse {
+  0%   { box-shadow: inset 0 0 0 1px rgba(201,150,15,0.4); }
+  100% { box-shadow: inset 0 0 0 1px rgba(201,150,15,0); }
+}
+
+@keyframes stagger-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ─── Reduced motion ─── */
