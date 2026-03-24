@@ -29,7 +29,7 @@ import {
   fetchDataSourceTraceServices,
   listDataSources,
 } from '../api/datasources'
-import type { ToolCall } from './useCopilot'
+import type { ToolCall } from './useAIProvider'
 import {
   getMetricsTools,
   getToolsForDatasourceType,

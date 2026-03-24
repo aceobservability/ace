@@ -1,5 +1,52 @@
 # TODOS
 
+## AI Providers
+
+### Copilot token caching
+
+**What:** Cache short-lived Copilot session tokens in a sync.Map keyed by userID with TTL = expires_at minus 60s buffer.
+
+**Why:** Eliminates one GitHub API round-trip (~200-500ms) per chat request for Copilot users. Currently fetchCopilotToken hits GitHub's API on every single chat request even though tokens are valid for ~30 minutes.
+
+**Pros:** Faster Copilot chat responses, fewer GitHub API calls.
+**Cons:** Minimal — cache invalidation is simple (TTL-based, tokens have explicit expires_at).
+
+**Context:** The CopilotProvider implementation in the multi-provider refactor is the right place to add this. The token response includes `expires_at` as a unix timestamp. Cache key is userID, eviction is TTL-based. ~20 lines of code.
+
+**Effort:** S
+**Priority:** P2
+**Depends on:** Multi-provider AI support
+
+### Per-user rate limiting for org providers
+
+**What:** Add configurable per-user request quotas (e.g., 100 requests/hour) for org-level AI providers.
+
+**Why:** When an admin configures a shared API key, all org members share it with no limits. One user could burn through the org's entire API budget. Rate limiting protects against accidental or excessive usage.
+
+**Pros:** Cost protection for shared API keys, fair usage across org members.
+**Cons:** Adds complexity — needs a counter store (Redis or in-memory with TTL), admin UI for quota config, and user-facing quota exceeded messaging.
+
+**Context:** For MVP, admins manage quotas externally (provider dashboard rate limits, billing alerts). This TODO tracks adding native rate limiting within Ace. Consider a simple in-memory sliding window counter per (user_id, provider_id) before reaching for Redis.
+
+**Effort:** M
+**Priority:** P2
+**Depends on:** Multi-provider AI support
+
+### Anthropic native API provider
+
+**What:** Implement an AnthropicProvider that translates OpenAI-format messages to Anthropic's /v1/messages format.
+
+**Why:** Enables direct Anthropic API keys without needing OpenRouter as a gateway. Anthropic's API uses different auth (`x-api-key` header), request schema (top-level `system` field instead of system message role), and streaming format (custom SSE event types like `content_block_delta`).
+
+**Pros:** Direct Anthropic access without a middleman, potentially lower latency and cost.
+**Cons:** Maintenance burden for one vendor's proprietary format. Message format translation adds complexity.
+
+**Context:** OpenRouter already wraps Anthropic in an OpenAI-compatible API, so this is a convenience feature. The AIProvider interface makes it straightforward to add — implement ListModels and Chat with the Anthropic-specific request/response translation.
+
+**Effort:** M
+**Priority:** P3
+**Depends on:** Multi-provider AI support
+
 ## Copilot
 
 ### Add iterative spec refinement

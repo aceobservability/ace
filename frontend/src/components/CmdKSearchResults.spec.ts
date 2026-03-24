@@ -6,11 +6,11 @@ import CmdKSearchResults from './CmdKSearchResults.vue'
 
 // --- Mocks ---
 
-const mockIsConnected = ref(false)
+const mockProviders = ref<unknown[]>([])
 
-vi.mock('../composables/useCopilot', () => ({
-  useCopilot: () => ({
-    isConnected: mockIsConnected,
+vi.mock('../composables/useAIProvider', () => ({
+  useAIProvider: () => ({
+    providers: mockProviders,
   }),
 }))
 
@@ -66,7 +66,7 @@ describe('CmdKSearchResults', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCurrentOrgId.value = 'org-1'
-    mockIsConnected.value = false
+    mockProviders.value = []
     vi.mocked(dashboardApi.listDashboards).mockResolvedValue(mockDashboards)
   })
 
@@ -106,7 +106,7 @@ describe('CmdKSearchResults', () => {
 
   // --- 4. Shows "Ask Copilot" when connected and query non-empty ---
   it('shows "Ask Copilot" when connected and query non-empty', async () => {
-    mockIsConnected.value = true
+    mockProviders.value = [{ id: 'test', display_name: 'Test' }]
     wrapper = createWrapper({ query: 'metrics' })
     await flushPromises()
 
@@ -116,7 +116,7 @@ describe('CmdKSearchResults', () => {
 
   // --- 5. Does NOT show "Ask Copilot" when not connected ---
   it('does NOT show "Ask Copilot" when not connected', async () => {
-    mockIsConnected.value = false
+    mockProviders.value = []
     wrapper = createWrapper({ query: 'metrics' })
     await flushPromises()
 
@@ -125,7 +125,7 @@ describe('CmdKSearchResults', () => {
 
   // --- 5b. Does NOT show "Ask Copilot" when connected but query is empty ---
   it('does NOT show "Ask Copilot" when connected but query is empty', async () => {
-    mockIsConnected.value = true
+    mockProviders.value = [{ id: 'test', display_name: 'Test' }]
     wrapper = createWrapper({ query: '' })
     await flushPromises()
 
@@ -145,7 +145,7 @@ describe('CmdKSearchResults', () => {
 
   // --- 7. Emits enter-chat with query when Ask Copilot clicked ---
   it('emits enter-chat with query when Ask Copilot clicked', async () => {
-    mockIsConnected.value = true
+    mockProviders.value = [{ id: 'test', display_name: 'Test' }]
     wrapper = createWrapper({ query: 'show me metrics' })
     await flushPromises()
 

@@ -12,13 +12,14 @@ const mockGetToolsForDatasourceType = vi.hoisted(() => vi.fn().mockReturnValue([
 // --- Shared reactive state (created after Vue import above) ---
 
 const mockChatMessages = ref<Array<{ role: string; content: string }>>([])
-const mockModels = ref<Array<{ id: string; name: string }>>([])
+const mockModels = ref<Array<{ id: string; name: string; provider_id?: string; provider_name?: string }>>([])
 const mockSelectedModel = ref('')
 const mockIsLoading = ref(false)
 const mockError = ref<string | null>(null)
+const mockProviders = ref<Array<{ id: string; display_name: string }>>([])
 
-vi.mock('../composables/useCopilot', () => ({
-  useCopilot: () => ({
+vi.mock('../composables/useAIProvider', () => ({
+  useAIProvider: () => ({
     sendChatRequest: mockSendChatRequest,
     chatMessages: mockChatMessages,
     models: mockModels,
@@ -26,6 +27,7 @@ vi.mock('../composables/useCopilot', () => ({
     fetchModels: mockFetchModels,
     isLoading: mockIsLoading,
     error: mockError,
+    providers: mockProviders,
   }),
 }))
 
@@ -100,6 +102,7 @@ describe('CmdKChatView', () => {
     mockSelectedModel.value = ''
     mockIsLoading.value = false
     mockError.value = null
+    mockProviders.value = []
     // Default: sendChatRequest resolves with no tool calls
     mockSendChatRequest.mockResolvedValue({ content: 'Hello!', toolCalls: [] })
     mockFetchModels.mockResolvedValue(undefined)
@@ -198,6 +201,55 @@ describe('CmdKChatView', () => {
 
     const modelSelector = wrapper.find('[data-testid="model-selector"]')
     expect(modelSelector.exists()).toBe(false)
+  })
+
+  // --- 6b. Groups models by provider when multiple providers ---
+  it('groups models by provider when multiple providers exist', async () => {
+    mockProviders.value = [
+      { id: 'prov-1', display_name: 'OpenAI' },
+      { id: 'prov-2', display_name: 'Copilot' },
+    ]
+    mockModels.value = [
+      { id: 'gpt-4o', name: 'GPT-4o', provider_id: 'prov-1', provider_name: 'OpenAI' },
+      { id: 'claude-sonnet', name: 'Claude Sonnet', provider_id: 'prov-2', provider_name: 'Copilot' },
+    ]
+    wrapper = createWrapper()
+    await flushPromises()
+
+    const modelSelector = wrapper.find('[data-testid="model-selector"]')
+    expect(modelSelector.exists()).toBe(true)
+
+    const optgroups = modelSelector.findAll('optgroup')
+    expect(optgroups.length).toBe(2)
+    expect(optgroups[0]!.attributes('label')).toBe('OpenAI')
+    expect(optgroups[1]!.attributes('label')).toBe('Copilot')
+
+    const options = modelSelector.findAll('option')
+    expect(options.length).toBe(2)
+    expect(options[0]!.text()).toContain('GPT-4o')
+    expect(options[1]!.text()).toContain('Claude Sonnet')
+  })
+
+  // --- 6c. Shows flat options when single provider ---
+  it('shows flat options when single provider exists', async () => {
+    mockProviders.value = [
+      { id: 'prov-1', display_name: 'OpenAI' },
+    ]
+    mockModels.value = [
+      { id: 'gpt-4o', name: 'GPT-4o', provider_id: 'prov-1', provider_name: 'OpenAI' },
+      { id: 'gpt-4', name: 'GPT-4', provider_id: 'prov-1', provider_name: 'OpenAI' },
+    ]
+    wrapper = createWrapper()
+    await flushPromises()
+
+    const modelSelector = wrapper.find('[data-testid="model-selector"]')
+    expect(modelSelector.exists()).toBe(true)
+
+    const optgroups = modelSelector.findAll('optgroup')
+    expect(optgroups.length).toBe(0)
+
+    const options = modelSelector.findAll('option')
+    expect(options.length).toBe(2)
   })
 
   // --- 7. Calls fetchModels on mount ---

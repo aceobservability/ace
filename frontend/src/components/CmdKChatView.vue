@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2, Send, Wrench } from 'lucide-vue-next'
 import { nextTick, onMounted, ref, watch } from 'vue'
-import type { CopilotMessage, ToolCall } from '../composables/useCopilot'
-import { useCopilot } from '../composables/useCopilot'
+import type { ToolCall } from '../composables/useAIProvider'
+import { useAIProvider } from '../composables/useAIProvider'
 import { getToolsForDatasourceType, useCopilotToolExecutor } from '../composables/useCopilotTools'
 import { useOrganization } from '../composables/useOrganization'
 import type { DashboardSpec } from '../utils/dashboardSpec'
@@ -18,15 +18,11 @@ const props = defineProps<{
 
 const emit = defineEmits<{ 'exit-chat': [] }>()
 
-const { sendChatRequest, chatMessages, models, selectedModel, fetchModels, isLoading, error } =
-  useCopilot()
+const { sendChatRequest, chatMessages, models, selectedModel, fetchModels, isLoading, error, providers } =
+  useAIProvider()
 
 const { currentOrg } = useOrganization()
 
-// --- State ---
-
-const followUp = ref('')
-const lastUsedDatasourceId = ref('')
 const lastUsedDatasourceType = ref('')
 
 const { executeTool } = useCopilotToolExecutor(
@@ -34,6 +30,10 @@ const { executeTool } = useCopilotToolExecutor(
   () => currentOrg.value?.id ?? '',
   () => props.datasourceType || lastUsedDatasourceType.value,
 )
+
+// --- State ---
+
+const followUp = ref('')
 const dashboardSpec = ref<DashboardSpec | null>(null)
 const renderedHtml = ref<Record<number, string>>({})
 const messagesContainer = ref<HTMLDivElement | null>(null)
@@ -53,7 +53,7 @@ type ChatRequestMessage =
   | { role: 'assistant'; content: string | null; tool_calls: ToolCall[] }
   | { role: 'tool'; tool_call_id: string; content: string }
 
-// --- Build request messages from CopilotMessage[] ---
+// --- Build request messages from AIMessage[] ---
 
 function buildChatRequestMessages(): ChatRequestMessage[] {
   const messages: ChatRequestMessage[] = []
@@ -71,7 +71,7 @@ function buildChatRequestMessages(): ChatRequestMessage[] {
     })
   }
 
-  messages.push(...chatMessages.value.map((m) => ({ role: m.role, content: m.content })))
+  messages.push(...chatMessages.value.map((m) => ({ role: m.role as ChatRequestMessage['role'], content: m.content })))
   return messages
 }
 
@@ -83,7 +83,6 @@ async function handleSend(userMessage: string) {
   const tools = getToolsForDatasourceType(props.datasourceType)
   toolStatuses.value = []
   dashboardSpec.value = null
-  let discoveredDatasources: Array<{ id: string; name: string; type: string }> = []
 
   isLoading.value = true
   error.value = null
@@ -109,7 +108,7 @@ async function handleSend(userMessage: string) {
           try {
             const spec = JSON.parse(tc.function.arguments) as DashboardSpec
             spec.panels?.forEach((p) => {
-              if (p.query) p.query.datasource_id = props.datasourceId || lastUsedDatasourceId.value
+              if (p.query) p.query.datasource_id = props.datasourceId
             })
             dashboardSpec.value = spec
             chatMessages.value.push({
@@ -135,26 +134,6 @@ async function handleSend(userMessage: string) {
         })
         if (toolStatuses.value[statusIndex]!.status === 'running') {
           toolStatuses.value[statusIndex]!.status = 'complete'
-        }
-        let tcArgs: Record<string, unknown> = {}
-        try {
-          tcArgs = JSON.parse(tc.function.arguments || '{}')
-        } catch {
-          // ignore parse errors — tracking is best-effort
-        }
-        // Cache list_datasources results for type lookup
-        if (tc.function.name === 'list_datasources' && result && !result.startsWith('Error')) {
-          try {
-            discoveredDatasources = JSON.parse(result) as Array<{ id: string; name: string; type: string }>
-          } catch {
-            // ignore
-          }
-        }
-        // Track which datasource the model is using
-        if (tcArgs.datasource_id) {
-          lastUsedDatasourceId.value = tcArgs.datasource_id as string
-          const match = discoveredDatasources.find((ds) => ds.id === tcArgs.datasource_id)
-          if (match) lastUsedDatasourceType.value = match.type
         }
         requestMessages.push(
           { role: 'assistant', content: null, tool_calls: [tc] },
@@ -253,9 +232,18 @@ function toolStatusIcon(status: ToolStatus['status']): string {
           borderColor: 'var(--color-outline-variant)',
         }"
       >
-        <option v-for="m in models" :key="m.id" :value="m.id">
-          {{ m.name }}
-        </option>
+        <template v-if="providers.length > 1">
+          <optgroup v-for="p in providers" :key="p.id" :label="p.display_name">
+            <option v-for="m in models.filter(mod => mod.provider_id === p.id)" :key="m.id" :value="m.id">
+              {{ m.name }}
+            </option>
+          </optgroup>
+        </template>
+        <template v-else>
+          <option v-for="m in models" :key="m.id" :value="m.id">
+            {{ m.name }}
+          </option>
+        </template>
       </select>
     </div>
 

@@ -15,8 +15,8 @@ const mockConnect = vi.fn()
 const mockCancelDeviceFlow = vi.fn()
 const mockDisconnect = vi.fn()
 
-vi.mock('../composables/useCopilot', () => ({
-  useCopilot: () => ({
+vi.mock('../composables/useCopilotAuth', () => ({
+  useCopilotAuth: () => ({
     isConnected: mockIsConnected,
     githubUsername: mockGithubUsername,
     hasCopilot: mockHasCopilot,

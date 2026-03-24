@@ -21,12 +21,14 @@ vi.mock('../composables/useKeyboardShortcuts', () => ({
   }),
 }))
 
-const mockIsConnected = ref(false)
+const mockProviders = ref<unknown[]>([])
 const mockChatMessages = ref<unknown[]>([])
-vi.mock('../composables/useCopilot', () => ({
-  useCopilot: () => ({
-    isConnected: mockIsConnected,
+const mockFetchProviders = vi.fn()
+vi.mock('../composables/useAIProvider', () => ({
+  useAIProvider: () => ({
+    providers: mockProviders,
     chatMessages: mockChatMessages,
+    fetchProviders: mockFetchProviders,
   }),
 }))
 
@@ -69,7 +71,7 @@ describe('CmdKModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockContext.value = null
-    mockIsConnected.value = false
+    mockProviders.value = []
     mockChatMessages.value = []
     mockPush.mockReset()
   })
@@ -175,7 +177,7 @@ describe('CmdKModal', () => {
   })
 
   it('switches to chat mode when enter-chat emitted and connected', async () => {
-    mockIsConnected.value = true
+    mockProviders.value = [{ id: 'test', display_name: 'Test' }]
     wrapper = createWrapper({ isOpen: true })
 
     const searchResults = wrapper.findComponent('[data-testid="search-results"]')
@@ -187,7 +189,7 @@ describe('CmdKModal', () => {
   })
 
   it('shows not-connected message when trying to chat without connection', async () => {
-    mockIsConnected.value = false
+    mockProviders.value = []
     wrapper = createWrapper({ isOpen: true })
 
     const searchResults = wrapper.findComponent('[data-testid="search-results"]')
@@ -199,7 +201,7 @@ describe('CmdKModal', () => {
   })
 
   it('resets mode to search when modal closes', async () => {
-    mockIsConnected.value = true
+    mockProviders.value = [{ id: 'test', display_name: 'Test' }]
     wrapper = createWrapper({ isOpen: true })
 
     // Enter chat mode
@@ -233,7 +235,7 @@ describe('CmdKModal', () => {
 
   // --- No-context prop defaults ---
   it('passes empty strings for datasourceType and datasourceName when context is null', async () => {
-    mockIsConnected.value = true
+    mockProviders.value = [{ id: 'test', display_name: 'Test' }]
     mockContext.value = null
 
     const chatViewProps: Record<string, unknown> = {}

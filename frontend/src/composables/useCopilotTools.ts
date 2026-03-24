@@ -6,7 +6,7 @@ import {
   fetchDataSourceTraceServices,
   listDataSources,
 } from '../api/datasources'
-import type { ToolCall, ToolDefinition } from './useCopilot'
+import type { ToolCall, ToolDefinition } from './useAIProvider'
 import { useQueryEditor } from './useQueryEditor'
 
 // --- Named tool definition constants ---

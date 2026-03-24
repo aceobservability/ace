@@ -64,7 +64,7 @@ function buildAxisLineColors(): Array<[number, string]> {
 
   // Add segments based on thresholds
   let prevStop = 0
-  let prevColor = chartPalette[0]
+  let prevColor: string = chartPalette[0]
 
   for (const threshold of sortedThresholds) {
     const stop = (threshold.value - props.min) / range
@@ -92,7 +92,7 @@ function getValueColor(): string {
   const sortedThresholds = [...props.thresholds].sort((a, b) => a.value - b.value)
 
   // Find the highest threshold that is below or equal to the value
-  let color = chartPalette[0]
+  let color: string = chartPalette[0]
   for (const threshold of sortedThresholds) {
     if (props.value >= threshold.value) {
       color = threshold.color

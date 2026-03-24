@@ -18,6 +18,7 @@ import {
   updateGoogleSSOConfig,
   updateMicrosoftSSOConfig,
 } from '../api/sso'
+import AIProviderSettings from '../components/AIProviderSettings.vue'
 import DataSourceSettingsPanel from '../components/DataSourceSettingsPanel.vue'
 import CopilotConnectionPanel from '../components/CopilotConnectionPanel.vue'
 import { useCommandContext } from '../composables/useCommandContext'
@@ -96,6 +97,13 @@ const microsoftConfigured = ref(false)
 const microsoftSaving = ref(false)
 const microsoftError = ref<string | null>(null)
 
+// AI providers
+const hasOrgProviders = ref(false)
+
+function onProviderCount(count: number) {
+  hasOrgProviders.value = count > 0
+}
+
 type SsoProviderKey = 'google' | 'microsoft'
 
 const activeSsoProvider = ref<SsoProviderKey | null>(null)
@@ -143,10 +151,6 @@ const activeSection = computed<SettingsSection>(() => {
   return isSettingsSection(section) ? section : 'general'
 })
 
-function navigateToSection(section: SettingsSection) {
-  if (section === activeSection.value) return
-  router.push(`/app/settings/${section}`)
-}
 
 watch(
   () => route.params.section,
@@ -776,13 +780,10 @@ async function handleSaveMicrosoftSSO() {
           </div>
         </section>
 
-        <!-- AI Configuration Section (stub) -->
+        <!-- AI Configuration Section -->
         <section v-if="activeSection === 'ai'" class="flex flex-col gap-4 max-w-2xl" data-testid="settings-ai">
-          <div class="rounded-lg p-6" :style="{ backgroundColor: 'var(--color-surface-container-low)' }">
-            <h2 class="flex items-center gap-2 m-0 mb-2 text-base font-semibold font-display" :style="{ color: 'var(--color-on-surface)' }"><Bot :size="20" /> AI Configuration</h2>
-            <p class="m-0 mb-4 text-sm" :style="{ color: 'var(--color-on-surface-variant)' }">Configure AI assistant settings for automated insights and anomaly detection.</p>
-            <CopilotConnectionPanel v-if="orgId" :org-id="orgId" />
-          </div>
+          <AIProviderSettings v-if="orgId" :org-id="orgId" :is-admin="isAdmin" @provider-count="onProviderCount" />
+          <CopilotConnectionPanel v-if="orgId && !hasOrgProviders" :org-id="orgId" />
         </section>
 
         <!-- SSO / Auth Section (stub) -->

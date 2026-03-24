@@ -2,7 +2,7 @@
 import { LayoutGrid, Sparkles } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import { listDashboards } from '../api/dashboards'
-import { useCopilot } from '../composables/useCopilot'
+import { useAIProvider } from '../composables/useAIProvider'
 import { useOrganization } from '../composables/useOrganization'
 import type { Dashboard } from '../types/dashboard'
 
@@ -15,7 +15,7 @@ const emit = defineEmits<{
   'enter-chat': [query: string]
 }>()
 
-const { isConnected } = useCopilot()
+const { providers } = useAIProvider()
 const { currentOrgId } = useOrganization()
 
 const dashboards = ref<Dashboard[]>([])
@@ -40,7 +40,7 @@ const filteredDashboards = computed(() => {
 })
 
 const showAskCopilot = computed(() => {
-  return isConnected.value && props.query.length > 0
+  return providers.value.length > 0 && props.query.length > 0
 })
 
 function handleResultClick(dashboard: Dashboard) {
