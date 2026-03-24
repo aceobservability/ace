@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   LayoutGrid,
   Network,
+  PenTool,
   ScatterChart as ScatterIcon,
   StickyNote,
 } from 'lucide-vue-next'
@@ -342,4 +343,24 @@ registerPanel({
   category: 'charts',
   label: 'Geomap',
   icon: Globe,
+})
+
+// Register Canvas (Excalidraw whiteboard)
+registerPanel({
+  type: 'canvas',
+  component: () => import('./CanvasPanel.vue'),
+  dataAdapter: (_raw: RawQueryResult, query?: Record<string, unknown>) => {
+    // Canvas data stored in panel.query.canvasData
+    const canvasData = query?.canvasData as { elements?: unknown[]; appState?: unknown } | undefined
+    return {
+      data: {
+        elements: canvasData?.elements ?? [],
+        appState: canvasData?.appState ?? {},
+      },
+    }
+  },
+  defaultQuery: { canvasData: { elements: [], appState: {} } },
+  category: 'widgets',
+  label: 'Canvas',
+  icon: PenTool,
 })
