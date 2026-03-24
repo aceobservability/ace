@@ -2,8 +2,13 @@ import {
   BarChart3,
   Bell,
   FileText,
+  Flame,
+  GanttChart,
   GaugeCircle,
+  GitBranch,
   Grid3x3,
+  LayoutGrid,
+  Network,
   ScatterChart as ScatterIcon,
 } from 'lucide-vue-next'
 import type { RawQueryResult } from '../../types/panel'
@@ -124,6 +129,48 @@ registerPanel({
   icon: Bell,
 })
 
+// Register State Timeline
+registerPanel({
+  type: 'state_timeline',
+  component: () => import('./StateTimelinePanel.vue'),
+  dataAdapter: (raw: RawQueryResult) => {
+    // Transform metric series into state segments
+    // Each series = one entity, value thresholds determine state
+    const segments: Array<{ entity: string; state: string; start: number; end: number }> = []
+    for (const series of raw.series) {
+      const points = series.data as Array<{ timestamp: number; value: number }>
+      if (points.length === 0) continue
+      let currentState = points[0].value > 0 ? 'up' : 'down'
+      let segStart = points[0].timestamp
+      for (let i = 1; i < points.length; i++) {
+        const newState = points[i].value > 0 ? 'up' : 'down'
+        if (newState !== currentState) {
+          segments.push({
+            entity: series.name,
+            state: currentState,
+            start: segStart,
+            end: points[i].timestamp,
+          })
+          currentState = newState
+          segStart = points[i].timestamp
+        }
+      }
+      // Close final segment
+      segments.push({
+        entity: series.name,
+        state: currentState,
+        start: segStart,
+        end: points[points.length - 1].timestamp,
+      })
+    }
+    return { segments }
+  },
+  defaultQuery: {},
+  category: 'observability',
+  label: 'State Timeline',
+  icon: GanttChart,
+})
+
 // Register Histogram
 registerPanel({
   type: 'histogram',
@@ -144,4 +191,78 @@ registerPanel({
   category: 'charts',
   label: 'Histogram',
   icon: BarChart3,
+})
+
+// Register Status History
+registerPanel({
+  type: 'status_history',
+  component: () => import('./StatusHistoryPanel.vue'),
+  dataAdapter: (raw: RawQueryResult) => {
+    // Transform series into status cells
+    // Each series = entity, each data point = time bucket
+    const cells: Array<{ entity: string; bucket: string; state: string }> = []
+    for (const series of raw.series) {
+      const points = series.data as Array<{ timestamp: number; value: number }>
+      for (const point of points) {
+        const date = new Date(point.timestamp * 1000)
+        const bucket = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+        const state = point.value > 0.5 ? 'up' : point.value > 0 ? 'degraded' : 'down'
+        cells.push({ entity: series.name, bucket, state })
+      }
+    }
+    return { cells }
+  },
+  defaultQuery: {},
+  category: 'observability',
+  label: 'Status History',
+  icon: LayoutGrid,
+})
+
+// Register Flame Graph
+registerPanel({
+  type: 'flame_graph',
+  component: () => import('./FlameGraphPanel.vue'),
+  dataAdapter: (_raw: RawQueryResult) => {
+    // Flame graphs typically come from trace/profiling data
+    // For now, return a stub root node
+    // Real integration would parse trace spans into a call tree
+    return {
+      root: { name: 'root', value: 0, children: [] },
+      unit: 'ms',
+    }
+  },
+  defaultQuery: {},
+  category: 'observability',
+  label: 'Flame Graph',
+  icon: Flame,
+})
+
+// Register Node Graph
+registerPanel({
+  type: 'node_graph',
+  component: () => import('./NodeGraphPanel.vue'),
+  dataAdapter: (_raw: RawQueryResult) => {
+    // Node graph typically comes from trace service maps
+    // Stub: return empty graph
+    return { nodes: [], edges: [] }
+  },
+  defaultQuery: {},
+  category: 'observability',
+  label: 'Node Graph',
+  icon: Network,
+})
+
+// Register Trace Detail
+registerPanel({
+  type: 'trace_detail',
+  component: () => import('./TraceDetailPanel.vue'),
+  dataAdapter: (_raw: RawQueryResult) => {
+    // Trace detail gets span data from trace queries
+    // Stub: return empty spans
+    return { spans: [] }
+  },
+  defaultQuery: {},
+  category: 'observability',
+  label: 'Trace Detail',
+  icon: GitBranch,
 })
