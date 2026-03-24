@@ -163,11 +163,33 @@ Copilot-specific auth state: `isConnected`, `hasCopilot`, `githubUsername`, devi
 
 ### Component changes
 
-- **`CmdKModal.vue`** — gate on `providers.length > 0` instead of `isConnected`
-- **`CmdKChatView.vue`** — model selector grouped by provider. Uses `useAIProvider` instead of `useCopilot`
-- **`CopilotConnectionPanel.vue`** — shown only when no org providers configured. Unchanged internally.
-- **`UnifiedSettingsView.vue`** — new "AI Providers" admin section: add/edit/delete providers, test connection, see discovered models. Copilot connection moves under "Personal Fallback" subsection.
+- **`CmdKModal.vue`** — gate on `providers.length > 0` instead of `isConnected`. Empty state when no providers: "Configure an AI provider in Settings, or connect GitHub Copilot." with a link to Settings > AI.
+- **`CmdKChatView.vue`** — model selector uses `<select>` with `<optgroup>` per provider (e.g., `<optgroup label="OpenAI">`, `<optgroup label="Copilot">`). When only one provider exists, no grouping (flat list like today). Uses `useAIProvider` instead of `useCopilot`.
+- **`CopilotConnectionPanel.vue`** — shown only when no org providers configured. Unchanged internally. When shown, prefixed with note: "Your organization has no AI providers configured. Connect your GitHub Copilot as a personal fallback."
+- **`UnifiedSettingsView.vue`** — AI section split into two sub-sections:
+  1. **"AI Providers"** (admin-only): provider list with [+ Add] button. Each row shows: display_name, base_url (truncated), model count badge, enabled/disabled badge (`var(--color-secondary)` / `var(--color-outline)`), overflow menu ([···] → Edit, Test, Delete). Empty state: "No providers configured. Add one to enable AI chat for your team." Form follows existing SSO config form pattern (inline labels, compact layout).
+  2. **"Personal Fallback"** (all users): existing CopilotConnectionPanel, hidden when org providers exist.
 - **`useCopilotTools.ts`** — unchanged. Tools are datasource-specific, passed to whichever provider handles chat. Note: tool calling (function calling) requires provider support. See "Tool Compatibility" below.
+
+### Interaction states
+
+| Feature | Loading | Empty | Error | Success |
+|---|---|---|---|---|
+| Provider list | 2 skeleton rows | "No providers" + Add CTA | "Failed to load" + retry | Provider rows |
+| Add provider form | Save button spinner | Pre-filled base_url hint per type | Inline field validation | Toast "Provider added" |
+| Test connection | "Testing..." spinner on button | — | "Connection failed: [reason]" inline | "Connected, N models found" inline |
+| Delete provider | Confirmation dialog | — | "Failed to delete" toast | Toast "Provider removed" |
+| Model discovery | "Discovering models..." text | "No models found" + override hint | "Discovery failed" note | Model count badge on row |
+| Cmd+K (no provider) | — | "Configure an AI provider in Settings, or connect GitHub Copilot." | — | — |
+
+### Accessibility
+
+- Provider list: `role="list"`, each provider `role="listitem"`
+- Test connection button: `aria-label="Test connection for [provider name]"`
+- Status badges: `aria-label` describing state (e.g., "Enabled", "3 models available")
+- Cmd+K model selector: keyboard navigable via arrow keys, `<optgroup>` is natively accessible
+- All interactive elements: 44px minimum touch target
+- Color contrast: uses existing Kinetic tokens (WCAG AA compliant)
 
 ## Org Switch State Reset
 
