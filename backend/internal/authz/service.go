@@ -89,7 +89,7 @@ func (s *Service) ResolvePermission(
 	}
 
 	if !resourceHasACL {
-		return orgRoleFallbackPermission(role), nil
+		return orgRoleFallbackPermission(role, resourceType), nil
 	}
 
 	permission, err := s.explicitPermission(ctx, userID, orgID, resourceType, resourceID)
@@ -225,7 +225,7 @@ func (s *Service) explicitPermission(
 	return effective, nil
 }
 
-func orgRoleFallbackPermission(role models.MembershipRole) Permission {
+func orgRoleFallbackPermission(role models.MembershipRole, resourceType ResourceType) Permission {
 	switch role {
 	case models.RoleAdmin:
 		return PermissionAdmin
@@ -233,6 +233,13 @@ func orgRoleFallbackPermission(role models.MembershipRole) Permission {
 		return PermissionEdit
 	case models.RoleViewer:
 		return PermissionView
+	case models.RoleAuditor:
+		switch resourceType {
+		case ResourceTypeFolder, ResourceTypeDashboard:
+			return PermissionView
+		default:
+			return PermissionNone
+		}
 	default:
 		return PermissionNone
 	}

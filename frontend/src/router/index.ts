@@ -219,6 +219,18 @@ const routes: RouteRecordRaw[] = [
     },
   },
 
+  // Audit Log
+  {
+    path: '/app/audit-log',
+    name: 'audit-log',
+    component: () => import('../views/AuditLogView.vue'),
+    meta: {
+      appLayout: 'app',
+      title: 'Audit Log — Ace',
+      description: 'Browse and export organization audit log entries.',
+    },
+  },
+
   // Grafana conversion (low priority reskin)
   {
     path: '/convert/grafana',

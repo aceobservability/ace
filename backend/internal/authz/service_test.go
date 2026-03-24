@@ -249,6 +249,78 @@ func TestResolvePermission_AdminAndFailClosedBehavior(t *testing.T) {
 	}
 }
 
+func TestOrgRoleFallbackPermission_Auditor(t *testing.T) {
+	tests := []struct {
+		name         string
+		resourceType ResourceType
+		expected     Permission
+	}{
+		{
+			name:         "Auditor on folder gets view",
+			resourceType: ResourceTypeFolder,
+			expected:     PermissionView,
+		},
+		{
+			name:         "Auditor on dashboard gets view",
+			resourceType: ResourceTypeDashboard,
+			expected:     PermissionView,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := orgRoleFallbackPermission(models.RoleAuditor, tc.resourceType)
+			if got != tc.expected {
+				t.Fatalf("expected permission %q, got %q", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestResolvePermission_AuditorNoACL(t *testing.T) {
+	if testPool == nil {
+		t.Skip("database not available")
+	}
+
+	ctx := context.Background()
+	prefix := "authz-test-auditor-" + uuid.NewString()
+	defer cleanupTestData(t, ctx, prefix)
+
+	orgID := createTestOrganization(t, ctx, prefix)
+	auditorID := createTestUser(t, ctx, prefix+"-auditor@example.com")
+	addMembership(t, ctx, orgID, auditorID, models.RoleAuditor)
+	dashboardID := createTestDashboard(t, ctx, orgID, "Auditor Dashboard")
+
+	service := NewService(testPool)
+
+	// Auditor with no ACL on a dashboard should resolve to PermissionView
+	permission, err := service.ResolvePermission(ctx, auditorID, orgID, ResourceTypeDashboard, dashboardID)
+	if err != nil {
+		t.Fatalf("expected no error resolving auditor permission: %v", err)
+	}
+	if permission != PermissionView {
+		t.Fatalf("expected auditor fallback permission %q, got %q", PermissionView, permission)
+	}
+
+	// Auditor should NOT be able to edit a dashboard
+	canEdit, err := service.Can(ctx, auditorID, orgID, ResourceTypeDashboard, dashboardID, ActionEdit)
+	if err != nil {
+		t.Fatalf("expected no error checking edit action: %v", err)
+	}
+	if canEdit {
+		t.Fatal("expected auditor to be denied edit action")
+	}
+
+	// Auditor should be able to view a dashboard
+	canView, err := service.Can(ctx, auditorID, orgID, ResourceTypeDashboard, dashboardID, ActionView)
+	if err != nil {
+		t.Fatalf("expected no error checking view action: %v", err)
+	}
+	if !canView {
+		t.Fatal("expected auditor to be allowed to view")
+	}
+}
+
 func cleanupTestData(t *testing.T, ctx context.Context, prefix string) {
 	t.Helper()
 

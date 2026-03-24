@@ -66,6 +66,7 @@ const sectionConfigs: Record<string, SectionConfig> = {
       { id: 'datasources', label: 'Data Sources', path: '/app/settings/datasources' },
       { id: 'ai', label: 'AI Configuration', path: '/app/settings/ai' },
       { id: 'sso', label: 'SSO / Auth', path: '/app/settings/sso' },
+      { id: 'audit-log', label: 'Audit Log', path: '/app/audit-log' },
     ],
   },
 }

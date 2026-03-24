@@ -239,6 +239,36 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 		`ALTER TABLE sso_configs DROP CONSTRAINT IF EXISTS sso_configs_provider_check`,
 		`ALTER TABLE sso_configs ADD CONSTRAINT sso_configs_provider_check
 			CHECK (provider IN ('google', 'microsoft', 'github_copilot'))`,
+		// Widen organization_memberships role constraint to include auditor (010_auditor_role.sql)
+		`ALTER TABLE organization_memberships DROP CONSTRAINT IF EXISTS organization_memberships_role_check`,
+		`ALTER TABLE organization_memberships ADD CONSTRAINT organization_memberships_role_check
+			CHECK (role IN ('admin', 'editor', 'viewer', 'auditor'))`,
+		// Audit log table: append-only event log per organization (010_audit_log.sql)
+		`CREATE TABLE IF NOT EXISTS audit_log (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+			actor_id UUID REFERENCES users(id) ON DELETE SET NULL,
+			actor_email VARCHAR(255) NOT NULL,
+			action VARCHAR(100) NOT NULL,
+			resource_type VARCHAR(50),
+			resource_id UUID,
+			resource_name VARCHAR(255),
+			outcome VARCHAR(20) NOT NULL DEFAULT 'success' CHECK (outcome IN ('success', 'denied', 'error')),
+			ip_address VARCHAR(45),
+			metadata JSONB,
+			created_at TIMESTAMP DEFAULT NOW()
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_audit_log_org_created ON audit_log(organization_id, created_at DESC)`,
+		`CREATE INDEX IF NOT EXISTS idx_audit_log_actor ON audit_log(organization_id, actor_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(organization_id, action)`,
+		// Immutability trigger: prevent UPDATE and DELETE on audit_log
+		`CREATE OR REPLACE FUNCTION audit_log_immutable() RETURNS TRIGGER AS $$
+BEGIN RAISE EXCEPTION 'audit_log is immutable: % not allowed', TG_OP; END;
+$$ LANGUAGE plpgsql`,
+		`DROP TRIGGER IF EXISTS audit_log_no_update_delete ON audit_log`,
+		`CREATE TRIGGER audit_log_no_update_delete
+			BEFORE UPDATE OR DELETE ON audit_log
+			FOR EACH ROW EXECUTE FUNCTION audit_log_immutable()`,
 	}
 
 	for _, migration := range migrations {

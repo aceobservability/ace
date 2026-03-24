@@ -73,6 +73,7 @@ const ROUTE_SECTION_MAP: [string, string][] = [
   ['/app/alerts', 'alerts'],
   ['/app/explore', 'explore'],
   ['/app/settings', 'settings'],
+  ['/app/audit-log', 'settings'],
 ]
 
 const SHORTCUT_NAV: Record<string, { section: string; route: string }> = {

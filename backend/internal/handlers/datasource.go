@@ -144,7 +144,7 @@ func (h *DataSourceHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	_, err = h.checkOrgMembership(ctx, userID, orgID)
+	role, err := h.checkOrgMembership(ctx, userID, orgID)
 	if err != nil {
 		http.Error(w, `{"error":"not a member of this organization"}`, http.StatusForbidden)
 		return
@@ -167,6 +167,9 @@ func (h *DataSourceHandler) List(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Scan(&ds.ID, &ds.OrganizationID, &ds.Name, &ds.Type, &ds.URL, &ds.IsDefault, &ds.AuthType, &ds.AuthConfig, &ds.TraceIDField, &ds.LinkedTraceDatasourceID, &ds.CreatedAt, &ds.UpdatedAt); err != nil {
 			http.Error(w, `{"error":"failed to scan datasource"}`, http.StatusInternalServerError)
 			return
+		}
+		if role != "admin" {
+			ds.AuthConfig = nil
 		}
 		datasources = append(datasources, ds)
 	}
@@ -202,10 +205,14 @@ func (h *DataSourceHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.checkOrgMembership(ctx, userID, ds.OrganizationID)
+	role, err := h.checkOrgMembership(ctx, userID, ds.OrganizationID)
 	if err != nil {
 		http.Error(w, `{"error":"not a member of this organization"}`, http.StatusForbidden)
 		return
+	}
+
+	if role != "admin" {
+		ds.AuthConfig = nil
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -15,6 +15,7 @@ const (
 	UserIDKey    contextKey = "user_id"
 	UserEmailKey contextKey = "user_email"
 	UserNameKey  contextKey = "user_name"
+	IPAddressKey contextKey = "ip_address"
 )
 
 // AuthMiddleware creates middleware that validates JWT tokens
@@ -52,6 +53,12 @@ func AuthMiddleware(jwtManager *JWTManager) func(http.Handler) http.Handler {
 			ctx = context.WithValue(ctx, UserEmailKey, claims.Email)
 			ctx = context.WithValue(ctx, UserNameKey, claims.Name)
 
+			ip := r.RemoteAddr
+			if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+				ip = strings.Split(fwd, ",")[0]
+			}
+			ctx = context.WithValue(ctx, IPAddressKey, strings.TrimSpace(ip))
+
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -73,6 +80,12 @@ func GetUserEmail(ctx context.Context) (string, bool) {
 func GetUserName(ctx context.Context) (string, bool) {
 	name, ok := ctx.Value(UserNameKey).(string)
 	return name, ok
+}
+
+// GetIPAddress extracts the client IP address from context
+func GetIPAddress(ctx context.Context) string {
+	ip, _ := ctx.Value(IPAddressKey).(string)
+	return ip
 }
 
 // RequireAuth wraps a handler function to require authentication

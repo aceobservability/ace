@@ -1,34 +1,29 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { Bot, Database, Edit2, Lock, Shield, Trash2, UserPlus, Users } from 'lucide-vue-next'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { UserPlus, Trash2, Shield, Edit2, Users, Database, Bot, Lock } from 'lucide-vue-next'
-import type { Organization, Member, MembershipRole } from '../types/organization'
-import type { UserGroup, UserGroupMembership } from '../types/rbac'
+import { createGroup, deleteGroup, listGroupMembers, listGroups } from '../api/groups'
 import {
-  getOrganization,
-  updateOrganization,
-  deleteOrganization,
-  listMembers,
   createInvitation,
-  updateMemberRole,
+  deleteOrganization,
+  getOrganization,
+  listMembers,
   removeMember,
+  updateMemberRole,
+  updateOrganization,
 } from '../api/organizations'
 import {
-  listGroups,
-  createGroup,
-  deleteGroup,
-  listGroupMembers,
-} from '../api/groups'
-import {
   getGoogleSSOConfig,
-  updateGoogleSSOConfig,
   getMicrosoftSSOConfig,
+  updateGoogleSSOConfig,
   updateMicrosoftSSOConfig,
 } from '../api/sso'
-import { useOrganization } from '../composables/useOrganization'
-import { useCommandContext } from '../composables/useCommandContext'
 import DataSourceSettingsPanel from '../components/DataSourceSettingsPanel.vue'
 import CopilotConnectionPanel from '../components/CopilotConnectionPanel.vue'
+import { useCommandContext } from '../composables/useCommandContext'
+import { useOrganization } from '../composables/useOrganization'
+import type { Member, MembershipRole, Organization } from '../types/organization'
+import type { UserGroup, UserGroupMembership } from '../types/rbac'
 
 const route = useRoute()
 const router = useRouter()
@@ -107,11 +102,23 @@ const activeSsoProvider = ref<SsoProviderKey | null>(null)
 const ssoDialogOpen = ref(false)
 const ssoStep = ref<'picker' | 'form'>('picker')
 const ssoProviders = computed(() => [
-  { key: 'google' as const, name: 'Google', configured: googleConfigured.value, enabled: googleEnabled.value },
-  { key: 'microsoft' as const, name: 'Microsoft', configured: microsoftConfigured.value, enabled: microsoftEnabled.value },
+  {
+    key: 'google' as const,
+    name: 'Google',
+    configured: googleConfigured.value,
+    enabled: googleEnabled.value,
+  },
+  {
+    key: 'microsoft' as const,
+    name: 'Microsoft',
+    configured: microsoftConfigured.value,
+    enabled: microsoftEnabled.value,
+  },
 ])
 const configuredSsoProviders = computed(() => ssoProviders.value.filter((p) => p.configured))
-const activeSsoLabel = computed(() => ssoProviders.value.find((p) => p.key === activeSsoProvider.value)?.name ?? '')
+const activeSsoLabel = computed(
+  () => ssoProviders.value.find((p) => p.key === activeSsoProvider.value)?.name ?? '',
+)
 
 const isAdmin = computed(() => org.value?.role === 'admin')
 
@@ -208,11 +215,17 @@ function cancelEdit() {
 }
 
 async function saveEdit() {
-  if (!editName.value.trim()) { editError.value = 'Name is required'; return }
+  if (!editName.value.trim()) {
+    editError.value = 'Name is required'
+    return
+  }
   editLoading.value = true
   editError.value = null
   try {
-    org.value = await updateOrganization(orgId.value, { name: editName.value.trim(), slug: editSlug.value.trim() })
+    org.value = await updateOrganization(orgId.value, {
+      name: editName.value.trim(),
+      slug: editSlug.value.trim(),
+    })
     editMode.value = false
     await fetchOrganizations()
   } catch (e) {
@@ -224,12 +237,18 @@ async function saveEdit() {
 
 // --- Members ---
 async function handleInvite() {
-  if (!inviteEmail.value.trim()) { inviteError.value = 'Email is required'; return }
+  if (!inviteEmail.value.trim()) {
+    inviteError.value = 'Email is required'
+    return
+  }
   inviteLoading.value = true
   inviteError.value = null
   inviteSuccess.value = null
   try {
-    const invitation = await createInvitation(orgId.value, { email: inviteEmail.value.trim(), role: inviteRole.value })
+    const invitation = await createInvitation(orgId.value, {
+      email: inviteEmail.value.trim(),
+      role: inviteRole.value,
+    })
     inviteSuccess.value = `Invitation sent! Token: ${invitation.token}`
     inviteEmail.value = ''
     inviteRole.value = 'viewer'
@@ -274,7 +293,10 @@ async function handleDelete() {
 }
 
 // --- Groups ---
-function resetGroupMessages() { groupMessage.value = null; groupActionError.value = null }
+function resetGroupMessages() {
+  groupMessage.value = null
+  groupActionError.value = null
+}
 
 async function loadGroups() {
   groupsLoading.value = true
@@ -291,18 +313,36 @@ async function loadGroups() {
   }
 }
 
-function startCreateGroup() { showCreateGroupForm.value = true; createGroupName.value = ''; createGroupDescription.value = ''; resetGroupMessages() }
-function cancelCreateGroup() { showCreateGroupForm.value = false; createGroupName.value = ''; createGroupDescription.value = ''; resetGroupMessages() }
+function startCreateGroup() {
+  showCreateGroupForm.value = true
+  createGroupName.value = ''
+  createGroupDescription.value = ''
+  resetGroupMessages()
+}
+function cancelCreateGroup() {
+  showCreateGroupForm.value = false
+  createGroupName.value = ''
+  createGroupDescription.value = ''
+  resetGroupMessages()
+}
 
 async function handleCreateGroup() {
   const name = createGroupName.value.trim()
-  if (!name) { groupActionError.value = 'Group name is required'; return }
+  if (!name) {
+    groupActionError.value = 'Group name is required'
+    return
+  }
   createGroupLoading.value = true
   resetGroupMessages()
   try {
-    await createGroup(orgId.value, { name, description: createGroupDescription.value.trim() || undefined })
+    await createGroup(orgId.value, {
+      name,
+      description: createGroupDescription.value.trim() || undefined,
+    })
     groupMessage.value = 'Group created'
-    showCreateGroupForm.value = false; createGroupName.value = ''; createGroupDescription.value = ''
+    showCreateGroupForm.value = false
+    createGroupName.value = ''
+    createGroupDescription.value = ''
     await loadGroups()
   } catch (e) {
     groupActionError.value = e instanceof Error ? e.message : 'Failed to create group'
@@ -311,7 +351,12 @@ async function handleCreateGroup() {
   }
 }
 
-function startEditGroup(group: UserGroup) { editingGroupId.value = group.id; editGroupName.value = group.name; editGroupDescription.value = group.description || ''; resetGroupMessages() }
+function startEditGroup(group: UserGroup) {
+  editingGroupId.value = group.id
+  editGroupName.value = group.name
+  editGroupDescription.value = group.description || ''
+  resetGroupMessages()
+}
 
 async function handleDeleteGroup(group: UserGroup) {
   if (!confirm(`Delete group "${group.name}"?`)) return
@@ -329,71 +374,135 @@ async function handleDeleteGroup(group: UserGroup) {
   }
 }
 
-function isGroupExpanded(groupId: string) { return expandedGroupIds.value.includes(groupId) }
-function groupMemberCount(groupId: string) { return groupMembersById.value[groupId]?.length || 0 }
+function isGroupExpanded(groupId: string) {
+  return expandedGroupIds.value.includes(groupId)
+}
+function groupMemberCount(groupId: string) {
+  return groupMembersById.value[groupId]?.length || 0
+}
 async function loadGroupMembers(groupId: string) {
   groupMembersLoading.value = { ...groupMembersLoading.value, [groupId]: true }
   groupMembersError.value = { ...groupMembersError.value, [groupId]: null }
   try {
-    groupMembersById.value = { ...groupMembersById.value, [groupId]: await listGroupMembers(orgId.value, groupId) }
+    groupMembersById.value = {
+      ...groupMembersById.value,
+      [groupId]: await listGroupMembers(orgId.value, groupId),
+    }
   } catch (e) {
-    groupMembersError.value = { ...groupMembersError.value, [groupId]: e instanceof Error ? e.message : 'Failed to load members' }
+    groupMembersError.value = {
+      ...groupMembersError.value,
+      [groupId]: e instanceof Error ? e.message : 'Failed to load members',
+    }
   } finally {
     groupMembersLoading.value = { ...groupMembersLoading.value, [groupId]: false }
   }
 }
 
 async function toggleGroupMembers(groupId: string) {
-  if (isGroupExpanded(groupId)) { expandedGroupIds.value = expandedGroupIds.value.filter((id) => id !== groupId); return }
+  if (isGroupExpanded(groupId)) {
+    expandedGroupIds.value = expandedGroupIds.value.filter((id) => id !== groupId)
+    return
+  }
   expandedGroupIds.value = [...expandedGroupIds.value, groupId]
-  if (!groupMembersById.value[groupId] && !groupMembersLoading.value[groupId]) { await loadGroupMembers(groupId) }
+  if (!groupMembersById.value[groupId] && !groupMembersLoading.value[groupId]) {
+    await loadGroupMembers(groupId)
+  }
 }
 
 // --- SSO ---
-function resetSSOMessages() { ssoNotice.value = null; googleError.value = null; microsoftError.value = null }
+function resetSSOMessages() {
+  ssoNotice.value = null
+  googleError.value = null
+  microsoftError.value = null
+}
 
 async function loadGoogleConfig() {
-  googleError.value = null; googleClientSecret.value = ''
+  googleError.value = null
+  googleClientSecret.value = ''
   try {
     const config = await getGoogleSSOConfig(orgId.value)
-    googleClientId.value = config.client_id; googleEnabled.value = config.enabled; googleConfigured.value = true
+    googleClientId.value = config.client_id
+    googleEnabled.value = config.enabled
+    googleConfigured.value = true
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Failed to load Google SSO'
-    if (msg === 'Google SSO not configured') { googleClientId.value = ''; googleEnabled.value = false; googleConfigured.value = false; return }
+    if (msg === 'Google SSO not configured') {
+      googleClientId.value = ''
+      googleEnabled.value = false
+      googleConfigured.value = false
+      return
+    }
     googleError.value = msg
   }
 }
 
 async function loadMicrosoftConfig() {
-  microsoftError.value = null; microsoftClientSecret.value = ''
+  microsoftError.value = null
+  microsoftClientSecret.value = ''
   try {
     const config = await getMicrosoftSSOConfig(orgId.value)
-    microsoftTenantId.value = config.tenant_id; microsoftClientId.value = config.client_id; microsoftEnabled.value = config.enabled; microsoftConfigured.value = true
+    microsoftTenantId.value = config.tenant_id
+    microsoftClientId.value = config.client_id
+    microsoftEnabled.value = config.enabled
+    microsoftConfigured.value = true
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Failed to load Microsoft SSO'
-    if (msg === 'Microsoft SSO not configured') { microsoftTenantId.value = ''; microsoftClientId.value = ''; microsoftEnabled.value = false; microsoftConfigured.value = false; return }
+    if (msg === 'Microsoft SSO not configured') {
+      microsoftTenantId.value = ''
+      microsoftClientId.value = ''
+      microsoftEnabled.value = false
+      microsoftConfigured.value = false
+      return
+    }
     microsoftError.value = msg
   }
 }
 
 async function loadSSOConfigs() {
-  ssoLoading.value = true; resetSSOMessages()
+  ssoLoading.value = true
+  resetSSOMessages()
   await Promise.all([loadGoogleConfig(), loadMicrosoftConfig()])
   ssoLoading.value = false
 }
 
-function openSsoProvider(provider: SsoProviderKey) { ssoDialogOpen.value = true; ssoStep.value = 'form'; activeSsoProvider.value = provider; resetSSOMessages() }
-function closeSsoDialog() { ssoDialogOpen.value = false; ssoStep.value = 'picker'; activeSsoProvider.value = null; resetSSOMessages() }
+function openSsoProvider(provider: SsoProviderKey) {
+  ssoDialogOpen.value = true
+  ssoStep.value = 'form'
+  activeSsoProvider.value = provider
+  resetSSOMessages()
+}
+function closeSsoDialog() {
+  ssoDialogOpen.value = false
+  ssoStep.value = 'picker'
+  activeSsoProvider.value = null
+  resetSSOMessages()
+}
 
 async function handleSaveGoogleSSO() {
   if (!isAdmin.value) return
-  const cId = googleClientId.value.trim(); const cSecret = googleClientSecret.value.trim()
-  if (!cId) { googleError.value = 'Client ID is required'; return }
-  if (!cSecret) { googleError.value = 'Client secret is required'; return }
-  googleSaving.value = true; googleError.value = null; ssoNotice.value = null
+  const cId = googleClientId.value.trim()
+  const cSecret = googleClientSecret.value.trim()
+  if (!cId) {
+    googleError.value = 'Client ID is required'
+    return
+  }
+  if (!cSecret) {
+    googleError.value = 'Client secret is required'
+    return
+  }
+  googleSaving.value = true
+  googleError.value = null
+  ssoNotice.value = null
   try {
-    const updated = await updateGoogleSSOConfig(orgId.value, { client_id: cId, client_secret: cSecret, enabled: googleEnabled.value })
-    googleClientId.value = updated.client_id; googleEnabled.value = updated.enabled; googleConfigured.value = true; googleClientSecret.value = ''
+    const updated = await updateGoogleSSOConfig(orgId.value, {
+      client_id: cId,
+      client_secret: cSecret,
+      enabled: googleEnabled.value,
+    })
+    googleClientId.value = updated.client_id
+    googleEnabled.value = updated.enabled
+    googleConfigured.value = true
+    googleClientSecret.value = ''
     ssoNotice.value = 'Google SSO settings saved'
   } catch (e) {
     googleError.value = e instanceof Error ? e.message : 'Failed to save Google SSO settings'
@@ -404,14 +513,36 @@ async function handleSaveGoogleSSO() {
 
 async function handleSaveMicrosoftSSO() {
   if (!isAdmin.value) return
-  const tId = microsoftTenantId.value.trim(); const cId = microsoftClientId.value.trim(); const cSecret = microsoftClientSecret.value.trim()
-  if (!tId) { microsoftError.value = 'Tenant ID is required'; return }
-  if (!cId) { microsoftError.value = 'Client ID is required'; return }
-  if (!cSecret) { microsoftError.value = 'Client secret is required'; return }
-  microsoftSaving.value = true; microsoftError.value = null; ssoNotice.value = null
+  const tId = microsoftTenantId.value.trim()
+  const cId = microsoftClientId.value.trim()
+  const cSecret = microsoftClientSecret.value.trim()
+  if (!tId) {
+    microsoftError.value = 'Tenant ID is required'
+    return
+  }
+  if (!cId) {
+    microsoftError.value = 'Client ID is required'
+    return
+  }
+  if (!cSecret) {
+    microsoftError.value = 'Client secret is required'
+    return
+  }
+  microsoftSaving.value = true
+  microsoftError.value = null
+  ssoNotice.value = null
   try {
-    const updated = await updateMicrosoftSSOConfig(orgId.value, { tenant_id: tId, client_id: cId, client_secret: cSecret, enabled: microsoftEnabled.value })
-    microsoftTenantId.value = updated.tenant_id; microsoftClientId.value = updated.client_id; microsoftEnabled.value = updated.enabled; microsoftConfigured.value = true; microsoftClientSecret.value = ''
+    const updated = await updateMicrosoftSSOConfig(orgId.value, {
+      tenant_id: tId,
+      client_id: cId,
+      client_secret: cSecret,
+      enabled: microsoftEnabled.value,
+    })
+    microsoftTenantId.value = updated.tenant_id
+    microsoftClientId.value = updated.client_id
+    microsoftEnabled.value = updated.enabled
+    microsoftConfigured.value = true
+    microsoftClientSecret.value = ''
     ssoNotice.value = 'Microsoft SSO settings saved'
   } catch (e) {
     microsoftError.value = e instanceof Error ? e.message : 'Failed to save Microsoft SSO settings'
@@ -531,6 +662,7 @@ async function handleSaveMicrosoftSSO() {
                   <option value="viewer">Viewer</option>
                   <option value="editor">Editor</option>
                   <option value="admin">Admin</option>
+                  <option value="auditor">Auditor</option>
                 </select>
                 <button class="px-4 py-2.5 rounded-sm text-sm font-semibold cursor-pointer transition" :style="{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))', color: '#fff', border: 'none' }" data-testid="org-invite-submit-btn" @click="handleInvite" :disabled="inviteLoading">{{ inviteLoading ? 'Sending...' : 'Send Invite' }}</button>
               </div>
@@ -565,6 +697,7 @@ async function handleSaveMicrosoftSSO() {
                     <option value="viewer">Viewer</option>
                     <option value="editor">Editor</option>
                     <option value="admin">Admin</option>
+                    <option value="auditor">Auditor</option>
                   </select>
                   <span v-else class="text-xs font-mono capitalize" :style="{ color: 'var(--color-primary)' }">{{ member.role }}</span>
                   <button

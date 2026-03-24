@@ -17,7 +17,7 @@ const mockCurrentOrg = {
     id: 'org-1',
     name: 'Acme',
     slug: 'acme',
-    role: 'admin' as 'admin' | 'editor' | 'viewer',
+    role: 'admin' as 'admin' | 'editor' | 'viewer' | 'auditor',
     created_at: '2026-02-08T00:00:00Z',
     updated_at: '2026-02-08T00:00:00Z',
   },

@@ -1,4 +1,4 @@
-export type MembershipRole = 'admin' | 'editor' | 'viewer'
+export type MembershipRole = 'admin' | 'editor' | 'viewer' | 'auditor'
 
 export interface OrgBranding {
   primary_color?: string | null
