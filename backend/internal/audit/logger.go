@@ -26,6 +26,7 @@ func NewLogger(pool *pgxpool.Pool) *Logger {
 type responseWriter struct {
 	http.ResponseWriter
 	statusCode int
+	ctx        context.Context // captures the enriched context from inner handlers
 }
 
 func (rw *responseWriter) WriteHeader(code int) {
@@ -40,9 +41,17 @@ func (rw *responseWriter) WriteHeader(code int) {
 func (l *Logger) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Wrap the writer so we can inspect the status code afterwards.
-		rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+		// Also captures the enriched context from inner handlers (e.g. RequireAuth
+		// injects auth values via r.WithContext which creates a child context the
+		// outer middleware can't see through r.Context() alone).
+		rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK, ctx: r.Context()}
 
-		next.ServeHTTP(rw, r)
+		// Wrap the inner handler to capture the enriched context.
+		inner := http.HandlerFunc(func(w2 http.ResponseWriter, r2 *http.Request) {
+			rw.ctx = r2.Context() // capture the auth-enriched context
+			next.ServeHTTP(w2, r2)
+		})
+		inner.ServeHTTP(rw, r)
 
 		// Only log mutating methods.
 		switch r.Method {
@@ -59,7 +68,8 @@ func (l *Logger) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := r.Context()
+		// Use the enriched context captured from the inner handler chain.
+		ctx := rw.ctx
 		action := r.Method + " " + r.URL.Path
 
 		outcome := outcomeFromStatus(rw.statusCode)
@@ -162,12 +172,17 @@ func parseOrgIDFromPath(path string) (uuid.UUID, bool) {
 	return orgID, true
 }
 
-// outcomeFromStatus maps an HTTP status code to "success" or "denied".
+// outcomeFromStatus maps an HTTP status code to an audit outcome.
+// 2xx = "success", 5xx = "error" (server failure), everything else = "denied".
 func outcomeFromStatus(code int) string {
-	if code >= 200 && code < 300 {
+	switch {
+	case code >= 200 && code < 300:
 		return "success"
+	case code >= 500:
+		return "error"
+	default:
+		return "denied"
 	}
-	return "denied"
 }
 
 // nullableString converts an empty string to nil so pgx stores NULL rather

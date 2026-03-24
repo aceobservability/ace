@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -50,7 +51,7 @@ func (h *AuditHandler) checkOrgAuditAccess(w http.ResponseWriter, r *http.Reques
 		return "", false
 	}
 
-	if role != "admin" && role != "auditor" {
+	if role != string(models.RoleAdmin) && role != string(models.RoleAuditor) {
 		http.Error(w, `{"error":"admin or auditor access required"}`, http.StatusForbidden)
 		return "", false
 	}
@@ -130,7 +131,8 @@ func (h *AuditHandler) ListAuditLog(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
 
 	// Count total matching rows
 	var total int

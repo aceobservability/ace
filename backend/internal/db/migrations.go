@@ -253,7 +253,7 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 			resource_type VARCHAR(50),
 			resource_id UUID,
 			resource_name VARCHAR(255),
-			outcome VARCHAR(20) NOT NULL DEFAULT 'success' CHECK (outcome IN ('success', 'denied')),
+			outcome VARCHAR(20) NOT NULL DEFAULT 'success' CHECK (outcome IN ('success', 'denied', 'error')),
 			ip_address VARCHAR(45),
 			metadata JSONB,
 			created_at TIMESTAMP DEFAULT NOW()
