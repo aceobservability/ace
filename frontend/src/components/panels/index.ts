@@ -5,6 +5,7 @@ import {
   GanttChart,
   GaugeCircle,
   Grid3x3,
+  LayoutGrid,
   ScatterChart as ScatterIcon,
 } from 'lucide-vue-next'
 import type { RawQueryResult } from '../../types/panel'
@@ -177,4 +178,29 @@ registerPanel({
   category: 'charts',
   label: 'Histogram',
   icon: BarChart3,
+})
+
+// Register Status History
+registerPanel({
+  type: 'status_history',
+  component: () => import('./StatusHistoryPanel.vue'),
+  dataAdapter: (raw: RawQueryResult) => {
+    // Transform series into status cells
+    // Each series = entity, each data point = time bucket
+    const cells: Array<{ entity: string; bucket: string; state: string }> = []
+    for (const series of raw.series) {
+      const points = series.data as Array<{ timestamp: number; value: number }>
+      for (const point of points) {
+        const date = new Date(point.timestamp * 1000)
+        const bucket = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+        const state = point.value > 0.5 ? 'up' : point.value > 0 ? 'degraded' : 'down'
+        cells.push({ entity: series.name, bucket, state })
+      }
+    }
+    return { cells }
+  },
+  defaultQuery: {},
+  category: 'observability',
+  label: 'Status History',
+  icon: LayoutGrid,
 })
