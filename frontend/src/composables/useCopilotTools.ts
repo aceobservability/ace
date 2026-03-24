@@ -3,6 +3,8 @@ import {
   fetchDataSourceLabels,
   fetchDataSourceLabelValues,
   fetchDataSourceMetricNames,
+  fetchDataSourceTraceServices,
+  listDataSources,
 } from '../api/datasources'
 import type { ToolCall, ToolDefinition } from './useCopilot'
 import { useQueryEditor } from './useQueryEditor'
@@ -232,17 +234,35 @@ export function getMetricsTools(): ToolDefinition[] {
   return getToolsForDatasourceType('victoriametrics')
 }
 
-export function useCopilotToolExecutor(datasourceId: () => string) {
+function resolveDatasourceId(args: Record<string, unknown>, defaultId: string): string | null {
+  const id = (args.datasource_id as string) || defaultId
+  return id || null
+}
+
+export function useCopilotToolExecutor(
+  datasourceId: () => string,
+  orgId: () => string,
+  datasourceType: () => string,
+) {
   const queryEditor = useQueryEditor()
   const router = useRouter()
 
   async function executeTool(toolCall: ToolCall): Promise<string> {
     const args = JSON.parse(toolCall.function.arguments || '{}')
-    const dsId = datasourceId()
 
     switch (toolCall.function.name) {
+      case 'list_datasources': {
+        const org = orgId()
+        if (!org) return 'Error: no organization selected'
+        const sources = await listDataSources(org)
+        return JSON.stringify(sources.map((ds) => ({ id: ds.id, name: ds.name, type: ds.type })))
+      }
+
       case 'get_metrics': {
-        const metrics = await fetchDataSourceMetricNames(dsId, args.search)
+        const dsId = resolveDatasourceId(args, datasourceId())
+        if (!dsId)
+          return 'Error: no datasource selected. Call list_datasources first to get a datasource ID.'
+        const metrics = await fetchDataSourceMetricNames(dsId, args.search as string | undefined)
         if (metrics.length === 0) return 'No metrics found'
         if (metrics.length > 100) {
           return `Found ${metrics.length} metrics. Showing first 100:\n${metrics.slice(0, 100).join('\n')}`
@@ -251,14 +271,24 @@ export function useCopilotToolExecutor(datasourceId: () => string) {
       }
 
       case 'get_labels': {
-        const labels = await fetchDataSourceLabels(dsId, args.metric)
+        const dsId = resolveDatasourceId(args, datasourceId())
+        if (!dsId)
+          return 'Error: no datasource selected. Call list_datasources first to get a datasource ID.'
+        const labels = await fetchDataSourceLabels(dsId, args.metric as string | undefined)
         if (labels.length === 0) return 'No labels found'
         return labels.join('\n')
       }
 
       case 'get_label_values': {
         if (!args.label) return 'Error: label parameter is required'
-        const values = await fetchDataSourceLabelValues(dsId, args.label, args.metric)
+        const dsId = resolveDatasourceId(args, datasourceId())
+        if (!dsId)
+          return 'Error: no datasource selected. Call list_datasources first to get a datasource ID.'
+        const values = await fetchDataSourceLabelValues(
+          dsId,
+          args.label as string,
+          args.metric as string | undefined,
+        )
         if (values.length === 0) return `No values found for label "${args.label}"`
         if (values.length > 100) {
           return `Found ${values.length} values for "${args.label}". Showing first 100:\n${values.slice(0, 100).join('\n')}`
@@ -266,16 +296,29 @@ export function useCopilotToolExecutor(datasourceId: () => string) {
         return values.join('\n')
       }
 
+      case 'get_trace_services': {
+        const dsId = resolveDatasourceId(args, datasourceId())
+        if (!dsId)
+          return 'Error: no datasource selected. Call list_datasources first to get a datasource ID.'
+        const services = await fetchDataSourceTraceServices(dsId)
+        if (services.length === 0) return 'No services found'
+        return services.join('\n')
+      }
+
       case 'write_query': {
         if (!args.query) return 'Error: query parameter is required'
         if (queryEditor.hasEditor()) {
-          queryEditor.setQuery(args.query)
+          queryEditor.setQuery(args.query as string)
           return `Query written to editor: ${args.query}`
         }
-        await router.push('/app/explore/metrics')
+        const dsType = datasourceType()
+        let route = '/app/explore/metrics'
+        if (['loki', 'victorialogs'].includes(dsType)) route = '/app/explore/logs'
+        else if (['tempo', 'victoriatraces'].includes(dsType)) route = '/app/explore/traces'
+        await router.push(route)
         await new Promise((resolve) => setTimeout(resolve, 500))
         if (queryEditor.hasEditor()) {
-          queryEditor.setQuery(args.query)
+          queryEditor.setQuery(args.query as string)
           return `Navigated to Explore and wrote query: ${args.query}`
         }
         return `Navigated to Explore but editor not ready. Query: ${args.query}`

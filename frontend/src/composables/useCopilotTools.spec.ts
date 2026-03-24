@@ -1,5 +1,52 @@
-import { describe, expect, it } from 'vitest'
-import { getMetricsTools, getToolsForDatasourceType } from './useCopilotTools'
+import { describe, expect, it, vi } from 'vitest'
+
+// --- Hoisted mocks (must be before any imports that use them) ---
+
+vi.mock('../api/datasources', () => ({
+  fetchDataSourceMetricNames: vi.fn(),
+  fetchDataSourceLabels: vi.fn(),
+  fetchDataSourceLabelValues: vi.fn(),
+  fetchDataSourceTraceServices: vi.fn(),
+  listDataSources: vi.fn(),
+}))
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}))
+
+vi.mock('./useQueryEditor', () => ({
+  useQueryEditor: () => ({
+    hasEditor: () => false,
+    setQuery: vi.fn(),
+    execute: vi.fn(),
+  }),
+}))
+
+import {
+  fetchDataSourceLabels,
+  fetchDataSourceLabelValues,
+  fetchDataSourceMetricNames,
+  fetchDataSourceTraceServices,
+  listDataSources,
+} from '../api/datasources'
+import type { ToolCall } from './useCopilot'
+import {
+  getMetricsTools,
+  getToolsForDatasourceType,
+  useCopilotToolExecutor,
+} from './useCopilotTools'
+
+// --- Helper ---
+
+function makeToolCall(name: string, args: Record<string, unknown> = {}): ToolCall {
+  return {
+    id: 'tc-1',
+    type: 'function',
+    function: { name, arguments: JSON.stringify(args) },
+  }
+}
+
+// --- Existing Task 1 tests ---
 
 describe('getMetricsTools', () => {
   // T14: getMetricsTools includes generate_dashboard
@@ -110,5 +157,77 @@ describe('getToolsForDatasourceType', () => {
     const getLabelValues = tools.find((t) => t.function.name === 'get_label_values')
     const props = getLabelValues!.function.parameters as { properties?: Record<string, unknown> }
     expect(props.properties).toHaveProperty('datasource_id')
+  })
+})
+
+// --- Task 2: useCopilotToolExecutor tests ---
+
+describe('useCopilotToolExecutor', () => {
+  const mockDsId = () => 'ds-default'
+  const mockOrgId = () => 'org-1'
+  const mockDsType = () => 'victoriametrics'
+
+  it('list_datasources returns datasource list as JSON', async () => {
+    vi.mocked(listDataSources).mockResolvedValue([
+      { id: 'ds-1', name: 'Prom', type: 'prometheus' } as any,
+    ])
+    const { executeTool } = useCopilotToolExecutor(mockDsId, mockOrgId, mockDsType)
+    const result = await executeTool(makeToolCall('list_datasources'))
+    expect(result).toContain('ds-1')
+    expect(result).toContain('Prom')
+    expect(listDataSources).toHaveBeenCalledWith('org-1')
+  })
+
+  it('list_datasources returns error when orgId is empty', async () => {
+    const { executeTool } = useCopilotToolExecutor(mockDsId, () => '', mockDsType)
+    const result = await executeTool(makeToolCall('list_datasources'))
+    expect(result).toContain('Error')
+    expect(result).toContain('no organization')
+  })
+
+  it('get_metrics uses override datasource_id when provided', async () => {
+    vi.mocked(fetchDataSourceMetricNames).mockResolvedValue(['up', 'http_requests_total'])
+    const { executeTool } = useCopilotToolExecutor(mockDsId, mockOrgId, mockDsType)
+    await executeTool(makeToolCall('get_metrics', { datasource_id: 'ds-override' }))
+    expect(fetchDataSourceMetricNames).toHaveBeenCalledWith('ds-override', undefined)
+  })
+
+  it('get_metrics falls back to context datasource_id', async () => {
+    vi.mocked(fetchDataSourceMetricNames).mockResolvedValue(['up'])
+    const { executeTool } = useCopilotToolExecutor(mockDsId, mockOrgId, mockDsType)
+    await executeTool(makeToolCall('get_metrics'))
+    expect(fetchDataSourceMetricNames).toHaveBeenCalledWith('ds-default', undefined)
+  })
+
+  it('get_metrics returns error when no datasource available', async () => {
+    const { executeTool } = useCopilotToolExecutor(() => '', mockOrgId, mockDsType)
+    const result = await executeTool(makeToolCall('get_metrics'))
+    expect(result).toContain('Error')
+    expect(result).toContain('no datasource')
+  })
+
+  it('get_labels uses override datasource_id', async () => {
+    vi.mocked(fetchDataSourceLabels).mockResolvedValue(['job', 'instance'])
+    const { executeTool } = useCopilotToolExecutor(mockDsId, mockOrgId, mockDsType)
+    await executeTool(makeToolCall('get_labels', { datasource_id: 'ds-2' }))
+    expect(fetchDataSourceLabels).toHaveBeenCalledWith('ds-2', undefined)
+  })
+
+  it('get_label_values uses override datasource_id', async () => {
+    vi.mocked(fetchDataSourceLabelValues).mockResolvedValue(['node1', 'node2'])
+    const { executeTool } = useCopilotToolExecutor(mockDsId, mockOrgId, mockDsType)
+    await executeTool(
+      makeToolCall('get_label_values', { label: 'instance', datasource_id: 'ds-3' }),
+    )
+    expect(fetchDataSourceLabelValues).toHaveBeenCalledWith('ds-3', 'instance', undefined)
+  })
+
+  it('get_trace_services returns services list', async () => {
+    vi.mocked(fetchDataSourceTraceServices).mockResolvedValue(['frontend', 'api', 'db'])
+    const { executeTool } = useCopilotToolExecutor(mockDsId, mockOrgId, mockDsType)
+    const result = await executeTool(makeToolCall('get_trace_services'))
+    expect(result).toContain('frontend')
+    expect(result).toContain('api')
+    expect(fetchDataSourceTraceServices).toHaveBeenCalledWith('ds-default')
   })
 })
