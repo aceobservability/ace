@@ -7,6 +7,7 @@ import { ref } from 'vue'
 const mockSendChatRequest = vi.hoisted(() => vi.fn())
 const mockFetchModels = vi.hoisted(() => vi.fn())
 const mockExecuteTool = vi.hoisted(() => vi.fn())
+const mockGetToolsForDatasourceType = vi.hoisted(() => vi.fn().mockReturnValue([]))
 
 // --- Shared reactive state (created after Vue import above) ---
 
@@ -30,8 +31,15 @@ vi.mock('../composables/useCopilot', () => ({
 
 vi.mock('../composables/useCopilotTools', () => ({
   getMetricsTools: () => [],
+  getToolsForDatasourceType: mockGetToolsForDatasourceType,
   useCopilotToolExecutor: () => ({
     executeTool: mockExecuteTool,
+  }),
+}))
+
+vi.mock('../composables/useOrganization', () => ({
+  useOrganization: () => ({
+    currentOrg: ref({ id: 'org-1', name: 'Test Org' }),
   }),
 }))
 
@@ -198,5 +206,43 @@ describe('CmdKChatView', () => {
     await flushPromises()
 
     expect(mockFetchModels).toHaveBeenCalledOnce()
+  })
+
+  // --- 8. System message with datasource info ---
+  it('prepends system message with datasource info when datasourceId is set', async () => {
+    wrapper = createWrapper()
+    await flushPromises()
+
+    const call = mockSendChatRequest.mock.calls[0]!
+    const messages = call[2] as Array<{ role: string; content: string }>
+    const systemMsg = messages.find((m) => m.role === 'system')
+    expect(systemMsg).toBeDefined()
+    expect(systemMsg!.content).toContain('ds-1')
+    expect(systemMsg!.content).toContain('VictoriaMetrics')
+  })
+
+  // --- 9. System message without datasource ---
+  it('prepends system message instructing list_datasources when datasourceId is empty', async () => {
+    wrapper = createWrapper({
+      ...defaultProps,
+      datasourceId: '',
+      datasourceType: '',
+      datasourceName: '',
+    })
+    await flushPromises()
+
+    const call = mockSendChatRequest.mock.calls[0]!
+    const messages = call[2] as Array<{ role: string; content: string }>
+    const systemMsg = messages.find((m) => m.role === 'system')
+    expect(systemMsg).toBeDefined()
+    expect(systemMsg!.content).toContain('list_datasources')
+  })
+
+  // --- 10. Uses getToolsForDatasourceType ---
+  it('uses getToolsForDatasourceType with correct type', async () => {
+    wrapper = createWrapper()
+    await flushPromises()
+
+    expect(mockGetToolsForDatasourceType).toHaveBeenCalledWith('victoriametrics')
   })
 })
