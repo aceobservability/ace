@@ -82,8 +82,8 @@ const chartOption = computed(() => {
       x2: 0,
       y2: 1,
       colorStops: [
-        { offset: 0, color: `${lineColors[index % lineColors.length]}33` },
-        { offset: 1, color: `${lineColors[index % lineColors.length]}05` },
+        { offset: 0, color: `${chartPalette[index % chartPalette.length]}33` },
+        { offset: 1, color: `${chartPalette[index % chartPalette.length]}05` },
       ],
     },
   })
