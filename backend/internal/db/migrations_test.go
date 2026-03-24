@@ -23,6 +23,7 @@ func TestRunMigrations(t *testing.T) {
 
 	// Clean up test database
 	cleanupSQL := `
+		DROP TABLE IF EXISTS sso_role_mappings CASCADE;
 		DROP TABLE IF EXISTS audit_log CASCADE;
 		DROP TABLE IF EXISTS panels CASCADE;
 		DROP TABLE IF EXISTS dashboards CASCADE;
@@ -61,6 +62,7 @@ func TestRunMigrations(t *testing.T) {
 		"resource_permissions",
 		"user_auth_methods",
 		"sso_configs",
+		"sso_role_mappings",
 		"prometheus_datasources",
 		"datasources",
 		"folders",
@@ -261,6 +263,140 @@ func TestRunMigrations(t *testing.T) {
 		t.Errorf("Expected error to contain 'immutable', got: %v", err)
 	}
 
+	// --- Phase 2: Enterprise Auth Migration Tests ---
+
+	// Test sso_configs accepts 'okta' as provider
+	_, err = pool.Exec(ctx, `
+		INSERT INTO sso_configs (organization_id, provider, client_id, client_secret)
+		SELECT o.id, 'okta', 'okta-client-id', 'okta-client-secret'
+		FROM organizations o
+		WHERE o.slug = 'test-org'
+	`)
+	if err != nil {
+		t.Errorf("Expected 'okta' provider to be valid, got error: %v", err)
+	}
+
+	// Test sso_role_mappings table exists and constraints work
+	_, err = pool.Exec(ctx, `
+		INSERT INTO sso_role_mappings (organization_id, sso_config_id, sso_group_name, ace_role)
+		SELECT o.id, sc.id, 'platform-engineers', 'admin'
+		FROM organizations o
+		JOIN sso_configs sc ON sc.organization_id = o.id AND sc.provider = 'okta'
+		WHERE o.slug = 'test-org'
+	`)
+	if err != nil {
+		t.Errorf("Expected sso_role_mappings INSERT to succeed, got error: %v", err)
+	}
+
+	// Test sso_role_mappings UNIQUE(sso_config_id, sso_group_name) constraint
+	_, err = pool.Exec(ctx, `
+		INSERT INTO sso_role_mappings (organization_id, sso_config_id, sso_group_name, ace_role)
+		SELECT o.id, sc.id, 'platform-engineers', 'viewer'
+		FROM organizations o
+		JOIN sso_configs sc ON sc.organization_id = o.id AND sc.provider = 'okta'
+		WHERE o.slug = 'test-org'
+	`)
+	if err == nil {
+		t.Error("Expected duplicate sso_role_mappings (sso_config_id, sso_group_name) to fail unique constraint")
+	}
+
+	// Test sso_role_mappings ace_role CHECK constraint rejects invalid roles
+	_, err = pool.Exec(ctx, `
+		INSERT INTO sso_role_mappings (organization_id, sso_config_id, sso_group_name, ace_role)
+		SELECT o.id, sc.id, 'bad-group', 'superadmin'
+		FROM organizations o
+		JOIN sso_configs sc ON sc.organization_id = o.id AND sc.provider = 'okta'
+		WHERE o.slug = 'test-org'
+	`)
+	if err == nil {
+		t.Error("Expected invalid ace_role to fail CHECK constraint")
+	}
+
+	// Test organization_memberships has role_source column
+	_, err = pool.Exec(ctx, `
+		DELETE FROM organization_memberships WHERE user_id = (SELECT id FROM users WHERE email = 'test@example.com')
+	`)
+	if err != nil {
+		t.Errorf("Could not clean up memberships: %v", err)
+	}
+
+	_, err = pool.Exec(ctx, `
+		INSERT INTO organization_memberships (organization_id, user_id, role, role_source)
+		SELECT o.id, u.id, 'viewer', 'sso'
+		FROM organizations o, users u
+		WHERE o.slug = 'test-org' AND u.email = 'test@example.com'
+	`)
+	if err != nil {
+		t.Errorf("Expected organization_memberships INSERT with role_source to succeed, got error: %v", err)
+	}
+
+	var roleSource string
+	err = pool.QueryRow(ctx, `
+		SELECT role_source FROM organization_memberships
+		WHERE user_id = (SELECT id FROM users WHERE email = 'test@example.com')
+	`).Scan(&roleSource)
+	if err != nil {
+		t.Errorf("Error reading role_source: %v", err)
+	}
+	if roleSource != "sso" {
+		t.Errorf("Expected role_source 'sso', got '%s'", roleSource)
+	}
+
+	// Test user_auth_methods has UNIQUE(user_id, provider) index
+	var uniqueIndexExists bool
+	err = pool.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM pg_indexes
+			WHERE indexname = 'idx_user_auth_methods_user_provider'
+		)
+	`).Scan(&uniqueIndexExists)
+	if err != nil {
+		t.Errorf("Error checking user_auth_methods unique index: %v", err)
+	}
+	if !uniqueIndexExists {
+		t.Error("Expected idx_user_auth_methods_user_provider index to exist")
+	}
+
+	// Verify the index is unique
+	var isUnique bool
+	err = pool.QueryRow(ctx, `
+		SELECT i.indisunique
+		FROM pg_index i
+		JOIN pg_class c ON c.oid = i.indexrelid
+		WHERE c.relname = 'idx_user_auth_methods_user_provider'
+	`).Scan(&isUnique)
+	if err != nil {
+		t.Errorf("Error checking index uniqueness: %v", err)
+	}
+	if !isUnique {
+		t.Error("Expected idx_user_auth_methods_user_provider to be a UNIQUE index")
+	}
+
+	// Test sso_configs has groups_claim_name and default_role columns with defaults
+	var groupsClaim, defaultRole string
+	err = pool.QueryRow(ctx, `
+		SELECT groups_claim_name, default_role FROM sso_configs
+		WHERE provider = 'okta'
+		LIMIT 1
+	`).Scan(&groupsClaim, &defaultRole)
+	if err != nil {
+		t.Errorf("Error reading new sso_configs columns: %v", err)
+	}
+	if groupsClaim != "groups" {
+		t.Errorf("Expected groups_claim_name default 'groups', got '%s'", groupsClaim)
+	}
+	if defaultRole != "viewer" {
+		t.Errorf("Expected default_role default 'viewer', got '%s'", defaultRole)
+	}
+
+	// Clean up memberships from Phase 2 tests before cascade delete test
+	_, err = pool.Exec(ctx, `
+		DELETE FROM organization_memberships WHERE user_id = (SELECT id FROM users WHERE email = 'test@example.com')
+	`)
+	if err != nil {
+		t.Errorf("Could not clean up memberships before cascade test: %v", err)
+	}
+
 	// Test cascade delete - use a separate org with no audit_log entries so delete is not blocked
 	_, err = pool.Exec(ctx, `INSERT INTO organizations (name, slug) VALUES ('Cascade Test Org', 'cascade-test-org')`)
 	if err != nil {
@@ -309,6 +445,7 @@ func TestDownMigration(t *testing.T) {
 
 	// First run up migrations
 	cleanupSQL := `
+		DROP TABLE IF EXISTS sso_role_mappings CASCADE;
 		DROP TABLE IF EXISTS audit_log CASCADE;
 		DROP TABLE IF EXISTS panels CASCADE;
 		DROP TABLE IF EXISTS dashboards CASCADE;
@@ -352,6 +489,7 @@ func TestDownMigration(t *testing.T) {
 		"resource_permissions",
 		"user_auth_methods",
 		"sso_configs",
+		"sso_role_mappings",
 		"prometheus_datasources",
 		"datasources",
 		"folders",

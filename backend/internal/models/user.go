@@ -41,6 +41,7 @@ type OrganizationMembership struct {
 	OrganizationID uuid.UUID      `json:"organization_id"`
 	UserID         uuid.UUID      `json:"user_id"`
 	Role           MembershipRole `json:"role"`
+	RoleSource     string         `json:"role_source"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
 }

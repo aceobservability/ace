@@ -9,8 +9,10 @@ import (
 type SSOProvider string
 
 const (
-	SSOGoogle    SSOProvider = "google"
-	SSOMicrosoft SSOProvider = "microsoft"
+	SSOGoogle          SSOProvider = "google"
+	SSOMicrosoft       SSOProvider = "microsoft"
+	SSOOkta            SSOProvider = "okta"
+	SSOGitHubCopilot   SSOProvider = "github_copilot"
 )
 
 type SSOConfig struct {
@@ -21,6 +23,8 @@ type SSOConfig struct {
 	ClientSecret   string      `json:"-"`
 	TenantID       *string     `json:"tenant_id,omitempty"`
 	Enabled        bool        `json:"enabled"`
+	GroupsClaimName string     `json:"groups_claim_name"`
+	DefaultRole    string      `json:"default_role"`
 	CreatedAt      time.Time   `json:"created_at"`
 	UpdatedAt      time.Time   `json:"updated_at"`
 }
