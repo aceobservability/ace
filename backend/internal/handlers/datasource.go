@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +19,42 @@ import (
 	"github.com/janhoon/dash/backend/internal/datasource"
 	"github.com/janhoon/dash/backend/internal/models"
 )
+
+// validateDatasourceURL validates a datasource URL to prevent SSRF attacks.
+// Unlike AI provider URLs, datasource URLs may legitimately target private
+// networks (e.g. Prometheus on an internal IP). We only block the cloud
+// metadata endpoint (169.254.169.254) which is the primary SSRF target.
+func validateDatasourceURL(raw string) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("invalid url: %w", err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("url must use http or https scheme")
+	}
+	if u.Host == "" {
+		return fmt.Errorf("url must have a host")
+	}
+	if strings.Contains(raw, "@") {
+		return fmt.Errorf("url must not contain userinfo")
+	}
+
+	hostname := u.Hostname()
+	if ip := net.ParseIP(hostname); ip != nil {
+		if ip.Equal(net.ParseIP("169.254.169.254")) {
+			return fmt.Errorf("url must not target cloud metadata endpoint")
+		}
+	}
+	// Also resolve hostname to catch DNS-based SSRF
+	if ips, err := net.LookupHost(hostname); err == nil {
+		for _, ipStr := range ips {
+			if ip := net.ParseIP(ipStr); ip != nil && ip.Equal(net.ParseIP("169.254.169.254")) {
+				return fmt.Errorf("url must not resolve to cloud metadata endpoint")
+			}
+		}
+	}
+	return nil
+}
 
 type DataSourceHandler struct {
 	pool *pgxpool.Pool
@@ -65,6 +103,10 @@ func (h *DataSourceHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.URL == "" {
 		http.Error(w, `{"error":"url is required"}`, http.StatusBadRequest)
+		return
+	}
+	if err := validateDatasourceURL(req.URL); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error":%q}`, err.Error()), http.StatusBadRequest)
 		return
 	}
 
@@ -242,6 +284,12 @@ func (h *DataSourceHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if req.Type != nil && !req.Type.Valid() {
 		http.Error(w, `{"error":"invalid datasource type"}`, http.StatusBadRequest)
 		return
+	}
+	if req.URL != nil {
+		if err := validateDatasourceURL(*req.URL); err != nil {
+			http.Error(w, fmt.Sprintf(`{"error":%q}`, err.Error()), http.StatusBadRequest)
+			return
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -653,6 +701,10 @@ func (h *DataSourceHandler) TestConnectionDraft(w http.ResponseWriter, r *http.R
 	datasourceURL := strings.TrimSpace(req.URL)
 	if datasourceURL == "" {
 		http.Error(w, `{"error":"url is required"}`, http.StatusBadRequest)
+		return
+	}
+	if err := validateDatasourceURL(datasourceURL); err != nil {
+		http.Error(w, fmt.Sprintf(`{"error":%q}`, err.Error()), http.StatusBadRequest)
 		return
 	}
 
