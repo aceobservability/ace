@@ -713,7 +713,7 @@ async function handleTestOktaConnection() {
   oktaTestMessage.value = ''
   try {
     const result = await testOktaConnection(orgId.value)
-    if (result.status === 'ok') {
+    if (result.status === 'connected') {
       oktaTestStatus.value = 'success'
       oktaTestMessage.value = result.message || 'Connected — OIDC discovery verified'
     } else {

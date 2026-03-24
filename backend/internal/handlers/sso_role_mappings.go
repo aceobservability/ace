@@ -33,7 +33,6 @@ var validSSOProviders = map[string]bool{
 	string(models.SSOGoogle):        true,
 	string(models.SSOMicrosoft):     true,
 	string(models.SSOOkta):         true,
-	string(models.SSOGitHubCopilot): true,
 }
 
 // validAceRoles enumerates the allowed values for the ace_role column.

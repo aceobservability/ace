@@ -48,7 +48,7 @@ async function fetchSSOProviders(slug: string): Promise<SSOProvider[]> {
 }
 
 function handleSSOLogin(provider: string) {
-  window.location.href = `${API_BASE}/api/auth/${provider}/login?org=${orgSlug.value}`
+  window.location.href = `${API_BASE}/api/auth/${provider}/login?org=${encodeURIComponent(orgSlug.value!)}`
 }
 
 onMounted(async () => {

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -149,7 +150,9 @@ func (h *OktaSSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	cfg, err := h.getOktaConfig(ctx, orgSlug)
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -232,7 +235,9 @@ func (h *OktaSSOHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	// Check for errors from Okta
 	if errParam := r.URL.Query().Get("error"); errParam != "" {
 		errDesc := r.URL.Query().Get("error_description")
-		http.Error(w, fmt.Sprintf(`{"error":"oauth error: %s - %s"}`, errParam, errDesc), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "oauth error: " + errParam + " - " + errDesc})
 		return
 	}
 
@@ -248,7 +253,9 @@ func (h *OktaSSOHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	// Get SSO config
 	cfg, err := h.getOktaConfig(ctx, orgSlug)
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -451,9 +458,9 @@ func (h *OktaSSOHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		frontendURL = "http://localhost:5173"
 	}
 
-	redirectURL := fmt.Sprintf("%s/auth/callback#access_token=%s&token_type=Bearer", frontendURL, accessToken)
+	redirectURL := fmt.Sprintf("%s/auth/callback#access_token=%s&token_type=Bearer", frontendURL, url.QueryEscape(accessToken))
 	if refreshToken != "" {
-		redirectURL += "&refresh_token=" + refreshToken
+		redirectURL += "&refresh_token=" + url.QueryEscape(refreshToken)
 	}
 	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }
