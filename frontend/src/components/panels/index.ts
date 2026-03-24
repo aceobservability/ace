@@ -5,6 +5,7 @@ import {
   Flame,
   GanttChart,
   GaugeCircle,
+  GitBranch,
   Grid3x3,
   LayoutGrid,
   Network,
@@ -144,13 +145,23 @@ registerPanel({
       for (let i = 1; i < points.length; i++) {
         const newState = points[i].value > 0 ? 'up' : 'down'
         if (newState !== currentState) {
-          segments.push({ entity: series.name, state: currentState, start: segStart, end: points[i].timestamp })
+          segments.push({
+            entity: series.name,
+            state: currentState,
+            start: segStart,
+            end: points[i].timestamp,
+          })
           currentState = newState
           segStart = points[i].timestamp
         }
       }
       // Close final segment
-      segments.push({ entity: series.name, state: currentState, start: segStart, end: points[points.length - 1].timestamp })
+      segments.push({
+        entity: series.name,
+        state: currentState,
+        start: segStart,
+        end: points[points.length - 1].timestamp,
+      })
     }
     return { segments }
   },
@@ -239,4 +250,19 @@ registerPanel({
   category: 'observability',
   label: 'Node Graph',
   icon: Network,
+})
+
+// Register Trace Detail
+registerPanel({
+  type: 'trace_detail',
+  component: () => import('./TraceDetailPanel.vue'),
+  dataAdapter: (_raw: RawQueryResult) => {
+    // Trace detail gets span data from trace queries
+    // Stub: return empty spans
+    return { spans: [] }
+  },
+  defaultQuery: {},
+  category: 'observability',
+  label: 'Trace Detail',
+  icon: GitBranch,
 })
