@@ -7,6 +7,7 @@ import {
   GaugeCircle,
   Grid3x3,
   LayoutGrid,
+  Network,
   ScatterChart as ScatterIcon,
 } from 'lucide-vue-next'
 import type { RawQueryResult } from '../../types/panel'
@@ -223,4 +224,19 @@ registerPanel({
   category: 'observability',
   label: 'Flame Graph',
   icon: Flame,
+})
+
+// Register Node Graph
+registerPanel({
+  type: 'node_graph',
+  component: () => import('./NodeGraphPanel.vue'),
+  dataAdapter: (_raw: RawQueryResult) => {
+    // Node graph typically comes from trace service maps
+    // Stub: return empty graph
+    return { nodes: [], edges: [] }
+  },
+  defaultQuery: {},
+  category: 'observability',
+  label: 'Node Graph',
+  icon: Network,
 })
