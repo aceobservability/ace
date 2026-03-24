@@ -1,15 +1,20 @@
 import {
   BarChart3,
   Bell,
+  CandlestickChart as CandlestickIcon,
   FileText,
   Flame,
   GanttChart,
   GaugeCircle,
   GitBranch,
+  Globe,
   Grid3x3,
+  LayoutDashboard,
   LayoutGrid,
   Network,
+  PenTool,
   ScatterChart as ScatterIcon,
+  StickyNote,
 } from 'lucide-vue-next'
 import type { RawQueryResult } from '../../types/panel'
 import { registerPanel } from '../../utils/panelRegistry'
@@ -252,6 +257,36 @@ registerPanel({
   icon: Network,
 })
 
+// Register Candlestick
+registerPanel({
+  type: 'candlestick',
+  component: () => import('./CandlestickPanel.vue'),
+  dataAdapter: (raw: RawQueryResult) => {
+    // Transform 4 series (open, close, low, high) into candlestick points
+    if (raw.series.length < 4) return { data: [] }
+    const open = raw.series[0].data as Array<{ timestamp: number; value: number }>
+    const close = raw.series[1].data as Array<{ timestamp: number; value: number }>
+    const low = raw.series[2].data as Array<{ timestamp: number; value: number }>
+    const high = raw.series[3].data as Array<{ timestamp: number; value: number }>
+    const len = Math.min(open.length, close.length, low.length, high.length)
+    const data: Array<{ timestamp: number; open: number; close: number; low: number; high: number }> = []
+    for (let i = 0; i < len; i++) {
+      data.push({
+        timestamp: open[i].timestamp,
+        open: open[i].value,
+        close: close[i].value,
+        low: low[i].value,
+        high: high[i].value,
+      })
+    }
+    return { data }
+  },
+  defaultQuery: {},
+  category: 'charts',
+  label: 'Candlestick',
+  icon: CandlestickIcon,
+})
+
 // Register Trace Detail
 registerPanel({
   type: 'trace_detail',
@@ -265,4 +300,67 @@ registerPanel({
   category: 'observability',
   label: 'Trace Detail',
   icon: GitBranch,
+})
+
+// Register Annotation List
+registerPanel({
+  type: 'annotation_list',
+  component: () => import('./AnnotationListPanel.vue'),
+  dataAdapter: () => {
+    // TODO: Annotation list needs backend annotation API integration
+    return { annotations: [] }
+  },
+  defaultQuery: {},
+  category: 'widgets',
+  label: 'Annotation List',
+  icon: StickyNote,
+})
+
+// Register Dashboard List
+registerPanel({
+  type: 'dashboard_list',
+  component: () => import('./DashboardListPanel.vue'),
+  dataAdapter: () => {
+    // TODO: Dashboard list needs backend dashboard API integration
+    return { dashboards: [] }
+  },
+  defaultQuery: {},
+  category: 'widgets',
+  label: 'Dashboard List',
+  icon: LayoutDashboard,
+})
+
+// Register Geomap
+registerPanel({
+  type: 'geomap',
+  component: () => import('./GeomapPanel.vue'),
+  dataAdapter: (_raw: RawQueryResult) => {
+    // Geo data typically comes from metrics with location labels
+    // Stub for now
+    return { points: [] }
+  },
+  defaultQuery: {},
+  category: 'charts',
+  label: 'Geomap',
+  icon: Globe,
+})
+
+// Register Canvas (Excalidraw whiteboard)
+registerPanel({
+  type: 'canvas',
+  component: () => import('./CanvasPanel.vue'),
+  dataAdapter: (_raw: RawQueryResult, query?: Record<string, unknown>) => {
+    // Canvas data stored in panel.query.canvasData
+    const canvasData = query?.canvasData as { elements?: unknown[]; appState?: unknown } | undefined
+    return {
+      data: {
+        elements: canvasData?.elements ?? [],
+        appState: canvasData?.appState ?? {},
+      },
+    }
+  },
+  defaultQuery: { canvasData: { elements: [], appState: {} } },
+  category: 'widgets',
+  label: 'Canvas',
+  icon: PenTool,
 })
