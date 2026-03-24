@@ -4,7 +4,7 @@ import {
   fetchDataSourceLabelValues,
   fetchDataSourceMetricNames,
 } from '../api/datasources'
-import type { ToolCall, ToolDefinition } from './useCopilot'
+import type { ToolCall, ToolDefinition } from './useAIProvider'
 import { useQueryEditor } from './useQueryEditor'
 
 export function getMetricsTools(): ToolDefinition[] {
