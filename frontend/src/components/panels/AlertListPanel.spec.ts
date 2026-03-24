@@ -186,7 +186,10 @@ describe('AlertListPanel', () => {
     const style = badge.attributes('style') ?? ''
     const classes = badge.classes().join(' ')
     // Should reference the critical/error color from thresholdColors
-    const hasErrorColor = style.includes(thresholdColors.critical) || classes.includes('critical') || classes.includes('error')
+    const hasErrorColor =
+      style.includes(thresholdColors.critical) ||
+      classes.includes('critical') ||
+      classes.includes('error')
     expect(hasErrorColor).toBe(true)
   })
 

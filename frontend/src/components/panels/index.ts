@@ -1,4 +1,11 @@
-import { BarChart3, Bell, FileText, GaugeCircle, Grid3x3, ScatterChart as ScatterIcon } from 'lucide-vue-next'
+import {
+  BarChart3,
+  Bell,
+  FileText,
+  GaugeCircle,
+  Grid3x3,
+  ScatterChart as ScatterIcon,
+} from 'lucide-vue-next'
 import type { RawQueryResult } from '../../types/panel'
 import { registerPanel } from '../../utils/panelRegistry'
 
@@ -50,7 +57,7 @@ registerPanel({
   component: () => import('./BarGaugePanel.vue'),
   dataAdapter: (raw: RawQueryResult) => {
     // Each series becomes an item with its latest value
-    const items = raw.series.map(s => {
+    const items = raw.series.map((s) => {
       const points = s.data as Array<{ timestamp: number; value: number }>
       const latestValue = points.length > 0 ? points[points.length - 1].value : 0
       return { label: s.name, value: latestValue, max: 100 }
