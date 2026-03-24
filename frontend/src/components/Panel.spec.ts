@@ -45,7 +45,11 @@ vi.mock('../api/datasources', () => ({
 vi.mock('../utils/panelRegistry', () => ({
   lookupPanel: mockLookupPanel,
   isRegisteredPanel: mockIsRegisteredPanel,
+  registerPanel: vi.fn(),
 }))
+
+// Mock the side-effect import so it doesn't try to register real panels
+vi.mock('./panels/index', () => ({}))
 
 // Mock LineChart component
 vi.mock('./LineChart.vue', () => ({

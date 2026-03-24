@@ -7,6 +7,7 @@ import { useTimeRange } from '../composables/useTimeRange'
 import type { LogEntry, TraceSpan, TraceSummary } from '../types/datasource'
 import type { Panel, RawQueryResult } from '../types/panel'
 import { isRegisteredPanel, lookupPanel } from '../utils/panelRegistry'
+import './panels/index' // Side-effect: registers all panel types
 import BarChart from './BarChart.vue'
 import GaugeChart, { type Threshold } from './GaugeChart.vue'
 import LineChart from './LineChart.vue'
