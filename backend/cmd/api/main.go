@@ -109,14 +109,14 @@ func main() {
 	mux.HandleFunc("POST /api/auth/logout-all", auth.RequireAuth(jwtManager, authHandler.LogoutAll))
 
 	// Google SSO routes
-	googleSSOHandler := handlers.NewGoogleSSOHandler(pool, jwtManager)
+	googleSSOHandler := handlers.NewGoogleSSOHandler(pool, jwtManager, rdb)
 	mux.HandleFunc("GET /api/auth/google/login", googleSSOHandler.Login)
 	mux.HandleFunc("GET /api/auth/google/callback", googleSSOHandler.Callback)
 	mux.HandleFunc("POST /api/orgs/{id}/sso/google", auth.RequireAuth(jwtManager, googleSSOHandler.ConfigureSSO))
 	mux.HandleFunc("GET /api/orgs/{id}/sso/google", auth.RequireAuth(jwtManager, googleSSOHandler.GetSSOConfig))
 
 	// Microsoft SSO routes
-	microsoftSSOHandler := handlers.NewMicrosoftSSOHandler(pool, jwtManager)
+	microsoftSSOHandler := handlers.NewMicrosoftSSOHandler(pool, jwtManager, rdb)
 	mux.HandleFunc("GET /api/auth/microsoft/login", microsoftSSOHandler.Login)
 	mux.HandleFunc("GET /api/auth/microsoft/callback", microsoftSSOHandler.Callback)
 	mux.HandleFunc("POST /api/orgs/{id}/sso/microsoft", auth.RequireAuth(jwtManager, microsoftSSOHandler.ConfigureSSO))
