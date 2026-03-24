@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Bell,
+  CandlestickChart as CandlestickIcon,
   FileText,
   Flame,
   GanttChart,
@@ -250,6 +251,36 @@ registerPanel({
   category: 'observability',
   label: 'Node Graph',
   icon: Network,
+})
+
+// Register Candlestick
+registerPanel({
+  type: 'candlestick',
+  component: () => import('./CandlestickPanel.vue'),
+  dataAdapter: (raw: RawQueryResult) => {
+    // Transform 4 series (open, close, low, high) into candlestick points
+    if (raw.series.length < 4) return { data: [] }
+    const open = raw.series[0].data as Array<{ timestamp: number; value: number }>
+    const close = raw.series[1].data as Array<{ timestamp: number; value: number }>
+    const low = raw.series[2].data as Array<{ timestamp: number; value: number }>
+    const high = raw.series[3].data as Array<{ timestamp: number; value: number }>
+    const len = Math.min(open.length, close.length, low.length, high.length)
+    const data: Array<{ timestamp: number; open: number; close: number; low: number; high: number }> = []
+    for (let i = 0; i < len; i++) {
+      data.push({
+        timestamp: open[i].timestamp,
+        open: open[i].value,
+        close: close[i].value,
+        low: low[i].value,
+        high: high[i].value,
+      })
+    }
+    return { data }
+  },
+  defaultQuery: {},
+  category: 'charts',
+  label: 'Candlestick',
+  icon: CandlestickIcon,
 })
 
 // Register Trace Detail
