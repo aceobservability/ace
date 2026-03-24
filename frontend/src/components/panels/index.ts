@@ -1,4 +1,4 @@
-import { BarChart3, GaugeCircle, Grid3x3 } from 'lucide-vue-next'
+import { BarChart3, GaugeCircle, Grid3x3, ScatterChart as ScatterIcon } from 'lucide-vue-next'
 import type { RawQueryResult } from '../../types/panel'
 import { registerPanel } from '../../utils/panelRegistry'
 
@@ -47,6 +47,45 @@ registerPanel({
   category: 'stats',
   label: 'Bar Gauge',
   icon: GaugeCircle,
+})
+
+// Register Scatter
+registerPanel({
+  type: 'scatter',
+  component: () => import('./ScatterPanel.vue'),
+  dataAdapter: (raw: RawQueryResult) => {
+    // Pair first two series as X and Y axes
+    // If only one series, plot value vs timestamp
+    if (raw.series.length === 0) return { series: [] }
+
+    if (raw.series.length >= 2) {
+      const xSeries = raw.series[0].data as Array<{ timestamp: number; value: number }>
+      const ySeries = raw.series[1].data as Array<{ timestamp: number; value: number }>
+      const len = Math.min(xSeries.length, ySeries.length)
+      const data: Array<[number, number]> = []
+      for (let i = 0; i < len; i++) {
+        data.push([xSeries[i].value, ySeries[i].value])
+      }
+      return {
+        series: [{ name: `${raw.series[0].name} vs ${raw.series[1].name}`, data }],
+      }
+    }
+
+    // Single series: plot timestamp vs value
+    const points = raw.series[0].data as Array<{ timestamp: number; value: number }>
+    return {
+      series: [
+        {
+          name: raw.series[0].name,
+          data: points.map((p) => [p.timestamp, p.value] as [number, number]),
+        },
+      ],
+    }
+  },
+  defaultQuery: {},
+  category: 'charts',
+  label: 'Scatter',
+  icon: ScatterIcon,
 })
 
 // Register Histogram
