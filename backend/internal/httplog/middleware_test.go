@@ -210,6 +210,28 @@ func TestResponseWriter_ImplicitStatusOK(t *testing.T) {
 	assertFieldInt(t, fields, "status", 200)
 }
 
+func TestResponseWriter_WriteHeaderOnce(t *testing.T) {
+	logger, logs := newTestLogger()
+	middleware := NewMiddleware(logger)
+
+	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusCreated) // first call — this is the real status
+		w.WriteHeader(http.StatusConflict) // second call — should be ignored for logging
+	})
+
+	req := httptest.NewRequest("POST", "/api/orgs", nil)
+	rec := httptest.NewRecorder()
+
+	middleware(inner).ServeHTTP(rec, req)
+
+	if logs.Len() != 1 {
+		t.Fatalf("expected 1 log entry, got %d", logs.Len())
+	}
+
+	fields := fieldMap(logs.All()[0].ContextMap())
+	assertFieldInt(t, fields, "status", 201) // logged status must match the first WriteHeader call
+}
+
 func TestMiddleware_XForwardedForMultipleIPs(t *testing.T) {
 	logger, logs := newTestLogger()
 	middleware := NewMiddleware(logger)

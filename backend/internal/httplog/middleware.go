@@ -15,9 +15,15 @@ type responseWriter struct {
 	http.ResponseWriter
 	statusCode   int
 	bytesWritten int
+	wroteHeader  bool
 }
 
 func (rw *responseWriter) WriteHeader(code int) {
+	if rw.wroteHeader {
+		rw.ResponseWriter.WriteHeader(code) // delegate so stdlib warning is still emitted
+		return
+	}
+	rw.wroteHeader = true
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
 }
@@ -84,7 +90,9 @@ func NewMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 }
 
 // clientIP extracts the client IP from the request, preferring
-// X-Forwarded-For over RemoteAddr.
+// X-Forwarded-For over RemoteAddr. NOTE: X-Forwarded-For is trusted
+// unconditionally; this is only accurate when the load balancer strips
+// or overwrites client-supplied XFF headers before forwarding.
 func clientIP(r *http.Request) string {
 	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
 		return strings.TrimSpace(strings.Split(fwd, ",")[0])
