@@ -71,8 +71,8 @@ func NewMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 				zap.Int("status", rw.statusCode),
 				zap.Duration("duration", duration),
 				zap.Int("bytes", rw.bytesWritten),
-				zap.String("ip", clientIP(r)),
-				zap.String("user_agent", r.Header.Get("User-Agent")),
+				zap.String("ip", sanitize(clientIP(r))),
+				zap.String("user_agent", sanitize(r.Header.Get("User-Agent"))),
 			}
 
 			// Include OTEL trace ID if a span exists in context
@@ -87,6 +87,17 @@ func NewMiddleware(logger *zap.Logger) func(http.Handler) http.Handler {
 			}
 		})
 	}
+}
+
+// sanitize strips control characters (newlines, tabs, etc.) from a string
+// to prevent log injection via user-controlled HTTP headers.
+func sanitize(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r < 0x20 { // control characters including \n, \r, \t
+			return -1 // drop
+		}
+		return r
+	}, s)
 }
 
 // clientIP extracts the client IP from the request, preferring
