@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/janhoon/dash/backend/internal/auth"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/oauth2"
 )
 
@@ -23,20 +25,26 @@ const (
 )
 
 type MicrosoftSSOHandler struct {
-	pool       *pgxpool.Pool
-	jwtManager *auth.JWTManager
-	baseURL    string
+	pool                *pgxpool.Pool
+	jwtManager          *auth.JWTManager
+	refreshTokenManager *auth.RefreshTokenManager
+	baseURL             string
 }
 
-func NewMicrosoftSSOHandler(pool *pgxpool.Pool, jwtManager *auth.JWTManager) *MicrosoftSSOHandler {
+func NewMicrosoftSSOHandler(pool *pgxpool.Pool, jwtManager *auth.JWTManager, rdb *redis.Client) *MicrosoftSSOHandler {
 	baseURL := os.Getenv("BASE_URL")
 	if baseURL == "" {
 		baseURL = "http://localhost:8080"
 	}
+	var rtm *auth.RefreshTokenManager
+	if rdb != nil {
+		rtm = auth.NewRefreshTokenManager(rdb)
+	}
 	return &MicrosoftSSOHandler{
-		pool:       pool,
-		jwtManager: jwtManager,
-		baseURL:    baseURL,
+		pool:                pool,
+		jwtManager:          jwtManager,
+		refreshTokenManager: rtm,
+		baseURL:             baseURL,
 	}
 }
 
@@ -131,7 +139,9 @@ func (h *MicrosoftSSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	config, err := h.getOAuthConfig(ctx, orgSlug)
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -213,7 +223,9 @@ func (h *MicrosoftSSOHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	// Check for errors from Microsoft
 	if errParam := r.URL.Query().Get("error"); errParam != "" {
 		errDesc := r.URL.Query().Get("error_description")
-		http.Error(w, fmt.Sprintf(`{"error":"oauth error: %s - %s"}`, errParam, errDesc), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "oauth error: " + errParam + " - " + errDesc})
 		return
 	}
 
@@ -229,7 +241,9 @@ func (h *MicrosoftSSOHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	// Get OAuth config
 	config, err := h.getOAuthConfig(ctx, orgSlug)
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -341,7 +355,7 @@ func (h *MicrosoftSSOHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate JWT token
+	// Generate JWT access token
 	name := ""
 	if userName != nil {
 		name = *userName
@@ -352,14 +366,30 @@ func (h *MicrosoftSSOHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return tokens to frontend via redirect with fragment
+	// Generate refresh token if manager is available
+	var refreshToken string
+	if h.refreshTokenManager != nil {
+		refreshToken, err = auth.GenerateRefreshToken()
+		if err != nil {
+			http.Error(w, `{"error":"failed to generate refresh token"}`, http.StatusInternalServerError)
+			return
+		}
+		if err := h.refreshTokenManager.StoreRefreshToken(ctx, refreshToken, userID, userEmail, name); err != nil {
+			http.Error(w, `{"error":"failed to store refresh token"}`, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Redirect to frontend with tokens in hash fragment
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
 		frontendURL = "http://localhost:5173"
 	}
 
-	// Redirect to frontend with token in hash (client-side only)
-	redirectURL := fmt.Sprintf("%s/auth/callback#access_token=%s&token_type=Bearer", frontendURL, accessToken)
+	redirectURL := fmt.Sprintf("%s/auth/callback#access_token=%s&token_type=Bearer", frontendURL, url.QueryEscape(accessToken))
+	if refreshToken != "" {
+		redirectURL += "&refresh_token=" + url.QueryEscape(refreshToken)
+	}
 	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }
 

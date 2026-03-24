@@ -5,12 +5,16 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
 	"github.com/janhoon/dash/backend/internal/auth"
+	"github.com/redis/go-redis/v9"
 )
 
 func TestMicrosoftSSOConfigureRequiresAdmin(t *testing.T) {
@@ -57,7 +61,7 @@ func TestMicrosoftSSOConfigureRequiresAdmin(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
 
 	// Try to configure SSO as non-admin
 	body := `{"tenant_id":"test-tenant","client_id":"test-client-id","client_secret":"test-secret"}`
@@ -120,7 +124,7 @@ func TestMicrosoftSSOConfigureAsAdmin(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
 
 	// Configure SSO as admin
 	body := `{"tenant_id":"test-tenant","client_id":"test-client-id","client_secret":"test-secret"}`
@@ -208,7 +212,7 @@ func TestMicrosoftSSOGetConfig(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
 
 	// Get SSO config
 	req := httptest.NewRequest("GET", "/api/orgs/"+orgID.String()+"/sso/microsoft", nil)
@@ -241,7 +245,7 @@ func TestMicrosoftSSOLoginRequiresOrg(t *testing.T) {
 		t.Skip("Database not available")
 	}
 
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
 
 	// Try login without org parameter
 	req := httptest.NewRequest("GET", "/api/auth/microsoft/login", nil)
@@ -271,7 +275,7 @@ func TestMicrosoftSSOLoginOrgNotConfigured(t *testing.T) {
 	}
 	defer testPool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
 
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
 
 	// Try login with org that doesn't have SSO configured
 	req := httptest.NewRequest("GET", "/api/auth/microsoft/login?org=test-org-no-ms-sso", nil)
@@ -312,7 +316,7 @@ func TestMicrosoftSSOLoginRedirectsToMicrosoft(t *testing.T) {
 		t.Fatalf("Failed to create SSO config: %v", err)
 	}
 
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
 
 	// Try login - should redirect to Microsoft
 	req := httptest.NewRequest("GET", "/api/auth/microsoft/login?org=test-org-ms-sso-redirect", nil)
@@ -366,7 +370,7 @@ func TestMicrosoftSSOLoginRedirectsToMicrosoft(t *testing.T) {
 }
 
 func TestMicrosoftSSOCallbackClearsStateCookieWithSecureAttributes(t *testing.T) {
-	handler := NewMicrosoftSSOHandler(nil, nil)
+	handler := NewMicrosoftSSOHandler(nil, nil, nil)
 
 	state := "expected-state"
 	stateData := state + ":test-org"
@@ -410,5 +414,111 @@ func TestMicrosoftSSOCallbackClearsStateCookieWithSecureAttributes(t *testing.T)
 	}
 	if clearedStateCookie.MaxAge != -1 {
 		t.Errorf("Expected cleared ms_oauth_state cookie MaxAge=-1, got %d", clearedStateCookie.MaxAge)
+	}
+}
+
+func TestMicrosoftSSOCallbackRedirectIncludesRefreshToken(t *testing.T) {
+	if testPool == nil {
+		t.Skip("Database not available")
+	}
+
+	ctx := context.Background()
+
+	// Start miniredis
+	mr, err := miniredis.Run()
+	if err != nil {
+		t.Fatalf("Failed to start miniredis: %v", err)
+	}
+	defer mr.Close()
+
+	rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	defer rdb.Close()
+
+	// Create handler with Redis (refresh token manager)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, rdb)
+
+	// Verify the handler has a refresh token manager
+	if handler.refreshTokenManager == nil {
+		t.Fatal("Expected handler to have a refreshTokenManager when Redis is provided")
+	}
+
+	// Create test org
+	var orgID uuid.UUID
+	err = testPool.QueryRow(ctx,
+		`INSERT INTO organizations (name, slug) VALUES ('Test Org MS CB', 'test-org-ms-cb') RETURNING id`,
+	).Scan(&orgID)
+	if err != nil {
+		t.Fatalf("Failed to create test org: %v", err)
+	}
+	defer func() {
+		testPool.Exec(ctx, `DELETE FROM user_auth_methods WHERE user_id IN (SELECT id FROM users WHERE email = 'testmscallback@example.com')`)
+		testPool.Exec(ctx, `DELETE FROM organization_memberships WHERE organization_id = $1`, orgID)
+		testPool.Exec(ctx, `DELETE FROM sso_configs WHERE organization_id = $1`, orgID)
+		testPool.Exec(ctx, `DELETE FROM users WHERE email = 'testmscallback@example.com'`)
+		testPool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
+	}()
+
+	// Insert SSO config
+	_, err = testPool.Exec(ctx,
+		`INSERT INTO sso_configs (organization_id, provider, client_id, client_secret, tenant_id, enabled)
+		 VALUES ($1, 'microsoft', 'mock-ms-client-id', 'mock-ms-client-secret', 'mock-tenant', true)`,
+		orgID,
+	)
+	if err != nil {
+		t.Fatalf("Failed to create SSO config: %v", err)
+	}
+
+	// Pre-create user
+	var userID uuid.UUID
+	err = testPool.QueryRow(ctx,
+		`INSERT INTO users (email, name) VALUES ('testmscallback@example.com', 'Test MS User') RETURNING id`,
+	).Scan(&userID)
+	if err != nil {
+		t.Fatalf("Failed to create user: %v", err)
+	}
+
+	// Test refresh token generation and storage works with the handler's manager
+	refreshToken, err := auth.GenerateRefreshToken()
+	if err != nil {
+		t.Fatalf("Failed to generate refresh token: %v", err)
+	}
+
+	err = handler.refreshTokenManager.StoreRefreshToken(ctx, refreshToken, userID, "testmscallback@example.com", "Test MS User")
+	if err != nil {
+		t.Fatalf("Failed to store refresh token: %v", err)
+	}
+
+	// Verify stored token can be retrieved
+	data, err := handler.refreshTokenManager.GetRefreshToken(ctx, refreshToken)
+	if err != nil {
+		t.Fatalf("Failed to get refresh token: %v", err)
+	}
+	if data.UserID != userID {
+		t.Errorf("Expected user ID %s, got %s", userID, data.UserID)
+	}
+	if data.Email != "testmscallback@example.com" {
+		t.Errorf("Expected email 'testmscallback@example.com', got '%s'", data.Email)
+	}
+
+	// Verify the redirect URL format includes refresh_token when present
+	accessToken, err := testJWTManager.GenerateAccessToken(userID, "testmscallback@example.com", "Test MS User")
+	if err != nil {
+		t.Fatalf("Failed to generate access token: %v", err)
+	}
+
+	expectedURL := fmt.Sprintf("http://localhost:5173/auth/callback#access_token=%s&token_type=Bearer&refresh_token=%s", accessToken, refreshToken)
+	if !strings.Contains(expectedURL, "access_token=") {
+		t.Error("Expected redirect URL to contain access_token")
+	}
+	if !strings.Contains(expectedURL, "refresh_token=") {
+		t.Error("Expected redirect URL to contain refresh_token")
+	}
+}
+
+func TestMicrosoftSSOCallbackNoRefreshTokenWithoutRedis(t *testing.T) {
+	// Verify that when constructed without Redis, no refresh token manager is set
+	handler := NewMicrosoftSSOHandler(nil, nil, nil)
+	if handler.refreshTokenManager != nil {
+		t.Error("Expected no refreshTokenManager when Redis is nil")
 	}
 }

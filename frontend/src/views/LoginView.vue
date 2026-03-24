@@ -1,10 +1,29 @@
 <script setup lang="ts">
 import { AlertCircle, Lock, LogIn, Mail, User, UserPlus } from 'lucide-vue-next'
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+
+const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
+  google: 'Google',
+  microsoft: 'Microsoft',
+  okta: 'Okta',
+}
+
+const PROVIDER_ICON_LETTERS: Record<string, string> = {
+  google: 'G',
+  microsoft: 'M',
+  okta: 'O',
+}
+
+interface SSOProvider {
+  provider: string
+}
+
 const router = useRouter()
+const route = useRoute()
 const { login, register } = useAuth()
 
 const mode = ref<'login' | 'register'>('login')
@@ -13,6 +32,34 @@ const password = ref('')
 const name = ref('')
 const error = ref('')
 const loading = ref(false)
+
+const orgSlug = ref<string | null>(null)
+const ssoProviders = ref<SSOProvider[]>([])
+const ssoLoading = ref(false)
+
+async function fetchSSOProviders(slug: string): Promise<SSOProvider[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/orgs/${slug}/sso/providers`)
+    if (!res.ok) return []
+    return (await res.json()) as SSOProvider[]
+  } catch {
+    return []
+  }
+}
+
+function handleSSOLogin(provider: string) {
+  window.location.href = `${API_BASE}/api/auth/${provider}/login?org=${encodeURIComponent(orgSlug.value!)}`
+}
+
+onMounted(async () => {
+  const org = route.query.org
+  if (typeof org === 'string' && org) {
+    orgSlug.value = org
+    ssoLoading.value = true
+    ssoProviders.value = await fetchSSOProviders(org)
+    ssoLoading.value = false
+  }
+})
 
 async function handleSubmit() {
   error.value = ''
@@ -58,6 +105,27 @@ function switchMode() {
         <p class="text-sm text-[var(--color-outline)] text-center mt-2">
           {{ mode === 'login' ? 'Sign in to your account to continue' : 'Get started with your new account' }}
         </p>
+      </div>
+
+      <!-- SSO Provider Buttons -->
+      <div v-if="ssoProviders.length > 0 && mode === 'login'" class="flex flex-col gap-3" data-testid="sso-providers">
+        <button
+          v-for="p in ssoProviders"
+          :key="p.provider"
+          type="button"
+          class="bg-transparent border border-[var(--color-outline-variant)] text-[var(--color-on-surface)] rounded px-4 py-2.5 w-full flex items-center justify-center gap-2 hover:bg-[var(--color-surface-container-high)] cursor-pointer text-sm font-medium transition"
+          :data-testid="`sso-btn-${p.provider}`"
+          @click="handleSSOLogin(p.provider)"
+        >
+          <span class="inline-flex h-5 w-5 items-center justify-center rounded-sm text-xs font-bold" :style="{ background: 'var(--color-surface-container-high)', color: 'var(--color-on-surface)' }">{{ PROVIDER_ICON_LETTERS[p.provider] || p.provider[0]?.toUpperCase() }}</span>
+          Continue with {{ PROVIDER_DISPLAY_NAMES[p.provider] || p.provider }}
+        </button>
+
+        <div class="flex items-center gap-3 my-4">
+          <div class="flex-1 h-px" :style="{ background: 'var(--color-outline)' }"></div>
+          <span class="text-xs uppercase tracking-wider" :style="{ color: 'var(--color-on-surface-variant)' }">or</span>
+          <div class="flex-1 h-px" :style="{ background: 'var(--color-outline)' }"></div>
+        </div>
       </div>
 
       <form class="flex flex-col gap-5" @submit.prevent="handleSubmit" data-testid="login-form">

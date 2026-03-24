@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!!**/dist", "!!**/coverage"]
+    "includes": ["**"]
   },
   "formatter": {
     "enabled": true,
@@ -17,8 +17,7 @@
   },
   "css": {
     "parser": {
-      "cssModules": true,
-      "tailwindDirectives": true
+      "cssModules": true
     }
   },
   "linter": {

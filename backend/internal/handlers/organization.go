@@ -132,8 +132,8 @@ func (h *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// Add creator as admin
 	_, err = tx.Exec(ctx,
-		`INSERT INTO organization_memberships (organization_id, user_id, role)
-		 VALUES ($1, $2, 'admin')`,
+		`INSERT INTO organization_memberships (organization_id, user_id, role, role_source)
+		 VALUES ($1, $2, 'admin', 'manual')`,
 		org.ID, userID,
 	)
 	if err != nil {
@@ -543,12 +543,12 @@ func (h *OrganizationHandler) AcceptInvitation(w http.ResponseWriter, r *http.Re
 	// Create membership
 	var membership models.OrganizationMembership
 	err = h.pool.QueryRow(ctx,
-		`INSERT INTO organization_memberships (organization_id, user_id, role)
-		 VALUES ($1, $2, $3)
-		 ON CONFLICT (organization_id, user_id) DO UPDATE SET role = $3, updated_at = NOW()
-		 RETURNING id, organization_id, user_id, role, created_at, updated_at`,
+		`INSERT INTO organization_memberships (organization_id, user_id, role, role_source)
+		 VALUES ($1, $2, $3, 'manual')
+		 ON CONFLICT (organization_id, user_id) DO UPDATE SET role = $3, role_source = 'manual', updated_at = NOW()
+		 RETURNING id, organization_id, user_id, role, role_source, created_at, updated_at`,
 		invitationData.OrganizationID, userID, invitationData.Role,
-	).Scan(&membership.ID, &membership.OrganizationID, &membership.UserID, &membership.Role, &membership.CreatedAt, &membership.UpdatedAt)
+	).Scan(&membership.ID, &membership.OrganizationID, &membership.UserID, &membership.Role, &membership.RoleSource, &membership.CreatedAt, &membership.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"failed to create membership"}`, http.StatusInternalServerError)
 		return
@@ -698,7 +698,7 @@ func (h *OrganizationHandler) UpdateMemberRole(w http.ResponseWriter, r *http.Re
 
 	// Update role
 	result, err := h.pool.Exec(ctx,
-		`UPDATE organization_memberships SET role = $1, updated_at = NOW()
+		`UPDATE organization_memberships SET role = $1, role_source = 'manual', updated_at = NOW()
 		 WHERE organization_id = $2 AND user_id = $3`,
 		req.Role, orgID, memberUserID,
 	)

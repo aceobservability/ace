@@ -877,5 +877,209 @@ func TestInviteAlreadyMemberFails(t *testing.T) {
 	}
 }
 
+func TestUpdateMemberRoleSetsRoleSourceManual(t *testing.T) {
+	orgHandler, authHandler, cleanup := setupOrgTestWithRedis(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	testPool.Exec(ctx, "DELETE FROM organizations WHERE slug = 'rolesrc-update-org'")
+
+	adminResp := createTestUser(t, authHandler, "testrolesrcadmin@example.com")
+	memberResp := createTestUser(t, authHandler, "testrolesrcmember@example.com")
+
+	// Create org
+	createBody := `{"name":"RoleSrc Update Org","slug":"rolesrc-update-org"}`
+	createReq := httptest.NewRequest("POST", "/api/orgs", bytes.NewBufferString(createBody))
+	createReq.Header.Set("Content-Type", "application/json")
+	createReq.Header.Set("Authorization", "Bearer "+adminResp.AccessToken)
+	createW := httptest.NewRecorder()
+
+	wrapped := auth.RequireAuth(testJWTManager, orgHandler.Create)
+	wrapped(createW, createReq)
+
+	var createdOrg models.Organization
+	json.NewDecoder(createW.Body).Decode(&createdOrg)
+
+	// Invite member
+	inviteBody := `{"email":"testrolesrcmember@example.com","role":"viewer"}`
+	inviteReq := httptest.NewRequest("POST", "/api/orgs/"+createdOrg.ID.String()+"/invitations", bytes.NewBufferString(inviteBody))
+	inviteReq.Header.Set("Content-Type", "application/json")
+	inviteReq.Header.Set("Authorization", "Bearer "+adminResp.AccessToken)
+	inviteReq.SetPathValue("id", createdOrg.ID.String())
+	inviteW := httptest.NewRecorder()
+
+	inviteWrapped := auth.RequireAuth(testJWTManager, orgHandler.CreateInvitation)
+	inviteWrapped(inviteW, inviteReq)
+
+	var invitation InvitationResponse
+	json.NewDecoder(inviteW.Body).Decode(&invitation)
+
+	// Accept invitation
+	acceptReq := httptest.NewRequest("POST", "/api/invitations/"+invitation.Token+"/accept", nil)
+	acceptReq.Header.Set("Authorization", "Bearer "+memberResp.AccessToken)
+	acceptReq.SetPathValue("token", invitation.Token)
+	acceptW := httptest.NewRecorder()
+
+	acceptWrapped := auth.RequireAuth(testJWTManager, orgHandler.AcceptInvitation)
+	acceptWrapped(acceptW, acceptReq)
+
+	var membership models.OrganizationMembership
+	json.NewDecoder(acceptW.Body).Decode(&membership)
+	memberUserID := membership.UserID
+
+	// Simulate SSO by setting role_source to 'sso' directly in DB
+	_, err := testPool.Exec(ctx,
+		`UPDATE organization_memberships SET role_source = 'sso' WHERE organization_id = $1 AND user_id = $2`,
+		createdOrg.ID, memberUserID,
+	)
+	if err != nil {
+		t.Fatalf("Failed to set role_source to sso: %v", err)
+	}
+
+	// Admin updates member role — should set role_source back to 'manual'
+	updateBody := `{"role":"editor"}`
+	updateReq := httptest.NewRequest("PUT", "/api/orgs/"+createdOrg.ID.String()+"/members/"+memberUserID.String()+"/role", bytes.NewBufferString(updateBody))
+	updateReq.Header.Set("Content-Type", "application/json")
+	updateReq.Header.Set("Authorization", "Bearer "+adminResp.AccessToken)
+	updateReq.SetPathValue("id", createdOrg.ID.String())
+	updateReq.SetPathValue("userId", memberUserID.String())
+	updateW := httptest.NewRecorder()
+
+	updateWrapped := auth.RequireAuth(testJWTManager, orgHandler.UpdateMemberRole)
+	updateWrapped(updateW, updateReq)
+
+	if updateW.Code != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d: %s", updateW.Code, updateW.Body.String())
+	}
+
+	// Verify role_source is 'manual' in DB
+	var roleSource string
+	err = testPool.QueryRow(ctx,
+		`SELECT role_source FROM organization_memberships WHERE organization_id = $1 AND user_id = $2`,
+		createdOrg.ID, memberUserID,
+	).Scan(&roleSource)
+	if err != nil {
+		t.Fatalf("Failed to query role_source: %v", err)
+	}
+	if roleSource != "manual" {
+		t.Errorf("Expected role_source 'manual' after admin role update, got '%s'", roleSource)
+	}
+}
+
+func TestAcceptInvitationSetsRoleSourceManual(t *testing.T) {
+	orgHandler, authHandler, cleanup := setupOrgTestWithRedis(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	testPool.Exec(ctx, "DELETE FROM organizations WHERE slug = 'rolesrc-accept-org'")
+
+	adminResp := createTestUser(t, authHandler, "testrolesrcacceptadmin@example.com")
+	inviteeResp := createTestUser(t, authHandler, "testrolesrcacceptinvitee@example.com")
+
+	// Create org
+	createBody := `{"name":"RoleSrc Accept Org","slug":"rolesrc-accept-org"}`
+	createReq := httptest.NewRequest("POST", "/api/orgs", bytes.NewBufferString(createBody))
+	createReq.Header.Set("Content-Type", "application/json")
+	createReq.Header.Set("Authorization", "Bearer "+adminResp.AccessToken)
+	createW := httptest.NewRecorder()
+
+	wrapped := auth.RequireAuth(testJWTManager, orgHandler.Create)
+	wrapped(createW, createReq)
+
+	var createdOrg models.Organization
+	json.NewDecoder(createW.Body).Decode(&createdOrg)
+
+	// Create invitation
+	inviteBody := `{"email":"testrolesrcacceptinvitee@example.com","role":"editor"}`
+	inviteReq := httptest.NewRequest("POST", "/api/orgs/"+createdOrg.ID.String()+"/invitations", bytes.NewBufferString(inviteBody))
+	inviteReq.Header.Set("Content-Type", "application/json")
+	inviteReq.Header.Set("Authorization", "Bearer "+adminResp.AccessToken)
+	inviteReq.SetPathValue("id", createdOrg.ID.String())
+	inviteW := httptest.NewRecorder()
+
+	inviteWrapped := auth.RequireAuth(testJWTManager, orgHandler.CreateInvitation)
+	inviteWrapped(inviteW, inviteReq)
+
+	var invitation InvitationResponse
+	json.NewDecoder(inviteW.Body).Decode(&invitation)
+
+	// Accept invitation
+	acceptReq := httptest.NewRequest("POST", "/api/invitations/"+invitation.Token+"/accept", nil)
+	acceptReq.Header.Set("Authorization", "Bearer "+inviteeResp.AccessToken)
+	acceptReq.SetPathValue("token", invitation.Token)
+	acceptW := httptest.NewRecorder()
+
+	acceptWrapped := auth.RequireAuth(testJWTManager, orgHandler.AcceptInvitation)
+	acceptWrapped(acceptW, acceptReq)
+
+	if acceptW.Code != http.StatusCreated {
+		t.Fatalf("Expected status 201, got %d: %s", acceptW.Code, acceptW.Body.String())
+	}
+
+	// Verify role_source is 'manual' in DB
+	var membership models.OrganizationMembership
+	json.NewDecoder(acceptW.Body).Decode(&membership)
+
+	var roleSource string
+	err := testPool.QueryRow(ctx,
+		`SELECT role_source FROM organization_memberships WHERE organization_id = $1 AND user_id = $2`,
+		createdOrg.ID, membership.UserID,
+	).Scan(&roleSource)
+	if err != nil {
+		t.Fatalf("Failed to query role_source: %v", err)
+	}
+	if roleSource != "manual" {
+		t.Errorf("Expected role_source 'manual' after invitation acceptance, got '%s'", roleSource)
+	}
+
+	// Also verify the response body includes role_source
+	if membership.RoleSource != "manual" {
+		t.Errorf("Expected role_source 'manual' in response body, got '%s'", membership.RoleSource)
+	}
+}
+
+func TestCreateOrganizationSetsRoleSourceManual(t *testing.T) {
+	orgHandler, authHandler, cleanup := setupOrgTestWithRedis(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	testPool.Exec(ctx, "DELETE FROM organizations WHERE slug = 'rolesrc-create-org'")
+
+	userResp := createTestUser(t, authHandler, "testrolesrccreate@example.com")
+
+	// Create org
+	createBody := `{"name":"RoleSrc Create Org","slug":"rolesrc-create-org"}`
+	createReq := httptest.NewRequest("POST", "/api/orgs", bytes.NewBufferString(createBody))
+	createReq.Header.Set("Content-Type", "application/json")
+	createReq.Header.Set("Authorization", "Bearer "+userResp.AccessToken)
+	createW := httptest.NewRecorder()
+
+	wrapped := auth.RequireAuth(testJWTManager, orgHandler.Create)
+	wrapped(createW, createReq)
+
+	if createW.Code != http.StatusCreated {
+		t.Fatalf("Expected status 201, got %d: %s", createW.Code, createW.Body.String())
+	}
+
+	var createdOrg models.Organization
+	json.NewDecoder(createW.Body).Decode(&createdOrg)
+
+	// Get the user ID from JWT claims
+	claims, _ := testJWTManager.VerifyAccessToken(userResp.AccessToken)
+
+	// Verify role_source is 'manual' for the org creator
+	var roleSource string
+	err := testPool.QueryRow(ctx,
+		`SELECT role_source FROM organization_memberships WHERE organization_id = $1 AND user_id = $2`,
+		createdOrg.ID, claims.UserID,
+	).Scan(&roleSource)
+	if err != nil {
+		t.Fatalf("Failed to query role_source: %v", err)
+	}
+	if roleSource != "manual" {
+		t.Errorf("Expected role_source 'manual' for org creator, got '%s'", roleSource)
+	}
+}
+
 // Ensure uuid is used
 var _ = uuid.New

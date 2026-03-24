@@ -236,9 +236,12 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool) error {
 			ADD COLUMN IF NOT EXISTS linked_trace_datasource_id UUID REFERENCES datasources(id) ON DELETE SET NULL`,
 		`CREATE INDEX IF NOT EXISTS idx_datasources_linked_trace ON datasources(linked_trace_datasource_id)`,
 		// Widen sso_configs provider constraint to include github_copilot (009_github_copilot_per_org.sql)
+		// NOTE: include 'okta' here for idempotency -- a later migration widens
+		// to include okta, and re-running migrations would fail if okta rows
+		// already exist from a previous run.
 		`ALTER TABLE sso_configs DROP CONSTRAINT IF EXISTS sso_configs_provider_check`,
 		`ALTER TABLE sso_configs ADD CONSTRAINT sso_configs_provider_check
-			CHECK (provider IN ('google', 'microsoft', 'github_copilot'))`,
+			CHECK (provider IN ('google', 'microsoft', 'github_copilot', 'okta'))`,
 		// Widen organization_memberships role constraint to include auditor (010_auditor_role.sql)
 		`ALTER TABLE organization_memberships DROP CONSTRAINT IF EXISTS organization_memberships_role_check`,
 		`ALTER TABLE organization_memberships ADD CONSTRAINT organization_memberships_role_check
@@ -284,6 +287,33 @@ $$ LANGUAGE plpgsql`,
 			UNIQUE(organization_id, display_name)
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_ai_providers_org_id ON ai_providers(organization_id)`,
+		// Phase 2: SSO role mappings table (011_enterprise_auth_phase2.sql)
+		`CREATE TABLE IF NOT EXISTS sso_role_mappings (
+			id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+			sso_config_id UUID NOT NULL REFERENCES sso_configs(id) ON DELETE CASCADE,
+			sso_group_name VARCHAR(255) NOT NULL,
+			ace_role VARCHAR(50) NOT NULL CHECK (ace_role IN ('admin', 'editor', 'viewer', 'auditor')),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			UNIQUE(sso_config_id, sso_group_name)
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_sso_role_mappings_org_id ON sso_role_mappings(organization_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_sso_role_mappings_config_id ON sso_role_mappings(sso_config_id)`,
+		// Widen sso_configs provider constraint to include okta
+		`ALTER TABLE sso_configs DROP CONSTRAINT IF EXISTS sso_configs_provider_check`,
+		`ALTER TABLE sso_configs ADD CONSTRAINT sso_configs_provider_check
+			CHECK (provider IN ('google', 'microsoft', 'github_copilot', 'okta'))`,
+		// Add SSO group mapping columns to sso_configs
+		`ALTER TABLE sso_configs ADD COLUMN IF NOT EXISTS groups_claim_name VARCHAR(255) DEFAULT 'groups'`,
+		`ALTER TABLE sso_configs ADD COLUMN IF NOT EXISTS default_role VARCHAR(50) DEFAULT 'viewer'`,
+		`ALTER TABLE sso_configs DROP CONSTRAINT IF EXISTS sso_configs_default_role_check`,
+		`ALTER TABLE sso_configs ADD CONSTRAINT sso_configs_default_role_check CHECK (default_role IN ('admin', 'editor', 'viewer', 'auditor'))`,
+		// Track whether a membership role was set manually or via SSO
+		`ALTER TABLE organization_memberships ADD COLUMN IF NOT EXISTS role_source VARCHAR(50) DEFAULT 'manual'`,
+		`ALTER TABLE organization_memberships DROP CONSTRAINT IF EXISTS organization_memberships_role_source_check`,
+		`ALTER TABLE organization_memberships ADD CONSTRAINT organization_memberships_role_source_check CHECK (role_source IN ('manual', 'sso'))`,
+		// Fix pre-existing bug: ON CONFLICT (user_id, provider) has no matching unique index
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_user_auth_methods_user_provider ON user_auth_methods(user_id, provider)`,
 	}
 
 	for _, migration := range migrations {
