@@ -230,4 +230,45 @@ describe('CmdKModal', () => {
     expect(wrapper.emitted('close')).toBeTruthy()
     expect(mockPush).toHaveBeenCalledWith('/app/dashboards/123')
   })
+
+  // --- No-context prop defaults ---
+  it('passes empty strings for datasourceType and datasourceName when context is null', async () => {
+    mockIsConnected.value = true
+    mockContext.value = null
+
+    const chatViewProps: Record<string, unknown> = {}
+    const wrapperWithCapture = mount(CmdKModal, {
+      props: { isOpen: true },
+      global: {
+        stubs: {
+          CmdKSearchResults: {
+            template: '<div data-testid="search-results" />',
+            emits: ['navigate', 'enter-chat'],
+          },
+          CmdKChatView: {
+            template: '<div data-testid="chat-view" />',
+            emits: ['exit-chat'],
+            props: ['initialQuery', 'datasourceType', 'datasourceName', 'datasourceId'],
+            setup(props: Record<string, unknown>) {
+              Object.assign(chatViewProps, props)
+              return {}
+            },
+          },
+        },
+      },
+      attachTo: document.body,
+    })
+
+    // Trigger chat mode
+    const searchResults = wrapperWithCapture.findComponent('[data-testid="search-results"]')
+    searchResults.vm.$emit('enter-chat', 'test query')
+    await wrapperWithCapture.vm.$nextTick()
+
+    expect(wrapperWithCapture.find('[data-testid="chat-view"]').exists()).toBe(true)
+    expect(chatViewProps.datasourceType).toBe('')
+    expect(chatViewProps.datasourceName).toBe('')
+    expect(chatViewProps.datasourceId).toBe('')
+
+    wrapperWithCapture.unmount()
+  })
 })
