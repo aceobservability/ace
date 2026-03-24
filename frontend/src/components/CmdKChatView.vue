@@ -3,7 +3,8 @@ import { ArrowLeft, Loader2, Send, Wrench } from 'lucide-vue-next'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import type { ToolCall } from '../composables/useAIProvider'
 import { useAIProvider } from '../composables/useAIProvider'
-import { getMetricsTools, useCopilotToolExecutor } from '../composables/useCopilotTools'
+import { getToolsForDatasourceType, useCopilotToolExecutor } from '../composables/useCopilotTools'
+import { useOrganization } from '../composables/useOrganization'
 import type { DashboardSpec } from '../utils/dashboardSpec'
 import { initMarkdown, renderMarkdown } from '../utils/markdown'
 import DashboardSpecPreview from './DashboardSpecPreview.vue'
@@ -20,7 +21,15 @@ const emit = defineEmits<{ 'exit-chat': [] }>()
 const { sendChatRequest, chatMessages, models, selectedModel, fetchModels, isLoading, error, providers } =
   useAIProvider()
 
-const { executeTool } = useCopilotToolExecutor(() => props.datasourceId)
+const { currentOrg } = useOrganization()
+
+const lastUsedDatasourceType = ref('')
+
+const { executeTool } = useCopilotToolExecutor(
+  () => props.datasourceId,
+  () => currentOrg.value?.id ?? '',
+  () => props.datasourceType || lastUsedDatasourceType.value,
+)
 
 // --- State ---
 
@@ -47,10 +56,23 @@ type ChatRequestMessage =
 // --- Build request messages from AIMessage[] ---
 
 function buildChatRequestMessages(): ChatRequestMessage[] {
-  return chatMessages.value.map((m) => ({
-    role: m.role,
-    content: m.content,
-  }))
+  const messages: ChatRequestMessage[] = []
+
+  if (props.datasourceId) {
+    messages.push({
+      role: 'system',
+      content: `You have tools to explore datasource data. You are currently working with datasource '${props.datasourceName}' (type: ${props.datasourceType}, id: ${props.datasourceId}). You can use the data discovery tools directly.`,
+    })
+  } else {
+    messages.push({
+      role: 'system',
+      content:
+        'You have tools to explore datasource data. No datasource is currently selected. Call list_datasources first to discover available datasources, then pass the datasource_id to other tools.',
+    })
+  }
+
+  messages.push(...chatMessages.value.map((m) => ({ role: m.role as ChatRequestMessage['role'], content: m.content })))
+  return messages
 }
 
 // --- Core tool-calling loop ---
@@ -58,7 +80,7 @@ function buildChatRequestMessages(): ChatRequestMessage[] {
 async function handleSend(userMessage: string) {
   chatMessages.value.push({ role: 'user', content: userMessage })
   const requestMessages = buildChatRequestMessages()
-  const tools = getMetricsTools()
+  const tools = getToolsForDatasourceType(props.datasourceType)
   toolStatuses.value = []
   dashboardSpec.value = null
 

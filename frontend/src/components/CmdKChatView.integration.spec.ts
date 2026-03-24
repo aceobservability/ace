@@ -40,10 +40,10 @@ vi.mock('../composables/useOrganization', () => ({
   useOrganization: () => ({ currentOrg: ref({ id: 'org-1', name: 'Test' }) }),
 }))
 
-// Mock useCopilot — controls the chat request/response loop
+// Mock useAIProvider — controls the chat request/response loop
 const mockSendChatRequest = vi.fn()
-vi.mock('../composables/useCopilot', () => ({
-  useCopilot: () => ({
+vi.mock('../composables/useAIProvider', () => ({
+  useAIProvider: () => ({
     sendChatRequest: mockSendChatRequest,
     chatMessages: ref([]),
     models: ref([]),
@@ -51,6 +51,7 @@ vi.mock('../composables/useCopilot', () => ({
     fetchModels: vi.fn(),
     isLoading: ref(false),
     error: ref(null),
+    providers: ref([]),
   }),
 }))
 

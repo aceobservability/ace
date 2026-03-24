@@ -235,7 +235,7 @@ describe('CmdKModal', () => {
 
   // --- No-context prop defaults ---
   it('passes empty strings for datasourceType and datasourceName when context is null', async () => {
-    mockIsConnected.value = true
+    mockProviders.value = [{ id: 'test', display_name: 'Test' }]
     mockContext.value = null
 
     const chatViewProps: Record<string, unknown> = {}
