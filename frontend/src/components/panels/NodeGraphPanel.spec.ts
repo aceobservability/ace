@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { chartPalette, getSeriesColor } from '../../utils/chartTheme'
+import { getSeriesColor } from '../../utils/chartTheme'
 import { clearRegistry } from '../../utils/panelRegistry'
 import type { GraphEdge, GraphNode } from './NodeGraphPanel.vue'
 

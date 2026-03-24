@@ -134,7 +134,7 @@ const chartOption = computed(() => ({
     {
       type: 'custom' as const,
       renderItem: (
-        _params: unknown,
+        _params: { dataIndex: number },
         api: {
           value: (idx: number) => number
           coord: (arr: number[]) => number[]
@@ -157,9 +157,7 @@ const chartOption = computed(() => ({
             height,
           },
           style: {
-            fill: seriesData.value.find(
-              (d) => d.value[0] === entityIndex && d.value[1] === start && d.value[2] === end,
-            )?.color ?? chartPalette[7],
+            fill: seriesData.value[_params.dataIndex]?.color ?? chartPalette[7],
           },
         }
       },

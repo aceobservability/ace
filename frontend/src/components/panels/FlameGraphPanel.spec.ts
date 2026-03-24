@@ -98,7 +98,6 @@ describe('FlameGraphPanel', () => {
     const rects = wrapper.findAll('rect')
 
     // Root rect should span full width
-    const rootTotal = totalValue(treeRoot)
     const rootRect = rects.find(
       (r) =>
         Number(r.attributes('y')) === Math.max(...rects.map((r2) => Number(r2.attributes('y')))),

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SimulationNodeDatum } from 'd3-force'
 import { forceCenter, forceLink, forceManyBody, forceSimulation } from 'd3-force'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { getSeriesColor } from '../../utils/chartTheme'
 
 // ---------------------------------------------------------------------------
@@ -102,8 +102,12 @@ function clamp(val: number, min: number, max: number): number {
 // Simulation
 // ---------------------------------------------------------------------------
 
-onMounted(() => {
-  if (props.nodes.length === 0) return
+function runSimulation() {
+  if (props.nodes.length === 0) {
+    simulatedNodes.value = []
+    simulatedEdges.value = []
+    return
+  }
 
   // Create mutable copies for d3
   const simNodes: SimNode[] = props.nodes.map((n) => ({
@@ -141,13 +145,17 @@ onMounted(() => {
 
   simulatedNodes.value = simNodes
   simulatedEdges.value = simEdges
-})
+}
+
+// Run on mount and re-run when props change
+onMounted(runSimulation)
+watch([() => props.nodes, () => props.edges], runSimulation, { deep: true })
 
 // ---------------------------------------------------------------------------
-// Edge color
+// Edge color — use outline-variant at higher opacity for visibility
 // ---------------------------------------------------------------------------
 
-const edgeColor = 'rgba(71,72,74,0.4)'
+const edgeColor = 'var(--color-outline-variant)'
 </script>
 
 <template>
