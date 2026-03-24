@@ -50,8 +50,8 @@ async function fetchEntries() {
   if (actorFilter.value) params.actor = actorFilter.value
   if (actionFilter.value) params.action = actionFilter.value
   if (resourceTypeFilter.value) params.resource_type = resourceTypeFilter.value
-  if (fromFilter.value) params.from = fromFilter.value + ':00Z'
-  if (toFilter.value) params.to = toFilter.value + ':00Z'
+  if (fromFilter.value) params.from = `${fromFilter.value}:00Z`
+  if (toFilter.value) params.to = `${toFilter.value}:00Z`
 
   try {
     const result = await listAuditLog(orgId, params)
@@ -75,8 +75,8 @@ async function handleExport(format: 'csv' | 'json') {
     const blob = await exportAuditLog(
       orgId,
       format,
-      fromFilter.value ? fromFilter.value + ':00Z' : undefined,
-      toFilter.value ? toFilter.value + ':00Z' : undefined,
+      fromFilter.value ? `${fromFilter.value}:00Z` : undefined,
+      toFilter.value ? `${toFilter.value}:00Z` : undefined,
     )
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
