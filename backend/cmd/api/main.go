@@ -227,16 +227,22 @@ func main() {
 	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/receivers", auth.RequireAuth(jwtManager, alertManagerHandler.ListReceivers))
 	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/health", auth.RequireAuth(jwtManager, alertManagerHandler.Health))
 
-	// GitHub Copilot routes
+	// GitHub Copilot auth routes
 	githubCopilotHandler := handlers.NewGitHubCopilotHandler(pool, jwtManager)
 	mux.HandleFunc("POST /api/auth/github/device", auth.RequireAuth(jwtManager, githubCopilotHandler.StartDeviceFlow))
 	mux.HandleFunc("POST /api/auth/github/device/poll", auth.RequireAuth(jwtManager, githubCopilotHandler.PollDeviceFlow))
 	mux.HandleFunc("GET /api/auth/github/connection", auth.RequireAuth(jwtManager, githubCopilotHandler.GetConnection))
 	mux.HandleFunc("DELETE /api/auth/github/connection", auth.RequireAuth(jwtManager, githubCopilotHandler.Disconnect))
-	mux.HandleFunc("GET /api/copilot/models", auth.RequireAuth(jwtManager, githubCopilotHandler.ListModels))
-	mux.HandleFunc("POST /api/copilot/chat", auth.RequireAuth(jwtManager, githubCopilotHandler.Chat))
-	mux.HandleFunc("POST /api/orgs/{id}/github-app", auth.RequireAuth(jwtManager, githubCopilotHandler.ConfigureGitHubApp))
-	mux.HandleFunc("GET /api/orgs/{id}/github-app", auth.RequireAuth(jwtManager, githubCopilotHandler.GetGitHubApp))
+
+	// AI provider routes (org-scoped)
+	aiHandler := handlers.NewAIHandler(pool)
+	mux.HandleFunc("GET /api/orgs/{id}/ai/providers", auth.RequireAuth(jwtManager, auth.RequireOrgMember(pool, aiHandler.ListProviders)))
+	mux.HandleFunc("GET /api/orgs/{id}/ai/models", auth.RequireAuth(jwtManager, auth.RequireOrgMember(pool, aiHandler.ListModels)))
+	mux.HandleFunc("POST /api/orgs/{id}/ai/chat", auth.RequireAuth(jwtManager, auth.RequireOrgMember(pool, aiHandler.Chat)))
+	mux.HandleFunc("POST /api/orgs/{id}/ai/providers", auth.RequireAuth(jwtManager, auth.RequireOrgMember(pool, aiHandler.CreateProvider)))
+	mux.HandleFunc("PUT /api/orgs/{id}/ai/providers/{pid}", auth.RequireAuth(jwtManager, auth.RequireOrgMember(pool, aiHandler.UpdateProvider)))
+	mux.HandleFunc("DELETE /api/orgs/{id}/ai/providers/{pid}", auth.RequireAuth(jwtManager, auth.RequireOrgMember(pool, aiHandler.DeleteProvider)))
+	mux.HandleFunc("POST /api/orgs/{id}/ai/providers/{pid}/test", auth.RequireAuth(jwtManager, auth.RequireOrgMember(pool, aiHandler.TestProvider)))
 
 	// Grafana conversion route
 	grafanaConverterHandler := handlers.NewGrafanaConverterHandler()
@@ -248,10 +254,12 @@ func main() {
 
 	// Create server
 	server := &http.Server{
-		Addr:         ":8080",
-		Handler:      handler,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		Addr:        ":8080",
+		Handler:     handler,
+		ReadTimeout: 15 * time.Second,
+		// WriteTimeout is 0 to allow SSE streaming responses to run as long as
+		// needed; per-request context timeouts handle individual request limits.
+		WriteTimeout: 0,
 		IdleTimeout:  60 * time.Second,
 	}
 
