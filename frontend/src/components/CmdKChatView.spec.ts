@@ -7,17 +7,19 @@ import { ref } from 'vue'
 const mockSendChatRequest = vi.hoisted(() => vi.fn())
 const mockFetchModels = vi.hoisted(() => vi.fn())
 const mockExecuteTool = vi.hoisted(() => vi.fn())
+const mockGetToolsForDatasourceType = vi.hoisted(() => vi.fn().mockReturnValue([]))
 
 // --- Shared reactive state (created after Vue import above) ---
 
 const mockChatMessages = ref<Array<{ role: string; content: string }>>([])
-const mockModels = ref<Array<{ id: string; name: string }>>([])
+const mockModels = ref<Array<{ id: string; name: string; provider_id?: string; provider_name?: string }>>([])
 const mockSelectedModel = ref('')
 const mockIsLoading = ref(false)
 const mockError = ref<string | null>(null)
+const mockProviders = ref<Array<{ id: string; display_name: string }>>([])
 
-vi.mock('../composables/useCopilot', () => ({
-  useCopilot: () => ({
+vi.mock('../composables/useAIProvider', () => ({
+  useAIProvider: () => ({
     sendChatRequest: mockSendChatRequest,
     chatMessages: mockChatMessages,
     models: mockModels,
@@ -25,13 +27,21 @@ vi.mock('../composables/useCopilot', () => ({
     fetchModels: mockFetchModels,
     isLoading: mockIsLoading,
     error: mockError,
+    providers: mockProviders,
   }),
 }))
 
 vi.mock('../composables/useCopilotTools', () => ({
   getMetricsTools: () => [],
+  getToolsForDatasourceType: mockGetToolsForDatasourceType,
   useCopilotToolExecutor: () => ({
     executeTool: mockExecuteTool,
+  }),
+}))
+
+vi.mock('../composables/useOrganization', () => ({
+  useOrganization: () => ({
+    currentOrg: ref({ id: 'org-1', name: 'Test Org' }),
   }),
 }))
 
@@ -92,6 +102,7 @@ describe('CmdKChatView', () => {
     mockSelectedModel.value = ''
     mockIsLoading.value = false
     mockError.value = null
+    mockProviders.value = []
     // Default: sendChatRequest resolves with no tool calls
     mockSendChatRequest.mockResolvedValue({ content: 'Hello!', toolCalls: [] })
     mockFetchModels.mockResolvedValue(undefined)
@@ -192,11 +203,98 @@ describe('CmdKChatView', () => {
     expect(modelSelector.exists()).toBe(false)
   })
 
+  // --- 6b. Groups models by provider when multiple providers ---
+  it('groups models by provider when multiple providers exist', async () => {
+    mockProviders.value = [
+      { id: 'prov-1', display_name: 'OpenAI' },
+      { id: 'prov-2', display_name: 'Copilot' },
+    ]
+    mockModels.value = [
+      { id: 'gpt-4o', name: 'GPT-4o', provider_id: 'prov-1', provider_name: 'OpenAI' },
+      { id: 'claude-sonnet', name: 'Claude Sonnet', provider_id: 'prov-2', provider_name: 'Copilot' },
+    ]
+    wrapper = createWrapper()
+    await flushPromises()
+
+    const modelSelector = wrapper.find('[data-testid="model-selector"]')
+    expect(modelSelector.exists()).toBe(true)
+
+    const optgroups = modelSelector.findAll('optgroup')
+    expect(optgroups.length).toBe(2)
+    expect(optgroups[0]!.attributes('label')).toBe('OpenAI')
+    expect(optgroups[1]!.attributes('label')).toBe('Copilot')
+
+    const options = modelSelector.findAll('option')
+    expect(options.length).toBe(2)
+    expect(options[0]!.text()).toContain('GPT-4o')
+    expect(options[1]!.text()).toContain('Claude Sonnet')
+  })
+
+  // --- 6c. Shows flat options when single provider ---
+  it('shows flat options when single provider exists', async () => {
+    mockProviders.value = [
+      { id: 'prov-1', display_name: 'OpenAI' },
+    ]
+    mockModels.value = [
+      { id: 'gpt-4o', name: 'GPT-4o', provider_id: 'prov-1', provider_name: 'OpenAI' },
+      { id: 'gpt-4', name: 'GPT-4', provider_id: 'prov-1', provider_name: 'OpenAI' },
+    ]
+    wrapper = createWrapper()
+    await flushPromises()
+
+    const modelSelector = wrapper.find('[data-testid="model-selector"]')
+    expect(modelSelector.exists()).toBe(true)
+
+    const optgroups = modelSelector.findAll('optgroup')
+    expect(optgroups.length).toBe(0)
+
+    const options = modelSelector.findAll('option')
+    expect(options.length).toBe(2)
+  })
+
   // --- 7. Calls fetchModels on mount ---
   it('calls fetchModels on mount', async () => {
     wrapper = createWrapper()
     await flushPromises()
 
     expect(mockFetchModels).toHaveBeenCalledOnce()
+  })
+
+  // --- 8. System message with datasource info ---
+  it('prepends system message with datasource info when datasourceId is set', async () => {
+    wrapper = createWrapper()
+    await flushPromises()
+
+    const call = mockSendChatRequest.mock.calls[0]!
+    const messages = call[2] as Array<{ role: string; content: string }>
+    const systemMsg = messages.find((m) => m.role === 'system')
+    expect(systemMsg).toBeDefined()
+    expect(systemMsg!.content).toContain('ds-1')
+    expect(systemMsg!.content).toContain('VictoriaMetrics')
+  })
+
+  // --- 9. System message without datasource ---
+  it('prepends system message instructing list_datasources when datasourceId is empty', async () => {
+    wrapper = createWrapper({
+      ...defaultProps,
+      datasourceId: '',
+      datasourceType: '',
+      datasourceName: '',
+    })
+    await flushPromises()
+
+    const call = mockSendChatRequest.mock.calls[0]!
+    const messages = call[2] as Array<{ role: string; content: string }>
+    const systemMsg = messages.find((m) => m.role === 'system')
+    expect(systemMsg).toBeDefined()
+    expect(systemMsg!.content).toContain('list_datasources')
+  })
+
+  // --- 10. Uses getToolsForDatasourceType ---
+  it('uses getToolsForDatasourceType with correct type', async () => {
+    wrapper = createWrapper()
+    await flushPromises()
+
+    expect(mockGetToolsForDatasourceType).toHaveBeenCalledWith('victoriametrics')
   })
 })

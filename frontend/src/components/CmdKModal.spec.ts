@@ -21,12 +21,14 @@ vi.mock('../composables/useKeyboardShortcuts', () => ({
   }),
 }))
 
-const mockIsConnected = ref(false)
+const mockProviders = ref<unknown[]>([])
 const mockChatMessages = ref<unknown[]>([])
-vi.mock('../composables/useCopilot', () => ({
-  useCopilot: () => ({
-    isConnected: mockIsConnected,
+const mockFetchProviders = vi.fn()
+vi.mock('../composables/useAIProvider', () => ({
+  useAIProvider: () => ({
+    providers: mockProviders,
     chatMessages: mockChatMessages,
+    fetchProviders: mockFetchProviders,
   }),
 }))
 
@@ -69,7 +71,7 @@ describe('CmdKModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockContext.value = null
-    mockIsConnected.value = false
+    mockProviders.value = []
     mockChatMessages.value = []
     mockPush.mockReset()
   })
@@ -175,7 +177,7 @@ describe('CmdKModal', () => {
   })
 
   it('switches to chat mode when enter-chat emitted and connected', async () => {
-    mockIsConnected.value = true
+    mockProviders.value = [{ id: 'test', display_name: 'Test' }]
     wrapper = createWrapper({ isOpen: true })
 
     const searchResults = wrapper.findComponent('[data-testid="search-results"]')
@@ -187,7 +189,7 @@ describe('CmdKModal', () => {
   })
 
   it('shows not-connected message when trying to chat without connection', async () => {
-    mockIsConnected.value = false
+    mockProviders.value = []
     wrapper = createWrapper({ isOpen: true })
 
     const searchResults = wrapper.findComponent('[data-testid="search-results"]')
@@ -199,7 +201,7 @@ describe('CmdKModal', () => {
   })
 
   it('resets mode to search when modal closes', async () => {
-    mockIsConnected.value = true
+    mockProviders.value = [{ id: 'test', display_name: 'Test' }]
     wrapper = createWrapper({ isOpen: true })
 
     // Enter chat mode
@@ -229,5 +231,46 @@ describe('CmdKModal', () => {
 
     expect(wrapper.emitted('close')).toBeTruthy()
     expect(mockPush).toHaveBeenCalledWith('/app/dashboards/123')
+  })
+
+  // --- No-context prop defaults ---
+  it('passes empty strings for datasourceType and datasourceName when context is null', async () => {
+    mockProviders.value = [{ id: 'test', display_name: 'Test' }]
+    mockContext.value = null
+
+    const chatViewProps: Record<string, unknown> = {}
+    const wrapperWithCapture = mount(CmdKModal, {
+      props: { isOpen: true },
+      global: {
+        stubs: {
+          CmdKSearchResults: {
+            template: '<div data-testid="search-results" />',
+            emits: ['navigate', 'enter-chat'],
+          },
+          CmdKChatView: {
+            template: '<div data-testid="chat-view" />',
+            emits: ['exit-chat'],
+            props: ['initialQuery', 'datasourceType', 'datasourceName', 'datasourceId'],
+            setup(props: Record<string, unknown>) {
+              Object.assign(chatViewProps, props)
+              return {}
+            },
+          },
+        },
+      },
+      attachTo: document.body,
+    })
+
+    // Trigger chat mode
+    const searchResults = wrapperWithCapture.findComponent('[data-testid="search-results"]')
+    searchResults.vm.$emit('enter-chat', 'test query')
+    await wrapperWithCapture.vm.$nextTick()
+
+    expect(wrapperWithCapture.find('[data-testid="chat-view"]').exists()).toBe(true)
+    expect(chatViewProps.datasourceType).toBe('')
+    expect(chatViewProps.datasourceName).toBe('')
+    expect(chatViewProps.datasourceId).toBe('')
+
+    wrapperWithCapture.unmount()
   })
 })

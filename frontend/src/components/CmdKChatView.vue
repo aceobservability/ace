@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2, Send, Wrench } from 'lucide-vue-next'
 import { nextTick, onMounted, ref, watch } from 'vue'
-import type { CopilotMessage, ToolCall } from '../composables/useCopilot'
-import { useCopilot } from '../composables/useCopilot'
-import { getMetricsTools, useCopilotToolExecutor } from '../composables/useCopilotTools'
+import type { ToolCall } from '../composables/useAIProvider'
+import { useAIProvider } from '../composables/useAIProvider'
+import { getToolsForDatasourceType, useCopilotToolExecutor } from '../composables/useCopilotTools'
+import { useOrganization } from '../composables/useOrganization'
 import type { DashboardSpec } from '../utils/dashboardSpec'
 import { initMarkdown, renderMarkdown } from '../utils/markdown'
 import DashboardSpecPreview from './DashboardSpecPreview.vue'
@@ -17,10 +18,18 @@ const props = defineProps<{
 
 const emit = defineEmits<{ 'exit-chat': [] }>()
 
-const { sendChatRequest, chatMessages, models, selectedModel, fetchModels, isLoading, error } =
-  useCopilot()
+const { sendChatRequest, chatMessages, models, selectedModel, fetchModels, isLoading, error, providers } =
+  useAIProvider()
 
-const { executeTool } = useCopilotToolExecutor(() => props.datasourceId)
+const { currentOrg } = useOrganization()
+
+const lastUsedDatasourceType = ref('')
+
+const { executeTool } = useCopilotToolExecutor(
+  () => props.datasourceId,
+  () => currentOrg.value?.id ?? '',
+  () => props.datasourceType || lastUsedDatasourceType.value,
+)
 
 // --- State ---
 
@@ -44,13 +53,26 @@ type ChatRequestMessage =
   | { role: 'assistant'; content: string | null; tool_calls: ToolCall[] }
   | { role: 'tool'; tool_call_id: string; content: string }
 
-// --- Build request messages from CopilotMessage[] ---
+// --- Build request messages from AIMessage[] ---
 
 function buildChatRequestMessages(): ChatRequestMessage[] {
-  return chatMessages.value.map((m) => ({
-    role: m.role,
-    content: m.content,
-  }))
+  const messages: ChatRequestMessage[] = []
+
+  if (props.datasourceId) {
+    messages.push({
+      role: 'system',
+      content: `You have tools to explore datasource data. You are currently working with datasource '${props.datasourceName}' (type: ${props.datasourceType}, id: ${props.datasourceId}). You can use the data discovery tools directly.`,
+    })
+  } else {
+    messages.push({
+      role: 'system',
+      content:
+        'You have tools to explore datasource data. No datasource is currently selected. Call list_datasources first to discover available datasources, then pass the datasource_id to other tools.',
+    })
+  }
+
+  messages.push(...chatMessages.value.map((m) => ({ role: m.role as ChatRequestMessage['role'], content: m.content })))
+  return messages
 }
 
 // --- Core tool-calling loop ---
@@ -58,7 +80,7 @@ function buildChatRequestMessages(): ChatRequestMessage[] {
 async function handleSend(userMessage: string) {
   chatMessages.value.push({ role: 'user', content: userMessage })
   const requestMessages = buildChatRequestMessages()
-  const tools = getMetricsTools()
+  const tools = getToolsForDatasourceType(props.datasourceType)
   toolStatuses.value = []
   dashboardSpec.value = null
 
@@ -210,9 +232,18 @@ function toolStatusIcon(status: ToolStatus['status']): string {
           borderColor: 'var(--color-outline-variant)',
         }"
       >
-        <option v-for="m in models" :key="m.id" :value="m.id">
-          {{ m.name }}
-        </option>
+        <template v-if="providers.length > 1">
+          <optgroup v-for="p in providers" :key="p.id" :label="p.display_name">
+            <option v-for="m in models.filter(mod => mod.provider_id === p.id)" :key="m.id" :value="m.id">
+              {{ m.name }}
+            </option>
+          </optgroup>
+        </template>
+        <template v-else>
+          <option v-for="m in models" :key="m.id" :value="m.id">
+            {{ m.name }}
+          </option>
+        </template>
       </select>
     </div>
 

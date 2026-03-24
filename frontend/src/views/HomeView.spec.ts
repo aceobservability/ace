@@ -29,6 +29,25 @@ vi.mock('../composables/useFavorites', () => ({
   }),
 }))
 
+const mockDatasources = ref<{ id: string; type: string }[]>([])
+
+vi.mock('../composables/useDatasource', () => ({
+  useDatasource: () => ({
+    datasources: mockDatasources,
+    loading: ref(false),
+    error: ref(null),
+    metricsDatasources: ref([]),
+    logsDatasources: ref([]),
+    tracingDatasources: ref([]),
+    vmalertDatasources: ref([]),
+    alertingDatasources: ref([]),
+    fetchDatasources: vi.fn(),
+    addDatasource: vi.fn(),
+    editDatasource: vi.fn(),
+    removeDatasource: vi.fn(),
+  }),
+}))
+
 vi.mock('vue-router', () => ({
   useRoute: () => ({
     path: '/app',
@@ -62,13 +81,10 @@ describe('HomeView', () => {
   let wrapper: VueWrapper
 
   function createWrapper(opts: { hasDataSources?: boolean } = {}) {
-    // By default, the view shows the normal (non-empty) state.
-    // When hasDataSources is false, we set a localStorage flag so the view
-    // renders the empty state instead.
     if (opts.hasDataSources === false) {
-      localStorage.setItem('ace-has-datasources', 'false')
+      mockDatasources.value = []
     } else {
-      localStorage.setItem('ace-has-datasources', 'true')
+      mockDatasources.value = [{ id: 'ds-1', type: 'prometheus' }]
     }
 
     return mount(HomeView, {
@@ -120,6 +136,7 @@ describe('HomeView', () => {
     vi.clearAllMocks()
     mockFavorites.value = []
     mockRecentDashboards.value = []
+    mockDatasources.value = []
     localStorage.clear()
   })
 

@@ -3,8 +3,7 @@ import { nextTick, ref, watch } from 'vue'
 import CmdKChatView from './CmdKChatView.vue'
 import CmdKSearchResults from './CmdKSearchResults.vue'
 import { useCommandContext } from '../composables/useCommandContext'
-import { useCopilot } from '../composables/useCopilot'
-import { useOrganization } from '../composables/useOrganization'
+import { useAIProvider } from '../composables/useAIProvider'
 import { useRouter } from 'vue-router'
 
 const props = defineProps<{
@@ -16,8 +15,7 @@ const emit = defineEmits<{
 }>()
 
 const { currentContext } = useCommandContext()
-const { isConnected, chatMessages } = useCopilot()
-const { currentOrg } = useOrganization()
+const { providers, chatMessages, fetchProviders } = useAIProvider()
 const router = useRouter()
 
 const inputRef = ref<HTMLInputElement | null>(null)
@@ -31,6 +29,7 @@ watch(
   () => props.isOpen,
   async (open) => {
     if (open) {
+      fetchProviders()
       await nextTick()
       inputRef.value?.focus()
     } else {
@@ -53,7 +52,7 @@ function handleScrimClick() {
 }
 
 function handleEnterChat(q: string) {
-  if (!isConnected.value) {
+  if (providers.value.length === 0) {
     showNotConnected.value = true
     return
   }
@@ -135,9 +134,8 @@ function handleNavigate(path: string) {
       <!-- Not connected message -->
       <div v-if="showNotConnected" data-testid="not-connected-message" class="px-4 pb-3">
         <p class="text-sm m-0" :style="{ color: 'var(--color-on-surface-variant)' }">
-          Connect your GitHub Copilot subscription in
-          <a href="/app/settings/ai" :style="{ color: 'var(--color-primary)' }" @click.prevent="emit('close'); router.push('/app/settings/ai')">Settings</a>
-          to use AI features.
+          Configure an AI provider in
+          <a href="/app/settings/ai" :style="{ color: 'var(--color-primary)' }" @click.prevent="emit('close'); router.push('/app/settings/ai')">Settings</a>, or connect GitHub Copilot.
         </p>
       </div>
 
@@ -153,8 +151,8 @@ function handleNavigate(path: string) {
       <CmdKChatView
         v-else-if="mode === 'chat'"
         :initial-query="chatQuery"
-        :datasource-type="currentContext?.datasourceType ?? 'victoriametrics'"
-        :datasource-name="currentContext?.datasourceName ?? 'default'"
+        :datasource-type="currentContext?.datasourceType ?? ''"
+        :datasource-name="currentContext?.datasourceName ?? ''"
         :datasource-id="currentContext?.datasourceId ?? ''"
         @exit-chat="handleExitChat"
       />

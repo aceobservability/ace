@@ -43,10 +43,12 @@ const props = withDefaults(
     series: ChartSeries[]
     title?: string
     height?: string | number
+    fill?: 'none' | 'area' | 'stacked-area'
   }>(),
   {
     title: '',
     height: '100%',
+    fill: 'area',
   },
 )
 
@@ -72,6 +74,20 @@ function formatFullDateTime(timestamp: number): string {
 }
 
 const chartOption = computed(() => {
+  const gradientAreaStyle = (index: number) => ({
+    color: {
+      type: 'linear' as const,
+      x: 0,
+      y: 0,
+      x2: 0,
+      y2: 1,
+      colorStops: [
+        { offset: 0, color: `${chartPalette[index % chartPalette.length]}33` },
+        { offset: 1, color: `${chartPalette[index % chartPalette.length]}05` },
+      ],
+    },
+  })
+
   const seriesData = props.series.map((s, index) => ({
     name: s.name,
     type: 'line' as const,
@@ -84,19 +100,8 @@ const chartOption = computed(() => {
     itemStyle: {
       color: chartPalette[index % chartPalette.length],
     },
-    areaStyle: {
-      color: {
-        type: 'linear' as const,
-        x: 0,
-        y: 0,
-        x2: 0,
-        y2: 1,
-        colorStops: [
-          { offset: 0, color: `${chartPalette[index % chartPalette.length]}33` },
-          { offset: 1, color: `${chartPalette[index % chartPalette.length]}05` },
-        ],
-      },
-    },
+    ...(props.fill !== 'none' ? { areaStyle: gradientAreaStyle(index) } : {}),
+    ...(props.fill === 'stacked-area' ? { stack: 'total' } : {}),
     data: s.data.map((d) => [d.timestamp * 1000, d.value]),
   }))
 

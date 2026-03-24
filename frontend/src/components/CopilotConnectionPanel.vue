@@ -9,7 +9,7 @@ import {
   Unplug,
 } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
-import { useCopilot } from '../composables/useCopilot'
+import { useCopilotAuth } from '../composables/useCopilotAuth'
 
 const props = defineProps<{ orgId: string }>()
 
@@ -25,7 +25,7 @@ const {
   connect,
   cancelDeviceFlow,
   disconnect,
-} = useCopilot()
+} = useCopilotAuth()
 
 const codeCopied = ref(false)
 

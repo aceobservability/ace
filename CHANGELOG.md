@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.9.0](https://github.com/aceobservability/ace/compare/v0.8.0...v0.9.0) (2026-03-24)
+
+
+### Features
+
+* fix Cmd+K datasource tools and add full metrics/logs/traces support ([#149](https://github.com/aceobservability/ace/issues/149)) ([8ac4cf8](https://github.com/aceobservability/ace/commit/8ac4cf88a6a5e0cd175b1a0bb7161cbf04f0971b))
+
+## [0.8.0](https://github.com/aceobservability/ace/compare/v0.7.0...v0.8.0) (2026-03-24)
+
+
+### Features
+
+* chart types expansion — Tier 1 (6 new panel types + registry infrastructure) ([#148](https://github.com/aceobservability/ace/issues/148)) ([a969bb9](https://github.com/aceobservability/ace/commit/a969bb90e92ddd295877e0fd96d9ad5d674e2540))
+* enterprise auth phase 1 — audit logging + auditor role ([#146](https://github.com/aceobservability/ace/issues/146)) ([5433ac9](https://github.com/aceobservability/ace/commit/5433ac9cad32b3586731418ca9cb9fea7b1de94e))
+
 ## [0.7.0](https://github.com/aceobservability/ace/compare/v0.6.0...v0.7.0) (2026-03-23)
 
 

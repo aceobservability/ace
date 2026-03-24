@@ -18,13 +18,18 @@
     "lint:dead-code": "knip"
   },
   "dependencies": {
+    "@excalidraw/excalidraw": "^0.18.0",
     "@tailwindcss/typography": "^0.5.19",
+    "@types/d3-force": "^3.0.10",
+    "d3-force": "^3.0.0",
     "dompurify": "^3.3.3",
     "echarts": "^6.0.0",
     "lucide-vue-next": "^0.577.0",
     "marked": "^17.0.5",
     "monaco-editor": "^0.55.1",
     "posthog-js": "^1.363.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "shiki": "^4.0.2",
     "vue": "^3.5.30",
     "vue-echarts": "^8.0.1",

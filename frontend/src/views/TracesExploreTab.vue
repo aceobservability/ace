@@ -65,6 +65,10 @@ const TRACE_METRICS_NAVIGATION_CONTEXT_KEY = 'trace_metrics_navigation'
 const TRACE_NAVIGATION_MAX_AGE_MS = 5 * 60 * 1000
 const TRACE_TO_X_PADDING_MS = 5 * 60 * 1000
 
+const emit = defineEmits<{
+  'datasource-changed': [payload: { id: string; name: string; type: string }]
+}>()
+
 const route = useRoute()
 const router = useRouter()
 const { timeRange, isCustomRange, onRefresh } = useTimeRange()
@@ -709,6 +713,13 @@ watch(
   },
   { immediate: true },
 )
+
+watch(selectedDatasourceId, (newId) => {
+  const ds = tracingDatasources.value.find((d) => d.id === newId)
+  if (ds) {
+    emit('datasource-changed', { id: ds.id, name: ds.name, type: ds.type })
+  }
+})
 
 async function handleOpenTraceFromList(traceId: string) {
   if (isClickHouseDatasource.value) {
