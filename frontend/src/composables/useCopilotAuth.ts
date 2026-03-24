@@ -14,6 +14,7 @@ export function getAuthHeaders(): HeadersInit {
 const isConnected = ref(false)
 const githubUsername = ref('')
 const hasCopilot = ref(false)
+const error = ref('')
 
 export function useCopilotAuth() {
   // Device flow state — per-call, only one component uses it at a time
@@ -130,6 +131,7 @@ export function useCopilotAuth() {
     isConnected,
     githubUsername,
     hasCopilot,
+    error,
     deviceFlowActive,
     userCode,
     verificationUri,

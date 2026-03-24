@@ -4,7 +4,6 @@ import CmdKChatView from './CmdKChatView.vue'
 import CmdKSearchResults from './CmdKSearchResults.vue'
 import { useCommandContext } from '../composables/useCommandContext'
 import { useAIProvider } from '../composables/useAIProvider'
-import { useOrganization } from '../composables/useOrganization'
 import { useRouter } from 'vue-router'
 
 const props = defineProps<{
@@ -17,7 +16,6 @@ const emit = defineEmits<{
 
 const { currentContext } = useCommandContext()
 const { providers, chatMessages, fetchProviders } = useAIProvider()
-const { currentOrg } = useOrganization()
 const router = useRouter()
 
 const inputRef = ref<HTMLInputElement | null>(null)

@@ -151,10 +151,6 @@ const activeSection = computed<SettingsSection>(() => {
   return isSettingsSection(section) ? section : 'general'
 })
 
-function navigateToSection(section: SettingsSection) {
-  if (section === activeSection.value) return
-  router.push(`/app/settings/${section}`)
-}
 
 watch(
   () => route.params.section,
