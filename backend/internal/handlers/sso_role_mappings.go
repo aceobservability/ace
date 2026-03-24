@@ -30,9 +30,9 @@ func NewSSORoleMappingHandler(pool *pgxpool.Pool, auditLogger *audit.Logger) *SS
 
 // validSSOProviders enumerates the allowed SSO provider path values.
 var validSSOProviders = map[string]bool{
-	string(models.SSOGoogle):        true,
-	string(models.SSOMicrosoft):     true,
-	string(models.SSOOkta):         true,
+	string(models.SSOGoogle):    true,
+	string(models.SSOMicrosoft): true,
+	string(models.SSOOkta):      true,
 }
 
 // validAceRoles enumerates the allowed values for the ace_role column.
