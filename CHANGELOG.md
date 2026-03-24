@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/aceobservability/ace/compare/v0.8.0...v0.9.0) (2026-03-24)
+
+
+### Features
+
+* fix Cmd+K datasource tools and add full metrics/logs/traces support ([#149](https://github.com/aceobservability/ace/issues/149)) ([8ac4cf8](https://github.com/aceobservability/ace/commit/8ac4cf88a6a5e0cd175b1a0bb7161cbf04f0971b))
+
 ## [0.8.0](https://github.com/aceobservability/ace/compare/v0.7.0...v0.8.0) (2026-03-24)
 
 
