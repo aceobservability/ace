@@ -1,5 +1,21 @@
 <script setup lang="ts">
-import { Bot, Database, Edit2, Lock, Shield, Trash2, UserPlus, Users } from 'lucide-vue-next'
+import {
+  AlertTriangle,
+  Bot,
+  Check,
+  ChevronDown,
+  Database,
+  Edit2,
+  Info,
+  Loader2,
+  Lock,
+  Plus,
+  Shield,
+  Trash2,
+  UserPlus,
+  Users,
+  X,
+} from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createGroup, deleteGroup, listGroupMembers, listGroups } from '../api/groups'
@@ -15,9 +31,18 @@ import {
 import {
   getGoogleSSOConfig,
   getMicrosoftSSOConfig,
+  getOktaSSOConfig,
+  testOktaConnection,
   updateGoogleSSOConfig,
   updateMicrosoftSSOConfig,
+  updateOktaSSOConfig,
 } from '../api/sso'
+import {
+  createRoleMapping,
+  deleteRoleMapping,
+  listRoleMappings,
+  type SSOConfigRoleMapping,
+} from '../api/ssoRoleMappings'
 import DataSourceSettingsPanel from '../components/DataSourceSettingsPanel.vue'
 import CopilotConnectionPanel from '../components/CopilotConnectionPanel.vue'
 import { useCommandContext } from '../composables/useCommandContext'
@@ -96,26 +121,62 @@ const microsoftConfigured = ref(false)
 const microsoftSaving = ref(false)
 const microsoftError = ref<string | null>(null)
 
-type SsoProviderKey = 'google' | 'microsoft'
+// Okta SSO
+const oktaDomain = ref('')
+const oktaClientId = ref('')
+const oktaClientSecret = ref('')
+const oktaGroupsClaimName = ref('groups')
+const oktaDefaultRole = ref('viewer')
+const oktaEnabled = ref(false)
+const oktaConfigured = ref(false)
+const oktaSaving = ref(false)
+const oktaError = ref<string | null>(null)
+const oktaTestStatus = ref<'idle' | 'testing' | 'success' | 'error'>('idle')
+const oktaTestMessage = ref('')
+
+// Okta role mappings
+const oktaRoleMappings = ref<SSOConfigRoleMapping[]>([])
+const oktaRoleMappingsLoading = ref(false)
+const showAddMappingForm = ref(false)
+const newMappingGroup = ref('')
+const newMappingRole = ref('viewer')
+const addMappingLoading = ref(false)
+const addMappingError = ref<string | null>(null)
+
+type SsoProviderKey = 'google' | 'microsoft' | 'okta'
 
 const activeSsoProvider = ref<SsoProviderKey | null>(null)
 const ssoDialogOpen = ref(false)
 const ssoStep = ref<'picker' | 'form'>('picker')
+const showAddProviderDropdown = ref(false)
 const ssoProviders = computed(() => [
   {
     key: 'google' as const,
     name: 'Google',
+    issuer: 'accounts.google.com',
     configured: googleConfigured.value,
     enabled: googleEnabled.value,
+    mappingCount: 0,
   },
   {
     key: 'microsoft' as const,
     name: 'Microsoft',
+    issuer: microsoftTenantId.value ? `login.microsoftonline.com/${microsoftTenantId.value}` : 'login.microsoftonline.com',
     configured: microsoftConfigured.value,
     enabled: microsoftEnabled.value,
+    mappingCount: 0,
+  },
+  {
+    key: 'okta' as const,
+    name: 'Okta',
+    issuer: oktaDomain.value ? `${oktaDomain.value}.okta.com` : 'okta.com',
+    configured: oktaConfigured.value,
+    enabled: oktaEnabled.value,
+    mappingCount: oktaRoleMappings.value.length,
   },
 ])
 const configuredSsoProviders = computed(() => ssoProviders.value.filter((p) => p.configured))
+const unconfiguredSsoProviders = computed(() => ssoProviders.value.filter((p) => !p.configured))
 const activeSsoLabel = computed(
   () => ssoProviders.value.find((p) => p.key === activeSsoProvider.value)?.name ?? '',
 )
@@ -414,6 +475,7 @@ function resetSSOMessages() {
   ssoNotice.value = null
   googleError.value = null
   microsoftError.value = null
+  oktaError.value = null
 }
 
 async function loadGoogleConfig() {
@@ -458,10 +520,48 @@ async function loadMicrosoftConfig() {
   }
 }
 
+async function loadOktaConfig() {
+  oktaError.value = null
+  oktaClientSecret.value = ''
+  try {
+    const config = await getOktaSSOConfig(orgId.value)
+    if (config) {
+      oktaDomain.value = config.tenant_id
+      oktaClientId.value = config.client_id
+      oktaGroupsClaimName.value = config.groups_claim_name || 'groups'
+      oktaDefaultRole.value = config.default_role || 'viewer'
+      oktaEnabled.value = config.enabled
+      oktaConfigured.value = true
+      await loadOktaRoleMappings()
+    } else {
+      oktaDomain.value = ''
+      oktaClientId.value = ''
+      oktaGroupsClaimName.value = 'groups'
+      oktaDefaultRole.value = 'viewer'
+      oktaEnabled.value = false
+      oktaConfigured.value = false
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Failed to load Okta SSO'
+    oktaError.value = msg
+  }
+}
+
+async function loadOktaRoleMappings() {
+  oktaRoleMappingsLoading.value = true
+  try {
+    oktaRoleMappings.value = await listRoleMappings(orgId.value, 'okta')
+  } catch {
+    oktaRoleMappings.value = []
+  } finally {
+    oktaRoleMappingsLoading.value = false
+  }
+}
+
 async function loadSSOConfigs() {
   ssoLoading.value = true
   resetSSOMessages()
-  await Promise.all([loadGoogleConfig(), loadMicrosoftConfig()])
+  await Promise.all([loadGoogleConfig(), loadMicrosoftConfig(), loadOktaConfig()])
   ssoLoading.value = false
 }
 
@@ -470,12 +570,17 @@ function openSsoProvider(provider: SsoProviderKey) {
   ssoStep.value = 'form'
   activeSsoProvider.value = provider
   resetSSOMessages()
+  oktaTestStatus.value = 'idle'
+  oktaTestMessage.value = ''
+  addMappingError.value = null
+  showAddMappingForm.value = false
 }
 function closeSsoDialog() {
   ssoDialogOpen.value = false
   ssoStep.value = 'picker'
   activeSsoProvider.value = null
   resetSSOMessages()
+  showAddProviderDropdown.value = false
 }
 
 async function handleSaveGoogleSSO() {
@@ -548,6 +653,139 @@ async function handleSaveMicrosoftSSO() {
     microsoftError.value = e instanceof Error ? e.message : 'Failed to save Microsoft SSO settings'
   } finally {
     microsoftSaving.value = false
+  }
+}
+
+async function handleSaveOktaSSO() {
+  if (!isAdmin.value) return
+  const domain = oktaDomain.value.trim()
+  const cId = oktaClientId.value.trim()
+  const cSecret = oktaClientSecret.value.trim()
+  if (!domain) {
+    oktaError.value = 'Okta domain is required'
+    return
+  }
+  if (domain.includes(' ') || domain.includes('://')) {
+    oktaError.value = 'Enter the Okta domain only (e.g. dev-12345), not a full URL'
+    return
+  }
+  if (!cId) {
+    oktaError.value = 'Client ID is required'
+    return
+  }
+  if (!cSecret) {
+    oktaError.value = 'Client secret is required'
+    return
+  }
+  oktaSaving.value = true
+  oktaError.value = null
+  ssoNotice.value = null
+  try {
+    const updated = await updateOktaSSOConfig(orgId.value, {
+      tenant_id: domain,
+      client_id: cId,
+      client_secret: cSecret,
+      groups_claim_name: oktaGroupsClaimName.value || 'groups',
+      default_role: oktaDefaultRole.value || 'viewer',
+      enabled: oktaEnabled.value,
+    })
+    oktaDomain.value = updated.tenant_id
+    oktaClientId.value = updated.client_id
+    oktaGroupsClaimName.value = updated.groups_claim_name
+    oktaDefaultRole.value = updated.default_role
+    oktaEnabled.value = updated.enabled
+    oktaConfigured.value = true
+    oktaClientSecret.value = ''
+    ssoNotice.value = 'Okta SSO settings saved'
+  } catch (e) {
+    oktaError.value = e instanceof Error ? e.message : 'Failed to save Okta SSO settings'
+  } finally {
+    oktaSaving.value = false
+  }
+}
+
+async function handleTestOktaConnection() {
+  oktaTestStatus.value = 'testing'
+  oktaTestMessage.value = ''
+  try {
+    const result = await testOktaConnection(orgId.value)
+    if (result.status === 'ok') {
+      oktaTestStatus.value = 'success'
+      oktaTestMessage.value = result.message || 'Connected — OIDC discovery verified'
+    } else {
+      oktaTestStatus.value = 'error'
+      oktaTestMessage.value = result.message || 'Connection test failed'
+    }
+  } catch (e) {
+    oktaTestStatus.value = 'error'
+    oktaTestMessage.value = e instanceof Error ? e.message : 'Connection test failed'
+  }
+}
+
+async function handleAddRoleMapping() {
+  const group = newMappingGroup.value.trim()
+  if (!group) {
+    addMappingError.value = 'Group name is required'
+    return
+  }
+  addMappingLoading.value = true
+  addMappingError.value = null
+  try {
+    const mapping = await createRoleMapping(orgId.value, 'okta', {
+      sso_group_name: group,
+      ace_role: newMappingRole.value,
+    })
+    oktaRoleMappings.value = [...oktaRoleMappings.value, mapping]
+    newMappingGroup.value = ''
+    newMappingRole.value = 'viewer'
+    showAddMappingForm.value = false
+  } catch (e) {
+    addMappingError.value = e instanceof Error ? e.message : 'Failed to create role mapping'
+  } finally {
+    addMappingLoading.value = false
+  }
+}
+
+async function handleDeleteRoleMapping(mappingId: string) {
+  try {
+    await deleteRoleMapping(orgId.value, 'okta', mappingId)
+    oktaRoleMappings.value = oktaRoleMappings.value.filter((m) => m.id !== mappingId)
+  } catch (e) {
+    oktaError.value = e instanceof Error ? e.message : 'Failed to delete role mapping'
+  }
+}
+
+function toggleAddProviderDropdown() {
+  showAddProviderDropdown.value = !showAddProviderDropdown.value
+}
+
+function selectNewProvider(providerKey: SsoProviderKey) {
+  showAddProviderDropdown.value = false
+  openSsoProvider(providerKey)
+}
+
+function roleBadgeStyle(role: string) {
+  if (role === 'admin') {
+    return {
+      backgroundColor: 'color-mix(in srgb, var(--color-error) 15%, transparent)',
+      color: 'var(--color-error)',
+    }
+  }
+  if (role === 'editor') {
+    return {
+      backgroundColor: 'color-mix(in srgb, var(--color-primary) 15%, transparent)',
+      color: 'var(--color-primary)',
+    }
+  }
+  if (role === 'auditor') {
+    return {
+      backgroundColor: 'color-mix(in srgb, var(--color-info) 15%, transparent)',
+      color: 'var(--color-info)',
+    }
+  }
+  return {
+    backgroundColor: 'color-mix(in srgb, var(--color-on-surface-variant) 15%, transparent)',
+    color: 'var(--color-on-surface-variant)',
   }
 }
 </script>
@@ -785,10 +1023,48 @@ async function handleSaveMicrosoftSSO() {
           </div>
         </section>
 
-        <!-- SSO / Auth Section (stub) -->
+        <!-- SSO / Auth Section -->
         <section v-if="activeSection === 'sso'" class="flex flex-col gap-4 max-w-2xl" data-testid="settings-sso">
           <div class="rounded-lg p-6" :style="{ backgroundColor: 'var(--color-surface-container-low)' }">
-            <h2 class="flex items-center gap-2 m-0 mb-2 text-base font-semibold font-display" :style="{ color: 'var(--color-on-surface)' }"><Lock :size="20" /> SSO / Auth</h2>
+            <div class="flex justify-between items-center mb-2">
+              <h2 class="flex items-center gap-2 m-0 text-base font-semibold font-display" :style="{ color: 'var(--color-on-surface)' }"><Lock :size="20" /> SSO / Auth</h2>
+              <!-- Add Provider dropdown -->
+              <div v-if="isAdmin && configuredSsoProviders.length > 0" class="relative">
+                <button
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-sm font-semibold cursor-pointer transition"
+                  :style="{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))', color: '#fff', border: 'none' }"
+                  data-testid="add-provider-btn"
+                  @click="toggleAddProviderDropdown"
+                >
+                  <Plus :size="16" /> Add Provider <ChevronDown :size="14" />
+                </button>
+                <div
+                  v-if="showAddProviderDropdown"
+                  class="absolute right-0 top-full mt-1 w-48 rounded-md py-1 z-10"
+                  :style="{ backgroundColor: 'var(--color-surface-bright)', border: '1px solid var(--color-outline-variant)', boxShadow: '0 4px 12px rgba(0,0,0,0.32), 0 2px 4px rgba(0,0,0,0.20)' }"
+                  data-testid="add-provider-dropdown"
+                >
+                  <button
+                    v-for="provider in ssoProviders"
+                    :key="provider.key"
+                    class="w-full text-left px-3 py-2 text-sm cursor-pointer transition border-none"
+                    :style="{
+                      backgroundColor: 'transparent',
+                      color: provider.configured ? 'var(--color-on-surface-variant)' : 'var(--color-on-surface)',
+                      opacity: provider.configured ? 0.5 : 1,
+                    }"
+                    :disabled="provider.configured"
+                    :data-testid="`add-provider-${provider.key}`"
+                    @click="!provider.configured && selectNewProvider(provider.key)"
+                    @mouseover="($event.target as HTMLElement).style.backgroundColor = provider.configured ? 'transparent' : 'var(--color-surface-hover)'"
+                    @mouseleave="($event.target as HTMLElement).style.backgroundColor = 'transparent'"
+                  >
+                    {{ provider.name }}
+                    <span v-if="provider.configured" class="text-xs ml-1">(configured)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
             <p class="m-0 mb-4 text-sm" :style="{ color: 'var(--color-on-surface-variant)' }">Configure SSO providers and authentication settings for your organization.</p>
 
             <div v-if="ssoLoading" class="p-3.5 text-sm" :style="{ color: 'var(--color-outline)' }">Loading SSO settings...</div>
@@ -802,27 +1078,69 @@ async function handleSaveMicrosoftSSO() {
                 <span class="inline-flex px-2 py-0.5 rounded-sm text-xs font-medium w-fit" :style="{ backgroundColor: 'color-mix(in srgb, var(--color-secondary) 15%, transparent)', color: 'var(--color-secondary)' }">Enabled</span>
               </article>
 
-              <!-- Configured providers -->
+              <!-- Configured provider cards -->
               <article
                 v-for="provider in configuredSsoProviders"
                 :key="provider.key"
-                class="rounded-lg p-3.5 flex flex-col gap-2.5"
+                class="rounded-lg p-3.5 flex flex-col gap-2.5 cursor-pointer transition"
                 :style="{ backgroundColor: 'var(--color-surface-container-high)' }"
                 :data-testid="`sso-provider-${provider.key}`"
+                tabindex="0"
+                role="button"
+                :aria-label="`Configure ${provider.name} SSO`"
+                @click="isAdmin && openSsoProvider(provider.key)"
+                @keydown.enter="isAdmin && openSsoProvider(provider.key)"
               >
-                <div>
-                  <h3 class="m-0 text-sm" :style="{ color: 'var(--color-on-surface)' }">{{ provider.name }}</h3>
-                  <p class="mt-1 mb-0 text-xs" :style="{ color: 'var(--color-on-surface-variant)' }">{{ provider.configured ? 'Configured for this org.' : 'Not configured yet.' }}</p>
-                </div>
-                <div class="flex items-center justify-between gap-3 flex-wrap">
-                  <span class="inline-flex px-2 py-0.5 rounded-sm text-xs font-medium" :style="{ backgroundColor: provider.enabled ? 'color-mix(in srgb, var(--color-secondary) 15%, transparent)' : 'color-mix(in srgb, var(--color-tertiary) 15%, transparent)', color: provider.enabled ? 'var(--color-secondary)' : 'var(--color-tertiary)' }">{{ provider.enabled ? 'Enabled' : 'Disabled' }}</span>
-                  <button v-if="isAdmin" class="px-3 py-1.5 rounded-sm text-xs font-medium cursor-pointer transition" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :data-testid="`edit-sso-${provider.key}`" @click="openSsoProvider(provider.key)">
-                    <Edit2 :size="14" class="inline mr-1" /> Settings
-                  </button>
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0 flex-1">
+                    <h3 class="m-0 text-sm" :style="{ color: 'var(--color-on-surface)' }">{{ provider.name }}</h3>
+                    <p class="mt-1 mb-0 text-xs font-mono truncate" :style="{ color: 'var(--color-on-surface-variant)' }">{{ provider.issuer }}</p>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span v-if="provider.mappingCount > 0" class="text-xs" :style="{ color: 'var(--color-on-surface-variant)' }">{{ provider.mappingCount }} mapping{{ provider.mappingCount !== 1 ? 's' : '' }}</span>
+                    <span class="inline-flex px-2 py-0.5 rounded-sm text-xs font-medium" :style="{ backgroundColor: provider.enabled ? 'color-mix(in srgb, var(--color-secondary) 15%, transparent)' : 'color-mix(in srgb, var(--color-tertiary) 15%, transparent)', color: provider.enabled ? 'var(--color-secondary)' : 'var(--color-tertiary)' }">{{ provider.enabled ? 'Enabled' : 'Disabled' }}</span>
+                    <button v-if="isAdmin" class="px-3 py-1.5 rounded-sm text-xs font-medium cursor-pointer transition" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :data-testid="`edit-sso-${provider.key}`" @click.stop="openSsoProvider(provider.key)">
+                      <Edit2 :size="14" class="inline mr-1" /> Settings
+                    </button>
+                  </div>
                 </div>
               </article>
 
-              <div v-if="configuredSsoProviders.length === 0" class="p-3.5 rounded-sm text-sm" :style="{ color: 'var(--color-outline)' }">No external authentication methods configured yet.</div>
+              <!-- Empty state: no providers configured -->
+              <div v-if="configuredSsoProviders.length === 0" class="flex flex-col items-center gap-3 py-8 px-4 text-center rounded-lg" :style="{ backgroundColor: 'var(--color-surface-container-high)' }" data-testid="sso-empty-state">
+                <Shield :size="40" :style="{ color: 'var(--color-outline)' }" />
+                <p class="m-0 text-sm" :style="{ color: 'var(--color-on-surface)' }">Connect an identity provider to enable single sign-on for your team.</p>
+                <p class="m-0 text-xs" :style="{ color: 'var(--color-on-surface-variant)' }">Supports Google, Microsoft, Okta</p>
+                <div v-if="isAdmin" class="relative mt-2">
+                  <button
+                    class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-sm text-sm font-semibold cursor-pointer transition"
+                    :style="{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))', color: '#fff', border: 'none' }"
+                    data-testid="add-provider-empty-btn"
+                    @click="toggleAddProviderDropdown"
+                  >
+                    <Plus :size="16" /> Add Provider <ChevronDown :size="14" />
+                  </button>
+                  <div
+                    v-if="showAddProviderDropdown"
+                    class="absolute left-1/2 -translate-x-1/2 top-full mt-1 w-48 rounded-md py-1 z-10"
+                    :style="{ backgroundColor: 'var(--color-surface-bright)', border: '1px solid var(--color-outline-variant)', boxShadow: '0 4px 12px rgba(0,0,0,0.32), 0 2px 4px rgba(0,0,0,0.20)' }"
+                    data-testid="add-provider-empty-dropdown"
+                  >
+                    <button
+                      v-for="p in unconfiguredSsoProviders"
+                      :key="p.key"
+                      class="w-full text-left px-3 py-2 text-sm cursor-pointer transition border-none"
+                      :style="{ backgroundColor: 'transparent', color: 'var(--color-on-surface)' }"
+                      :data-testid="`add-provider-empty-${p.key}`"
+                      @click="selectNewProvider(p.key)"
+                      @mouseover="($event.target as HTMLElement).style.backgroundColor = 'var(--color-surface-hover)'"
+                      @mouseleave="($event.target as HTMLElement).style.backgroundColor = 'transparent'"
+                    >
+                      {{ p.name }}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div v-if="ssoNotice" class="px-3.5 py-2.5 rounded-sm text-sm mt-3 break-all" :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)', color: 'var(--color-primary)' }">{{ ssoNotice }}</div>
@@ -847,7 +1165,7 @@ async function handleSaveMicrosoftSSO() {
 
     <!-- SSO Config Modal -->
     <div v-if="ssoDialogOpen" class="fixed inset-0 flex items-center justify-center z-[1000]" :style="{ backgroundColor: 'rgba(0,0,0,0.5)' }" data-testid="sso-config-modal" @click.self="closeSsoDialog">
-      <div class="rounded-lg p-6 w-[min(640px,calc(100vw-2rem))] max-w-[640px]" :style="{ backgroundColor: 'var(--color-surface-bright)', border: '1px solid var(--color-outline-variant)' }">
+      <div class="rounded-lg p-6 w-[min(640px,calc(100vw-2rem))] max-w-[640px] max-h-[90vh] overflow-y-auto" :style="{ backgroundColor: 'var(--color-surface-bright)', border: '1px solid var(--color-outline-variant)' }">
         <div class="flex justify-between items-start gap-4 mb-3">
           <div>
             <h3 class="m-0 mb-1 text-base" :style="{ color: 'var(--color-on-surface)' }">{{ activeSsoLabel }} SSO Settings</h3>
@@ -857,14 +1175,15 @@ async function handleSaveMicrosoftSSO() {
         </div>
 
         <div class="rounded-lg p-4" :style="{ backgroundColor: 'var(--color-surface-container-high)' }" data-testid="sso-config-panel">
+          <!-- Google -->
           <div v-if="activeSsoProvider === 'google'" data-testid="google-sso-card">
             <div class="mb-4">
               <label class="block mb-1.5 text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Client ID</label>
-              <input v-model="googleClientId" type="text" data-testid="google-client-id" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || googleSaving" />
+              <input v-model="googleClientId" type="text" data-testid="google-client-id" aria-label="Google Client ID" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || googleSaving" />
             </div>
             <div class="mb-4">
               <label class="block mb-1.5 text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Client Secret</label>
-              <input v-model="googleClientSecret" type="password" data-testid="google-client-secret" placeholder="Enter to update" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || googleSaving" />
+              <input v-model="googleClientSecret" type="password" data-testid="google-client-secret" aria-label="Google Client Secret" placeholder="Enter to update" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || googleSaving" />
             </div>
             <label class="inline-flex items-center gap-2 m-0 text-sm" :style="{ color: 'var(--color-on-surface)' }">
               <input v-model="googleEnabled" type="checkbox" data-testid="google-enabled" class="w-auto m-0" :disabled="!isAdmin || googleSaving" />
@@ -877,18 +1196,19 @@ async function handleSaveMicrosoftSSO() {
             </div>
           </div>
 
+          <!-- Microsoft -->
           <div v-else-if="activeSsoProvider === 'microsoft'" data-testid="microsoft-sso-card">
             <div class="mb-4">
               <label class="block mb-1.5 text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Tenant ID</label>
-              <input v-model="microsoftTenantId" type="text" data-testid="microsoft-tenant-id" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || microsoftSaving" />
+              <input v-model="microsoftTenantId" type="text" data-testid="microsoft-tenant-id" aria-label="Microsoft Tenant ID" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || microsoftSaving" />
             </div>
             <div class="mb-4">
               <label class="block mb-1.5 text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Client ID</label>
-              <input v-model="microsoftClientId" type="text" data-testid="microsoft-client-id" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || microsoftSaving" />
+              <input v-model="microsoftClientId" type="text" data-testid="microsoft-client-id" aria-label="Microsoft Client ID" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || microsoftSaving" />
             </div>
             <div class="mb-4">
               <label class="block mb-1.5 text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Client Secret</label>
-              <input v-model="microsoftClientSecret" type="password" data-testid="microsoft-client-secret" placeholder="Enter to update" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || microsoftSaving" />
+              <input v-model="microsoftClientSecret" type="password" data-testid="microsoft-client-secret" aria-label="Microsoft Client Secret" placeholder="Enter to update" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || microsoftSaving" />
             </div>
             <label class="inline-flex items-center gap-2 m-0 text-sm" :style="{ color: 'var(--color-on-surface)' }">
               <input v-model="microsoftEnabled" type="checkbox" data-testid="microsoft-enabled" class="w-auto m-0" :disabled="!isAdmin || microsoftSaving" />
@@ -898,6 +1218,180 @@ async function handleSaveMicrosoftSSO() {
             <div v-if="isAdmin" class="flex justify-end gap-3 mt-3">
               <button class="px-4 py-2.5 rounded-sm text-sm font-medium cursor-pointer transition" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" @click="closeSsoDialog">Cancel</button>
               <button class="px-4 py-2.5 rounded-sm text-sm font-semibold cursor-pointer transition" :style="{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))', color: '#fff', border: 'none' }" data-testid="save-microsoft-sso" :disabled="microsoftSaving" @click="handleSaveMicrosoftSSO">{{ microsoftSaving ? 'Saving...' : 'Save Microsoft SSO' }}</button>
+            </div>
+          </div>
+
+          <!-- Okta -->
+          <div v-else-if="activeSsoProvider === 'okta'" data-testid="okta-sso-card">
+            <!-- Okta setup callout -->
+            <div class="flex gap-3 p-3 rounded-md mb-4" :style="{ backgroundColor: 'var(--color-surface-container-low)', border: '1px solid var(--color-outline)' }" data-testid="okta-setup-callout">
+              <Info :size="18" class="shrink-0 mt-0.5" :style="{ color: 'var(--color-info)' }" />
+              <p class="m-0 text-xs leading-relaxed" :style="{ color: 'var(--color-on-surface-variant)' }">
+                To enable group-to-role mapping, configure a "groups" claim in your Okta authorization server. This allows Ace to automatically assign roles based on your Okta group memberships.
+              </p>
+            </div>
+
+            <!-- Okta config form -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block mb-1.5 text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Okta Domain</label>
+                <input v-model="oktaDomain" type="text" data-testid="okta-domain" aria-label="Okta Domain" placeholder="dev-12345" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || oktaSaving" />
+              </div>
+              <div>
+                <label class="block mb-1.5 text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Client ID</label>
+                <input v-model="oktaClientId" type="text" data-testid="okta-client-id" aria-label="Okta Client ID" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || oktaSaving" />
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="block mb-1.5 text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Client Secret</label>
+              <input v-model="oktaClientSecret" type="password" data-testid="okta-client-secret" aria-label="Okta Client Secret" placeholder="Enter to update" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || oktaSaving" />
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block mb-1.5 text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Groups Claim Name</label>
+                <input v-model="oktaGroupsClaimName" type="text" data-testid="okta-groups-claim" aria-label="Groups Claim Name" placeholder="groups" class="w-full px-3 py-2.5 rounded-sm text-sm font-mono focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || oktaSaving" />
+              </div>
+              <div>
+                <label class="block mb-1.5 text-sm font-medium" :style="{ color: 'var(--color-on-surface-variant)' }">Default Role</label>
+                <select v-model="oktaDefaultRole" data-testid="okta-default-role" aria-label="Default Role" class="w-full px-3 py-2.5 rounded-sm text-sm cursor-pointer focus:outline-none" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" :disabled="!isAdmin || oktaSaving">
+                  <option value="viewer">Viewer</option>
+                  <option value="editor">Editor</option>
+                  <option value="admin">Admin</option>
+                  <option value="auditor">Auditor</option>
+                </select>
+              </div>
+            </div>
+
+            <label class="inline-flex items-center gap-2 m-0 text-sm" :style="{ color: 'var(--color-on-surface)' }">
+              <input v-model="oktaEnabled" type="checkbox" data-testid="okta-enabled" class="w-auto m-0" :disabled="!isAdmin || oktaSaving" />
+              Enable Okta SSO
+            </label>
+
+            <div v-if="oktaError" class="px-3.5 py-2.5 rounded-sm text-sm mt-3" :style="{ backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)', color: 'var(--color-error)' }" data-testid="okta-error">{{ oktaError }}</div>
+
+            <!-- Test Connection + Save buttons -->
+            <div v-if="isAdmin" class="flex items-center justify-between gap-3 mt-4 flex-wrap">
+              <div class="flex items-center gap-2">
+                <button
+                  class="inline-flex items-center gap-1.5 px-3 py-2 rounded-sm text-sm font-medium cursor-pointer transition"
+                  :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }"
+                  data-testid="okta-test-connection"
+                  :disabled="oktaTestStatus === 'testing' || !oktaConfigured"
+                  @click="handleTestOktaConnection"
+                >
+                  <Loader2 v-if="oktaTestStatus === 'testing'" :size="14" class="animate-spin" />
+                  Test Connection
+                </button>
+                <span v-if="oktaTestStatus === 'success'" class="inline-flex items-center gap-1 text-xs" :style="{ color: 'var(--color-secondary)' }" data-testid="okta-test-success">
+                  <Check :size="14" /> {{ oktaTestMessage }}
+                </span>
+                <span v-if="oktaTestStatus === 'error'" class="inline-flex items-center gap-1 text-xs" :style="{ color: 'var(--color-error)' }" data-testid="okta-test-error">
+                  <AlertTriangle :size="14" /> {{ oktaTestMessage }}
+                </span>
+              </div>
+              <div class="flex gap-3">
+                <button class="px-4 py-2.5 rounded-sm text-sm font-medium cursor-pointer transition" :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }" @click="closeSsoDialog">Cancel</button>
+                <button class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-sm text-sm font-semibold cursor-pointer transition" :style="{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))', color: '#fff', border: 'none' }" data-testid="save-okta-sso" :disabled="oktaSaving" @click="handleSaveOktaSSO">
+                  <Loader2 v-if="oktaSaving" :size="14" class="animate-spin" />
+                  {{ oktaSaving ? 'Saving...' : 'Save Configuration' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Group-to-role mapping table -->
+            <div v-if="oktaConfigured" class="mt-6 pt-4" :style="{ borderTop: '1px solid var(--color-outline)' }" data-testid="okta-role-mappings-section">
+              <div class="flex justify-between items-center mb-3">
+                <h4 class="m-0 text-sm font-semibold" :style="{ color: 'var(--color-on-surface)' }">Group → Role Mapping</h4>
+                <button
+                  v-if="isAdmin && !showAddMappingForm"
+                  class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-sm text-xs font-medium cursor-pointer transition"
+                  :style="{ backgroundColor: 'var(--color-surface-container-low)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }"
+                  data-testid="add-mapping-btn"
+                  @click="showAddMappingForm = true; addMappingError = null"
+                >
+                  <Plus :size="14" /> Add Mapping
+                </button>
+              </div>
+
+              <!-- Add mapping inline form -->
+              <div v-if="showAddMappingForm" class="flex flex-col gap-2 p-3 rounded-md mb-3" :style="{ backgroundColor: 'var(--color-surface-container-low)' }" data-testid="add-mapping-form">
+                <div class="flex flex-col md:flex-row gap-2">
+                  <input
+                    v-model="newMappingGroup"
+                    type="text"
+                    placeholder="SSO group name"
+                    aria-label="SSO Group Name"
+                    class="flex-1 px-3 py-2 rounded-sm text-sm font-mono focus:outline-none"
+                    :style="{ backgroundColor: 'var(--color-surface-container-high)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }"
+                    :disabled="addMappingLoading"
+                    data-testid="new-mapping-group"
+                  />
+                  <select
+                    v-model="newMappingRole"
+                    aria-label="Ace Role"
+                    class="w-full md:w-[120px] px-3 py-2 rounded-sm text-sm cursor-pointer focus:outline-none"
+                    :style="{ backgroundColor: 'var(--color-surface-container-high)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }"
+                    :disabled="addMappingLoading"
+                    data-testid="new-mapping-role"
+                  >
+                    <option value="viewer">Viewer</option>
+                    <option value="editor">Editor</option>
+                    <option value="admin">Admin</option>
+                    <option value="auditor">Auditor</option>
+                  </select>
+                  <div class="flex gap-2">
+                    <button
+                      class="px-3 py-2 rounded-sm text-sm font-semibold cursor-pointer transition"
+                      :style="{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))', color: '#fff', border: 'none' }"
+                      :disabled="addMappingLoading"
+                      data-testid="add-mapping-submit"
+                      @click="handleAddRoleMapping"
+                    >
+                      {{ addMappingLoading ? 'Adding...' : 'Add' }}
+                    </button>
+                    <button
+                      class="px-3 py-2 rounded-sm text-sm font-medium cursor-pointer transition"
+                      :style="{ backgroundColor: 'transparent', color: 'var(--color-on-surface-variant)', border: '1px solid var(--color-outline-variant)' }"
+                      :disabled="addMappingLoading"
+                      @click="showAddMappingForm = false; addMappingError = null"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+                <div v-if="addMappingError" class="px-3 py-2 rounded-sm text-xs" :style="{ backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)', color: 'var(--color-error)' }" data-testid="add-mapping-error">{{ addMappingError }}</div>
+              </div>
+
+              <!-- Mapping rows -->
+              <div v-if="oktaRoleMappingsLoading" class="p-3 text-sm" :style="{ color: 'var(--color-outline)' }">Loading mappings...</div>
+              <div v-else-if="oktaRoleMappings.length === 0" class="p-3 text-sm" :style="{ color: 'var(--color-outline)' }" data-testid="no-mappings-message">
+                No group mappings. Users will get the default role ({{ oktaDefaultRole }}).
+              </div>
+              <div v-else class="flex flex-col gap-1.5">
+                <div
+                  v-for="mapping in oktaRoleMappings"
+                  :key="mapping.id"
+                  class="flex items-center justify-between gap-3 px-3 py-2 rounded-md"
+                  :style="{ backgroundColor: 'var(--color-surface-container-low)' }"
+                  :data-testid="`mapping-row-${mapping.id}`"
+                >
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-sm font-mono truncate" :style="{ color: 'var(--color-on-surface)' }">{{ mapping.sso_group_name }}</span>
+                    <span class="text-xs shrink-0" :style="{ color: 'var(--color-outline)' }">→</span>
+                    <span class="inline-flex px-2 py-0.5 rounded-sm text-xs font-medium capitalize shrink-0" :style="roleBadgeStyle(mapping.ace_role)">{{ mapping.ace_role }}</span>
+                  </div>
+                  <button
+                    v-if="isAdmin"
+                    class="flex items-center justify-center w-7 h-7 bg-transparent border-none rounded-sm cursor-pointer transition shrink-0"
+                    :style="{ color: 'var(--color-on-surface-variant)' }"
+                    :data-testid="`delete-mapping-${mapping.id}`"
+                    :aria-label="`Delete mapping for ${mapping.sso_group_name}`"
+                    @click="handleDeleteRoleMapping(mapping.id)"
+                  >
+                    <X :size="14" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -115,3 +115,82 @@ export async function updateMicrosoftSSOConfig(
   return config
 }
 
+// --- Okta ---
+
+export interface OktaSSOConfig {
+  tenant_id: string // Okta domain
+  client_id: string
+  groups_claim_name: string
+  default_role: string
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface UpdateOktaSSOConfigRequest {
+  tenant_id: string
+  client_id: string
+  client_secret: string
+  groups_claim_name: string
+  default_role: string
+  enabled: boolean
+}
+
+export async function getOktaSSOConfig(orgId: string): Promise<OktaSSOConfig | null> {
+  const response = await fetch(`${API_BASE}/api/orgs/${orgId}/sso/okta`, {
+    headers: getAuthHeaders(),
+  })
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null
+    }
+    if (response.status === 403) {
+      throw new Error('Admin access required')
+    }
+    throw new Error(await getErrorMessage(response, 'Failed to fetch Okta SSO config'))
+  }
+
+  const data = await response.json()
+  return data || null
+}
+
+export async function updateOktaSSOConfig(
+  orgId: string,
+  data: UpdateOktaSSOConfigRequest,
+): Promise<OktaSSOConfig> {
+  const response = await fetch(`${API_BASE}/api/orgs/${orgId}/sso/okta`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    trackEvent('settings_sso_okta_update_failed', {
+      org_id: orgId,
+      status_code: response.status,
+    })
+    if (response.status === 403) {
+      throw new Error('Admin access required')
+    }
+    throw new Error(await getErrorMessage(response, 'Failed to save Okta SSO config'))
+  }
+
+  const config = await response.json()
+  trackEvent('settings_sso_okta_updated', {
+    org_id: orgId,
+    enabled: config.enabled,
+  })
+  return config
+}
+
+export async function testOktaConnection(
+  orgId: string,
+): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE}/api/orgs/${orgId}/sso/okta/test`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  })
+  return response.json()
+}
+
