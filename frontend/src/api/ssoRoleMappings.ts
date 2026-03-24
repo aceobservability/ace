@@ -1,12 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-
-function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem('access_token')
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  }
-}
+import { API_BASE, getAuthHeaders } from './sso'
 
 export interface SSOConfigRoleMapping {
   id: string

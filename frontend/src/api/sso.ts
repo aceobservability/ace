@@ -6,9 +6,9 @@ import type {
   UpdateMicrosoftSSOConfigRequest,
 } from '../types/sso'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
-function getAuthHeaders(): HeadersInit {
+export function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('access_token')
   return {
     'Content-Type': 'application/json',
