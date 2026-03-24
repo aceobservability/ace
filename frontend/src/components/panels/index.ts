@@ -37,8 +37,7 @@ registerPanel({
       yLabels.push(series.name)
       const yIndex = yLabels.length - 1
       const points = series.data as Array<{ timestamp: number; value: number }>
-      for (let xIndex = 0; xIndex < points.length; xIndex++) {
-        const point = points[xIndex]
+      for (const point of points) {
         data.push({ x: point.timestamp, y: yIndex, value: point.value })
       }
     }
