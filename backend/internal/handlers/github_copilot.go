@@ -2,11 +2,6 @@ package handlers
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/janhoon/dash/backend/internal/auth"
+	"github.com/janhoon/dash/backend/internal/crypto"
 )
 
 type GitHubCopilotHandler struct {
@@ -196,84 +192,6 @@ const defaultSystemPrompt = `You are an expert in observability, monitoring, and
 Help the user write and optimize queries for their observability platform.
 Be concise and provide ready-to-use query examples.`
 
-// deriveEncryptionKey derives a 32-byte AES key from JWT_SECRET (or the JWT private key PEM).
-func deriveEncryptionKey() ([]byte, error) {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		// Fall back to the private key PEM bytes
-		secret = os.Getenv("JWT_PRIVATE_KEY")
-	}
-	if secret == "" {
-		// Read from disk as last resort
-		data, err := os.ReadFile(".data/jwt.key")
-		if err != nil {
-			return nil, fmt.Errorf("no encryption key material available")
-		}
-		secret = string(data)
-	}
-	hash := sha256.Sum256([]byte(secret))
-	return hash[:], nil
-}
-
-func encryptToken(plaintext string) (string, error) {
-	key, err := deriveEncryptionKey()
-	if err != nil {
-		return "", err
-	}
-
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return "", err
-	}
-
-	aesGCM, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", err
-	}
-
-	nonce := make([]byte, aesGCM.NonceSize())
-	if _, err := rand.Read(nonce); err != nil {
-		return "", err
-	}
-
-	ciphertext := aesGCM.Seal(nonce, nonce, []byte(plaintext), nil)
-	return base64.StdEncoding.EncodeToString(ciphertext), nil
-}
-
-func decryptToken(encoded string) (string, error) {
-	key, err := deriveEncryptionKey()
-	if err != nil {
-		return "", err
-	}
-
-	ciphertext, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		return "", err
-	}
-
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return "", err
-	}
-
-	aesGCM, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", err
-	}
-
-	nonceSize := aesGCM.NonceSize()
-	if len(ciphertext) < nonceSize {
-		return "", fmt.Errorf("ciphertext too short")
-	}
-
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return "", err
-	}
-
-	return string(plaintext), nil
-}
 
 // copilotClientID is GitHub's official public Copilot OAuth client ID.
 // All Copilot integrations (VS Code, Neovim, CLI) use this same client ID
@@ -408,7 +326,7 @@ func (h *GitHubCopilotHandler) PollDeviceFlow(w http.ResponseWriter, r *http.Req
 	}
 
 	// Encrypt the access token before storing
-	encryptedToken, err := encryptToken(ghToken)
+	encryptedToken, err := crypto.EncryptToken(ghToken)
 	if err != nil {
 		http.Error(w, `{"error":"failed to encrypt token"}`, http.StatusInternalServerError)
 		return
@@ -555,7 +473,7 @@ func (h *GitHubCopilotHandler) ListModels(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	ghToken, err := decryptToken(encryptedToken)
+	ghToken, err := crypto.DecryptToken(encryptedToken)
 	if err != nil {
 		http.Error(w, `{"error":"failed to decrypt token"}`, http.StatusInternalServerError)
 		return
@@ -692,7 +610,7 @@ func (h *GitHubCopilotHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Decrypt the access token
-	ghToken, err := decryptToken(encryptedToken)
+	ghToken, err := crypto.DecryptToken(encryptedToken)
 	if err != nil {
 		http.Error(w, `{"error":"failed to decrypt token"}`, http.StatusInternalServerError)
 		return
