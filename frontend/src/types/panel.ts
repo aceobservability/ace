@@ -29,3 +29,12 @@ export interface UpdatePanelRequest {
   grid_pos?: GridPos
   query?: Record<string, unknown>
 }
+
+export interface RawQueryResult {
+  series: Array<{
+    name: string
+    data: unknown[]
+  }>
+  logs?: unknown[]
+  traces?: unknown[]
+}

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { AlertCircle, BarChart3, Pencil, Trash2 } from 'lucide-vue-next'
-import { computed, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, ref, watch } from 'vue'
 import { queryDataSource, searchDataSourceTraces } from '../api/datasources'
 import { useProm } from '../composables/useProm'
 import { useTimeRange } from '../composables/useTimeRange'
 import type { LogEntry, TraceSpan, TraceSummary } from '../types/datasource'
-import type { Panel } from '../types/panel'
+import type { Panel, RawQueryResult } from '../types/panel'
+import { isRegisteredPanel, lookupPanel } from '../utils/panelRegistry'
+import './panels/index' // Side-effect: registers all panel types
 import BarChart from './BarChart.vue'
 import GaugeChart, { type Threshold } from './GaugeChart.vue'
 import LineChart from './LineChart.vue'
@@ -484,6 +486,36 @@ const isTablePanel = computed(() => props.panel.type === 'table')
 const isLogPanel = computed(() => props.panel.type === 'logs')
 const isTraceListPanel = computed(() => props.panel.type === 'trace_list')
 const isTraceHeatmapPanel = computed(() => props.panel.type === 'trace_heatmap')
+
+// Registry-based panel support
+const registryPanel = computed(() => {
+  if (!isRegisteredPanel(props.panel.type)) return null
+  return lookupPanel(props.panel.type)
+})
+
+const registryComponentCache = new Map<string, ReturnType<typeof defineAsyncComponent>>()
+
+const registryComponent = computed(() => {
+  if (!registryPanel.value) return null
+  const type = props.panel.type
+  if (!registryComponentCache.has(type)) {
+    registryComponentCache.set(type, defineAsyncComponent(registryPanel.value.component))
+  }
+  return registryComponentCache.get(type)!
+})
+
+const registryProps = computed(() => {
+  if (!registryPanel.value) return {}
+  const raw: RawQueryResult = {
+    series: chartData.value.series,
+    logs: logEntries.value,
+    traces: traceSummaries.value,
+  }
+  return registryPanel.value.dataAdapter(raw, props.panel.query)
+})
+
+const isRegistryPanel = computed(() => registryPanel.value !== null)
+
 const hasQuery = computed(() => {
   if (isTraceListPanel.value || isTraceHeatmapPanel.value) {
     if (explicitQuerySignal.value === 'traces') {
@@ -491,6 +523,11 @@ const hasQuery = computed(() => {
     }
 
     return !!datasourceId.value
+  }
+
+  // Registry panels: check if datasource or query is configured
+  if (isRegistryPanel.value) {
+    return !!datasourceId.value || !!queryExpr.value
   }
 
   return !!queryExpr.value
@@ -639,6 +676,9 @@ function handleOpenTrace(traceId: string) {
       </div>
       <div v-else-if="isTraceHeatmapPanel && traceSummaries.length > 0" class="flex-1 min-h-0">
         <TraceHeatmapPanel :traces="traceSummaries" @open-trace="handleOpenTrace" />
+      </div>
+      <div v-else-if="isRegistryPanel && registryComponent" class="flex-1 min-h-0">
+        <component :is="registryComponent" v-bind="registryProps" />
       </div>
       <div
         v-else-if="chartSeries.length === 0 && logEntries.length === 0 && traceSummaries.length === 0"

@@ -22,12 +22,20 @@ import QueryBuilder from '../components/QueryBuilder.vue'
 import TimeRangePicker from '../components/TimeRangePicker.vue'
 import { useDatasource } from '../composables/useDatasource'
 import { useOrganization } from '../composables/useOrganization'
-import { type PrometheusQueryData, type PrometheusQueryResult, transformToChartData } from '../composables/useProm'
+import {
+  type PrometheusQueryData,
+  type PrometheusQueryResult,
+  transformToChartData,
+} from '../composables/useProm'
 import { useQueryEditor } from '../composables/useQueryEditor'
 import { useTimeRange } from '../composables/useTimeRange'
 import type { DataSourceType } from '../types/datasource'
 import { dataSourceTypeLabels } from '../types/datasource'
 import { dataSourceTypeLogos } from '../utils/datasourceLogos'
+
+const emit = defineEmits<{
+  'datasource-changed': [payload: { id: string; name: string; type: string }]
+}>()
 
 const { timeRange, onRefresh, setCustomRange } = useTimeRange()
 const { currentOrg } = useOrganization()
@@ -483,6 +491,13 @@ watch(
 
 watch(selectedDatasourceId, () => {
   showDatasourceMenu.value = false
+})
+
+watch(selectedDatasourceId, (newId) => {
+  const ds = metricsDatasources.value.find((d) => d.id === newId)
+  if (ds) {
+    emit('datasource-changed', { id: ds.id, name: ds.name, type: ds.type })
+  }
 })
 </script>
 

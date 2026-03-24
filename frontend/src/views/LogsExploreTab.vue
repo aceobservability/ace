@@ -26,6 +26,10 @@ import type { DataSourceType, LogEntry } from '../types/datasource'
 import { dataSourceTypeLabels } from '../types/datasource'
 import { dataSourceTypeLogos } from '../utils/datasourceLogos'
 
+const emit = defineEmits<{
+  'datasource-changed': [payload: { id: string; name: string; type: string }]
+}>()
+
 const { timeRange, onRefresh, setCustomRange } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { logsDatasources, fetchDatasources } = useDatasource()
@@ -840,6 +844,13 @@ watch(
   },
   { immediate: true },
 )
+
+watch(selectedDatasourceId, (newId) => {
+  const ds = logsDatasources.value.find((d) => d.id === newId)
+  if (ds) {
+    emit('datasource-changed', { id: ds.id, name: ds.name, type: ds.type })
+  }
+})
 
 watch(selectedDatasourceId, () => {
   showDatasourceMenu.value = false

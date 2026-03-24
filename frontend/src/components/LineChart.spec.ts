@@ -185,4 +185,64 @@ describe('LineChart', () => {
 
     expect(option.series).toHaveLength(0)
   })
+
+  describe('fill prop', () => {
+    it('fill="area" (default) — series have areaStyle with gradient colorStops', () => {
+      const wrapper = mount(LineChart, {
+        props: { series: mockSeries, fill: 'area' },
+      })
+      const chart = wrapper.find('.echarts-mock')
+      const option = JSON.parse(chart.attributes('data-option') || '{}')
+
+      const s = option.series[0]
+      expect(s.areaStyle).toBeDefined()
+      expect(s.areaStyle.color.colorStops).toHaveLength(2)
+      expect(s.areaStyle.color.colorStops[0].offset).toBe(0)
+      expect(s.areaStyle.color.colorStops[1].offset).toBe(1)
+      expect(s.stack).toBeUndefined()
+    })
+
+    it('no fill prop (default) — same as fill="area" (backwards compatible)', () => {
+      const wrapper = mount(LineChart, {
+        props: { series: mockSeries },
+      })
+      const chart = wrapper.find('.echarts-mock')
+      const option = JSON.parse(chart.attributes('data-option') || '{}')
+
+      const s = option.series[0]
+      expect(s.areaStyle).toBeDefined()
+      expect(s.areaStyle.color.colorStops).toHaveLength(2)
+      expect(s.stack).toBeUndefined()
+    })
+
+    it('fill="none" — series have NO areaStyle', () => {
+      const wrapper = mount(LineChart, {
+        props: { series: mockSeries, fill: 'none' },
+      })
+      const chart = wrapper.find('.echarts-mock')
+      const option = JSON.parse(chart.attributes('data-option') || '{}')
+
+      const s = option.series[0]
+      expect(s.areaStyle).toBeUndefined()
+      expect(s.stack).toBeUndefined()
+    })
+
+    it('fill="stacked-area" — series have areaStyle AND stack: "total"', () => {
+      const multiSeries = [
+        { name: 'metric1', data: [{ timestamp: 1704067200, value: 1 }] },
+        { name: 'metric2', data: [{ timestamp: 1704067200, value: 2 }] },
+      ]
+      const wrapper = mount(LineChart, {
+        props: { series: multiSeries, fill: 'stacked-area' },
+      })
+      const chart = wrapper.find('.echarts-mock')
+      const option = JSON.parse(chart.attributes('data-option') || '{}')
+
+      for (const s of option.series) {
+        expect(s.areaStyle).toBeDefined()
+        expect(s.areaStyle.color.colorStops).toHaveLength(2)
+        expect(s.stack).toBe('total')
+      }
+    })
+  })
 })

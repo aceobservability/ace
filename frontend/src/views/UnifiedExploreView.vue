@@ -2,8 +2,8 @@
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCommandContext } from '../composables/useCommandContext'
-import MetricsExploreTab from './MetricsExploreTab.vue'
 import LogsExploreTab from './LogsExploreTab.vue'
+import MetricsExploreTab from './MetricsExploreTab.vue'
 import TracesExploreTab from './TracesExploreTab.vue'
 
 const route = useRoute()
@@ -38,6 +38,17 @@ const activeComponent = computed(() => {
 function navigateToTab(type: ExploreType) {
   if (type === activeType.value) return
   router.push(`/app/explore/${type}`)
+}
+
+function handleDatasourceChanged(payload: { id: string; name: string; type: string }) {
+  registerContext({
+    viewName: 'Explore',
+    viewRoute: '/app/explore',
+    description: 'Query and visualize metrics, logs, and traces from connected datasources',
+    datasourceId: payload.id,
+    datasourceName: payload.name,
+    datasourceType: payload.type,
+  })
 }
 
 onMounted(() => {
@@ -89,6 +100,6 @@ onUnmounted(() => {
     </nav>
 
     <!-- Tab content -->
-    <component :is="activeComponent" :key="activeType" />
+    <component :is="activeComponent" :key="activeType" @datasource-changed="handleDatasourceChanged" />
   </div>
 </template>

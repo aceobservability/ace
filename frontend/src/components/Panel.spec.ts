@@ -1,10 +1,12 @@
 import { flushPromises, mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed } from 'vue'
 import Panel from './Panel.vue'
 
 const mockQueryDataSource = vi.hoisted(() => vi.fn())
 const mockSearchDataSourceTraces = vi.hoisted(() => vi.fn())
+const mockLookupPanel = vi.hoisted(() => vi.fn())
+const mockIsRegisteredPanel = vi.hoisted(() => vi.fn())
 
 // Mock state that can be controlled per test
 let mockLoading = false
@@ -39,6 +41,15 @@ vi.mock('../api/datasources', () => ({
   queryDataSource: mockQueryDataSource,
   searchDataSourceTraces: mockSearchDataSourceTraces,
 }))
+
+vi.mock('../utils/panelRegistry', () => ({
+  lookupPanel: mockLookupPanel,
+  isRegisteredPanel: mockIsRegisteredPanel,
+  registerPanel: vi.fn(),
+}))
+
+// Mock the side-effect import so it doesn't try to register real panels
+vi.mock('./panels/index', () => ({}))
 
 // Mock LineChart component
 vi.mock('./LineChart.vue', () => ({
@@ -106,7 +117,14 @@ describe('Panel', () => {
       data: { resultType: 'matrix', result: [] },
     })
     mockSearchDataSourceTraces.mockResolvedValue([])
+    // Default: not a registry panel
+    mockIsRegisteredPanel.mockReturnValue(false)
+    mockLookupPanel.mockReturnValue(null)
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('renders panel title', () => {
@@ -459,5 +477,207 @@ describe('Panel', () => {
       }),
     )
     expect(wrapper.find('.mock-log-viewer').text()).toContain('1 logs')
+  })
+
+  describe('registry-based panel rendering', () => {
+    const mockDataAdapter = vi.fn()
+
+    beforeEach(() => {
+      // Reset registry mocks for each registry test
+      mockIsRegisteredPanel.mockReturnValue(false)
+      mockLookupPanel.mockReturnValue(null)
+      mockDataAdapter.mockReset()
+    })
+
+    it('renders a registered panel type with adapted props', async () => {
+      const registeredType = 'heatmap'
+      mockIsRegisteredPanel.mockImplementation((type: string) => type === registeredType)
+      mockDataAdapter.mockReturnValue({ buckets: [[1, 2, 3]], colorRange: ['#fff', '#000'] })
+      mockLookupPanel.mockImplementation((type: string) => {
+        if (type !== registeredType) return null
+        return {
+          type: registeredType,
+          component: () =>
+            Promise.resolve({
+              name: 'MockHeatmap',
+              props: ['buckets', 'colorRange'],
+              template: '<div class="mock-registry-panel">Heatmap Mock</div>',
+            }),
+          dataAdapter: mockDataAdapter,
+          defaultQuery: {},
+          category: 'charts',
+          label: 'Heatmap',
+          icon: { template: '<span />' },
+        }
+      })
+
+      mockChartSeries = [
+        {
+          name: 'heat',
+          data: [{ timestamp: 1000, value: 42 }],
+          labels: {},
+        },
+      ]
+
+      const panelWithQuery = {
+        ...mockPanel,
+        type: registeredType,
+        query: { promql: 'histogram_quantile(0.9, rate(http_duration_bucket[5m]))' },
+      }
+
+      const wrapper = mount(Panel, {
+        props: { panel: panelWithQuery },
+      })
+      await flushPromises()
+
+      expect(wrapper.find('.mock-registry-panel').exists()).toBe(true)
+    })
+
+    it('does NOT use registry for known panel types (line_chart)', async () => {
+      // Even if registry returns something for line_chart, the built-in branch should win
+      mockIsRegisteredPanel.mockReturnValue(true)
+      mockLookupPanel.mockReturnValue({
+        type: 'line_chart',
+        component: () =>
+          Promise.resolve({
+            name: 'ShouldNotRender',
+            template: '<div class="mock-registry-panel">Should Not Render</div>',
+          }),
+        dataAdapter: () => ({}),
+        defaultQuery: {},
+        category: 'charts',
+        label: 'Line',
+        icon: { template: '<span />' },
+      })
+
+      mockChartSeries = [
+        {
+          name: 'up',
+          data: [{ timestamp: 1000, value: 1 }],
+          labels: {},
+        },
+      ]
+
+      const panelWithQuery = {
+        ...mockPanel,
+        type: 'line_chart',
+        query: { promql: 'up' },
+      }
+
+      const wrapper = mount(Panel, {
+        props: { panel: panelWithQuery },
+      })
+      await flushPromises()
+
+      // The built-in LineChart should render, not the registry component
+      expect(wrapper.find('.mock-line-chart').exists()).toBe(true)
+      expect(wrapper.find('.mock-registry-panel').exists()).toBe(false)
+    })
+
+    it('shows "No data available" for unregistered unknown panel type', async () => {
+      // unknown_type is not registered
+      mockIsRegisteredPanel.mockReturnValue(false)
+      mockLookupPanel.mockReturnValue(null)
+
+      const panelWithQuery = {
+        ...mockPanel,
+        type: 'unknown_type',
+        query: { promql: 'up' },
+      }
+
+      const wrapper = mount(Panel, {
+        props: { panel: panelWithQuery },
+      })
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('No data')
+      expect(wrapper.find('.mock-registry-panel').exists()).toBe(false)
+    })
+
+    it('calls dataAdapter with raw query result containing series, logs, and traces', async () => {
+      const registeredType = 'custom_viz'
+      mockIsRegisteredPanel.mockImplementation((type: string) => type === registeredType)
+      mockDataAdapter.mockReturnValue({ items: [] })
+      mockLookupPanel.mockImplementation((type: string) => {
+        if (type !== registeredType) return null
+        return {
+          type: registeredType,
+          component: () =>
+            Promise.resolve({
+              name: 'MockCustomViz',
+              props: ['items'],
+              template: '<div class="mock-registry-panel">Custom Viz</div>',
+            }),
+          dataAdapter: mockDataAdapter,
+          defaultQuery: {},
+          category: 'widgets',
+          label: 'Custom',
+          icon: { template: '<span />' },
+        }
+      })
+
+      mockChartSeries = [
+        {
+          name: 'metric1',
+          data: [{ timestamp: 1000, value: 5 }],
+          labels: {},
+        },
+      ]
+
+      const panelWithQuery = {
+        ...mockPanel,
+        type: registeredType,
+        query: { promql: 'some_query' },
+      }
+
+      mount(Panel, {
+        props: { panel: panelWithQuery },
+      })
+      await flushPromises()
+
+      expect(mockDataAdapter).toHaveBeenCalledWith(
+        expect.objectContaining({
+          series: expect.arrayContaining([expect.objectContaining({ name: 'metric1' })]),
+          logs: expect.any(Array),
+          traces: expect.any(Array),
+        }),
+        expect.anything(), // panel.query passed as second arg
+      )
+    })
+
+    it('hasQuery returns true for a registry panel with a datasource configured', async () => {
+      const registeredType = 'scatter'
+      mockIsRegisteredPanel.mockImplementation((type: string) => type === registeredType)
+      mockLookupPanel.mockImplementation((type: string) => {
+        if (type !== registeredType) return null
+        return {
+          type: registeredType,
+          component: () =>
+            Promise.resolve({
+              name: 'MockScatter',
+              template: '<div class="mock-registry-panel">Scatter</div>',
+            }),
+          dataAdapter: () => ({}),
+          defaultQuery: {},
+          category: 'charts',
+          label: 'Scatter',
+          icon: { template: '<span />' },
+        }
+      })
+
+      const panelWithDatasource = {
+        ...mockPanel,
+        type: registeredType,
+        query: { datasource_id: 'ds-1' },
+      }
+
+      const wrapper = mount(Panel, {
+        props: { panel: panelWithDatasource },
+      })
+      await flushPromises()
+
+      // Should NOT show "No query configured" — hasQuery should be true
+      expect(wrapper.text()).not.toContain('No query configured')
+    })
   })
 })
