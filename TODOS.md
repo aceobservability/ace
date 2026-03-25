@@ -101,19 +101,19 @@
 
 ### Extend useFavorites to non-dashboard sections
 
-**What:** Extend the `useFavorites` composable to support favorites for Services, Explore queries, and Alerts — not just dashboards.
+**What:** Extend the `useFavorites` composable to support favorites for Services, Explore queries, and Alerts — not just dashboards. Show favorited items within each sidebar accordion sub-nav section.
 
-**Why:** The new sidebar flyout displays a Favorites section per nav section, but `useFavorites` currently only tracks dashboard IDs. Services, Explore, and Alerts flyouts will show the empty state hint ("Star items to pin them here") until this is implemented.
+**Why:** The collapsible sidebar's accordion sub-nav could display favorited items per section, making it a power-user productivity tool. Currently `useFavorites` only tracks dashboard IDs, so Services, Explore, and Alerts accordions can't surface starred items.
 
-**Pros:** Favorites become useful across all sections, making the flyout a power-user productivity tool.
+**Pros:** Favorites become useful across all sections; accordion sub-nav becomes a quick-access panel for frequently-used services, queries, and alerts.
 
 **Cons:** Requires defining what a "favorite" means for each section (service ID? query string? alert rule ID?) and extending the localStorage schema.
 
-**Context:** The sidebar flyout is display-only — it reads from `useFavorites` but doesn't write. The star/favorite action must be added to each view (ServicesView, UnifiedExploreView, AlertsView) individually. DashboardList already has starring.
+**Context:** The sidebar accordion is display-only — it reads from `useFavorites` but doesn't write. The star/favorite action must be added to each view (ServicesView, UnifiedExploreView, AlertsView) individually. DashboardList already has starring.
 
 **Effort:** M
 **Priority:** P2
-**Depends on:** Sidebar redesign
+**Depends on:** Sidebar rework
 
 ## Enterprise Auth
 

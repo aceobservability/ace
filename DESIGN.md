@@ -154,13 +154,12 @@ Brand and data colors are separate systems. Never use the brand brass as the def
 - **Max content width:** 1536px (dashboards: fluid, no max)
 - **Border radius:** sm(4px) md(8px) lg(12px) full(9999px) — sharp, not bubbly
 
-### Sidebar (icon rail + flyout)
+### Sidebar (collapsible)
 | Token | Value | Usage |
 |-------|-------|-------|
-| sidebar-rail-width | `52px` | Icon rail, always visible |
-| sidebar-flyout-width | `240px` | Flyout panel, overlays content |
-| sidebar-total-width | `292px` | Rail + flyout when both open |
-| content-inset-left | `52px` | Main content left margin (rail only — flyout overlays, does not push) |
+| sidebar-width-collapsed | `64px` | Collapsed sidebar width (icons only) |
+| sidebar-width-expanded | `220px` | Expanded sidebar width (icons + labels + accordion sub-nav) |
+| sidebar-transition | `180ms cubic-bezier(0.2, 0.8, 0.2, 1)` | Width transition |
 
 ### Control Heights
 | Token | Value | Usage |
@@ -229,5 +228,5 @@ When data refreshes (auto-refresh fires, new metric arrives), the panel border b
 | 2026-03-23 | Surfaces deepened toward blue-black | Cooler surfaces create better contrast with the warm brass primary. Surfaces shift from warm-neutral to cool-neutral. |
 | 2026-03-23 | Mineral/industrial data viz palette added | 50+ hardcoded chart colors found in audit. 10-color "mineral" palette (Steel Blue default, brand brass reserved for emphasis) replaces ad-hoc values. Separate brand from data. |
 | 2026-03-23 | Shadow & overlay token layer added | No shadow tokens existed — shadows were ad-hoc rgba values across components. Brass-tinted focus glow ring is the indie move that makes Ace feel alive. |
-| 2026-03-23 | Sidebar layout tokens formalized | Icon rail (52px) + flyout (240px) pattern shipped in PR #126 but had no design tokens. Now formalized with control heights and panel chrome tokens. |
+| 2026-03-25 | Sidebar layout tokens updated for collapsible pattern | Icon rail (52px) + flyout pattern replaced with collapsible sidebar (64px collapsed / 220px expanded). New tokens: sidebar-width-collapsed, sidebar-width-expanded, sidebar-transition. |
 | 2026-03-23 | Data-pulse signature animation | No competitor does live-data border flash. Single-frame brass border pulse on data refresh (300ms) makes dashboards feel alive. Zero perf cost (hardware-accelerated box-shadow). |
