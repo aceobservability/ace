@@ -1132,7 +1132,7 @@ function roleBadgeStyle(role: string) {
                   </button>
                   <div
                     v-if="showAddProviderDropdown"
-                    class="absolute left-1/2 -translate-x-1/2 top-full mt-1 w-48 rounded-md py-1 z-10"
+                    class="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 w-48 rounded-md py-1 z-10"
                     :style="{ backgroundColor: 'var(--color-surface-bright)', border: '1px solid var(--color-outline-variant)', boxShadow: '0 4px 12px rgba(0,0,0,0.32), 0 2px 4px rgba(0,0,0,0.20)' }"
                     data-testid="add-provider-empty-dropdown"
                   >
