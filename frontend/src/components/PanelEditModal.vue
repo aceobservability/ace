@@ -6,6 +6,8 @@ import { useDatasource } from '../composables/useDatasource'
 import { useOrganization } from '../composables/useOrganization'
 import { isTracingType } from '../types/datasource'
 import type { Panel } from '../types/panel'
+import { getAllPanels } from '../utils/panelRegistry'
+import '../components/panels/index'
 import ClickHouseSQLEditor from './ClickHouseSQLEditor.vue'
 import CloudWatchQueryEditor from './CloudWatchQueryEditor.vue'
 import ElasticsearchQueryEditor from './ElasticsearchQueryEditor.vue'
@@ -46,6 +48,26 @@ const { currentOrg } = useOrganization()
 const { datasources, fetchDatasources } = useDatasource()
 
 const isEditing = computed(() => !!props.panel)
+
+// Build panel type options from registry + hardcoded legacy types
+const builtinTypes = [
+  { value: 'line_chart', label: 'Line Chart' },
+  { value: 'bar_chart', label: 'Bar Chart' },
+  { value: 'pie', label: 'Pie Chart' },
+  { value: 'gauge', label: 'Gauge' },
+  { value: 'stat', label: 'Stat' },
+  { value: 'table', label: 'Table' },
+  { value: 'logs', label: 'Logs' },
+  { value: 'trace_list', label: 'Trace List' },
+  { value: 'trace_heatmap', label: 'Trace Heatmap' },
+]
+const panelTypeOptions = computed(() => {
+  const builtinKeys = new Set(builtinTypes.map((t) => t.value))
+  const registryTypes = getAllPanels()
+    .filter((p) => !builtinKeys.has(p.type))
+    .map((p) => ({ value: p.type, label: p.label }))
+  return [...builtinTypes, ...registryTypes]
+})
 
 const title = ref(props.panel?.title || '')
 const panelType = ref(props.panel?.type || 'line_chart')
@@ -405,15 +427,7 @@ const selectClass = 'w-full rounded-lg px-3 py-2.5 text-sm transition cursor-poi
                 border: '1px solid var(--color-outline-variant)',
               }"
             >
-              <option value="line_chart">Line Chart</option>
-              <option value="bar_chart">Bar Chart</option>
-              <option value="pie">Pie Chart</option>
-              <option value="gauge">Gauge</option>
-              <option value="stat">Stat</option>
-              <option value="table">Table</option>
-              <option value="logs">Logs</option>
-              <option value="trace_list">Trace List</option>
-              <option value="trace_heatmap">Trace Heatmap</option>
+              <option v-for="opt in panelTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
             </select>
           </div>
         </div>
