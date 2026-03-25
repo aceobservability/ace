@@ -38,8 +38,8 @@ function readPersistedExpanded(): boolean {
 }
 
 // Module-level singleton state
-let isExpanded = ref<boolean>(readPersistedExpanded())
-let expandedSections = ref<Set<string>>(new Set())
+const isExpanded = ref<boolean>(readPersistedExpanded())
+const expandedSections = ref<Set<string>>(new Set())
 
 let cachedRoutePath: { value: string } | null = null
 let router: { push: (path: string) => void } | null = null
