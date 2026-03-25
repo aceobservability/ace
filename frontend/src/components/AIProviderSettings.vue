@@ -62,7 +62,8 @@ const urlHints: Record<string, string> = {
 
 // --- Helpers ---
 
-function truncateUrl(url: string, max = 40): string {
+function truncateUrl(url: string | undefined, max = 40): string {
+  if (!url) return ''
   if (url.length <= max) return url
   return `${url.slice(0, max)}...`
 }
