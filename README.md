@@ -149,7 +149,7 @@ kind create cluster
 #### 2. Start the dev environment
 
 ```bash
-tilt up -- victoria-metrics victoria-logs
+tilt up -- --enable victoria-metrics --enable victoria-logs
 ```
 
 This deploys to your local cluster:
@@ -166,10 +166,10 @@ Enable any combination of datasource backends:
 
 ```bash
 # Prometheus + Loki + Tempo
-tilt up -- prometheus loki tempo
+tilt up -- --enable prometheus --enable loki --enable tempo
 
 # Everything
-tilt up -- prometheus loki victoria-metrics victoria-logs tempo
+tilt up -- --enable prometheus --enable loki --enable victoria-metrics --enable victoria-logs --enable tempo
 
 # Core only (no datasource backends)
 tilt up

@@ -9,7 +9,7 @@ optional_resources = [
     'tempo',
 ]
 
-config.define_string_list('enable', args=True)
+config.define_string_list('enable')
 cfg = config.parse()
 
 requested = cfg.get('enable', [])
