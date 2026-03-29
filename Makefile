@@ -20,7 +20,7 @@ help:
 	@printf "  make compose-down              Tear down all Docker Compose services\n"
 	@printf "  make compose-logs              Follow Docker Compose logs\n"
 	@printf "  make telemetrygen PROFILES=... Start OTLP telemetry generators for a profile\n"
-	@printf "  make tilt-up [ENABLE=...]  Start Tilt (e.g. ENABLE=\"victoria-metrics victoria-logs\")\n"
+	@printf "  make tilt-up   Start Tilt with local Helm infra + app services\n"
 	@printf "  make tilt-down Stop Tilt and tear down deployed resources\n"
 	@printf "  make frontend  Start Vite frontend dev server\n"
 	@printf "  make test      Run backend and frontend test suites\n"
@@ -99,10 +99,8 @@ seed-correlated:
 	fi; \
 	cd backend && "$$GO_BIN" run ./cmd/seed-correlated --loki-url $(LOKI_URL) --tempo-url $(TEMPO_URL) --count $(COUNT)
 
-ENABLE ?=
-
 tilt-up:
-	@tilt up -- $(ENABLE)
+	@tilt up
 
 tilt-down:
 	@tilt down

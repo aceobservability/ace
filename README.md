@@ -149,7 +149,7 @@ kind create cluster
 #### 2. Start the dev environment
 
 ```bash
-make tilt-up ENABLE="victoria-metrics victoria-logs"
+tilt up -- victoria-metrics victoria-logs
 ```
 
 This deploys to your local cluster:
@@ -166,10 +166,13 @@ Enable any combination of datasource backends:
 
 ```bash
 # Prometheus + Loki + Tempo
-make tilt-up ENABLE="prometheus loki tempo"
+tilt up -- prometheus loki tempo
 
 # Everything
-make tilt-up ENABLE="prometheus loki victoria-metrics victoria-logs tempo"
+tilt up -- prometheus loki victoria-metrics victoria-logs tempo
+
+# Core only (no datasource backends)
+tilt up
 ```
 
 You can also enable/disable services from the Tilt UI after startup.
@@ -195,7 +198,7 @@ make seed-correlated
 #### Stop
 
 ```bash
-make tilt-down
+tilt down
 
 # To also stop Colima:
 colima stop
