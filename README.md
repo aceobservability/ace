@@ -259,31 +259,93 @@ make check
 
 Runs tests, linting, and security scans, then prints a summary table.
 
+## API Endpoints
+
+- `GET /api/health` — health check endpoint
+
 ## Elasticsearch (ELK) Datasource
 
-Ace queries Elasticsearch directly for both logs and metrics aggregations. To use it locally:
+Ace queries Elasticsearch directly for both **logs** and **metrics-style** aggregations, so Kibana is optional for exploration dashboards.
+
+To use it locally:
 
 1. Start the ELK profile: `make compose-up PROFILES=elk`
 2. Add an Elasticsearch datasource in **Data Sources > Add Data Source**:
    - URL: `http://localhost:9200`
+   - Auth: `none` (for local profile)
    - Default Index Pattern: `dash-logs-*`
+   - Timestamp Field: `@timestamp` (optional)
+   - Message Field: `message` (optional)
+   - Level Field: `level` (optional)
 
-Query examples:
-- **Logs:** Lucene query string — `service.name:"backend" AND level:error`
-- **Metrics:** JSON body with `aggs` for date histogram timeseries
+Then use Explore/Dashboards:
+
+- **Logs mode:** Lucene query string (example: `service.name:"backend" AND level:error`) or Elasticsearch JSON body.
+- **Metrics mode:** JSON body with `aggs`, or plain query string and Ace will auto-build a date histogram timeseries.
+
+Example metrics aggregation query:
+```json
+{
+  "index": "dash-logs-*",
+  "query": {
+    "query_string": {
+      "query": "service.name:backend"
+    }
+  },
+  "aggs": {
+    "timeseries": {
+      "date_histogram": {
+        "field": "@timestamp",
+        "fixed_interval": "1m"
+      }
+    }
+  }
+}
+```
+
+## Code Coverage
+
+```bash
+# Backend
+cd backend
+go test ./... -coverprofile=coverage.out
+go tool cover -func=coverage.out
+
+# Frontend
+cd frontend
+npm run test:coverage
+```
+
+## Versioning and Releases
+
+- **Versioning:** Semantic Versioning (`vMAJOR.MINOR.PATCH`) with Conventional Commits
+- **Release planning:** `release-please` opens and updates release PRs from changes on `master`
+- **Release output:** merge of the release PR creates a GitHub Release with generated notes and updates `CHANGELOG.md`
+- **Auto-published assets:** backend binaries, frontend artifact tarball, image SBOMs, and checksums
+- **Release guide:** see [RELEASE.md](RELEASE.md) for the maintainer workflow and versioning rules
 
 ## Container Images
 
 Public multi-arch images are published to GHCR on every release:
+
+- `ghcr.io/aceobservability/ace-backend`
+- `ghcr.io/aceobservability/ace-frontend`
 
 ```bash
 docker pull ghcr.io/aceobservability/ace-backend:latest
 docker pull ghcr.io/aceobservability/ace-frontend:latest
 ```
 
-Tag strategy: `vX.Y.Z`, `X.Y.Z`, `X.Y`, `X`, `latest`, `sha-<commit>`
+When building the frontend image yourself, set `VITE_API_URL` at build time:
 
-See [RELEASE.md](RELEASE.md) for the maintainer workflow and versioning rules.
+```bash
+docker build -f frontend/Dockerfile --build-arg VITE_API_URL=https://api.example.com -t ace-frontend:local .
+```
+
+Tag strategy:
+
+- Release tags: `vX.Y.Z`, `X.Y.Z`
+- Moving tags: `X.Y`, `X`, `latest`, `sha-<commit>`
 
 ## Project Structure
 
