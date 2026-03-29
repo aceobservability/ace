@@ -146,24 +146,10 @@ kind create cluster
 
 **Docker Desktop:** Enable Kubernetes in Docker Desktop settings and restart.
 
-#### 2. Configure datasource backends
-
-Create a `tilt_config.json` in the repo root to choose which datasource backends to enable:
-
-```json
-{
-  "enable": ["victoria-metrics", "victoria-logs"]
-}
-```
-
-Available services: `prometheus`, `loki`, `victoria-metrics`, `victoria-logs`, `tempo`
-
-This file is gitignored — each developer can configure their own stack.
-
-#### 3. Start the dev environment
+#### 2. Start the dev environment
 
 ```bash
-tilt up
+tilt up -- victoria-metrics victoria-logs
 ```
 
 This deploys to your local cluster:
@@ -171,11 +157,22 @@ This deploys to your local cluster:
 - **valkey** — cache/session store (localhost:6379)
 - **backend** — Go API (http://localhost:8080)
 - **frontend** — Vite dev server with hot reload (http://localhost:5173)
-- Plus any datasource backends from your `tilt_config.json`
+- **victoria-metrics** — metrics storage (http://localhost:8428)
+- **victoria-logs** — log storage (http://localhost:9428)
 
 Open the Tilt UI (URL shown in terminal output) to monitor service health and enable/disable services on the fly.
 
-#### 4. Seed data for a demoable platform
+Available datasource backends: `prometheus`, `loki`, `victoria-metrics`, `victoria-logs`, `tempo`
+
+```bash
+# Everything
+tilt up -- prometheus loki victoria-metrics victoria-logs tempo
+
+# Core only (no datasource backends)
+tilt up
+```
+
+#### 3. Seed data for a demoable platform
 
 ```bash
 # Create admin user + organizations + datasource configs
@@ -185,7 +182,7 @@ make seed
 make seed-correlated
 ```
 
-#### 5. Stop
+#### 4. Stop
 
 ```bash
 tilt down
