@@ -1,4 +1,4 @@
-.PHONY: help backend seed seed-correlated frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs telemetrygen
+.PHONY: help backend seed seed-tilt seed-correlated frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs telemetrygen
 
 EMAIL ?= admin@admin.com
 PASSWORD ?= Admin1234
@@ -15,7 +15,8 @@ help:
 	@printf "  make backend   Start Go backend (hot reload with air if installed)\n"
 	@printf "  make backend-lint Run backend lint checks with golangci-lint\n"
 	@printf "  make seed [EMAIL=...] [PASSWORD=...]\n"
-	@printf "                 Seed 4 orgs with stack datasources. Defaults: EMAIL=admin@admin.com PASSWORD=Admin1234\n"
+	@printf "                 Seed all orgs with stack datasources. Defaults: EMAIL=admin@admin.com PASSWORD=Admin1234\n"
+	@printf "  make seed-tilt Seed Victoria org with k8s URLs (used by Tilt automatically)\n"
 	@printf "  make compose-up [PROFILES=...]  Start Docker Compose infra (core + profiles)\n"
 	@printf "  make compose-down              Tear down all Docker Compose services\n"
 	@printf "  make compose-logs              Follow Docker Compose logs\n"
@@ -83,6 +84,21 @@ seed:
 		exit 1; \
 	fi; \
 	cd backend && "$$GO_BIN" run ./cmd/seed -email "$(EMAIL)" -password "$(PASSWORD)"
+
+seed-tilt:
+	@set -e; \
+	GO_BIN=""; \
+	if [ -x "$$HOME/.go-sdk/go1.25.7/bin/go" ]; then \
+		GO_BIN="$$HOME/.go-sdk/go1.25.7/bin/go"; \
+	elif command -v go >/dev/null 2>&1; then \
+		GO_BIN="$$(command -v go)"; \
+	fi; \
+	if [ -z "$$GO_BIN" ]; then \
+		printf "Go is not installed.\n"; \
+		printf "Install Go 1.25+ and retry make seed-tilt.\n"; \
+		exit 1; \
+	fi; \
+	cd backend && "$$GO_BIN" run ./cmd/seed -email "$(EMAIL)" -password "$(PASSWORD)" -org victoria -k8s
 
 seed-correlated:
 	@set -e; \

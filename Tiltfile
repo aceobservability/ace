@@ -9,6 +9,8 @@ optional_resources = [
     'tempo',
 ]
 
+default_resources = ['victoria-metrics', 'victoria-logs']
+
 config.define_string_list('enable', args=True)
 cfg = config.parse()
 
@@ -17,10 +19,12 @@ unknown = [name for name in requested if name not in optional_resources]
 if len(unknown) > 0:
     fail('Unsupported values for --enable: {}. Supported: {}'.format(', '.join(unknown), ', '.join(optional_resources)))
 
-enabled_resources = ['namespace', 'postgres', 'valkey', 'backend', 'frontend']
-for name in optional_resources:
-    if name in requested:
-        enabled_resources.append(name)
+# If no --enable flags, use defaults; otherwise use only what was requested.
+extra = requested if len(requested) > 0 else default_resources
+
+enabled_resources = ['namespace', 'postgres', 'valkey', 'backend', 'frontend', 'seed']
+for name in extra:
+    enabled_resources.append(name)
 
 config.set_enabled_resources(enabled_resources)
 
@@ -85,4 +89,11 @@ local_resource(
     resource_deps=['backend'],
     labels=['app'],
     links=['http://localhost:5173'],
+)
+
+local_resource(
+    'seed',
+    cmd='make seed-tilt',
+    resource_deps=['backend'],
+    labels=['infra'],
 )
