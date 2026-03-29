@@ -60,6 +60,9 @@ agent/**
 !agent/opencode-auto-allow.json
 !agent/prompt.md
 
+# Tilt user config
+tilt_config.json
+
 # Local progress tracker
 /progress.txt
 .gstack/

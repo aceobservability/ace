@@ -146,10 +146,24 @@ kind create cluster
 
 **Docker Desktop:** Enable Kubernetes in Docker Desktop settings and restart.
 
-#### 2. Start the dev environment
+#### 2. Configure datasource backends
+
+Create a `tilt_config.json` in the repo root to choose which datasource backends to enable:
+
+```json
+{
+  "enable": ["victoria-metrics", "victoria-logs"]
+}
+```
+
+Available services: `prometheus`, `loki`, `victoria-metrics`, `victoria-logs`, `tempo`
+
+This file is gitignored — each developer can configure their own stack.
+
+#### 3. Start the dev environment
 
 ```bash
-tilt up -- --enable victoria-metrics --enable victoria-logs
+tilt up
 ```
 
 This deploys to your local cluster:
@@ -157,35 +171,11 @@ This deploys to your local cluster:
 - **valkey** — cache/session store (localhost:6379)
 - **backend** — Go API (http://localhost:8080)
 - **frontend** — Vite dev server with hot reload (http://localhost:5173)
-- **victoria-metrics** — metrics storage (http://localhost:8428)
-- **victoria-logs** — log storage (http://localhost:9428)
+- Plus any datasource backends from your `tilt_config.json`
 
-Open the Tilt UI (URL shown in terminal output) to monitor service health.
+Open the Tilt UI (URL shown in terminal output) to monitor service health and enable/disable services on the fly.
 
-Enable any combination of datasource backends:
-
-```bash
-# Prometheus + Loki + Tempo
-tilt up -- --enable prometheus --enable loki --enable tempo
-
-# Everything
-tilt up -- --enable prometheus --enable loki --enable victoria-metrics --enable victoria-logs --enable tempo
-
-# Core only (no datasource backends)
-tilt up
-```
-
-You can also enable/disable services from the Tilt UI after startup.
-
-| Service | Port | Enable name |
-|---------|------|-------------|
-| Prometheus | http://localhost:9090 | `prometheus` |
-| Loki | http://localhost:3100 | `loki` |
-| VictoriaMetrics | http://localhost:8428 | `victoria-metrics` |
-| Victoria Logs | http://localhost:9428 | `victoria-logs` |
-| Tempo | http://localhost:3200 | `tempo` |
-
-#### 3. Seed data for a demoable platform
+#### 4. Seed data for a demoable platform
 
 ```bash
 # Create admin user + organizations + datasource configs
@@ -195,7 +185,7 @@ make seed
 make seed-correlated
 ```
 
-#### Stop
+#### 5. Stop
 
 ```bash
 tilt down
