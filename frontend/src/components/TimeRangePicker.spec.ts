@@ -34,6 +34,16 @@ function findCustomRangeBtn(wrapper: ReturnType<typeof mount>) {
   return dropdown.findAll('button').find((b) => b.text().includes('Custom range'))
 }
 
+/** Find the refresh interval trigger button. */
+function findIntervalTrigger(wrapper: ReturnType<typeof mount>) {
+  return wrapper.find('[data-testid="refresh-interval-trigger"]')
+}
+
+/** Find all refresh interval option buttons. */
+function findIntervalOptions(wrapper: ReturnType<typeof mount>) {
+  return wrapper.findAll('[data-testid="refresh-interval-option"]')
+}
+
 describe('TimeRangePicker', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -63,16 +73,12 @@ describe('TimeRangePicker', () => {
     expect(findRefreshBtn(wrapper).exists()).toBe(true)
   })
 
-  it('should render refresh interval selector with auto-refresh options', () => {
+  it('should render refresh interval trigger with current label', () => {
     const wrapper = mount(TimeRangePicker)
 
-    const select = wrapper.find('[data-testid="time-range-auto-refresh-select"]')
-    expect(select.exists()).toBe(true)
-
-    const options = select.findAll('option')
-    // Should include Off, 15s, 30s, 1m, 5m at minimum
-    const labels = options.map((o) => o.text())
-    expect(labels).toContain('Off')
+    const trigger = findIntervalTrigger(wrapper)
+    expect(trigger.exists()).toBe(true)
+    expect(trigger.text()).toContain('Off')
   })
 
   it('should toggle dropdown when clicking time display', async () => {
@@ -204,12 +210,17 @@ describe('TimeRangePicker', () => {
     expect(wrapper.text()).toContain('Quick ranges')
   })
 
-  it('should change refresh interval', async () => {
+  it('should change refresh interval via custom dropdown', async () => {
     const wrapper = mount(TimeRangePicker)
 
-    const select = wrapper.find('[data-testid="time-range-auto-refresh-select"]')
+    // Open interval dropdown
+    await findIntervalTrigger(wrapper).trigger('click')
 
-    await select.setValue('5s')
+    // Select "5s"
+    const options = findIntervalOptions(wrapper)
+    const fiveSecOption = options.find((o) => o.text().includes('5s'))
+    expect(fiveSecOption).toBeDefined()
+    await fiveSecOption!.trigger('click')
 
     const { refreshIntervalValue } = useTimeRange()
     expect(refreshIntervalValue.value).toBe('5s')
@@ -245,26 +256,12 @@ describe('TimeRangePicker', () => {
     expect(callback).toHaveBeenCalled()
   })
 
-  it('should show refresh status when auto-refresh is enabled', async () => {
+  it('should show status text with last refreshed time', () => {
     const wrapper = mount(TimeRangePicker)
 
-    // Enable auto-refresh
-    const select = wrapper.find('[data-testid="time-range-auto-refresh-select"]')
-    await select.setValue('5s')
-
-    // Should show refresh status text (the span with refresh timing info)
-    expect(wrapper.text()).toMatch(/Refreshing|ago|just now/)
-  })
-
-  it('should not show refresh status when auto-refresh is off', () => {
-    const wrapper = mount(TimeRangePicker)
-
-    // Auto-refresh is off by default; the refresh status span should not exist
-    // The span with "Refreshing..." or "Xm ago" only appears when refreshIntervalValue !== 'off'
-    const statusTexts = wrapper
-      .findAll('span')
-      .filter((s) => s.text().includes('Refreshing') || s.text().match(/\d+[smh] ago/))
-    expect(statusTexts.length).toBe(0)
+    // Status should be visible by default (showStatus=true)
+    const status = wrapper.find('[data-testid="refresh-status"]')
+    expect(status.exists()).toBe(true)
   })
 
   it('should show last refresh time in refresh button title', async () => {
@@ -290,5 +287,178 @@ describe('TimeRangePicker', () => {
 
     // The refresh button should still exist
     expect(findRefreshBtn(wrapper).exists()).toBe(true)
+  })
+
+  // --- New tests for consolidated toolbar ---
+
+  it('should open interval dropdown when clicking trigger', async () => {
+    const wrapper = mount(TimeRangePicker)
+
+    await findIntervalTrigger(wrapper).trigger('click')
+
+    const options = findIntervalOptions(wrapper)
+    expect(options.length).toBeGreaterThanOrEqual(6) // Off, 5s, 15s, 30s, 1m, 5m
+    expect(wrapper.text()).toContain('Auto-refresh')
+  })
+
+  it('should close interval dropdown after selecting option', async () => {
+    const wrapper = mount(TimeRangePicker)
+
+    await findIntervalTrigger(wrapper).trigger('click')
+    expect(findIntervalOptions(wrapper).length).toBeGreaterThan(0)
+
+    const thirtySecOption = findIntervalOptions(wrapper).find((o) => o.text().includes('30s'))
+    await thirtySecOption!.trigger('click')
+
+    // Dropdown should close
+    expect(findIntervalOptions(wrapper).length).toBe(0)
+
+    // Value should be updated
+    const { refreshIntervalValue } = useTimeRange()
+    expect(refreshIntervalValue.value).toBe('30s')
+  })
+
+  it('should close time range dropdown when opening interval dropdown (mutual exclusion)', async () => {
+    const wrapper = mount(TimeRangePicker)
+
+    // Open time range dropdown
+    await findTimeDisplay(wrapper).trigger('click')
+    expect(wrapper.text()).toContain('Quick ranges')
+
+    // Open interval dropdown
+    await findIntervalTrigger(wrapper).trigger('click')
+
+    // Time range dropdown should be closed
+    expect(wrapper.text()).not.toContain('Quick ranges')
+    // Interval dropdown should be open
+    expect(wrapper.text()).toContain('Auto-refresh')
+  })
+
+  it('should close interval dropdown when opening time range dropdown (mutual exclusion)', async () => {
+    const wrapper = mount(TimeRangePicker)
+
+    // Open interval dropdown
+    await findIntervalTrigger(wrapper).trigger('click')
+    expect(wrapper.text()).toContain('Auto-refresh')
+
+    // Open time range dropdown
+    await findTimeDisplay(wrapper).trigger('click')
+
+    // Interval dropdown should be closed
+    expect(findIntervalOptions(wrapper).length).toBe(0)
+    // Time range dropdown should be open
+    expect(wrapper.text()).toContain('Quick ranges')
+  })
+
+  it('should navigate interval options with ArrowDown/ArrowUp', async () => {
+    const wrapper = mount(TimeRangePicker)
+
+    const trigger = findIntervalTrigger(wrapper)
+    await trigger.trigger('click')
+
+    // Arrow down should highlight first option
+    await trigger.trigger('keydown', { key: 'ArrowDown' })
+    await wrapper.vm.$nextTick()
+
+    // Arrow down again
+    await trigger.trigger('keydown', { key: 'ArrowDown' })
+    await wrapper.vm.$nextTick()
+
+    // Arrow up should go back one
+    await trigger.trigger('keydown', { key: 'ArrowUp' })
+    await wrapper.vm.$nextTick()
+
+    // Options should still be visible
+    expect(findIntervalOptions(wrapper).length).toBeGreaterThan(0)
+  })
+
+  it('should select option with Enter and close', async () => {
+    const wrapper = mount(TimeRangePicker)
+
+    const trigger = findIntervalTrigger(wrapper)
+    await trigger.trigger('click')
+
+    // Navigate to second option (5s)
+    await trigger.trigger('keydown', { key: 'ArrowDown' })
+    await trigger.trigger('keydown', { key: 'ArrowDown' })
+    await wrapper.vm.$nextTick()
+
+    // Press Enter to select
+    await trigger.trigger('keydown', { key: 'Enter' })
+    await wrapper.vm.$nextTick()
+
+    // Dropdown should close
+    expect(findIntervalOptions(wrapper).length).toBe(0)
+  })
+
+  it('should close interval dropdown with Escape', async () => {
+    const wrapper = mount(TimeRangePicker)
+
+    const trigger = findIntervalTrigger(wrapper)
+    await trigger.trigger('click')
+    expect(findIntervalOptions(wrapper).length).toBeGreaterThan(0)
+
+    await trigger.trigger('keydown', { key: 'Escape' })
+    await wrapper.vm.$nextTick()
+
+    // Dropdown should close
+    expect(findIntervalOptions(wrapper).length).toBe(0)
+
+    // Value should not change
+    const { refreshIntervalValue } = useTimeRange()
+    expect(refreshIntervalValue.value).toBe('off')
+  })
+
+  it('should render StatusDot with info status when auto-refresh off', () => {
+    const wrapper = mount(TimeRangePicker)
+
+    const statusDot = wrapper.findComponent({ name: 'StatusDot' })
+    expect(statusDot.exists()).toBe(true)
+    expect(statusDot.props('status')).toBe('info')
+    expect(statusDot.props('pulse')).toBe(false)
+  })
+
+  it('should render StatusDot with healthy status and pulse when auto-refresh on', async () => {
+    const wrapper = mount(TimeRangePicker)
+    const { setRefreshInterval } = useTimeRange()
+
+    setRefreshInterval('30s')
+    await wrapper.vm.$nextTick()
+
+    const statusDot = wrapper.findComponent({ name: 'StatusDot' })
+    expect(statusDot.props('status')).toBe('healthy')
+    expect(statusDot.props('pulse')).toBe(true)
+  })
+
+  it('should show stale warning when elapsed exceeds 2x interval', async () => {
+    const wrapper = mount(TimeRangePicker)
+    const { setRefreshInterval, pauseAutoRefresh } = useTimeRange()
+
+    // Start auto-refresh at 5s interval
+    setRefreshInterval('5s')
+    await wrapper.vm.$nextTick()
+
+    // Let the timer fire once so lastRefreshTime is updated
+    vi.advanceTimersByTime(6000)
+    await wrapper.vm.$nextTick()
+
+    // Pause auto-refresh (stops timer but keeps interval setting)
+    pauseAutoRefresh()
+
+    // Advance past 2x interval (>10s) without auto-refresh firing
+    vi.advanceTimersByTime(15000)
+    await wrapper.vm.$nextTick()
+
+    const statusDot = wrapper.findComponent({ name: 'StatusDot' })
+    expect(statusDot.props('status')).toBe('warning')
+  })
+
+  it('should hide status when showStatus=false', () => {
+    const wrapper = mount(TimeRangePicker, {
+      props: { showStatus: false },
+    })
+
+    const status = wrapper.find('[data-testid="refresh-status"]')
+    expect(status.exists()).toBe(false)
   })
 })

@@ -359,13 +359,6 @@ describe('DashboardDetailView', () => {
     })
   })
 
-  it('renders RefreshIndicator component', async () => {
-    const wrapper = mount(DashboardDetailView)
-    await flushPromises()
-
-    expect(wrapper.findComponent({ name: 'RefreshIndicator' }).exists()).toBe(true)
-  })
-
   it('registers command context on mount', async () => {
     mount(DashboardDetailView)
     await flushPromises()

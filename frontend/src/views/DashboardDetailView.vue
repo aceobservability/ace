@@ -8,7 +8,6 @@ import { getDashboard } from '../api/dashboards'
 import { deletePanel, listPanels, updatePanel } from '../api/panels'
 import Panel from '../components/Panel.vue'
 import PanelEditModal from '../components/PanelEditModal.vue'
-import RefreshIndicator from '../components/RefreshIndicator.vue'
 import TimeRangePicker from '../components/TimeRangePicker.vue'
 import VariableBar from '../components/VariableBar.vue'
 import { useCommandContext } from '../composables/useCommandContext'
@@ -60,18 +59,6 @@ const dashboardSettings = ref<DashboardViewSettings>({
   variables: [],
 })
 
-// RefreshIndicator state
-const lastRefreshed = ref<Date | null>(null)
-const autoRefreshMs = ref(0)
-
-function handleAutoRefreshChange(ms: number) {
-  autoRefreshMs.value = ms
-  if (ms > 0) {
-    setRefreshInterval(ms === 5000 ? '5s' : ms === 15000 ? '15s' : ms === 30000 ? '30s' : ms === 60000 ? '1m' : ms === 300000 ? '5m' : 'off')
-  } else {
-    setRefreshInterval('off')
-  }
-}
 
 function dashboardLoadErrorMessage(cause: unknown): string {
   if (cause instanceof Error && cause.message === 'Not a member of this organization') {
@@ -190,7 +177,6 @@ async function loadData() {
     await Promise.all([fetchPanels(), fetchVariables()])
   }
   loading.value = false
-  lastRefreshed.value = new Date()
 }
 
 function openAddPanel() {
@@ -394,7 +380,6 @@ onMounted(async () => {
     // In the future, this will refetch panel data with the new time range
     // For now, we log the time range for debugging
     console.log('Time range updated:', timeRange.value)
-    lastRefreshed.value = new Date()
   })
 })
 
@@ -448,14 +433,12 @@ onUnmounted(() => {
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-3">
+        <TimeRangePicker />
+        <div
+          class="hidden h-6 w-px sm:block"
+          :style="{ backgroundColor: 'var(--color-outline-variant)' }"
+        />
         <div class="flex items-center gap-2">
-          <TimeRangePicker />
-          <RefreshIndicator
-            :last-refreshed="lastRefreshed"
-            :auto-refresh-interval="autoRefreshMs"
-            :on-interval-change="handleAutoRefreshChange"
-          />
-        </div>
         <button
           v-if="dashboard"
           class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition hover:opacity-80"
@@ -481,6 +464,7 @@ onUnmounted(() => {
           <Plus :size="18" />
           <span>Add Panel</span>
         </button>
+        </div>
       </div>
     </header>
 

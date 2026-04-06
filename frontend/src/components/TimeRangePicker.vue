@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ChevronDown, ChevronUp, Clock, RefreshCw } from 'lucide-vue-next'
-import { computed, onUnmounted, ref } from 'vue'
+import { Check, ChevronDown, ChevronUp, Clock, RefreshCw } from 'lucide-vue-next'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useTimeRange } from '../composables/useTimeRange'
+import StatusDot from './StatusDot.vue'
 
 const props = withDefaults(
   defineProps<{
     stacked?: boolean
+    showStatus?: boolean
   }>(),
   {
     stacked: false,
+    showStatus: true,
   },
 )
 
@@ -28,15 +31,58 @@ const {
 } = useTimeRange()
 
 const isOpen = ref(false)
+const isRefreshDropdownOpen = ref(false)
 const showCustomRange = ref(false)
 const customFrom = ref('')
 const customTo = ref('')
 const customRangeError = ref<string | null>(null)
+const now = ref(Date.now())
+const highlightedIndex = ref(-1)
+let tickTimer: ReturnType<typeof setInterval> | null = null
 
 const currentDisplayText = computed(() => displayText.value)
 
+const currentIntervalLabel = computed(() => {
+  const match = refreshIntervals.find((r) => r.value === refreshIntervalValue.value)
+  return match ? match.label : 'Off'
+})
+
+const refreshIntervalMs = computed(() => {
+  const match = refreshIntervals.find((r) => r.value === refreshIntervalValue.value)
+  return match ? match.interval : 0
+})
+
+const isAutoRefreshing = computed(() => refreshIntervalMs.value > 0)
+
+const secondsAgo = computed(() => {
+  return Math.max(0, Math.floor((now.value - lastRefreshTime.value) / 1000))
+})
+
+const isStale = computed(() => {
+  if (!isAutoRefreshing.value) return false
+  const elapsed = now.value - lastRefreshTime.value
+  return elapsed > refreshIntervalMs.value * 2
+})
+
+const statusDotStatus = computed(() => {
+  if (isStale.value) return 'warning' as const
+  if (isAutoRefreshing.value) return 'healthy' as const
+  return 'info' as const
+})
+
+function formatAgo(seconds: number): string {
+  if (seconds < 1) return 'just now'
+  if (seconds < 60) return `${seconds}s ago`
+  const mins = Math.floor(seconds / 60)
+  if (mins < 60) return `${mins}m ago`
+  return `${Math.floor(mins / 60)}h ago`
+}
+
 function toggleDropdown() {
   isOpen.value = !isOpen.value
+  if (isOpen.value) {
+    isRefreshDropdownOpen.value = false
+  }
   if (!isOpen.value) {
     showCustomRange.value = false
     customRangeError.value = null
@@ -49,18 +95,76 @@ function closeDropdown() {
   customRangeError.value = null
 }
 
+function toggleRefreshDropdown() {
+  isRefreshDropdownOpen.value = !isRefreshDropdownOpen.value
+  if (isRefreshDropdownOpen.value) {
+    isOpen.value = false
+    showCustomRange.value = false
+    customRangeError.value = null
+    highlightedIndex.value = -1
+  }
+}
+
+function closeRefreshDropdown() {
+  isRefreshDropdownOpen.value = false
+  highlightedIndex.value = -1
+}
+
+function closeAllDropdowns() {
+  closeDropdown()
+  closeRefreshDropdown()
+}
+
 function selectPreset(presetValue: string) {
   setPreset(presetValue)
   closeDropdown()
 }
 
+function selectInterval(intervalValue: string) {
+  setRefreshInterval(intervalValue)
+  if (intervalValue !== 'off') {
+    refresh()
+  }
+  closeRefreshDropdown()
+}
+
+function handleRefreshDropdownKeydown(event: KeyboardEvent) {
+  if (!isRefreshDropdownOpen.value) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      toggleRefreshDropdown()
+    }
+    return
+  }
+
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault()
+      highlightedIndex.value = Math.min(highlightedIndex.value + 1, refreshIntervals.length - 1)
+      break
+    case 'ArrowUp':
+      event.preventDefault()
+      highlightedIndex.value = Math.max(highlightedIndex.value - 1, 0)
+      break
+    case 'Enter':
+      event.preventDefault()
+      if (highlightedIndex.value >= 0 && highlightedIndex.value < refreshIntervals.length) {
+        selectInterval(refreshIntervals[highlightedIndex.value].value)
+      }
+      break
+    case 'Escape':
+      event.preventDefault()
+      closeRefreshDropdown()
+      break
+  }
+}
+
 function openCustomRange() {
   showCustomRange.value = true
-  // Initialize with current date/time values
-  const now = new Date()
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+  const d = new Date()
+  const oneHourAgo = new Date(d.getTime() - 60 * 60 * 1000)
   customFrom.value = formatDateTimeLocal(oneHourAgo)
-  customTo.value = formatDateTimeLocal(now)
+  customTo.value = formatDateTimeLocal(d)
 }
 
 function applyCustomRange() {
@@ -86,22 +190,8 @@ function cancelCustomRange() {
   customRangeError.value = null
 }
 
-function selectRefreshInterval(intervalValue: string) {
-  setRefreshInterval(intervalValue)
-}
-
 function handleRefresh() {
   refresh()
-}
-
-function formatLastRefresh(): string {
-  const now = Date.now()
-  const diff = now - lastRefreshTime.value
-
-  if (diff < 1000) return 'just now'
-  if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-  return `${Math.floor(diff / 3600000)}h ago`
 }
 
 function formatDateTimeLocal(date: Date): string {
@@ -113,22 +203,30 @@ function formatDateTimeLocal(date: Date): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
-// Close dropdown when clicking outside
 function handleClickOutside(event: MouseEvent) {
   const target = event.target as HTMLElement
   if (!target.closest('.time-range-picker')) {
-    closeDropdown()
+    closeAllDropdowns()
   }
 }
 
-// Add/remove click listener
 if (typeof window !== 'undefined') {
   window.addEventListener('click', handleClickOutside)
 }
 
+onMounted(() => {
+  tickTimer = setInterval(() => {
+    now.value = Date.now()
+  }, 1000)
+})
+
 onUnmounted(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('click', handleClickOutside)
+  }
+  if (tickTimer) {
+    clearInterval(tickTimer)
+    tickTimer = null
   }
 })
 </script>
@@ -143,7 +241,7 @@ onUnmounted(() => {
       <div class="flex items-center gap-2" :class="props.stacked ? 'w-full' : ''">
         <button
           data-testid="time-range-picker-btn"
-          class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition cursor-pointer hover:opacity-80"
+          class="flex h-[36px] items-center gap-2 rounded px-3 text-sm transition cursor-pointer hover:opacity-80"
           :style="{
             backgroundColor: 'var(--color-surface-container-high)',
             color: 'var(--color-on-surface)',
@@ -167,56 +265,111 @@ onUnmounted(() => {
       >
         <button
           data-testid="time-range-refresh-btn"
-          class="flex items-center justify-center rounded-lg px-2 py-1.5 transition cursor-pointer hover:opacity-80"
+          class="flex h-[28px] items-center justify-center rounded px-2 transition cursor-pointer hover:opacity-80"
           :style="{
             backgroundColor: 'var(--color-surface-container-high)',
             color: isRefreshing ? 'var(--color-primary)' : 'var(--color-outline)',
             border: '1px solid transparent',
           }"
           @click="handleRefresh"
-          :title="'Last refresh: ' + formatLastRefresh()"
+          :title="'Last refresh: ' + formatAgo(secondsAgo)"
         >
           <RefreshCw :size="16" :class="isRefreshing ? 'animate-spin' : ''" />
         </button>
 
-        <div>
-          <select
-            :value="refreshIntervalValue"
-            data-testid="time-range-auto-refresh-select"
-            @change="selectRefreshInterval(($event.target as HTMLSelectElement).value)"
-            title="Auto-refresh interval"
-            class="rounded-lg px-2 py-1.5 pr-7 text-xs font-medium cursor-pointer transition appearance-none focus:outline-none"
+        <!-- Auto-refresh interval dropdown -->
+        <div class="relative">
+          <button
+            data-testid="refresh-interval-trigger"
+            class="flex h-[28px] items-center gap-1 rounded px-2 text-xs font-medium transition cursor-pointer hover:opacity-80"
             :style="{
               backgroundColor: 'var(--color-surface-container-high)',
               color: 'var(--color-on-surface-variant)',
-              border: '1px solid transparent',
+              border: isRefreshDropdownOpen ? '1px solid var(--color-primary)' : '1px solid transparent',
             }"
+            aria-haspopup="listbox"
+            :aria-expanded="isRefreshDropdownOpen"
+            @click.stop="toggleRefreshDropdown"
+            @keydown="handleRefreshDropdownKeydown"
           >
-            <option
-              v-for="interval in refreshIntervals"
+            {{ currentIntervalLabel }}
+            <ChevronDown :size="12" :style="{ color: 'var(--color-outline)' }" />
+          </button>
+
+          <div
+            v-if="isRefreshDropdownOpen"
+            class="absolute right-0 top-[calc(100%+4px)] min-w-[120px] rounded py-1 z-[1000] animate-fade-in"
+            :style="{
+              backgroundColor: 'var(--color-surface-bright)',
+              border: '1px solid var(--color-outline-variant)',
+              boxShadow: 'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.24), 0 1px 2px rgba(0,0,0,0.16))',
+            }"
+            role="listbox"
+            @click.stop
+          >
+            <div
+              class="px-3 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide font-mono"
+              :style="{ color: 'var(--color-outline)' }"
+            >
+              Auto-refresh
+            </div>
+            <button
+              v-for="(interval, index) in refreshIntervals"
               :key="interval.value"
-              :value="interval.value"
+              data-testid="refresh-interval-option"
+              role="option"
+              :aria-selected="interval.value === refreshIntervalValue"
+              class="flex w-full items-center justify-between px-3 py-1.5 text-left text-xs transition cursor-pointer hover:opacity-80"
+              :style="{
+                color: interval.value === refreshIntervalValue ? 'var(--color-primary)' : 'var(--color-on-surface-variant)',
+                backgroundColor: index === highlightedIndex
+                  ? 'var(--color-surface-container-high)'
+                  : interval.value === refreshIntervalValue
+                    ? 'var(--selected-fill, color-mix(in srgb, var(--color-primary) 14%, transparent))'
+                    : 'transparent',
+              }"
+              @click="selectInterval(interval.value)"
             >
               {{ interval.label }}
-            </option>
-          </select>
+              <Check v-if="interval.value === refreshIntervalValue" :size="12" />
+            </button>
+          </div>
         </div>
 
-        <span
-          v-if="refreshIntervalValue !== 'off'"
-          class="text-xs px-2"
-          :style="{ color: 'var(--color-on-surface-variant)' }"
-          :class="props.stacked ? 'px-0' : ''"
+        <!-- Status indicator -->
+        <div
+          v-if="showStatus && !stacked"
+          class="flex items-center gap-2"
+          data-testid="refresh-status"
         >
-          {{ isRefreshing ? 'Refreshing...' : formatLastRefresh() }}
-        </span>
+          <StatusDot
+            :status="statusDotStatus"
+            :pulse="isAutoRefreshing"
+            :size="6"
+            :title="'Last refreshed ' + formatAgo(secondsAgo)"
+          />
+          <!-- Full text on desktop, short on medium, hidden on mobile (dot only) -->
+          <span
+            class="hidden lg:inline text-xs"
+            :style="{ color: isStale ? 'var(--color-tertiary)' : 'var(--color-on-surface-variant)' }"
+          >
+            {{ isRefreshing ? 'Refreshing...' : `Last refreshed ${formatAgo(secondsAgo)}` }}
+            <template v-if="isStale">&mdash; Data may be stale</template>
+          </span>
+          <span
+            class="hidden sm:inline lg:hidden text-xs"
+            :style="{ color: isStale ? 'var(--color-tertiary)' : 'var(--color-on-surface-variant)' }"
+          >
+            {{ isRefreshing ? 'Refreshing...' : formatAgo(secondsAgo) }}
+          </span>
+        </div>
       </div>
     </div>
 
-    <!-- Dropdown -->
+    <!-- Time range dropdown -->
     <div
       v-if="isOpen"
-      class="absolute top-[calc(100%+4px)] left-0 min-w-[220px] rounded-lg shadow-lg z-[1000] animate-fade-in"
+      class="absolute top-[calc(100%+4px)] left-0 min-w-[220px] rounded shadow-lg z-[1000] animate-fade-in"
       :style="{
         backgroundColor: 'var(--color-surface-bright)',
         border: '1px solid var(--color-outline-variant)',
@@ -279,7 +432,7 @@ onUnmounted(() => {
             data-testid="time-range-custom-from-input"
             type="datetime-local"
             v-model="customFrom"
-            class="w-full rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2"
+            class="w-full rounded px-2 py-1 text-xs focus:outline-none focus:ring-2"
             :style="{
               backgroundColor: 'var(--color-surface-container-low)',
               color: 'var(--color-on-surface)',
@@ -299,7 +452,7 @@ onUnmounted(() => {
             data-testid="time-range-custom-to-input"
             type="datetime-local"
             v-model="customTo"
-            class="w-full rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2"
+            class="w-full rounded px-2 py-1 text-xs focus:outline-none focus:ring-2"
             :style="{
               backgroundColor: 'var(--color-surface-container-low)',
               color: 'var(--color-on-surface)',
@@ -310,7 +463,7 @@ onUnmounted(() => {
 
         <div
           v-if="customRangeError"
-          class="mb-3 rounded-lg px-3 py-2 text-xs"
+          class="mb-3 rounded px-3 py-2 text-xs"
           :style="{
             backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
             color: 'var(--color-error)',
@@ -322,7 +475,7 @@ onUnmounted(() => {
         <div class="flex justify-end gap-2">
           <button
             data-testid="time-range-cancel-btn"
-            class="rounded-lg px-4 py-2 text-sm font-medium bg-transparent cursor-pointer transition hover:opacity-80"
+            class="rounded px-4 py-2 text-sm font-medium bg-transparent cursor-pointer transition hover:opacity-80"
             :style="{
               color: 'var(--color-on-surface-variant)',
               border: '1px solid var(--color-outline-variant)',
@@ -333,7 +486,7 @@ onUnmounted(() => {
           </button>
           <button
             data-testid="time-range-apply-btn"
-            class="rounded-lg px-4 py-2 text-sm font-medium text-white cursor-pointer transition hover:opacity-90"
+            class="rounded px-4 py-2 text-sm font-medium text-white cursor-pointer transition hover:opacity-90"
             :style="{
               background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
               border: '1px solid transparent',
