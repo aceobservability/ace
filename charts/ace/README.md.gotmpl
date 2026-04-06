@@ -1,0 +1,200 @@
+{{ template "chart.header" . }}
+
+Production-ready Helm chart for deploying the **Ace Observability Platform** to Kubernetes, including the full VictoriaMetrics stack for metrics, logs, and traces.
+
+## Architecture
+
+```
+┌──────────────┐    ┌──────────────┐
+│   Ingress    │───▶│   Frontend   │  (Vue 3 SPA / nginx)
+│  (optional)  │    └──────────────┘
+│              │    ┌──────────────┐    ┌────────────┐
+│              │───▶│   Backend    │───▶│ PostgreSQL │
+│              │    │   (Go API)   │    └────────────┘
+└──────────────┘    └──────┬───────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+     ┌────────────┐ ┌───────────┐ ┌───────────────┐
+     │VictoriaMetrics│ │VictoriaLogs│ │VictoriaTraces │
+     │  (metrics)    │ │  (logs)    │ │  (traces)     │
+     └────────────┘ └───────────┘ └───────────────┘
+              ▲            ▲
+              │            │
+     ┌────────────┐ ┌───────────┐
+     │  VMAgent   │ │  Vector   │
+     │ (scraper)  │ │(log ship) │
+     └────────────┘ └───────────┘
+```
+
+## Prerequisites
+
+- Kubernetes 1.28+
+- Helm 3.14+
+- PV provisioner (for persistent storage)
+- (Optional) cert-manager for TLS
+- (Optional) ingress controller (nginx, traefik, etc.)
+
+## Quick Start
+
+```bash
+# Add the VictoriaMetrics Helm repo (required for subchart deps)
+helm repo add vm https://victoriametrics.github.io/helm-charts/
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+
+# Download subchart dependencies
+helm dependency build charts/ace
+
+# Install with dev settings
+helm install ace charts/ace \
+  -f charts/ace/values-dev.yaml \
+  --set postgresql.auth.password=MyDevPassword123 \
+  --set backend.jwt.secret=my-dev-jwt-secret \
+  -n ace --create-namespace
+
+# Install with production settings
+helm install ace charts/ace \
+  -f charts/ace/values-prod.yaml \
+  --set postgresql.auth.password=STRONG_RANDOM_PASSWORD \
+  --set backend.jwt.secret=STRONG_RANDOM_SECRET \
+  --set ingress.hosts[0].host=ace.yourdomain.com \
+  --set ingress.tls[0].hosts[0]=ace.yourdomain.com \
+  -n ace --create-namespace
+```
+
+## Validation
+
+```bash
+# Lint the chart
+helm lint charts/ace
+
+# Render templates without installing
+helm template ace charts/ace -f charts/ace/values-dev.yaml
+
+# Dry-run install
+helm install ace charts/ace --dry-run -f charts/ace/values-dev.yaml -n ace
+```
+
+## Components
+
+### Ace Application
+
+| Component | Description | Port |
+|-----------|-------------|------|
+| **Backend** | Go API server — auth, dashboards, datasource proxy, alerting | 8080 |
+| **Frontend** | Vue 3 SPA served by nginx | 8080 |
+| **PostgreSQL** | Bitnami subchart (togglable for external DB) | 5432 |
+
+### VictoriaMetrics Stack (all independently togglable)
+
+| Component | Chart | Description |
+|-----------|-------|-------------|
+| **Metrics** | `victoria-metrics-k8s-stack` | VMSingle + VMAgent + VMAlert + Alertmanager |
+| **Logs** | `victoria-logs-single` | High-performance log storage |
+| **Traces** | `victoria-metrics-single` (as vtraces) | VictoriaTraces with OTLP ingestion |
+| **Log Shipper** | Vector (DaemonSet) | Ships container logs to VictoriaLogs |
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+## Toggling Components
+
+Each major component is independently togglable:
+
+```yaml
+# Disable metrics stack
+victoria-metrics-k8s-stack:
+  enabled: false
+
+# Disable logs
+victoria-logs-single:
+  enabled: false
+vector:
+  enabled: false  # No point shipping logs without a log store
+
+# Disable traces
+victoriatraces:
+  enabled: false
+
+# Disable alerting (within the k8s-stack)
+victoria-metrics-k8s-stack:
+  vmalert:
+    enabled: false
+  alertmanager:
+    enabled: false
+
+# Use external PostgreSQL
+postgresql:
+  enabled: false
+externalDatabase:
+  url: "postgres://user:pass@external-db:5432/ace?sslmode=require"
+```
+
+## OTLP Trace Ingestion
+
+VictoriaTraces exposes OTLP endpoints for trace ingestion:
+
+| Protocol | Port | Endpoint |
+|----------|------|----------|
+| gRPC | 4317 | `<release>-vtraces-victoria-metrics-single-server:4317` |
+| HTTP | 4318 | `<release>-vtraces-victoria-metrics-single-server:4318/v1/traces` |
+
+Configure your applications to send traces to these endpoints:
+
+```yaml
+# OpenTelemetry SDK configuration
+env:
+  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    value: "http://ace-vtraces-victoria-metrics-single-server:4318"
+  - name: OTEL_EXPORTER_OTLP_PROTOCOL
+    value: "http/protobuf"
+```
+
+## Datasource Configuration
+
+When the VictoriaMetrics stack is deployed alongside Ace, the backend is automatically configured with the correct datasource URLs:
+
+| Datasource | Auto-configured URL |
+|------------|-------------------|
+| Metrics (VictoriaMetrics) | `http://<release>-vmetrics-...-vmsingle:8429` |
+| Logs (VictoriaLogs) | `http://<release>-vlogs-...-server:9428` |
+| Traces (VictoriaTraces) | `http://<release>-vtraces-...-server:4318` |
+
+These can be overridden via `backend.prometheus.url`, `backend.victoriaLogs.url`, and `backend.otlp.endpoint`.
+
+## Environment Value Files
+
+| File | Purpose |
+|------|---------|
+| `values.yaml` | Production defaults (sane baselines) |
+| `values-dev.yaml` | Development: 1 replica, small storage, 3-7d retention |
+| `values-prod.yaml` | Production: HA replicas, large storage, 90-180d retention, TLS |
+
+## Security Notes
+
+- All sensitive values (DB password, JWT keys, API keys) are stored in Kubernetes Secrets
+- Use `backend.existingSecret` to reference a pre-created Secret (e.g., from Vault or Sealed Secrets)
+- Pod security contexts enforce non-root execution and drop all capabilities
+- NetworkPolicy resources are available (enable with `networkPolicy.enabled: true`)
+- RBAC is scoped to the minimum required permissions for metrics scraping
+
+## Upgrading
+
+```bash
+# Update subchart dependencies
+helm dependency update charts/ace
+
+# Upgrade the release
+helm upgrade ace charts/ace -f charts/ace/values-prod.yaml -n ace
+```
+
+## Uninstalling
+
+```bash
+helm uninstall ace -n ace
+
+# PVCs are retained by default — delete manually if needed
+kubectl delete pvc -l app.kubernetes.io/instance=ace -n ace
+```

@@ -1,0 +1,25 @@
+name: Setup helm-docs
+description: Install helm-docs with checksum verification
+
+inputs:
+  version:
+    description: helm-docs version to install
+    required: false
+    default: "1.14.2"
+
+runs:
+  using: composite
+  steps:
+    - name: Install helm-docs
+      shell: bash
+      env:
+        HELM_DOCS_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        archive="helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz"
+        curl -sL "https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/${archive}" \
+          -o "$archive"
+        curl -sL "https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/checksums.txt" \
+          | grep "$archive" | sha256sum -c -
+        tar xzf "$archive" helm-docs
+        chmod +x helm-docs

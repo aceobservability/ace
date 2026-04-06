@@ -18,6 +18,7 @@ maintainers:
   - name: Jan Hoon
     url: https://github.com/janhoon
 annotations:
+  artifacthub.io/displayName: Ace Observability Platform
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: Source
