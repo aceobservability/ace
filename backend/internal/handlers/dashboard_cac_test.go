@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+
 	"github.com/aceobservability/ace/backend/internal/auth"
 )
 

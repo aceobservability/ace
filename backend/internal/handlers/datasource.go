@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/aceobservability/ace/backend/internal/analytics"
 	"github.com/aceobservability/ace/backend/internal/auth"
 	"github.com/aceobservability/ace/backend/internal/datasource"

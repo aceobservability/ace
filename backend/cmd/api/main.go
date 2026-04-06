@@ -9,6 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.uber.org/zap"
+
 	"github.com/aceobservability/ace/backend/internal/analytics"
 	"github.com/aceobservability/ace/backend/internal/audit"
 	"github.com/aceobservability/ace/backend/internal/auth"
@@ -17,9 +21,6 @@ import (
 	"github.com/aceobservability/ace/backend/internal/httplog"
 	"github.com/aceobservability/ace/backend/internal/telemetry"
 	"github.com/aceobservability/ace/backend/internal/valkey"
-	"github.com/redis/go-redis/v9"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.uber.org/zap"
 )
 
 func main() {
