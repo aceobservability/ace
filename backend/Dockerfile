@@ -9,12 +9,12 @@ COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
 COPY backend/ ./
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o /out/dash-api ./cmd/api
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o /out/ace-api ./cmd/api
 
 FROM gcr.io/distroless/static-debian12:nonroot
 
-COPY --from=builder /out/dash-api /usr/local/bin/dash-api
+COPY --from=builder /out/ace-api /usr/local/bin/ace-api
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/dash-api"]
+ENTRYPOINT ["/usr/local/bin/ace-api"]

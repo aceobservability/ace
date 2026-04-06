@@ -46,8 +46,8 @@ Use Conventional Commit messages for all merge commits/PR titles to keep release
 
 ### Container images (public GHCR)
 
-- `ghcr.io/janhoon/dash-backend`
-- `ghcr.io/janhoon/dash-frontend`
+- `ghcr.io/aceobservability/ace-backend`
+- `ghcr.io/aceobservability/ace-frontend`
 
 Image tags published per release:
 

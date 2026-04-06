@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/janhoon/dash/backend/internal/db"
+	"github.com/aceobservability/ace/backend/internal/db"
 )
 
 // panel describes a single panel to create inside a dashboard.
@@ -269,7 +269,7 @@ func main() {
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://dash:dash@localhost:5432/dash?sslmode=disable"
+		dbURL = "postgres://ace:ace@localhost:5432/ace?sslmode=disable"
 	}
 
 	ctx := context.Background()

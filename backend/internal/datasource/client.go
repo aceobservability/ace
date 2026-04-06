@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // QueryRequest represents a query request body

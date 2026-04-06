@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/janhoon/dash/backend/internal/db"
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/db"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 var testPool *pgxpool.Pool
@@ -17,7 +17,7 @@ var testPool *pgxpool.Pool
 func TestMain(m *testing.M) {
 	dbURL := os.Getenv("TEST_DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://dash:dash@localhost:5432/dash_test?sslmode=disable"
+		dbURL = "postgres://ace:ace@localhost:5432/ace_test?sslmode=disable"
 	}
 
 	ctx := context.Background()

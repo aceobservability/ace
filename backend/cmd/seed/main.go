@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/janhoon/dash/backend/internal/auth"
-	"github.com/janhoon/dash/backend/internal/db"
+	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/db"
 )
 
 type datasource struct {
@@ -92,7 +92,7 @@ func main() {
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://dash:dash@localhost:5432/dash?sslmode=disable"
+		dbURL = "postgres://ace:ace@localhost:5432/ace?sslmode=disable"
 	}
 
 	ctx := context.Background()

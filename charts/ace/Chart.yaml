@@ -11,10 +11,10 @@ keywords:
   - logs
   - traces
   - victoriametrics
-home: https://github.com/janhoon/ace
+home: https://github.com/aceobservability/ace
 maintainers:
   - name: Jan Hoon
-    url: https://github.com/janhoon
+    url: https://github.com/aceobservability
 
 dependencies:
   # -- PostgreSQL database (togglable — disable when using an external DB)

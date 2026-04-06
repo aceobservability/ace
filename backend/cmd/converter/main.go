@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/janhoon/dash/backend/internal/converter"
+	"github.com/aceobservability/ace/backend/internal/converter"
 )
 
 func main() {

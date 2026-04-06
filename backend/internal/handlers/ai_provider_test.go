@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/crypto"
+	"github.com/aceobservability/ace/backend/internal/crypto"
 )
 
 func TestOpenAICompatibleProvider_ListModels(t *testing.T) {

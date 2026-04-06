@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 type datasourceAuthConfig struct {

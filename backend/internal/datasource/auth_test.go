@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 func TestApplyDataSourceAuth_Basic(t *testing.T) {

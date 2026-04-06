@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 func TestElasticsearchClient_QueryWithSignal_Logs(t *testing.T) {

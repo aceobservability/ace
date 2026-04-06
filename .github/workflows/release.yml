@@ -158,11 +158,11 @@ jobs:
         run: |
           set -euo pipefail
           version="${RELEASE_TAG#v}"
-          base="dash-backend_${version}_${GOOS}_${GOARCH}"
+          base="ace-backend_${version}_${GOOS}_${GOARCH}"
           staging="dist/${base}"
 
           mkdir -p "$staging"
-          CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build -trimpath -o "$staging/dash-api${EXT}" ./cmd/api
+          CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build -trimpath -o "$staging/ace-api${EXT}" ./cmd/api
 
           if [ "$ARCHIVE" = "zip" ]; then
             (cd dist && zip -r "${base}.zip" "${base}")
@@ -212,7 +212,7 @@ jobs:
           set -euo pipefail
           version="${RELEASE_TAG#v}"
           mkdir -p dist-release
-          tar -czf "dist-release/dash-frontend_${version}.tar.gz" -C frontend dist
+          tar -czf "dist-release/ace-frontend_${version}.tar.gz" -C frontend dist
 
       - name: Upload frontend package
         uses: actions/upload-artifact@v7
@@ -256,7 +256,7 @@ jobs:
           major="${version%%.*}"
           remainder="${version#*.}"
           minor="${remainder%%.*}"
-          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dash-backend"
+          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ace-backend"
 
           {
             printf "image_repo=%s\n" "$repo"
@@ -282,8 +282,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.vars.outputs.tags }}
           labels: |
-            org.opencontainers.image.title=Dash Backend
-            org.opencontainers.image.description=Dash backend API service
+            org.opencontainers.image.title=Ace Backend
+            org.opencontainers.image.description=Ace backend API service
             org.opencontainers.image.version=${{ env.RELEASE_TAG }}
             org.opencontainers.image.revision=${{ github.sha }}
 
@@ -352,7 +352,7 @@ jobs:
           major="${version%%.*}"
           remainder="${version#*.}"
           minor="${remainder%%.*}"
-          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dash-frontend"
+          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ace-frontend"
 
           {
             printf "image_repo=%s\n" "$repo"
@@ -378,8 +378,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.vars.outputs.tags }}
           labels: |
-            org.opencontainers.image.title=Dash Frontend
-            org.opencontainers.image.description=Dash frontend SPA
+            org.opencontainers.image.title=Ace Frontend
+            org.opencontainers.image.description=Ace frontend SPA
             org.opencontainers.image.version=${{ env.RELEASE_TAG }}
             org.opencontainers.image.revision=${{ github.sha }}
 

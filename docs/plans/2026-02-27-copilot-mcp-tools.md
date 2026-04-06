@@ -312,7 +312,7 @@ In `backend/cmd/api/main.go`, add the metric-names route after the existing labe
 
 **Step 5: Verify it compiles**
 
-Run: `cd /home/janhoon/projects/ace/backend && go build ./...`
+Run: `cd ./backend && go build ./...`
 Expected: No errors
 
 **Step 6: Commit**
@@ -425,7 +425,7 @@ export async function fetchDataSourceLabelValues(
 
 **Step 4: Verify it compiles**
 
-Run: `cd /home/janhoon/projects/ace/frontend && npx biome check src/api/datasources.ts`
+Run: `cd ./frontend && npx biome check src/api/datasources.ts`
 Expected: No errors
 
 **Step 5: Commit**
@@ -497,7 +497,7 @@ export function useQueryEditor() {
 
 **Step 2: Verify lint passes**
 
-Run: `cd /home/janhoon/projects/ace/frontend && npx biome check src/composables/useQueryEditor.ts`
+Run: `cd ./frontend && npx biome check src/composables/useQueryEditor.ts`
 Expected: No errors
 
 **Step 3: Commit**
@@ -548,7 +548,7 @@ queryEditor.unregister()
 
 **Step 3: Verify lint passes**
 
-Run: `cd /home/janhoon/projects/ace/frontend && npx biome check src/views/Explore.vue`
+Run: `cd ./frontend && npx biome check src/views/Explore.vue`
 Expected: No errors
 
 **Step 4: Commit**
@@ -692,7 +692,7 @@ Add `sendChatRequest` to the return object of `useCopilot()`.
 
 **Step 4: Verify lint passes**
 
-Run: `cd /home/janhoon/projects/ace/frontend && npx biome check src/composables/useCopilot.ts`
+Run: `cd ./frontend && npx biome check src/composables/useCopilot.ts`
 Expected: No errors
 
 **Step 5: Commit**
@@ -773,7 +773,7 @@ After the Copilot API call, check if the response is streaming or JSON. If non-s
 
 **Step 4: Verify it compiles**
 
-Run: `cd /home/janhoon/projects/ace/backend && go build ./...`
+Run: `cd ./backend && go build ./...`
 Expected: No errors
 
 **Step 5: Commit**
@@ -965,7 +965,7 @@ export function useCopilotToolExecutor(datasourceId: () => string) {
 
 **Step 2: Verify lint passes**
 
-Run: `cd /home/janhoon/projects/ace/frontend && npx biome check src/composables/useCopilotTools.ts`
+Run: `cd ./frontend && npx biome check src/composables/useCopilotTools.ts`
 Expected: No errors
 
 **Step 3: Commit**
@@ -1127,7 +1127,7 @@ These are no longer needed — the `write_query` tool handles query insertion. R
 
 **Step 5: Verify lint passes**
 
-Run: `cd /home/janhoon/projects/ace/frontend && npx biome check src/components/CopilotPanel.vue`
+Run: `cd ./frontend && npx biome check src/components/CopilotPanel.vue`
 Expected: No errors
 
 **Step 6: Commit**
@@ -1230,7 +1230,7 @@ In `Explore.vue`:
 
 **Step 4: Verify lint passes**
 
-Run: `cd /home/janhoon/projects/ace/frontend && npx biome check src/App.vue src/views/Explore.vue`
+Run: `cd ./frontend && npx biome check src/App.vue src/views/Explore.vue`
 Expected: No errors
 
 **Step 5: Commit**
@@ -1246,7 +1246,7 @@ git commit -m "feat: move copilot panel to app-level layout for global visibilit
 
 **Step 1: Start the dev environment**
 
-Run: `cd /home/janhoon/projects/ace && make dev` (or however the local dev environment starts)
+Run: `cd . && make dev` (or however the local dev environment starts)
 
 **Step 2: Verify copilot panel visibility**
 

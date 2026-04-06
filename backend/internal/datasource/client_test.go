@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 func TestNewClient_Prometheus(t *testing.T) {

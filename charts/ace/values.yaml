@@ -53,7 +53,7 @@ backend:
   replicaCount: 2
 
   image:
-    repository: ghcr.io/janhoon/ace-backend
+    repository: ghcr.io/aceobservability/ace-backend
     pullPolicy: IfNotPresent
     # -- Overrides the image tag (default: Chart.appVersion)
     tag: ""
@@ -158,7 +158,7 @@ frontend:
   replicaCount: 2
 
   image:
-    repository: ghcr.io/janhoon/ace-frontend
+    repository: ghcr.io/aceobservability/ace-frontend
     pullPolicy: IfNotPresent
     tag: ""
 

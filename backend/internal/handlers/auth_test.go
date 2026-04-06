@@ -11,8 +11,8 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/janhoon/dash/backend/internal/auth"
-	"github.com/janhoon/dash/backend/internal/db"
+	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/db"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -24,7 +24,7 @@ func TestMain(m *testing.M) {
 	// Setup test database
 	dbURL := os.Getenv("TEST_DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://dash:dash@localhost:5432/dash_test?sslmode=disable"
+		dbURL = "postgres://ace:ace@localhost:5432/ace_test?sslmode=disable"
 	}
 
 	ctx := context.Background()

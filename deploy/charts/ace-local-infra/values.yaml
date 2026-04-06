@@ -1,9 +1,9 @@
 postgres:
   enabled: false
   image: postgres:16-alpine
-  database: dash
-  username: dash
-  password: dash
+  database: ace
+  username: ace
+  password: ace
   persistence:
     enabled: false
     size: 5Gi
@@ -18,7 +18,7 @@ valkey:
 backend:
   enabled: false
   image: ace-backend
-  databaseURL: postgres://dash:dash@postgres:5432/dash?sslmode=disable
+  databaseURL: postgres://ace:ace@postgres:5432/ace?sslmode=disable
   valkeyURL: redis://valkey:6379
   otlpEndpoint: tempo:4318
 

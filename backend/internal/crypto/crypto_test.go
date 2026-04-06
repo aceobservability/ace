@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/janhoon/dash/backend/internal/crypto"
+	"github.com/aceobservability/ace/backend/internal/crypto"
 )
 
 // TestEncryptDecryptRoundTrip verifies that a plaintext can be encrypted and

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	promclient "github.com/janhoon/dash/backend/pkg/prometheus"
+	promclient "github.com/aceobservability/ace/backend/pkg/prometheus"
 )
 
 type PrometheusClient struct {

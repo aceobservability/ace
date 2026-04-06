@@ -9,14 +9,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/analytics"
-	"github.com/janhoon/dash/backend/internal/audit"
-	"github.com/janhoon/dash/backend/internal/auth"
-	"github.com/janhoon/dash/backend/internal/db"
-	"github.com/janhoon/dash/backend/internal/handlers"
-	"github.com/janhoon/dash/backend/internal/httplog"
-	"github.com/janhoon/dash/backend/internal/telemetry"
-	"github.com/janhoon/dash/backend/internal/valkey"
+	"github.com/aceobservability/ace/backend/internal/analytics"
+	"github.com/aceobservability/ace/backend/internal/audit"
+	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/db"
+	"github.com/aceobservability/ace/backend/internal/handlers"
+	"github.com/aceobservability/ace/backend/internal/httplog"
+	"github.com/aceobservability/ace/backend/internal/telemetry"
+	"github.com/aceobservability/ace/backend/internal/valkey"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
@@ -45,7 +45,7 @@ func main() {
 	// Get database URL from environment
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://dash:dash@localhost:5432/dash?sslmode=disable"
+		dbURL = "postgres://ace:ace@localhost:5432/ace?sslmode=disable"
 	}
 
 	// Get Prometheus URL from environment

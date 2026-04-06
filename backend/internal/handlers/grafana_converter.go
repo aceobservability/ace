@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/janhoon/dash/backend/internal/converter"
+	"github.com/aceobservability/ace/backend/internal/converter"
 )
 
 type GrafanaConverterHandler struct{}

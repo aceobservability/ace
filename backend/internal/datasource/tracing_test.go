@@ -7,7 +7,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 func TestParseTrace_JaegerDataFormat(t *testing.T) {

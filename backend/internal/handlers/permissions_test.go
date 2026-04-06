@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/janhoon/dash/backend/internal/auth"
-	"github.com/janhoon/dash/backend/internal/authz"
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/authz"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 func createTestFolderForPermissions(t *testing.T, folderHandler *FolderHandler, accessToken string, orgID uuid.UUID, name string) models.Folder {
