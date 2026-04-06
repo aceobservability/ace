@@ -1,4 +1,4 @@
-.PHONY: help dev backend seed seed-tilt seed-correlated frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs telemetrygen demo demo-down
+.PHONY: help dev backend seed seed-tilt seed-correlated frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs telemetrygen demo demo-down docs docs-dev docs-preview
 
 EMAIL ?= admin@admin.com
 PASSWORD ?= Admin1234
@@ -31,6 +31,9 @@ help:
 	@printf "  make lint      Run backend and frontend lint checks\n"
 	@printf "  make security-local Run local security checks (govulncheck + gitleaks)\n"
 	@printf "  make check     Run tests, lint, security and print summary table\n"
+	@printf "  make docs      Generate content and build the documentation site\n"
+	@printf "  make docs-dev  Generate content and start VitePress dev server\n"
+	@printf "  make docs-preview  Build docs and preview locally\n"
 
 dev:
 	@trap 'kill 0' EXIT; \
@@ -221,3 +224,14 @@ check:
 		exit 1; \
 	fi; \
 	printf "\nAll checks passed.\n"
+
+docs:
+	@bash scripts/build-docs.sh
+
+docs-dev:
+	@bash scripts/build-docs.sh --skip-build
+	@cd website && bun run dev
+
+docs-preview:
+	@bash scripts/build-docs.sh
+	@cd website && bun run preview
