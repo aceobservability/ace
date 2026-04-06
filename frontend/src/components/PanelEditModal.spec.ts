@@ -4,8 +4,12 @@ import * as api from '../api/panels'
 import PanelEditModal from './PanelEditModal.vue'
 
 const mockFetchDatasources = vi.hoisted(() => vi.fn())
+const mockFetchDataSourceLabels = vi.hoisted(() => vi.fn())
 
 vi.mock('../api/panels')
+vi.mock('../api/datasources', () => ({
+  fetchDataSourceLabels: mockFetchDataSourceLabels,
+}))
 vi.mock('../composables/useDatasource', async () => {
   const { ref } = await import('vue')
 
@@ -67,6 +71,28 @@ vi.mock('../composables/useDatasource', async () => {
           created_at: '2026-01-01T00:00:00Z',
           updated_at: '2026-01-01T00:00:00Z',
         },
+        {
+          id: 'ds-loki-1',
+          organization_id: 'org-1',
+          name: 'Loki Main',
+          type: 'loki',
+          url: 'http://localhost:3100',
+          is_default: false,
+          auth_type: 'none',
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+        },
+        {
+          id: 'ds-victorialogs-1',
+          organization_id: 'org-1',
+          name: 'VictoriaLogs Main',
+          type: 'victorialogs',
+          url: 'http://localhost:9428',
+          is_default: false,
+          auth_type: 'none',
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+        },
       ]),
       fetchDatasources: mockFetchDatasources,
     }),
@@ -118,6 +144,19 @@ vi.mock('./CloudWatchQueryEditor.vue', () => ({
   },
 }))
 
+vi.mock('./LogQLQueryBuilder.vue', () => ({
+  default: {
+    name: 'LogQLQueryBuilder',
+    props: ['modelValue', 'queryLanguage', 'datasourceId', 'indexedLabels', 'disabled'],
+    emits: ['update:modelValue'],
+    template: `
+      <div class="mock-logql-builder">
+        <textarea id="logql-query" :value="modelValue" @input="$emit('update:modelValue', $event.target.value)"></textarea>
+      </div>
+    `,
+  },
+}))
+
 vi.mock('./ElasticsearchQueryEditor.vue', () => ({
   default: {
     name: 'ElasticsearchQueryEditor',
@@ -141,6 +180,7 @@ describe('PanelEditModal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockFetchDatasources.mockResolvedValue(undefined)
+    mockFetchDataSourceLabels.mockResolvedValue(['job', 'service_name'])
   })
 
   it('renders form fields', async () => {
@@ -334,7 +374,7 @@ describe('PanelEditModal', () => {
       title: 'Trace List Panel',
       type: 'trace_list',
       grid_pos: { x: 0, y: 0, w: 6, h: 4 },
-      query: { datasource_id: 'ds-trace-1', expr: 'service=api', service: 'api', limit: 25 },
+      query: { datasource_id: 'ds-trace-1', service: 'api', limit: 25 },
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-01T00:00:00Z',
     })
@@ -348,8 +388,8 @@ describe('PanelEditModal', () => {
     await wrapper.find('select#type').setValue('trace_list')
     await wrapper.find('select#datasource').setValue('ds-trace-1')
 
-    const queryBuilder = wrapper.findComponent({ name: 'QueryBuilder' })
-    await queryBuilder.vm.$emit('update:modelValue', 'service=api')
+    // QueryBuilder should not be rendered for trace panels with tracing datasources
+    expect(wrapper.findComponent({ name: 'QueryBuilder' }).exists()).toBe(false)
 
     await wrapper.find('#trace-service-filter').setValue('api')
     await wrapper.find('#trace-limit').setValue('25')
@@ -363,7 +403,6 @@ describe('PanelEditModal', () => {
       grid_pos: { x: 0, y: 0, w: 6, h: 4 },
       query: {
         datasource_id: 'ds-trace-1',
-        expr: 'service=api',
         service: 'api',
         limit: 25,
       },
@@ -501,5 +540,72 @@ describe('PanelEditModal', () => {
         signal: 'logs',
       },
     })
+  })
+
+  it('renders LogQLQueryBuilder for logs panel with Loki datasource', async () => {
+    vi.mocked(api.createPanel).mockResolvedValue({
+      id: 'panel-loki-1',
+      dashboard_id: dashboardId,
+      title: 'Loki Logs',
+      type: 'logs',
+      grid_pos: { x: 0, y: 0, w: 6, h: 4 },
+      query: { datasource_id: 'ds-loki-1', expr: '{job="api"} |= "error"' },
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z',
+    })
+
+    const wrapper = mount(PanelEditModal, {
+      props: { dashboardId },
+    })
+    await flushPromises()
+
+    await wrapper.find('#title').setValue('Loki Logs')
+    await wrapper.find('#type').setValue('logs')
+    await wrapper.find('#datasource').setValue('ds-loki-1')
+
+    expect(wrapper.findComponent({ name: 'LogQLQueryBuilder' }).exists()).toBe(true)
+    expect(wrapper.findComponent({ name: 'QueryBuilder' }).exists()).toBe(false)
+
+    await wrapper.find('#logql-query').setValue('{job="api"} |= "error"')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(api.createPanel).toHaveBeenCalledWith(dashboardId, {
+      title: 'Loki Logs',
+      type: 'logs',
+      grid_pos: { x: 0, y: 0, w: 6, h: 4 },
+      query: {
+        datasource_id: 'ds-loki-1',
+        expr: '{job="api"} |= "error"',
+      },
+    })
+  })
+
+  it('renders LogQLQueryBuilder in logsql mode for VictoriaLogs datasource', async () => {
+    const wrapper = mount(PanelEditModal, {
+      props: { dashboardId },
+    })
+    await flushPromises()
+
+    await wrapper.find('#type').setValue('logs')
+    await wrapper.find('#datasource').setValue('ds-victorialogs-1')
+
+    const logqlBuilder = wrapper.findComponent({ name: 'LogQLQueryBuilder' })
+    expect(logqlBuilder.exists()).toBe(true)
+    expect(logqlBuilder.props('queryLanguage')).toBe('logsql')
+    expect(wrapper.findComponent({ name: 'QueryBuilder' }).exists()).toBe(false)
+  })
+
+  it('fetches indexed labels when Loki datasource is selected for logs panel', async () => {
+    const wrapper = mount(PanelEditModal, {
+      props: { dashboardId },
+    })
+    await flushPromises()
+
+    await wrapper.find('#type').setValue('logs')
+    await wrapper.find('#datasource').setValue('ds-loki-1')
+    await flushPromises()
+
+    expect(mockFetchDataSourceLabels).toHaveBeenCalledWith('ds-loki-1')
   })
 })

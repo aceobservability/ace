@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Plus, Trash2, X } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
+import { fetchDataSourceLabels } from '../api/datasources'
 import { createPanel, updatePanel } from '../api/panels'
 import { useDatasource } from '../composables/useDatasource'
 import { useOrganization } from '../composables/useOrganization'
-import { isTracingType } from '../types/datasource'
+import { isLogsType, isTracingType } from '../types/datasource'
 import type { Panel } from '../types/panel'
 import { getAllPanels, lookupPanel } from '../utils/panelRegistry'
 import type { PanelQueryMode } from '../utils/panelRegistry'
@@ -12,6 +13,7 @@ import './panels/index' // Side-effect: registers all panel types
 import ClickHouseSQLEditor from './ClickHouseSQLEditor.vue'
 import CloudWatchQueryEditor from './CloudWatchQueryEditor.vue'
 import ElasticsearchQueryEditor from './ElasticsearchQueryEditor.vue'
+import LogQLQueryBuilder from './LogQLQueryBuilder.vue'
 import QueryBuilder from './QueryBuilder.vue'
 
 interface Threshold {
@@ -142,6 +144,13 @@ const currentQueryMode = computed<PanelQueryMode>(() => {
 
 const needsDatasource = computed(() => currentQueryMode.value !== 'none')
 const isTracePanelType = computed(() => currentQueryMode.value === 'traces')
+// Built-in trace panels that consume service filter + limit options (registry trace panels like
+// flame_graph, node_graph, trace_detail use their own query mechanisms and don't consume these)
+const isBuiltinTracePanel = computed(
+  () => panelType.value === 'trace_list' || panelType.value === 'trace_heatmap',
+)
+const isLogsPanelType = computed(() => currentQueryMode.value === 'logs')
+const indexedLabels = ref<string[]>([])
 const selectedDatasource = computed(() => {
   return (
     datasources.value.find((datasource) => datasource.id === selectedDatasourceId.value) || null
@@ -153,6 +162,13 @@ const isElasticsearchDatasource = computed(() => selectedDatasource.value?.type 
 const isSignalDatasource = computed(
   () =>
     isClickHouseDatasource.value || isCloudWatchDatasource.value || isElasticsearchDatasource.value,
+)
+const isNativeLogsDatasource = computed(() => {
+  const type = selectedDatasource.value?.type
+  return type === 'loki' || type === 'victorialogs'
+})
+const logQueryLanguage = computed(() =>
+  selectedDatasource.value?.type === 'victorialogs' ? 'logsql' : 'logql',
 )
 const nonTraceSignal = computed<'logs' | 'metrics'>({
   get() {
@@ -167,13 +183,17 @@ const availableDatasources = computed(() => {
     return datasources.value.filter((datasource) => isTracingType(datasource.type))
   }
 
+  if (isLogsPanelType.value) {
+    return datasources.value.filter((datasource) => isLogsType(datasource.type))
+  }
+
   return datasources.value
 })
 
 watch(
   [panelType, datasources],
   () => {
-    if (isTracePanelType.value) {
+    if (isTracePanelType.value || isLogsPanelType.value) {
       if (
         !availableDatasources.value.some(
           (datasource) => datasource.id === selectedDatasourceId.value,
@@ -212,6 +232,23 @@ watch(selectedDatasource, (nextDatasource, prevDatasource) => {
     querySignal.value = getDefaultQuerySignal(panelType.value)
   }
 })
+
+// Fetch indexed labels for logs panels with native log datasources
+watch(
+  [selectedDatasourceId, isLogsPanelType, isNativeLogsDatasource],
+  async ([dsId, isLogs, isNativeLogs]) => {
+    if (!dsId || !isLogs || !isNativeLogs) {
+      indexedLabels.value = []
+      return
+    }
+    try {
+      indexedLabels.value = await fetchDataSourceLabels(dsId)
+    } catch {
+      indexedLabels.value = []
+    }
+  },
+  { immediate: true },
+)
 
 function addThreshold() {
   const lastValue =
@@ -282,7 +319,7 @@ async function handleSubmit() {
       }
     }
 
-    if (isTracePanelType.value) {
+    if (isBuiltinTracePanel.value) {
       const trimmedService = traceService.value.trim()
       if (trimmedService) {
         query.service = trimmedService
@@ -469,8 +506,9 @@ const selectClass = 'w-full rounded-lg px-3 py-2.5 text-sm transition cursor-poi
               border: '1px solid var(--color-outline-variant)',
             }"
           >
-            <option v-if="!isTracePanelType" value="">Default (Prometheus)</option>
-            <option v-else value="">Select tracing datasource</option>
+            <option v-if="isTracePanelType" value="">Select tracing datasource</option>
+            <option v-else-if="isLogsPanelType" value="">Select logs datasource</option>
+            <option v-else value="">Default (Prometheus)</option>
             <option v-for="ds in availableDatasources" :key="ds.id" :value="ds.id">
               {{ ds.name }} ({{ ds.type }})
             </option>
@@ -478,7 +516,7 @@ const selectClass = 'w-full rounded-lg px-3 py-2.5 text-sm transition cursor-poi
         </div>
 
         <div
-          v-if="needsDatasource"
+          v-if="needsDatasource && (!isTracePanelType || isSignalDatasource)"
           class="mb-5 pt-5"
           :style="{ borderTop: '1px solid var(--color-outline-variant)' }"
         >
@@ -493,13 +531,21 @@ const selectClass = 'w-full rounded-lg px-3 py-2.5 text-sm transition cursor-poi
                   ? 'CloudWatch Query'
                   : isElasticsearchDatasource
                     ? 'Elasticsearch Query'
-                    : isTracePanelType
-                      ? 'Trace Search Query'
+                    : isNativeLogsDatasource
+                      ? 'Log Query'
                       : 'Query'
             }}
           </label>
+          <LogQLQueryBuilder
+            v-if="isLogsPanelType && isNativeLogsDatasource"
+            v-model="promqlQuery"
+            :query-language="logQueryLanguage"
+            :datasource-id="selectedDatasourceId"
+            :indexed-labels="indexedLabels"
+            :disabled="loading"
+          />
           <QueryBuilder
-            v-if="!isSignalDatasource"
+            v-else-if="!isSignalDatasource"
             v-model="promqlQuery"
             :disabled="loading"
           />
@@ -525,7 +571,7 @@ const selectClass = 'w-full rounded-lg px-3 py-2.5 text-sm transition cursor-poi
         </div>
 
         <div
-          v-if="isTracePanelType"
+          v-if="isBuiltinTracePanel"
           class="pt-5 mb-5"
           :style="{ borderTop: '1px solid var(--color-outline-variant)' }"
         >
