@@ -13,7 +13,7 @@ import {
   Table,
   TrendingUp,
 } from 'lucide-vue-next'
-import { computed, onMounted, ref, type Component } from 'vue'
+import { computed, onMounted, ref, watch, type Component } from 'vue'
 import { RouterLink } from 'vue-router'
 import { queryDataSource } from '../api/datasources'
 import { useDatasource } from '../composables/useDatasource'
@@ -134,6 +134,14 @@ async function runDryRuns() {
 onMounted(() => {
   runDryRuns()
 })
+
+watch(() => props.spec, () => {
+  savedDashboardId.value = null
+  saveSuccess.value = false
+  saveError.value = null
+  validationErrors.value = []
+  runDryRuns()
+}, { deep: true })
 
 // --- Save ---
 

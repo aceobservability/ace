@@ -67,7 +67,16 @@ async function handleSend(userMessage: string) {
   const dsType = currentContext.value?.datasourceType ?? ''
   const dsName = currentContext.value?.datasourceName ?? ''
   const tools = getToolsForDatasourceType(dsType)
-  dashboardSpec.value = null
+
+  // Inject current spec so the AI can refine it
+  if (dashboardSpec.value) {
+    requestMessages.push({
+      role: 'system',
+      content: `Current dashboard spec to refine:\n${JSON.stringify(dashboardSpec.value, null, 2)}\nModify and call generate_dashboard with the full updated spec.`,
+    })
+  }
+
+  const isRefinement = !!dashboardSpec.value
 
   const result = await generate(requestMessages, tools, dsName, {
     onContent(text) {
@@ -77,7 +86,9 @@ async function handleSend(userMessage: string) {
       dashboardSpec.value = spec
       chatMessages.value.push({
         role: 'assistant',
-        content: 'Dashboard generated. See the preview below.',
+        content: isRefinement
+          ? 'Dashboard updated. See the revised preview below.'
+          : 'Dashboard generated. See the preview below.',
         dashboardSpec: spec,
       })
     },

@@ -88,6 +88,28 @@ function addRecent(dashboard: RecentDashboard): void {
   persistRecents()
 }
 
+function favoriteRoute(item: FavoriteItem): string {
+  switch (item.type) {
+    case 'dashboard':
+      return `/app/dashboards/${item.id}`
+    case 'service':
+      return '/app/services'
+    case 'alert':
+      return '/app/alerts'
+    case 'explore': {
+      const [, exploreType, ...queryParts] = item.id.split('::')
+      const query = queryParts.join('::')
+      return `/app/explore/${exploreType || 'metrics'}?q=${encodeURIComponent(query || '')}`
+    }
+    default:
+      return '/app'
+  }
+}
+
+function favoritesForType(type: FavoriteItem['type']): FavoriteItem[] {
+  return favorites.value.filter((f) => f.type === type)
+}
+
 /** Re-read from localStorage. Exposed for testing. */
 function _reset(): void {
   favorites.value = readFavorites()
@@ -101,6 +123,8 @@ export function useFavorites() {
     toggleFavorite,
     isFavorite,
     addRecent,
+    favoriteRoute,
+    favoritesForType,
     _reset,
   }
 }

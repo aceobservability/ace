@@ -42,6 +42,8 @@ const formDisplayName = ref('')
 const formBaseUrl = ref('')
 const formApiKey = ref('')
 const formEnabled = ref(true)
+const formRateLimitPerUser = ref(0)
+const formRateLimitWindowSeconds = ref(3600)
 const formLoading = ref(false)
 const formError = ref<string | null>(null)
 
@@ -119,6 +121,8 @@ function openAddForm() {
   formBaseUrl.value = urlHints.openai
   formApiKey.value = ''
   formEnabled.value = true
+  formRateLimitPerUser.value = 0
+  formRateLimitWindowSeconds.value = 3600
   formError.value = null
   showForm.value = true
 }
@@ -130,6 +134,8 @@ function openEditForm(provider: AIProviderInfo) {
   formBaseUrl.value = provider.base_url
   formApiKey.value = ''
   formEnabled.value = provider.enabled
+  formRateLimitPerUser.value = provider.rate_limit_per_user ?? 0
+  formRateLimitWindowSeconds.value = provider.rate_limit_window_seconds ?? 3600
   formError.value = null
   showForm.value = true
   openMenuId.value = null
@@ -157,6 +163,8 @@ async function submitForm() {
         display_name: formDisplayName.value,
         base_url: formBaseUrl.value,
         enabled: formEnabled.value,
+        rate_limit_per_user: formRateLimitPerUser.value,
+        rate_limit_window_seconds: formRateLimitWindowSeconds.value,
       }
       if (formApiKey.value) data.api_key = formApiKey.value
       await updateAIProvider(props.orgId, editingId.value, data)
@@ -166,6 +174,8 @@ async function submitForm() {
         display_name: formDisplayName.value,
         base_url: formBaseUrl.value,
         enabled: formEnabled.value,
+        rate_limit_per_user: formRateLimitPerUser.value,
+        rate_limit_window_seconds: formRateLimitWindowSeconds.value,
       }
       if (formApiKey.value) data.api_key = formApiKey.value
       await createAIProvider(props.orgId, data)
@@ -292,6 +302,18 @@ function cancelDelete() {
               }"
             >
               {{ modelCount(provider) }} models
+            </span>
+
+            <!-- Rate limit badge -->
+            <span
+              v-if="provider.rate_limit_per_user > 0"
+              class="inline-flex px-2 py-0.5 rounded-sm text-xs font-medium font-mono"
+              :style="{
+                backgroundColor: 'color-mix(in srgb, var(--color-tertiary) 10%, transparent)',
+                color: 'var(--color-tertiary)',
+              }"
+            >
+              {{ provider.rate_limit_per_user }}/{{ provider.rate_limit_window_seconds >= 3600 ? `${provider.rate_limit_window_seconds / 3600}hr` : `${provider.rate_limit_window_seconds / 60}min` }}
             </span>
 
             <!-- Enabled/Disabled badge -->
@@ -455,6 +477,30 @@ function cancelDelete() {
           <input v-model="formEnabled" type="checkbox" class="w-auto m-0" />
           Enabled
         </label>
+
+        <!-- Rate limit -->
+        <div class="flex gap-3">
+          <label class="flex flex-col gap-1 text-xs font-medium flex-1" :style="{ color: 'var(--color-on-surface-variant)' }">
+            Rate limit per user (0 = unlimited)
+            <input
+              v-model.number="formRateLimitPerUser"
+              type="number"
+              min="0"
+              class="px-3 py-2 rounded-sm text-sm focus:outline-none"
+              :style="{ backgroundColor: 'var(--color-surface-container-high)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }"
+            />
+          </label>
+          <label class="flex flex-col gap-1 text-xs font-medium flex-1" :style="{ color: 'var(--color-on-surface-variant)' }">
+            Window (seconds)
+            <input
+              v-model.number="formRateLimitWindowSeconds"
+              type="number"
+              min="60"
+              class="px-3 py-2 rounded-sm text-sm focus:outline-none"
+              :style="{ backgroundColor: 'var(--color-surface-container-high)', color: 'var(--color-on-surface)', border: '1px solid var(--color-outline-variant)' }"
+            />
+          </label>
+        </div>
 
         <!-- Form error -->
         <div v-if="formError" class="text-xs" :style="{ color: 'var(--color-error)' }">{{ formError }}</div>

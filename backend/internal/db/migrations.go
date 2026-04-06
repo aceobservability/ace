@@ -330,6 +330,10 @@ $$ LANGUAGE plpgsql`,
 			UNIQUE(dashboard_id, name)
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_dashboard_variables_dashboard_id ON dashboard_variables(dashboard_id)`,
+
+		// Per-user rate limiting for org AI providers
+		`ALTER TABLE ai_providers ADD COLUMN IF NOT EXISTS rate_limit_per_user INTEGER DEFAULT 0`,
+		`ALTER TABLE ai_providers ADD COLUMN IF NOT EXISTS rate_limit_window_seconds INTEGER DEFAULT 3600`,
 	}
 
 	for _, migration := range migrations {

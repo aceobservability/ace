@@ -103,7 +103,11 @@ export function useDashboardGeneration(
 
             resultSpec = spec
             callbacks?.onDashboardSpec?.(spec)
-            return { spec: resultSpec, content: lastContent }
+            requestMessages.push(
+              { role: 'assistant', content: null, tool_calls: [tc] },
+              { role: 'tool', tool_call_id: tc.id, content: JSON.stringify(spec) },
+            )
+            break
           }
 
           const statusEntry: ToolStatus = { name: tc.function.name, status: 'running' }
@@ -125,9 +129,11 @@ export function useDashboardGeneration(
             { role: 'tool', tool_call_id: tc.id, content: result },
           )
         }
+
+        if (resultSpec) break
       }
 
-      if (!resultSpec) {
+      if (!resultSpec && !lastContent) {
         error.value = 'Could not generate a dashboard. Try a more specific prompt.'
       }
     } catch (e) {

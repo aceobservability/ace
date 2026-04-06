@@ -8,6 +8,7 @@ import {
   HeartPulse,
   Loader2,
   Search,
+  Star,
   Waypoints,
 } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
@@ -74,6 +75,9 @@ const router = useRouter()
 const { timeRange, isCustomRange, onRefresh } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { tracingDatasources, fetchDatasources } = useDatasource()
+
+import { useFavorites } from '../composables/useFavorites'
+const { toggleFavorite, isFavorite } = useFavorites()
 
 type DatasourceHealthStatus = 'unknown' | 'checking' | 'healthy' | 'unhealthy'
 
@@ -731,6 +735,11 @@ async function handleOpenTraceFromList(traceId: string) {
 }
 
 onMounted(() => {
+  // Populate query from URL param (e.g., from explore favorites)
+  if (route.query.q && typeof route.query.q === 'string') {
+    query.value = route.query.q
+  }
+
   const queryTraceId = route.query.traceId
   const queryDatasourceId = route.query.datasourceId
   if (queryTraceId && typeof queryTraceId === 'string') {
@@ -913,6 +922,22 @@ onUnmounted(() => {
             <Loader2 v-if="loadingSearch" :size="16" class="animate-spin" />
             <Search v-else :size="16" />
             <span>{{ loadingSearch ? 'Searching...' : (isClickHouseDatasource ? 'Run Query' : 'Search Traces') }}</span>
+          </button>
+          <button
+            v-if="isClickHouseDatasource && query.trim()"
+            class="inline-flex items-center gap-1.5 rounded-sm px-3 py-2.5 text-sm transition border cursor-pointer"
+            :style="{
+              backgroundColor: isFavorite(`explore::traces::${query}`) ? 'var(--color-primary-muted)' : 'var(--color-surface-container-high)',
+              borderColor: isFavorite(`explore::traces::${query}`) ? 'var(--color-primary)' : 'var(--color-stroke-subtle)',
+              color: isFavorite(`explore::traces::${query}`) ? 'var(--color-primary)' : 'var(--color-on-surface-variant)',
+            }"
+            :title="isFavorite(`explore::traces::${query}`) ? 'Remove from favorites' : 'Save to favorites'"
+            @click="toggleFavorite({ id: `explore::traces::${query}`, title: query.length > 40 ? query.slice(0, 40) + '...' : query, type: 'explore' })"
+          >
+            <Star
+              :size="14"
+              :fill="isFavorite(`explore::traces::${query}`) ? 'currentColor' : 'none'"
+            />
           </button>
         </div>
 

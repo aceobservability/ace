@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/aceobservability/ace/backend/internal/db"
 	"github.com/aceobservability/ace/backend/internal/handlers"
 	"github.com/aceobservability/ace/backend/internal/httplog"
+	"github.com/aceobservability/ace/backend/internal/ratelimit"
 	"github.com/aceobservability/ace/backend/internal/telemetry"
 	"github.com/aceobservability/ace/backend/internal/valkey"
 )
@@ -67,6 +70,17 @@ func main() {
 		logger.Fatal("failed to run migrations", zap.Error(err))
 	}
 
+	// Separate audit DB pool (INSERT-only role for compliance hardening)
+	auditPool := pool // default: use main pool
+	if auditDBURL := os.Getenv("AUDIT_DATABASE_URL"); auditDBURL != "" {
+		auditPool, err = db.Connect(context.Background(), auditDBURL)
+		if err != nil {
+			logger.Fatal("failed to connect audit database", zap.Error(err))
+		}
+		defer auditPool.Close()
+		logger.Info("audit database pool connected (INSERT-only role)")
+	}
+
 	// Initialize JWT manager
 	jwtManager, err := auth.NewJWTManager()
 	if err != nil {
@@ -108,6 +122,21 @@ func main() {
 			logger.Warn("PostHog shutdown failed", zap.Error(closeErr))
 		}
 	}()
+
+	// Configure trusted proxies for IP logging
+	if tp := os.Getenv("TRUSTED_PROXIES"); tp != "" {
+		var proxies []net.IPNet
+		for _, cidr := range strings.Split(tp, ",") {
+			cidr = strings.TrimSpace(cidr)
+			_, network, err := net.ParseCIDR(cidr)
+			if err != nil {
+				logger.Fatal("invalid TRUSTED_PROXIES CIDR", zap.String("cidr", cidr), zap.Error(err))
+			}
+			proxies = append(proxies, *network)
+		}
+		auth.SetTrustedProxies(proxies)
+		logger.Info("trusted proxies configured", zap.Int("count", len(proxies)))
+	}
 
 	// Setup router
 	mux := http.NewServeMux()
@@ -159,7 +188,7 @@ func main() {
 	mux.HandleFunc("PUT /api/orgs/{id}/branding", auth.RequireAuth(jwtManager, orgHandler.UpdateBranding))
 
 	// Audit log routes
-	auditLogger := audit.NewLogger(pool)
+	auditLogger := audit.NewLogger(auditPool)
 	auditHandler := handlers.NewAuditHandler(pool)
 	mux.HandleFunc("GET /api/orgs/{id}/audit-log", auth.RequireAuth(jwtManager, auditHandler.ListAuditLog))
 	mux.HandleFunc("GET /api/orgs/{id}/audit-log/export", auth.RequireAuth(jwtManager, auditHandler.ExportAuditLog))
@@ -275,7 +304,9 @@ func main() {
 	mux.HandleFunc("DELETE /api/auth/github/connection", auth.RequireAuth(jwtManager, githubCopilotHandler.Disconnect))
 
 	// AI provider routes (org-scoped)
-	aiHandler := handlers.NewAIHandler(pool)
+	aiLimiter := ratelimit.New()
+	defer aiLimiter.Stop()
+	aiHandler := handlers.NewAIHandler(pool, aiLimiter)
 	mux.HandleFunc("GET /api/orgs/{id}/ai/providers", auth.RequireAuth(jwtManager, auth.RequireOrgMember(pool, aiHandler.ListProviders)))
 	mux.HandleFunc("GET /api/orgs/{id}/ai/models", auth.RequireAuth(jwtManager, auth.RequireOrgMember(pool, aiHandler.ListModels)))
 	mux.HandleFunc("POST /api/orgs/{id}/ai/chat", auth.RequireAuth(jwtManager, auth.RequireOrgMember(pool, aiHandler.Chat)))

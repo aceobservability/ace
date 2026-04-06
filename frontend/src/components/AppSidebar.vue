@@ -27,7 +27,7 @@ const route = useRoute()
 const { user } = useAuth()
 const { organizations, currentOrg, selectOrganization } = useOrganization()
 const { expandedSection, isPinned, currentRouteSection, toggleSection, togglePin } = useSidebar()
-const { favorites, recentDashboards } = useFavorites()
+const { favorites, recentDashboards, favoriteRoute, favoritesForType } = useFavorites()
 const { isOpen: aiSidebarOpen, toggle: toggleAiSidebar } = useAiSidebar()
 
 const userMenuOpen = ref(false)
@@ -133,6 +133,18 @@ const dashboardRecents = computed(() => {
   return recentDashboards.value.slice(0, 5)
 })
 
+const sectionTypeMap: Record<string, 'dashboard' | 'service' | 'alert' | 'explore'> = {
+  services: 'service',
+  alerts: 'alert',
+  explore: 'explore',
+}
+
+const sectionFavorites = computed(() => {
+  const section = expandedSection.value
+  if (!section || !sectionTypeMap[section]) return []
+  return favoritesForType(sectionTypeMap[section]!).slice(0, 5)
+})
+
 // Search filtering
 const filteredSubNav = computed(() => {
   if (!searchQuery.value.trim()) return currentSubNav.value
@@ -148,6 +160,12 @@ const filteredFavorites = computed(() => {
   )
 })
 
+const filteredSectionFavorites = computed(() => {
+  if (!searchQuery.value.trim()) return sectionFavorites.value
+  const q = searchQuery.value.toLowerCase()
+  return sectionFavorites.value.filter((f) => f.title.toLowerCase().includes(q))
+})
+
 const filteredRecents = computed(() => {
   if (!searchQuery.value.trim()) return dashboardRecents.value
   const q = searchQuery.value.toLowerCase()
@@ -158,7 +176,7 @@ const hasAnyResults = computed(() => {
   if (expandedSection.value === 'dashboards') {
     return filteredFavorites.value.length > 0 || filteredRecents.value.length > 0 || !searchQuery.value.trim()
   }
-  return filteredSubNav.value.length > 0
+  return filteredSubNav.value.length > 0 || filteredSectionFavorites.value.length > 0
 })
 
 const allNavigableItems = computed<{ path: string }[]>(() => {
@@ -172,6 +190,9 @@ const allNavigableItems = computed<{ path: string }[]>(() => {
     }
     items.push({ path: '/app/dashboards' })
   } else {
+    for (const f of filteredSectionFavorites.value) {
+      items.push({ path: favoriteRoute(f) })
+    }
     for (const item of filteredSubNav.value) {
       items.push({ path: item.path })
     }
@@ -207,8 +228,12 @@ function handleOrgClick() {
 }
 
 function handleSelectOrg(orgId: string) {
+  const previousOrgId = currentOrg.value?.id
   selectOrganization(orgId)
   orgMenuOpen.value = false
+  if (orgId !== previousOrgId) {
+    router.push('/app')
+  }
 }
 
 function handleAvatarClick() {
@@ -517,15 +542,45 @@ onUnmounted(() => {
           </div>
         </template>
 
-        <!-- Non-dashboard sections: static sub-nav -->
+        <!-- Non-dashboard sections: favorites + static sub-nav -->
         <template v-else>
+          <!-- Section favorites -->
+          <template v-if="sectionTypeMap[expandedSection!]">
+            <div v-if="filteredSectionFavorites.length > 0" role="group" aria-labelledby="sidebar-section-favorites-label">
+              <div
+                id="sidebar-section-favorites-label"
+                :style="{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: 'var(--color-outline)',
+                  padding: '6px 10px 4px',
+                }"
+              >Favorites</div>
+              <button
+                v-for="(fav, idx) in filteredSectionFavorites"
+                :key="fav.id"
+                :data-testid="`sidebar-fav-${fav.id}`"
+                class="sidebar-subnav-item"
+                :class="{ highlighted: highlightedIndex === idx }"
+                @click="handleSubNavNavigate(favoriteRoute(fav))"
+              >
+                <Star :size="14" fill="currentColor" :style="{ color: 'var(--color-primary)', flexShrink: 0 }" />
+                <span class="flex-1 truncate">{{ fav.title }}</span>
+              </button>
+              <div :style="{ height: '1px', backgroundColor: 'var(--color-stroke-subtle)', margin: '4px 10px' }" />
+            </div>
+          </template>
+
           <button
             v-for="(item, idx) in filteredSubNav"
             :key="item.id"
             :data-testid="`sidebar-subnav-${item.id}`"
             :aria-current="isSubNavActive(item) ? 'page' : undefined"
             class="sidebar-subnav-item"
-            :class="{ highlighted: highlightedIndex === idx }"
+            :class="{ highlighted: highlightedIndex === filteredSectionFavorites.length + idx }"
             :style="{
               fontWeight: isSubNavActive(item) ? '500' : '400',
               color: isSubNavActive(item) ? 'var(--color-primary)' : 'var(--color-on-surface-variant)',
@@ -536,7 +591,7 @@ onUnmounted(() => {
           >{{ item.label }}</button>
 
           <!-- No search results -->
-          <div v-if="searchQuery.trim() && filteredSubNav.length === 0" data-testid="sidebar-no-results" class="sidebar-empty-hint">
+          <div v-if="searchQuery.trim() && !hasAnyResults" data-testid="sidebar-no-results" class="sidebar-empty-hint">
             <span>No matches</span>
           </div>
         </template>
