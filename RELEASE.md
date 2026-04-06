@@ -6,7 +6,7 @@ This project uses automated SemVer releases based on Conventional Commits.
 
 - Version format: `vMAJOR.MINOR.PATCH`
 - Scope: one repo-wide version for backend and frontend together
-- Release branch: `master`
+- Release branch: `main`
 - Initial release baseline: `v0.1.0`
 
 ## How version bumps are decided
@@ -22,7 +22,7 @@ Use Conventional Commit messages for all merge commits/PR titles to keep release
 
 ## Automated release flow
 
-1. Changes are merged to `master`.
+1. Changes are merged to `main`.
 2. `.github/workflows/release-pr.yml` runs `release-please`.
 3. `release-please` opens or updates a Release PR with:
    - next version
