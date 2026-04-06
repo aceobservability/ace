@@ -344,7 +344,7 @@ onUnmounted(() => {
           fontFamily: 'var(--font-display)',
         }"
         :title="currentOrg?.name || 'Select organization'"
-        @click="handleOrgClick"
+        @click.stop="handleOrgClick"
       >
         <span class="shrink-0">{{ orgInitial }}</span>
         <span v-if="isExpanded" class="flex-1 truncate text-left text-xs" :style="{ color: 'var(--color-on-surface)' }">
