@@ -11,11 +11,11 @@ import (
 type GrafanaConverterHandler struct{}
 
 type GrafanaConvertResponse struct {
-	Format   string                        `json:"format"`
-	Content  string                        `json:"content"`
-	Document converter.DashboardDocument   `json:"document"`
-	Warnings []string                      `json:"warnings"`
-	Report   *converter.ConversionReport   `json:"report,omitempty"`
+	Format   string                      `json:"format"`
+	Content  string                      `json:"content"`
+	Document converter.DashboardDocument `json:"document"`
+	Warnings []string                    `json:"warnings"`
+	Report   *converter.ConversionReport `json:"report,omitempty"`
 }
 
 func NewGrafanaConverterHandler() *GrafanaConverterHandler {

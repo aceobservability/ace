@@ -1,6 +1,5 @@
 import { computed } from 'vue'
 import {
-  type AnalyticsConsent,
   analyticsConsent,
   analyticsDntEnabled,
   analyticsReady,
@@ -33,4 +32,3 @@ export function useAnalytics() {
   }
 }
 
-export type { AnalyticsConsent }

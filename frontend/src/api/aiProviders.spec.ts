@@ -352,7 +352,7 @@ describe('aiProviders API', () => {
       ]
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockData),
+        json: () => Promise.resolve({ models: mockData }),
       })
 
       const result = await listAIModels('org-1')

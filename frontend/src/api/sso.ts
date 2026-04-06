@@ -117,7 +117,7 @@ export async function updateMicrosoftSSOConfig(
 
 // --- Okta ---
 
-export interface OktaSSOConfig {
+interface OktaSSOConfig {
   tenant_id: string // Okta domain
   client_id: string
   groups_claim_name: string
@@ -127,7 +127,7 @@ export interface OktaSSOConfig {
   updated_at: string
 }
 
-export interface UpdateOktaSSOConfigRequest {
+interface UpdateOktaSSOConfigRequest {
   tenant_id: string
   client_id: string
   client_secret: string

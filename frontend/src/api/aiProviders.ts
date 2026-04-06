@@ -45,7 +45,7 @@ export interface UpdateProviderRequest {
   models_override?: Array<{ id: string; name: string }>
 }
 
-export interface AIModel {
+interface AIModel {
   id: string
   name: string
   vendor: string

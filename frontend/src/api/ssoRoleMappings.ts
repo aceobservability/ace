@@ -9,7 +9,7 @@ export interface SSOConfigRoleMapping {
   created_at: string
 }
 
-export interface CreateSSOConfigRoleMappingRequest {
+interface CreateSSOConfigRoleMappingRequest {
   sso_group_name: string
   ace_role: string
 }

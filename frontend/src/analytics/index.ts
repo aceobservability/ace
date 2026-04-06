@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import type { Router } from 'vue-router'
 
-export type AnalyticsConsent = 'pending' | 'granted' | 'denied'
+type AnalyticsConsent = 'pending' | 'granted' | 'denied'
 
 interface AnalyticsUser {
   id: string

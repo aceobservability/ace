@@ -29,6 +29,7 @@ import {
   fetchDataSourceTraceServices,
   listDataSources,
 } from '../api/datasources'
+import type { DataSource } from '../types/datasource'
 import type { ToolCall } from './useAIProvider'
 import {
   getMetricsTools,
@@ -169,7 +170,7 @@ describe('useCopilotToolExecutor', () => {
 
   it('list_datasources returns datasource list as JSON', async () => {
     vi.mocked(listDataSources).mockResolvedValue([
-      { id: 'ds-1', name: 'Prom', type: 'prometheus' } as any,
+      { id: 'ds-1', name: 'Prom', type: 'prometheus' } as unknown as DataSource,
     ])
     const { executeTool } = useCopilotToolExecutor(mockDsId, mockOrgId, mockDsType)
     const result = await executeTool(makeToolCall('list_datasources'))

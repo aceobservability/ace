@@ -8,7 +8,7 @@ function getAuthHeaders(): HeadersInit {
   }
 }
 
-export interface GrafanaConnectResponse {
+interface GrafanaConnectResponse {
   ok: boolean
   version?: string
   error?: string

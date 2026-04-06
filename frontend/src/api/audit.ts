@@ -23,7 +23,7 @@ export interface AuditLogEntry {
   created_at: string
 }
 
-export interface AuditLogResponse {
+interface AuditLogResponse {
   entries: AuditLogEntry[]
   total: number
   page: number

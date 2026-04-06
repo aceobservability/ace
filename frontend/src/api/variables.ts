@@ -20,7 +20,7 @@ export interface Variable {
   sort_order: number
 }
 
-export interface CreateVariableRequest {
+interface CreateVariableRequest {
   name: string
   type: string
   label?: string
@@ -48,7 +48,7 @@ export async function bulkCreateVariables(dashboardId: string, variables: Create
   return resp.json()
 }
 
-export async function updateVariable(varId: string, data: Partial<CreateVariableRequest>): Promise<Variable> {
+async function updateVariable(varId: string, data: Partial<CreateVariableRequest>): Promise<Variable> {
   const resp = await fetch(`${API_BASE}/api/variables/${varId}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
@@ -58,7 +58,7 @@ export async function updateVariable(varId: string, data: Partial<CreateVariable
   return resp.json()
 }
 
-export async function deleteVariable(varId: string): Promise<void> {
+async function deleteVariable(varId: string): Promise<void> {
   const resp = await fetch(`${API_BASE}/api/variables/${varId}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),

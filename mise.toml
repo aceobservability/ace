@@ -1,7 +1,9 @@
 [tools]
 air = "latest"
 go = "1.25.8"
+golangci-lint = "latest"
 helm = "latest"
 k3d = "latest"
 kubectl = "latest"
+node = "latest"
 tilt = "latest"
