@@ -12,7 +12,7 @@ import (
 // This test requires a running PostgreSQL database
 func TestRunMigrations(t *testing.T) {
 	// Skip if no database URL is provided
-	databaseURL := "postgres://dash:dash@localhost:5432/dash_test?sslmode=disable"
+	databaseURL := "postgres://ace:ace@localhost:5432/ace_test?sslmode=disable"
 
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, databaseURL)
@@ -434,7 +434,7 @@ func TestRunMigrations(t *testing.T) {
 // TestDownMigration tests that migrations can be reversed
 func TestDownMigration(t *testing.T) {
 	// Skip if no database URL is provided
-	databaseURL := "postgres://dash:dash@localhost:5432/dash_test?sslmode=disable"
+	databaseURL := "postgres://ace:ace@localhost:5432/ace_test?sslmode=disable"
 
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, databaseURL)

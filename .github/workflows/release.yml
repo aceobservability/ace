@@ -94,7 +94,7 @@ jobs:
           staging="dist/${base}"
 
           mkdir -p "$staging"
-          CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build -trimpath -o "$staging/dash-api${EXT}" ./cmd/api
+          CGO_ENABLED=0 GOOS="$GOOS" GOARCH="$GOARCH" go build -trimpath -o "$staging/ace-api${EXT}" ./cmd/api
 
           if [ "$ARCHIVE" = "zip" ]; then
             (cd dist && zip -r "${base}.zip" "${base}")

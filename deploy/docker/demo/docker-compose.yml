@@ -13,13 +13,13 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: dash
-      POSTGRES_PASSWORD: dash
-      POSTGRES_DB: dash
+      POSTGRES_USER: ace
+      POSTGRES_PASSWORD: ace
+      POSTGRES_DB: ace
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dash"]
+      test: ["CMD-SHELL", "pg_isready -U ace"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -119,7 +119,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DATABASE_URL: postgres://dash:dash@postgres:5432/dash?sslmode=disable
+      DATABASE_URL: postgres://ace:ace@postgres:5432/ace?sslmode=disable
       VALKEY_URL: valkey://valkey:6379
       JWT_SECRET: demo-secret-change-in-production
     depends_on:

@@ -59,14 +59,14 @@ fi
 # Setup tmux with persistent session
 SOCKET_DIR="${OPENCLAW_TMUX_SOCKET_DIR:-${TMPDIR:-/tmp}/openclaw-tmux-sockets}"
 mkdir -p "$SOCKET_DIR"
-SOCKET="$SOCKET_DIR/ralph-dash.sock"
-SESSION="ralph-dash"
+SOCKET="$SOCKET_DIR/ralph-ace.sock"
+SESSION="ralph-ace"
 
 # Kill old session if it exists
 tmux -S "$SOCKET" kill-session -t "$SESSION" 2>/dev/null || true
 
 # Create new session
-if ! tmux -S "$SOCKET" new -d -s "$SESSION" -n "dash-agent" 2>/dev/null; then
+if ! tmux -S "$SOCKET" new -d -s "$SESSION" -n "ace-agent" 2>/dev/null; then
   echo "Failed to create tmux session"
   exit 1
 fi

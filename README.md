@@ -32,7 +32,7 @@ docker pull ghcr.io/aceobservability/ace-frontend:v0.1.0
 When building the frontend image yourself, set `VITE_API_URL` at build time:
 
 ```bash
-docker build -f frontend/Dockerfile --build-arg VITE_API_URL=https://api.example.com -t dash-frontend:local .
+docker build -f frontend/Dockerfile --build-arg VITE_API_URL=https://api.example.com -t ace-frontend:local .
 ```
 
 Tag strategy:
@@ -139,7 +139,7 @@ If you run Elasticsearch locally, add an `Elasticsearch (ELK)` datasource in **D
 
 - URL: `http://localhost:9200`
 - Auth: `none` (for local profile)
-- Default Index Pattern: `dash-logs-*`
+- Default Index Pattern: `ace-logs-*`
 - Timestamp Field: `@timestamp` (optional)
 - Message Field: `message` (optional)
 - Level Field: `level` (optional)
@@ -152,7 +152,7 @@ Then use Explore/Dashboards:
 Example metrics aggregation query:
 ```json
 {
-  "index": "dash-logs-*",
+  "index": "ace-logs-*",
   "query": {
     "query_string": {
       "query": "service.name:backend"

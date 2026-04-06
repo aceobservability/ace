@@ -116,7 +116,7 @@ func main() {
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://dash:dash@localhost:5432/dash?sslmode=disable"
+		dbURL = "postgres://ace:ace@localhost:5432/ace?sslmode=disable"
 	}
 
 	ctx := context.Background()
