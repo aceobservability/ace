@@ -26,7 +26,7 @@ export interface UpdateMicrosoftSSOConfigRequest {
   enabled?: boolean
 }
 
-interface OktaSSOConfig {
+export interface OktaSSOConfig {
   tenant_id: string
   client_id: string
   groups_claim_name: string
@@ -36,7 +36,7 @@ interface OktaSSOConfig {
   updated_at: string
 }
 
-interface UpdateOktaSSOConfigRequest {
+export interface UpdateOktaSSOConfigRequest {
   tenant_id: string
   client_id: string
   client_secret: string

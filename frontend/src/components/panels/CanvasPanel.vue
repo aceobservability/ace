@@ -57,11 +57,11 @@ async function mountExcalidraw() {
     const ExcalidrawWrapper = () => {
       return React.createElement(Excalidraw, {
         initialData: {
-          elements: props.data?.elements ?? [],
+          elements: (props.data?.elements ?? []) as any,
           appState: safeAppState,
         },
         viewModeEnabled: props.readOnly || !editing.value,
-        onChange: (elements: unknown[], appState: unknown) => {
+        onChange: (elements: readonly unknown[], appState: unknown) => {
           // Skip the initial onChange fired on mount to avoid overwriting saved data
           if (!mounted) {
             mounted = true
@@ -72,7 +72,7 @@ async function mountExcalidraw() {
             viewBackgroundColor: (appState as Record<string, unknown>)?.viewBackgroundColor,
             gridSize: (appState as Record<string, unknown>)?.gridSize,
           }
-          emit('change', { elements, appState: persistedAppState })
+          emit('change', { elements: [...elements], appState: persistedAppState })
         },
         theme: 'dark',
       })

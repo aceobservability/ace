@@ -1,6 +1,6 @@
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
-import { defineConfig } from 'vitest/config'
+import { defineConfig, type UserConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -14,4 +14,4 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
   },
-})
+} as UserConfig & { test: unknown })

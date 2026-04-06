@@ -71,7 +71,7 @@ function buildChatRequestMessages(): ChatRequestMessage[] {
     })
   }
 
-  messages.push(...chatMessages.value.map((m) => ({ role: m.role as ChatRequestMessage['role'], content: m.content })))
+  messages.push(...chatMessages.value.map((m) => ({ role: m.role as 'user' | 'assistant' | 'system', content: m.content })))
   return messages
 }
 

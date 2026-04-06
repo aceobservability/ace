@@ -40,6 +40,8 @@
     "@biomejs/biome": "^2.4.8",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vitest/coverage-v8": "^4.0.18",
     "@vue/test-utils": "^2.4.6",

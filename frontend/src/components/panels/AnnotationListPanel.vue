@@ -65,7 +65,7 @@ function formatTimestamp(iso: string): string {
 // ---------------------------------------------------------------------------
 
 const containerStyle = computed(() => ({
-  'overflow-y': 'auto',
+  overflowY: 'auto' as const,
   height: '100%',
   width: '100%',
   fontFamily: "'DM Sans', sans-serif",

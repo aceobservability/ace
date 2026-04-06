@@ -48,7 +48,7 @@ export async function bulkCreateVariables(dashboardId: string, variables: Create
   return resp.json()
 }
 
-async function updateVariable(varId: string, data: Partial<CreateVariableRequest>): Promise<Variable> {
+export async function updateVariable(varId: string, data: Partial<CreateVariableRequest>): Promise<Variable> {
   const resp = await fetch(`${API_BASE}/api/variables/${varId}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
@@ -58,7 +58,7 @@ async function updateVariable(varId: string, data: Partial<CreateVariableRequest
   return resp.json()
 }
 
-async function deleteVariable(varId: string): Promise<void> {
+export async function deleteVariable(varId: string): Promise<void> {
   const resp = await fetch(`${API_BASE}/api/variables/${varId}`, {
     method: 'DELETE',
     headers: getAuthHeaders(),

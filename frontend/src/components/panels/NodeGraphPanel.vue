@@ -222,7 +222,7 @@ const edgeColor = 'var(--color-outline-variant)'
 
       <!-- Node labels -->
       <text
-        v-for="(node, i) in simulatedNodes"
+        v-for="node in simulatedNodes"
         :key="'label-' + node.id"
         data-type="node-label"
         :x="node.x"

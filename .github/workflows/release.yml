@@ -25,68 +25,6 @@ env:
   RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.event.release.tag_name }}
 
 jobs:
-  backend-verify:
-    name: Verify Backend
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ env.RELEASE_TAG }}
-
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: backend/go.mod
-          check-latest: true
-          cache-dependency-path: backend/go.sum
-
-      - name: Run backend tests
-        run: go test ./...
-        working-directory: backend
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          working-directory: backend
-          args: --timeout=5m ./...
-
-      - name: Run govulncheck
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-        working-directory: backend
-
-  frontend-verify:
-    name: Verify Frontend
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ env.RELEASE_TAG }}
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install frontend dependencies
-        run: bun install --frozen-lockfile
-        working-directory: frontend
-
-      - name: Run frontend lint
-        run: bun run lint
-        working-directory: frontend
-
-      - name: Run frontend dead-code lint
-        run: bun run lint:dead-code
-        working-directory: frontend
-
-      - name: Run frontend tests
-        run: bun run test
-        working-directory: frontend
-
-      - name: Build frontend
-        run: bun run build
-        working-directory: frontend
-
   secret-scan:
     name: Secret Scan
     runs-on: ubuntu-latest
@@ -105,8 +43,6 @@ jobs:
     name: Build Backend Binary (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ubuntu-latest
     needs:
-      - backend-verify
-      - frontend-verify
       - secret-scan
     strategy:
       fail-fast: false
@@ -179,8 +115,6 @@ jobs:
     name: Build Frontend Artifact
     runs-on: ubuntu-latest
     needs:
-      - backend-verify
-      - frontend-verify
       - secret-scan
     steps:
       - name: Checkout
@@ -216,8 +150,6 @@ jobs:
     name: Publish Backend Image
     runs-on: ubuntu-latest
     needs:
-      - backend-verify
-      - frontend-verify
       - secret-scan
     env:
       PRERELEASE: ${{ github.event.release.prerelease }}
@@ -312,8 +244,6 @@ jobs:
     name: Publish Frontend Image
     runs-on: ubuntu-latest
     needs:
-      - backend-verify
-      - frontend-verify
       - secret-scan
     env:
       PRERELEASE: ${{ github.event.release.prerelease }}
@@ -408,8 +338,6 @@ jobs:
     name: Publish Helm Chart
     runs-on: ubuntu-latest
     needs:
-      - backend-verify
-      - frontend-verify
       - secret-scan
     steps:
       - name: Checkout

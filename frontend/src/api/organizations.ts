@@ -220,7 +220,7 @@ export async function removeMember(orgId: string, userId: string): Promise<void>
   })
 }
 
-async function updateOrgBranding(
+export async function updateOrgBranding(
   orgId: string,
   data: UpdateBrandingRequest,
 ): Promise<Organization> {
