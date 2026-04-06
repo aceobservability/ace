@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.0](https://github.com/aceobservability/ace/compare/v0.10.0...v0.11.0) (2026-04-06)
+
+
+### Features
+
+* add Helm chart CI publishing and Artifact Hub metadata ([#191](https://github.com/aceobservability/ace/issues/191)) ([d5c2d07](https://github.com/aceobservability/ace/commit/d5c2d070ba2cf081a2b840bdce5d6f31a29299af))
+
+
+### Bug Fixes
+
+* update repo references from janhoon to aceobservability ([#189](https://github.com/aceobservability/ace/issues/189)) ([bbbc396](https://github.com/aceobservability/ace/commit/bbbc396890f14f4c9a1ab24052ab6c42d6f1365d))
+
 ## [0.10.0](https://github.com/aceobservability/ace/compare/v0.9.0...v0.10.0) (2026-04-06)
 
 
