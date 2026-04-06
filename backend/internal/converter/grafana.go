@@ -73,22 +73,9 @@ type ConversionReport struct {
 }
 
 func ConvertGrafanaDashboard(data []byte) (DashboardDocument, []string, error) {
-	var envelope grafanaEnvelope
-	if err := json.Unmarshal(data, &envelope); err != nil {
-		return DashboardDocument{}, nil, fmt.Errorf("invalid grafana JSON: %w", err)
-	}
-
-	dashboard := envelope.Dashboard
-	if dashboard == nil {
-		var raw grafanaDashboard
-		if err := json.Unmarshal(data, &raw); err != nil {
-			return DashboardDocument{}, nil, fmt.Errorf("invalid grafana dashboard: %w", err)
-		}
-		dashboard = &raw
-	}
-
-	if strings.TrimSpace(dashboard.Title) == "" {
-		return DashboardDocument{}, nil, fmt.Errorf("grafana dashboard title is required")
+	dashboard, err := parseGrafanaInput(data)
+	if err != nil {
+		return DashboardDocument{}, nil, err
 	}
 
 	warnings := make([]string, 0)
@@ -99,11 +86,12 @@ func ConvertGrafanaDashboard(data []byte) (DashboardDocument, []string, error) {
 			warnings = append(warnings, fmt.Sprintf("panel[%d] %s", idx, warning))
 		}
 
-		if panel.GridPos == nil {
-			panel.GridPos = map[string]int{"x": 0, "y": idx * 8, "w": 12, "h": 8}
+		gridPos := panel.GridPos
+		if gridPos == nil {
+			gridPos = map[string]int{"x": 0, "y": idx * 8, "w": 12, "h": 8}
 		}
 
-		query := map[string]string{}
+		var qr *QueryResource
 		if len(panel.Targets) > 0 {
 			target := panel.Targets[0]
 			expr := strings.TrimSpace(target.Expr)
@@ -111,20 +99,11 @@ func ConvertGrafanaDashboard(data []byte) (DashboardDocument, []string, error) {
 				expr = strings.TrimSpace(target.Query)
 			}
 			if expr != "" {
-				query["expr"] = expr
+				qr = &QueryResource{Expr: expr}
+				if target.RefID != "" {
+					qr.Extra = map[string]any{"ref_id": target.RefID}
+				}
 			}
-			if target.RefID != "" {
-				query["ref_id"] = target.RefID
-			}
-		}
-
-		queryRaw := json.RawMessage("{}")
-		if len(query) > 0 {
-			encodedQuery, err := json.Marshal(query)
-			if err != nil {
-				return DashboardDocument{}, nil, fmt.Errorf("failed to encode panel query: %w", err)
-			}
-			queryRaw = encodedQuery
 		}
 
 		panelTitle := strings.TrimSpace(panel.Title)
@@ -133,47 +112,21 @@ func ConvertGrafanaDashboard(data []byte) (DashboardDocument, []string, error) {
 		}
 
 		panels = append(panels, PanelResource{
-			Title:   panelTitle,
-			Type:    mappedType,
-			GridPos: panel.GridPos,
-			Query:   queryRaw,
+			Title: panelTitle,
+			Type:  mappedType,
+			Position: GridPosition{
+				X: gridPos["x"], Y: gridPos["y"],
+				W: gridPos["w"], H: gridPos["h"],
+			},
+			Query: qr,
 		})
-	}
-
-	variables := make([]VariableResource, 0, len(dashboard.Templating.List))
-	for _, variable := range dashboard.Templating.List {
-		query := strings.TrimSpace(variable.Query)
-		if query == "" {
-			query = strings.TrimSpace(variable.Definition)
-		}
-		variables = append(variables, VariableResource{
-			Name:       variable.Name,
-			Type:       variable.Type,
-			Label:      variable.Label,
-			Query:      query,
-			Multi:      variable.Multi,
-			IncludeAll: variable.IncludeAll,
-		})
-	}
-
-	var timeRange *TimeRangeResource
-	if dashboard.Time != nil {
-		timeRange = &TimeRangeResource{
-			From: dashboard.Time.From,
-			To:   dashboard.Time.To,
-		}
 	}
 
 	doc := DashboardDocument{
-		SchemaVersion: CurrentSchemaVersion,
-		Dashboard: DashboardResource{
-			Title:           dashboard.Title,
-			Description:     optionalString(dashboard.Description),
-			Panels:          panels,
-			Variables:       variables,
-			TimeRange:       timeRange,
-			RefreshInterval: optionalString(dashboard.Refresh),
-		},
+		Version:     CurrentSchemaVersion,
+		Title:       dashboard.Title,
+		Description: strings.TrimSpace(dashboard.Description),
+		Panels:      panels,
 	}
 
 	if err := ValidateDashboardDocument(doc); err != nil {
@@ -183,54 +136,13 @@ func ConvertGrafanaDashboard(data []byte) (DashboardDocument, []string, error) {
 	return doc, warnings, nil
 }
 
-func mapGrafanaPanelType(panelType string) (string, string) {
-	switch strings.ToLower(strings.TrimSpace(panelType)) {
-	case "graph", "timeseries":
-		return "line_chart", ""
-	case "gauge":
-		return "gauge", ""
-	case "stat":
-		return "stat", ""
-	case "piechart", "pie chart":
-		return "pie", ""
-	case "logs":
-		return "logs", ""
-	case "table":
-		return "table", ""
-	case "bargauge":
-		return "bar_gauge", ""
-	case "barchart":
-		return "bar_chart", ""
-	case "heatmap":
-		return "heatmap", ""
-	case "histogram":
-		return "histogram", ""
-	default:
-		return "line_chart", fmt.Sprintf("unsupported panel type %q mapped to line_chart", panelType)
-	}
-}
-
 // ConvertGrafanaDashboardWithReport returns the converted document plus a structured fidelity report.
 func ConvertGrafanaDashboardWithReport(data []byte) (DashboardDocument, ConversionReport, error) {
-	var envelope grafanaEnvelope
-	if err := json.Unmarshal(data, &envelope); err != nil {
-		return DashboardDocument{}, ConversionReport{}, fmt.Errorf("invalid grafana JSON: %w", err)
+	dashboard, err := parseGrafanaInput(data)
+	if err != nil {
+		return DashboardDocument{}, ConversionReport{}, err
 	}
 
-	dashboard := envelope.Dashboard
-	if dashboard == nil {
-		var raw grafanaDashboard
-		if err := json.Unmarshal(data, &raw); err != nil {
-			return DashboardDocument{}, ConversionReport{}, fmt.Errorf("invalid grafana dashboard: %w", err)
-		}
-		dashboard = &raw
-	}
-
-	if strings.TrimSpace(dashboard.Title) == "" {
-		return DashboardDocument{}, ConversionReport{}, fmt.Errorf("grafana dashboard title is required")
-	}
-
-	// Count field overrides per panel from raw JSON
 	overrideCounts := countFieldOverrides(data)
 
 	report := ConversionReport{
@@ -273,11 +185,12 @@ func ConvertGrafanaDashboardWithReport(data []byte) (DashboardDocument, Conversi
 
 		report.PanelDiagnostics = append(report.PanelDiagnostics, diag)
 
-		if panel.GridPos == nil {
-			panel.GridPos = map[string]int{"x": 0, "y": idx * 8, "w": 12, "h": 8}
+		gridPos := panel.GridPos
+		if gridPos == nil {
+			gridPos = map[string]int{"x": 0, "y": idx * 8, "w": 12, "h": 8}
 		}
 
-		query := map[string]string{}
+		var qr *QueryResource
 		if len(panel.Targets) > 0 {
 			target := panel.Targets[0]
 			expr := strings.TrimSpace(target.Expr)
@@ -285,20 +198,11 @@ func ConvertGrafanaDashboardWithReport(data []byte) (DashboardDocument, Conversi
 				expr = strings.TrimSpace(target.Query)
 			}
 			if expr != "" {
-				query["expr"] = expr
+				qr = &QueryResource{Expr: expr}
+				if target.RefID != "" {
+					qr.Extra = map[string]any{"ref_id": target.RefID}
+				}
 			}
-			if target.RefID != "" {
-				query["ref_id"] = target.RefID
-			}
-		}
-
-		queryRaw := json.RawMessage("{}")
-		if len(query) > 0 {
-			encodedQuery, err := json.Marshal(query)
-			if err != nil {
-				return DashboardDocument{}, ConversionReport{}, fmt.Errorf("failed to encode panel query: %w", err)
-			}
-			queryRaw = encodedQuery
 		}
 
 		panelTitle := strings.TrimSpace(panel.Title)
@@ -307,48 +211,24 @@ func ConvertGrafanaDashboardWithReport(data []byte) (DashboardDocument, Conversi
 		}
 
 		panels = append(panels, PanelResource{
-			Title:   panelTitle,
-			Type:    mappedType,
-			GridPos: panel.GridPos,
-			Query:   queryRaw,
+			Title: panelTitle,
+			Type:  mappedType,
+			Position: GridPosition{
+				X: gridPos["x"], Y: gridPos["y"],
+				W: gridPos["w"], H: gridPos["h"],
+			},
+			Query: qr,
 		})
 	}
 
-	variables := make([]VariableResource, 0, len(dashboard.Templating.List))
-	for _, variable := range dashboard.Templating.List {
-		query := strings.TrimSpace(variable.Query)
-		if query == "" {
-			query = strings.TrimSpace(variable.Definition)
-		}
-		variables = append(variables, VariableResource{
-			Name:       variable.Name,
-			Type:       variable.Type,
-			Label:      variable.Label,
-			Query:      query,
-			Multi:      variable.Multi,
-			IncludeAll: variable.IncludeAll,
-		})
-	}
-	report.VariablesFound = len(variables)
-
-	var timeRange *TimeRangeResource
-	if dashboard.Time != nil {
-		timeRange = &TimeRangeResource{
-			From: dashboard.Time.From,
-			To:   dashboard.Time.To,
-		}
-	}
+	// Count variables for the report but don't store in document
+	report.VariablesFound = len(dashboard.Templating.List)
 
 	doc := DashboardDocument{
-		SchemaVersion: CurrentSchemaVersion,
-		Dashboard: DashboardResource{
-			Title:           dashboard.Title,
-			Description:     optionalString(dashboard.Description),
-			Panels:          panels,
-			Variables:       variables,
-			TimeRange:       timeRange,
-			RefreshInterval: optionalString(dashboard.Refresh),
-		},
+		Version:     CurrentSchemaVersion,
+		Title:       dashboard.Title,
+		Description: strings.TrimSpace(dashboard.Description),
+		Panels:      panels,
 	}
 
 	if report.TotalPanels > 0 {
@@ -360,6 +240,56 @@ func ConvertGrafanaDashboardWithReport(data []byte) (DashboardDocument, Conversi
 	}
 
 	return doc, report, nil
+}
+
+func parseGrafanaInput(data []byte) (*grafanaDashboard, error) {
+	var envelope grafanaEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return nil, fmt.Errorf("invalid grafana JSON: %w", err)
+	}
+
+	if envelope.Dashboard != nil {
+		if strings.TrimSpace(envelope.Dashboard.Title) == "" {
+			return nil, fmt.Errorf("grafana dashboard title is required")
+		}
+		return envelope.Dashboard, nil
+	}
+
+	var raw grafanaDashboard
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("invalid grafana dashboard: %w", err)
+	}
+	if strings.TrimSpace(raw.Title) == "" {
+		return nil, fmt.Errorf("grafana dashboard title is required")
+	}
+	return &raw, nil
+}
+
+func mapGrafanaPanelType(panelType string) (string, string) {
+	switch strings.ToLower(strings.TrimSpace(panelType)) {
+	case "graph", "timeseries":
+		return "line_chart", ""
+	case "gauge":
+		return "gauge", ""
+	case "stat":
+		return "stat", ""
+	case "piechart", "pie chart":
+		return "pie", ""
+	case "logs":
+		return "logs", ""
+	case "table":
+		return "table", ""
+	case "bargauge":
+		return "bar_gauge", ""
+	case "barchart":
+		return "bar_chart", ""
+	case "heatmap":
+		return "heatmap", ""
+	case "histogram":
+		return "histogram", ""
+	default:
+		return "line_chart", fmt.Sprintf("unsupported panel type %q mapped to line_chart", panelType)
+	}
 }
 
 // countFieldOverrides attempts to count fieldConfig.overrides per panel from raw JSON.
@@ -390,12 +320,4 @@ func countFieldOverrides(data []byte) []int {
 		}
 	}
 	return counts
-}
-
-func optionalString(value string) *string {
-	trimmed := strings.TrimSpace(value)
-	if trimmed == "" {
-		return nil
-	}
-	return &trimmed
 }
