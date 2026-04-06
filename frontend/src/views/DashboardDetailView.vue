@@ -14,6 +14,7 @@ import { useCommandContext } from '../composables/useCommandContext'
 import { useFavorites } from '../composables/useFavorites'
 import { useOrganization } from '../composables/useOrganization'
 import { useTimeRange } from '../composables/useTimeRange'
+import { provideCrosshairSync } from '../composables/useCrosshairSync'
 import { useVariables } from '../composables/useVariables'
 import type { Dashboard } from '../types/dashboard'
 import type { Panel as PanelType } from '../types/panel'
@@ -35,6 +36,7 @@ const showDeleteConfirm = ref(false)
 const deletingPanel = ref<PanelType | null>(null)
 
 const dashboardId = route.params.id as string
+provideCrosshairSync(dashboardId)
 
 // Template variables
 const {

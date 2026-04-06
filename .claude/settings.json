@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/janhoon/.claude/plans/**)",
+      "Bash(~/.claude/skills/gstack/bin/gstack-learnings-log '{\"skill\":\"plan-eng-review\",\"type\":\"pattern\",\"key\":\"echarts-tooltip-installs-axispointer\",\"insight\":\"TooltipComponent in ECharts modular build already installs AxisPointerComponent internally via use\\(installAxisPointer\\). No need to separately register AxisPointerComponent for tooltip crosshair sync.\",\"confidence\":10,\"source\":\"observed\",\"files\":[\"frontend/node_modules/echarts/lib/component/tooltip/install.js\"]}')",
+      "Read(//home/janhoon/.gstack/projects/aceobservability-ace/**)",
+      "Read(//tmp/**)",
+      "Bash([ -f TODOS.md ])",
+      "Bash(ls -la /home/janhoon/projects/ace/frontend/src/components/*Modal.vue)",
+      "Bash(grep -n \"Badge\\\\|badge\" /home/janhoon/projects/ace/frontend/src/components/*.vue)",
+      "Bash(npx biome:*)",
+      "Bash(npx vite:*)",
+      "Bash(~/.claude/skills/gstack/bin/gstack-learnings-log '{\"skill\":\"plan-eng-review\",\"type\":\"pitfall\",\"key\":\"zr-mousemove-leaves-canvas\",\"insight\":\"ZRender mousemove events stop firing when the cursor leaves the ECharts canvas element. For drag interactions that may extend outside the chart bounds, use window DOM mousemove/mouseup listeners instead of @zr:mousemove/@zr:mouseup. Start with @zr:mousedown only, then register window listeners for tracking.\",\"confidence\":9,\"source\":\"observed\",\"files\":[\"frontend/src/components/LineChart.vue\",\"frontend/src/components/BarChart.vue\"]}')",
+      "Bash(~/.claude/skills/gstack/bin/gstack-learnings-log '{\"skill\":\"plan-eng-review\",\"type\":\"architecture\",\"key\":\"echarts-brush-vs-custom-events\",\"insight\":\"For dashboard-level brush-to-zoom \\(where the zoom updates a global time range, not the individual chart axis\\), custom mouse events are simpler than ECharts BrushComponent. Brush requires dispatchAction lifecycle management \\(activate/clear/reactivate\\), outOfBrush config to suppress data dimming, and fights against its designed purpose \\(per-chart selection\\). Custom events with convertFromPixel give timestamps directly with less coupling.\",\"confidence\":9,\"source\":\"cross-model\",\"files\":[\"frontend/src/composables/useBrushZoom.ts\"]}')",
+      "Skill(investigate)",
+      "Skill(investigate:*)"
+    ],
+    "additionalDirectories": [
+      "/home/janhoon/.gstack/projects/aceobservability-ace"
+    ]
+  }
+}

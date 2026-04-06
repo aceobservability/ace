@@ -6,8 +6,8 @@ import LineChart from './LineChart.vue'
 vi.mock('vue-echarts', () => ({
   default: {
     name: 'VChart',
-    props: ['option', 'autoresize'],
-    template: '<div class="echarts-mock" :data-option="JSON.stringify(option)"></div>',
+    props: ['option', 'autoresize', 'group'],
+    template: '<div class="echarts-mock" :data-option="JSON.stringify(option)" :data-group="group"></div>',
     methods: {
       resize: vi.fn(),
     },
@@ -16,6 +16,8 @@ vi.mock('vue-echarts', () => ({
 
 vi.mock('echarts/core', () => ({
   use: vi.fn(),
+  connect: vi.fn(),
+  disconnect: vi.fn(),
 }))
 
 vi.mock('echarts/renderers', () => ({
@@ -243,6 +245,29 @@ describe('LineChart', () => {
         expect(s.areaStyle.color.colorStops).toHaveLength(2)
         expect(s.stack).toBe('total')
       }
+    })
+  })
+
+  describe('crosshair sync', () => {
+    it('does not set group prop when no crosshair context is provided', () => {
+      const wrapper = mount(LineChart, {
+        props: { series: mockSeries },
+      })
+      const chart = wrapper.find('.echarts-mock')
+      expect(chart.attributes('data-group')).toBeUndefined()
+    })
+
+    it('configures axisPointer on tooltip', () => {
+      const wrapper = mount(LineChart, {
+        props: { series: mockSeries },
+      })
+      const chart = wrapper.find('.echarts-mock')
+      const option = JSON.parse(chart.attributes('data-option') || '{}')
+
+      expect(option.tooltip.axisPointer).toBeDefined()
+      expect(option.tooltip.axisPointer.type).toBe('line')
+      expect(option.tooltip.axisPointer.lineStyle).toBeDefined()
+      expect(option.tooltip.axisPointer.lineStyle.type).toBe('dashed')
     })
   })
 })

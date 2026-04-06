@@ -88,6 +88,24 @@
 **Priority:** P2
 **Depends on:** Sidebar redesign
 
+## Dashboard
+
+### Crosshair sync: extend to StateTimelinePanel
+
+**What:** Add crosshair sync support to StateTimelinePanel so it participates in dashboard-wide tooltip synchronization.
+
+**Why:** StateTimelinePanel has a time x-axis but uses `trigger: 'item'` with CustomChart rendering, so it can't join the ECharts `connect` group. Users with mixed dashboards (line charts + state timelines) would benefit from seeing the time cursor on all panels.
+
+**Pros:** More complete time-inspection experience across all time-based panels.
+
+**Cons:** Requires either changing tooltip trigger (may break existing behavior) or building manual event-based sync alongside the `connect` API.
+
+**Context:** The crosshair sync composable (`useCrosshairSync.ts`) uses ECharts' `connect` API which only syncs axis-triggered tooltips. StateTimelinePanel would need either: (a) switching to `trigger: 'axis'` (risky for CustomChart), or (b) the composable broadcasting a timestamp that StateTimelinePanel listens to independently via `watch`.
+
+**Effort:** S
+**Priority:** P3
+**Depends on:** Crosshair sync feature (line_chart, bar_chart, candlestick)
+
 ## Enterprise Auth
 
 ### Separate DB role for audit log writes
@@ -122,6 +140,38 @@
 **Priority:** P2
 **Depends on:** Enterprise Auth Phase 1
 
+
+## Dashboard
+
+### Fix double-fetch on time range change in Panel.vue
+
+**What:** Panel.vue has two watchers that both fire when the time range changes: the datasource watcher (line 360, watches `startRef`/`endRef`) and the time range watcher (line 442, watches `timeRange`). For datasource-based panels, both trigger `fetchDatasourceData()`, causing two identical API calls per time range change.
+
+**Why:** Wastes bandwidth and backend resources. Every time range change (preset selection, custom range, brush-zoom, auto-refresh) fires two requests per datasource panel. With 10 panels on a dashboard, that's 20 requests instead of 10.
+
+**Pros:** Reduces API calls by 50% for datasource panels. Simpler data flow.
+**Cons:** Minimal risk. The fix is straightforward: consolidate the two watchers or add a debounce.
+
+**Context:** The datasource watcher (line 360) watches `[datasourceId, queryExpr, ..., startRef, endRef]` and the time range watcher (line 442) watches `[timeRange, onRefresh]`. Since `startRef`/`endRef` are computed from `timeRange`, both fire simultaneously. Fix: remove `startRef`/`endRef` from the datasource watcher's dependencies and let the time range watcher handle all time-based refetches.
+
+**Effort:** S
+**Priority:** P2
+**Depends on:** None
+
+### Extend brush-to-zoom to registry-based time-axis panels
+
+**What:** Add brush-to-zoom support to CandlestickPanel, StateTimelinePanel, StatusHistoryPanel, and HeatmapPanel — all ECharts panels with `type: 'time'` x-axis.
+
+**Why:** Brush-to-zoom currently only works on LineChart and BarChart (the two built-in chart components). Registry-based panels use the same ECharts time axis but render via `panelRegistry.ts` with their own VChart instances. The `useBrushZoom` composable is designed for reuse, but each registry panel has a different template structure.
+
+**Pros:** Consistent zoom behavior across all time-series panels.
+**Cons:** Each registry panel needs individual wiring (different component structures). Some panels (HeatmapPanel, StatusHistoryPanel) use category/bucket x-axes that only loosely map to time.
+
+**Context:** The `useBrushZoom` composable accepts a VChart ref and returns event handlers + overlay state. To adopt it, each registry panel needs: (1) expose a VChart ref, (2) add `@zr:mousedown` and `@zr:dblclick` event listeners, (3) add the overlay div, (4) emit `brush-zoom` and `reset-zoom` events. Panel.vue already wires these events for registry panels via `v-bind`/`v-on`, so the Panel.vue side may need no changes if registry panels emit the same events.
+
+**Effort:** M
+**Priority:** P3
+**Depends on:** Brush-to-zoom on LineChart/BarChart
 
 ## Completed
 

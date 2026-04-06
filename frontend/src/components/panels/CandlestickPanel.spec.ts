@@ -7,8 +7,8 @@ import { clearRegistry } from '../../utils/panelRegistry'
 vi.mock('vue-echarts', () => ({
   default: {
     name: 'VChart',
-    props: ['option', 'autoresize'],
-    template: '<div class="echarts-mock" :data-option="JSON.stringify(option)"></div>',
+    props: ['option', 'autoresize', 'group'],
+    template: '<div class="echarts-mock" :data-option="JSON.stringify(option)" :data-group="group"></div>',
     methods: {
       resize: vi.fn(),
     },
@@ -17,6 +17,8 @@ vi.mock('vue-echarts', () => ({
 
 vi.mock('echarts/core', () => ({
   use: vi.fn(),
+  connect: vi.fn(),
+  disconnect: vi.fn(),
 }))
 
 vi.mock('echarts/renderers', () => ({

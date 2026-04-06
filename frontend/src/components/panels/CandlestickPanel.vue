@@ -6,12 +6,15 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import VChart from 'vue-echarts'
+import { useCrosshairSync } from '../../composables/useCrosshairSync'
 import {
   chartAxisStyle,
   chartGridStyle,
   chartTooltipStyle,
   thresholdColors,
 } from '../../utils/chartTheme'
+
+const { groupId } = useCrosshairSync()
 
 // Register ECharts components
 use([CanvasRenderer, CandlestickChart, GridComponent, TooltipComponent])
@@ -158,6 +161,7 @@ onUnmounted(() => {
       ref="chartRef"
       :option="chartOption"
       :autoresize="true"
+      :group="groupId ?? undefined"
       class="h-full w-full"
     />
   </div>

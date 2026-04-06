@@ -111,6 +111,19 @@ export const chartLegendStyle = {
 }
 
 // ---------------------------------------------------------------------------
+// Crosshair pointer
+// ---------------------------------------------------------------------------
+
+/** Shared axisPointer style for cross-panel crosshair sync. */
+export const crosshairPointerStyle = {
+  lineStyle: {
+    color: '#757578',
+    width: 1,
+    type: 'dashed' as const,
+  },
+}
+
+// ---------------------------------------------------------------------------
 // Helper
 // ---------------------------------------------------------------------------
 

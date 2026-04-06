@@ -28,7 +28,9 @@ export function useBrushZoom(
 
     startX = event.offsetX
 
-    // Get grid pixel bounds for the overlay height
+    // Fallback: matches ECharts default grid (top: '8%', bottom: '8%', no title).
+    // When props.title is set the chart uses top: '15%'; coordinateSystem.getRect()
+    // below returns the accurate position for that case.
     const el = chart.$el as HTMLElement
     const containerHeight = el.clientHeight
     gridTop = containerHeight * 0.08
