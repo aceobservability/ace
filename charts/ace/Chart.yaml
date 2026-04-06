@@ -1,9 +1,11 @@
 apiVersion: v2
 name: ace
-description: Ace Observability Platform — unified metrics, logs, and traces powered by VictoriaMetrics
+description: >-
+  Ace Observability Platform — unified metrics, logs, and traces powered by
+  VictoriaMetrics
 type: application
-version: 0.1.0
-appVersion: "1.0.0"
+version: 0.11.6
+appVersion: 0.11.6
 keywords:
   - observability
   - monitoring
@@ -23,42 +25,29 @@ annotations:
   artifacthub.io/links: |
     - name: Source
       url: https://github.com/aceobservability/ace
-  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/containsSecurityUpdates: 'false'
   artifacthub.io/images: |
     - name: ace-backend
       image: ghcr.io/aceobservability/ace-backend
     - name: ace-frontend
       image: ghcr.io/aceobservability/ace-frontend
-
 dependencies:
-  # -- PostgreSQL database (togglable — disable when using an external DB)
   - name: postgresql
-    version: "16.4.1"
+    version: 16.4.1
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
-
-  # -- VictoriaMetrics K8s Stack: VMSingle, VMAgent, VMAlert, Alertmanager, Grafana (optional)
   - name: victoria-metrics-k8s-stack
-    version: "0.45.0"
+    version: 0.45.0
     repository: https://victoriametrics.github.io/helm-charts/
     condition: victoria-metrics-k8s-stack.enabled
     alias: vmetrics
-
-  # -- VictoriaLogs Single: high-performance log storage
   - name: victoria-logs-single
-    version: "0.11.28"
+    version: 0.11.28
     repository: https://victoriametrics.github.io/helm-charts/
     condition: victoria-logs-single.enabled
     alias: vlogs
-
-  # -- VictoriaTraces: distributed tracing with OTLP ingestion
-  # Uses the dedicated victoria-traces helm chart when available,
-  # falling back to victoria-metrics-single configured for traces.
-  # NOTE: If the victoria-traces-single chart is not yet published to the
-  # VictoriaMetrics Helm repo at the version below, pin to the latest
-  # available version or use the OCI registry.
   - name: victoria-metrics-single
-    version: "0.18.0"
+    version: 0.18.0
     repository: https://victoriametrics.github.io/helm-charts/
     condition: victoriatraces.enabled
     alias: vtraces

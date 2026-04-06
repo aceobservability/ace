@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.6](https://github.com/aceobservability/ace/compare/v0.11.5...v0.11.6) (2026-04-06)
+
+
+### CI
+
+* auto-generate Helm docs and sync Chart.yaml version via release-please ([#202](https://github.com/aceobservability/ace/issues/202)) ([6f63a1e](https://github.com/aceobservability/ace/commit/6f63a1e8dbf805ba0a3d78c8a007dbb1cf50d0e7))
+
 ## [0.11.5](https://github.com/aceobservability/ace/compare/v0.11.4...v0.11.5) (2026-04-06)
 
 
