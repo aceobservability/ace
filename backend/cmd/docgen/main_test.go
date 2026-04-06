@@ -64,9 +64,9 @@ func TestLoadHandlerDocs(t *testing.T) {
 	}
 
 	tests := map[string]string{
-		"HealthCheck":        "HealthCheck returns server health status.",
-		"AuthHandler.Login":  "Login authenticates a user with email and password.",
-		"AuthHandler.Me":     "Me returns the current user profile.",
+		"HealthCheck":       "HealthCheck returns server health status.",
+		"AuthHandler.Login": "Login authenticates a user with email and password.",
+		"AuthHandler.Me":    "Me returns the current user profile.",
 	}
 
 	for key, want := range tests {

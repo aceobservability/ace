@@ -244,15 +244,15 @@ func unwrapAuth(expr ast.Expr) (auth, orgMember bool, inner ast.Expr) {
 		if len(call.Args) < 2 {
 			return false, false, expr
 		}
-		innerAuth, innerOrg, innerExpr := unwrapAuth(call.Args[1])
-		return true || innerAuth, innerOrg, innerExpr
+		_, innerOrg, innerExpr := unwrapAuth(call.Args[1])
+		return true, innerOrg, innerExpr
 
 	case "RequireOrgMember":
 		if len(call.Args) < 2 {
 			return false, false, expr
 		}
-		innerAuth, innerOrg, innerExpr := unwrapAuth(call.Args[1])
-		return innerAuth, true || innerOrg, innerExpr
+		innerAuth, _, innerExpr := unwrapAuth(call.Args[1])
+		return innerAuth, true, innerExpr
 
 	default:
 		return false, false, expr
