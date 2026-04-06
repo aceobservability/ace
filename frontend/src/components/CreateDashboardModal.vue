@@ -126,16 +126,14 @@ function setMode(nextMode: CreationMode) {
 }
 
 function setImportPreviewFromDocument(document: {
-  dashboard: {
-    title: string
-    description?: string
-    panels: unknown[]
-  }
+  title: string
+  description?: string
+  panels: unknown[]
 }) {
   importPreview.value = {
-    title: document.dashboard.title,
-    description: document.dashboard.description ?? '',
-    panelCount: document.dashboard.panels.length,
+    title: document.title,
+    description: document.description ?? '',
+    panelCount: document.panels.length,
   }
 }
 
@@ -301,18 +299,8 @@ async function convertGrafana() {
     setImportPreviewFromDocument(response.document)
     extractGrafanaDatasources(grafanaSource.value)
 
-    // Extract variables for persistence
-    const vars = response.document?.dashboard?.variables
-    if (vars && vars.length > 0) {
-      convertedVariables.value = vars.map(v => ({
-        name: v.name,
-        type: v.type || 'query',
-        label: v.label,
-        query: v.query,
-        multi: v.multi ?? false,
-        include_all: v.include_all ?? false,
-      }))
-    }
+    // Variables are not included in v2 export format (counted in report only)
+    convertedVariables.value = []
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to convert Grafana dashboard'
   } finally {

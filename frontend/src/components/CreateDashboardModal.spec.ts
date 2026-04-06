@@ -213,20 +213,18 @@ describe('CreateDashboardModal', () => {
     vi.mocked(converterApi.convertGrafanaDashboard).mockResolvedValue({
       format: 'yaml',
       content:
-        'schema_version: 1\ndashboard:\n  title: Converted Dashboard\n  panels:\n    - title: Requests\n',
+        'version: 2\ntitle: Converted Dashboard\npanels:\n  - title: Requests\n',
       document: {
-        schema_version: 1,
-        dashboard: {
-          title: 'Converted Dashboard',
-          description: 'From Grafana',
-          panels: [
-            {
-              title: 'Requests',
-              type: 'line_chart',
-              grid_pos: { x: 0, y: 0, w: 24, h: 8 },
-            },
-          ],
-        },
+        version: 2,
+        title: 'Converted Dashboard',
+        description: 'From Grafana',
+        panels: [
+          {
+            title: 'Requests',
+            type: 'line_chart',
+            position: { x: 0, y: 0, w: 24, h: 8 },
+          },
+        ],
       },
       warnings: ['Converted unsupported panel type'],
     })
@@ -266,7 +264,7 @@ describe('CreateDashboardModal', () => {
 
     expect(api.importDashboardYaml).toHaveBeenCalledWith(
       'org-1',
-      expect.stringContaining('schema_version'),
+      expect.stringContaining('version: 2'),
     )
     expect(wrapper.emitted('created')).toBeTruthy()
   })

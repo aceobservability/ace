@@ -7,29 +7,20 @@ export interface DashboardVariable {
   include_all?: boolean
 }
 
-interface DashboardTimeRange {
-  from: string
-  to: string
-}
-
 interface DashboardPanelResource {
   title: string
   type: string
-  grid_pos: Record<string, number>
-  query?: Record<string, string>
+  position: { x: number; y: number; w: number; h: number }
+  datasource?: { name?: string; type: string }
+  query?: Record<string, unknown>
+  display?: Record<string, unknown>
 }
 
 export interface DashboardDocument {
-  schema_version: number
-  dashboard: {
-    id?: string
-    title: string
-    description?: string
-    panels: DashboardPanelResource[]
-    variables?: DashboardVariable[]
-    time_range?: DashboardTimeRange
-    refresh_interval?: string
-  }
+  version: number
+  title: string
+  description?: string
+  panels: DashboardPanelResource[]
 }
 
 export interface PanelDiagnostic {
