@@ -39,6 +39,10 @@ export function transformToChartData(result: PrometheusQueryResult): ChartData {
     return { series }
   }
 
+  if (!Array.isArray(result.data.result)) {
+    return { series }
+  }
+
   for (const metricResult of result.data.result) {
     // Create a label string from metric labels
     const labelParts: string[] = []

@@ -7,7 +7,99 @@ metadata:
     app.kubernetes.io/name: otel-collector
 data:
   config.yaml: |
-{{ .Values.otelCollector.config | indent 4 }}
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      batch:
+        send_batch_size: 1024
+        timeout: 5s
+
+    exporters:
+      {{- if .Values.victoriaMetrics.enabled }}
+      prometheusremotewrite/victoria:
+        endpoint: http://victoria-metrics:8428/api/v1/write
+      {{- end }}
+      {{- if .Values.victoriaLogs.enabled }}
+      otlphttp/victorialogs:
+        logs_endpoint: http://victoria-logs:9428/insert/opentelemetry/v1/logs
+      {{- end }}
+      {{- if .Values.victoriaTraces.enabled }}
+      otlphttp/victoriatraces:
+        traces_endpoint: http://victoria-traces:10428/insert/opentelemetry/v1/traces
+      {{- end }}
+      {{- if .Values.prometheus.enabled }}
+      prometheusremotewrite/prometheus:
+        endpoint: http://prometheus:9090/api/v1/write
+      {{- end }}
+      {{- if .Values.loki.enabled }}
+      loki:
+        endpoint: http://loki:3100/loki/api/v1/push
+      {{- end }}
+      {{- if .Values.tempo.enabled }}
+      otlp/tempo:
+        endpoint: tempo:4317
+        tls:
+          insecure: true
+      {{- end }}
+      {{- if .Values.elasticsearch.enabled }}
+      elasticsearch:
+        endpoints: ["http://elasticsearch:9200"]
+        logs_index: ace-logs
+        traces_index: ace-traces
+      {{- end }}
+      {{- if .Values.clickhouse.enabled }}
+      clickhouse:
+        endpoint: tcp://clickhouse:9000
+        database: default
+        logs_table_name: ace_logs
+        traces_table_name: ace_traces
+        metrics_table_name: ace_metrics
+        create_schema: true
+      {{- end }}
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters:
+            {{- $metricsExporters := list }}
+            {{- if .Values.victoriaMetrics.enabled }}{{ $metricsExporters = append $metricsExporters "prometheusremotewrite/victoria" }}{{- end }}
+            {{- if .Values.prometheus.enabled }}{{ $metricsExporters = append $metricsExporters "prometheusremotewrite/prometheus" }}{{- end }}
+            {{- if .Values.clickhouse.enabled }}{{ $metricsExporters = append $metricsExporters "clickhouse" }}{{- end }}
+            {{- range $metricsExporters }}
+            - {{ . }}
+            {{- end }}
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters:
+            {{- $logsExporters := list }}
+            {{- if .Values.victoriaLogs.enabled }}{{ $logsExporters = append $logsExporters "otlphttp/victorialogs" }}{{- end }}
+            {{- if .Values.loki.enabled }}{{ $logsExporters = append $logsExporters "loki" }}{{- end }}
+            {{- if .Values.elasticsearch.enabled }}{{ $logsExporters = append $logsExporters "elasticsearch" }}{{- end }}
+            {{- if .Values.clickhouse.enabled }}{{ $logsExporters = append $logsExporters "clickhouse" }}{{- end }}
+            {{- range $logsExporters }}
+            - {{ . }}
+            {{- end }}
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters:
+            {{- $tracesExporters := list }}
+            {{- if .Values.victoriaTraces.enabled }}{{ $tracesExporters = append $tracesExporters "otlphttp/victoriatraces" }}{{- end }}
+            {{- if .Values.tempo.enabled }}{{ $tracesExporters = append $tracesExporters "otlp/tempo" }}{{- end }}
+            {{- if .Values.elasticsearch.enabled }}{{ $tracesExporters = append $tracesExporters "elasticsearch" }}{{- end }}
+            {{- if .Values.clickhouse.enabled }}{{ $tracesExporters = append $tracesExporters "clickhouse" }}{{- end }}
+            {{- range $tracesExporters }}
+            - {{ . }}
+            {{- end }}
 ---
 apiVersion: v1
 kind: Service

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { Sparkles } from 'lucide-vue-next'
 import EmptyState from '../components/EmptyState.vue'
 import SetupWizard from '../components/SetupWizard.vue'
@@ -15,7 +15,8 @@ const { datasources } = useDatasource()
 const { favorites, recentDashboards } = useFavorites()
 
 const hasDataSources = computed(() => datasources.value.length > 0)
-const showWizard = computed(() => !hasDataSources.value && localStorage.getItem('ace-setup-wizard-dismissed') !== 'true')
+const wizardDismissedByUser = ref(false)
+const showWizard = computed(() => !hasDataSources.value && !wizardDismissedByUser.value && localStorage.getItem('ace-setup-wizard-dismissed') !== 'true')
 
 // Onboarding banner visibility — check if user dismissed it
 const onboardingDismissed = computed(() => {
@@ -69,7 +70,7 @@ onUnmounted(() => {
 
 <template>
   <!-- Setup wizard when no data sources (first visit) -->
-  <SetupWizard v-if="showWizard" />
+  <SetupWizard v-if="showWizard" @dismissed="wizardDismissedByUser = true" />
 
   <!-- Empty state when no data sources (wizard dismissed) -->
   <div v-else-if="!hasDataSources" class="flex items-center justify-center min-h-[60vh]">

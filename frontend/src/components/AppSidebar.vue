@@ -20,6 +20,7 @@ import { useAuth } from '../composables/useAuth'
 import { useFavorites } from '../composables/useFavorites'
 import { useOrganization } from '../composables/useOrganization'
 import { useSidebar } from '../composables/useSidebar'
+import { useToast } from '../composables/useToast'
 import SidebarUserMenu from './SidebarUserMenu.vue'
 
 const router = useRouter()
@@ -33,6 +34,7 @@ const { isOpen: aiSidebarOpen, toggle: toggleAiSidebar } = useAiSidebar()
 const userMenuOpen = ref(false)
 const orgMenuOpen = ref(false)
 const orgMenuRef = ref<HTMLDivElement | null>(null)
+const orgSelectorRef = ref<HTMLButtonElement | null>(null)
 const searchQuery = ref('')
 const searchInput = ref<HTMLInputElement | null>(null)
 const highlightedIndex = ref(-1)
@@ -227,12 +229,15 @@ function handleOrgClick() {
   userMenuOpen.value = false
 }
 
+const { show: showToast } = useToast()
+
 function handleSelectOrg(orgId: string) {
   const previousOrgId = currentOrg.value?.id
+  const org = organizations.value.find(o => o.id === orgId)
   selectOrganization(orgId)
   orgMenuOpen.value = false
-  if (orgId !== previousOrgId) {
-    router.push('/app')
+  if (orgId !== previousOrgId && org) {
+    showToast(`Switched to ${org.name}`, 'success')
   }
 }
 
@@ -284,7 +289,9 @@ watch(expandedSection, (section) => {
 
 // Click-outside for org menu
 function handleOrgMenuClickOutside(event: MouseEvent) {
-  if (orgMenuRef.value && !orgMenuRef.value.contains(event.target as Node)) {
+  const target = event.target as Node
+  if (orgSelectorRef.value?.contains(target)) return
+  if (orgMenuRef.value && !orgMenuRef.value.contains(target)) {
     orgMenuOpen.value = false
   }
 }
@@ -355,6 +362,7 @@ onUnmounted(() => {
 
       <!-- Org selector -->
       <button
+        ref="orgSelectorRef"
         data-testid="sidebar-org-selector"
         class="flex items-center shrink-0 cursor-pointer transition-colors duration-150"
         :class="isExpanded ? 'gap-2 w-full rounded-lg px-2 py-1.5' : 'justify-center rounded-md'"

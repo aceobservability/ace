@@ -38,29 +38,29 @@ var orgs = []org{
 			{Name: "VictoriaMetrics", Type: "victoriametrics", URL: "http://localhost:8428", K8sURL: "http://victoria-metrics:8428"},
 			{Name: "Victoria Logs", Type: "victorialogs", URL: "http://localhost:9428", K8sURL: "http://victoria-logs:9428"},
 			{Name: "VictoriaTraces", Type: "victoriatraces", URL: "http://localhost:10428", K8sURL: "http://victoria-traces:10428"},
-			{Name: "VMAlert", Type: "vmalert", URL: "http://localhost:8880"},
-			{Name: "AlertManager", Type: "alertmanager", URL: "http://localhost:9093"},
+			{Name: "VMAlert", Type: "vmalert", URL: "http://localhost:8880", K8sURL: "http://vmalert:8880"},
+			{Name: "AlertManager", Type: "alertmanager", URL: "http://localhost:9093", K8sURL: "http://alertmanager:9093"},
 		},
 	},
 	{
 		Name: "Elastic",
 		Slug: "elastic",
 		Datasources: []datasource{
-			{Name: "Elasticsearch", Type: "elasticsearch", URL: "http://localhost:9200"},
+			{Name: "Elasticsearch", Type: "elasticsearch", URL: "http://localhost:9200", K8sURL: "http://elasticsearch:9200"},
 		},
 	},
 	{
 		Name: "ClickHouse",
 		Slug: "clickhouse",
 		Datasources: []datasource{
-			{Name: "ClickHouse", Type: "clickhouse", URL: "http://localhost:8123"},
+			{Name: "ClickHouse", Type: "clickhouse", URL: "http://localhost:8123", K8sURL: "http://clickhouse:8123"},
 		},
 	},
 	{
 		Name: "LGTM",
 		Slug: "lgtm",
 		Datasources: []datasource{
-			{Name: "Mimir", Type: "prometheus", URL: "http://localhost:9009", K8sURL: "http://mimir:9009"},
+			{Name: "Prometheus", Type: "prometheus", URL: "http://localhost:9090", K8sURL: "http://prometheus:9090"},
 			{Name: "Loki", Type: "loki", URL: "http://localhost:3100", K8sURL: "http://loki:3100"},
 			{Name: "Tempo", Type: "tempo", URL: "http://localhost:3200", K8sURL: "http://tempo:3200"},
 		},

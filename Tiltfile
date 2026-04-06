@@ -11,6 +11,10 @@ optional_resources = [
     'otel-collector',
     'grafana',
     'telemetrygen',
+    'elasticsearch',
+    'clickhouse',
+    'alertmanager',
+    'vmalert',
 ]
 
 config.define_string_list('enable', args=True)
@@ -82,9 +86,48 @@ deploy_chart_resource('victoria-metrics', 'victoriaMetrics', ['8428:8428'])
 deploy_chart_resource('victoria-logs', 'victoriaLogs', ['9428:9428'])
 deploy_chart_resource('victoria-traces', 'victoriaTraces', ['10428:10428'])
 deploy_chart_resource('tempo', 'tempo', ['3200:3200'])
-deploy_chart_resource('otel-collector', 'otelCollector', ['4317:4317', '4318:4318'])
+# otel-collector needs to know which datasource services are enabled
+# so its config template can generate the right exporters and pipelines.
+otel_set = ['otelCollector.enabled=true']
+datasource_values_map = {
+    'victoria-metrics': 'victoriaMetrics',
+    'victoria-logs': 'victoriaLogs',
+    'victoria-traces': 'victoriaTraces',
+    'prometheus': 'prometheus',
+    'loki': 'loki',
+    'tempo': 'tempo',
+    'elasticsearch': 'elasticsearch',
+    'clickhouse': 'clickhouse',
+}
+for res_name, val_key in datasource_values_map.items():
+    if res_name in requested:
+        otel_set.append('{}.enabled=true'.format(val_key))
+
+otel_rendered = helm(
+    CHART_PATH,
+    name='ace-local-otel-collector',
+    namespace=NAMESPACE,
+    set=otel_set,
+)
+# Filter to only otel-collector resources (the render also outputs other enabled services)
+otel_filtered = []
+for obj in decode_yaml_stream(otel_rendered):
+    name = obj.get('metadata', {}).get('name', '')
+    if 'otel-collector' in name:
+        otel_filtered.append(encode_yaml(obj))
+k8s_yaml(otel_filtered)
+k8s_resource(
+    'otel-collector',
+    labels=['infra'],
+    port_forwards=['4317:4317', '4318:4318'],
+    resource_deps=['namespace'],
+)
 deploy_chart_resource('grafana', 'grafana', ['3000:3000'])
 deploy_chart_resource('telemetrygen', 'telemetrygen', [])
+deploy_chart_resource('elasticsearch', 'elasticsearch', ['9200:9200'])
+deploy_chart_resource('clickhouse', 'clickhouse', ['8123:8123', '9000:9000'])
+deploy_chart_resource('alertmanager', 'alertmanager', ['9093:9093'])
+deploy_chart_resource('vmalert', 'vmalert', ['8880:8880'])
 deploy_chart_resource(
     'backend',
     'backend',

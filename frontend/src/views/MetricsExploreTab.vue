@@ -7,6 +7,7 @@ import {
   CircleAlert,
   HeartPulse,
   History,
+  LayoutDashboard,
   Loader2,
   Play,
   Star,
@@ -20,6 +21,8 @@ import CloudWatchQueryEditor from '../components/CloudWatchQueryEditor.vue'
 import ElasticsearchQueryEditor from '../components/ElasticsearchQueryEditor.vue'
 import type { ChartSeries } from '../components/LineChart.vue'
 import LineChart from '../components/LineChart.vue'
+import ExportToDashboardModal from '../components/ExportToDashboardModal.vue'
+import QueryAIAssist from '../components/QueryAIAssist.vue'
 import QueryBuilder from '../components/QueryBuilder.vue'
 import TimeRangePicker from '../components/TimeRangePicker.vue'
 import { useDatasource } from '../composables/useDatasource'
@@ -43,7 +46,7 @@ const emit = defineEmits<{
 const route = useRoute()
 const { timeRange, onRefresh, setCustomRange } = useTimeRange()
 const { currentOrg } = useOrganization()
-const { metricsDatasources, fetchDatasources } = useDatasource()
+const { metricsDatasources } = useDatasource()
 const { toggleFavorite, isFavorite } = useFavorites()
 const queryEditor = useQueryEditor()
 
@@ -66,6 +69,9 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const result = ref<PrometheusQueryResult | null>(null)
 const chartSeries = ref<ChartSeries[]>([])
+
+// Export to dashboard modal
+const showExportModal = ref(false)
 
 // Query history (session storage)
 const HISTORY_KEY = 'explore_query_history'
@@ -117,7 +123,7 @@ function buildServiceMetricsQuery(type_: DataSourceType, serviceName: string): s
 
     return JSON.stringify(
       {
-        index: 'logs-*',
+        index: 'ace-logs',
         query: {
           bool: {
             filter: serviceFilter,
@@ -226,10 +232,6 @@ onMounted(() => {
     }
   }
 
-  if (currentOrg.value) {
-    fetchDatasources(currentOrg.value.id)
-  }
-
   queryEditor.register({
     setQuery: (q: string) => {
       query.value = q
@@ -241,11 +243,18 @@ onMounted(() => {
   })
 })
 
+// Reset local state when org changes (App.vue handles the datasource fetch)
 watch(
   () => currentOrg.value?.id,
   (orgId, previousOrgId) => {
     if (orgId && orgId !== previousOrgId) {
-      fetchDatasources(orgId)
+      selectedDatasourceId.value = ''
+      datasourceHealth.value = {}
+      datasourceHealthErrors.value = {}
+      query.value = ''
+      result.value = null
+      chartSeries.value = []
+      error.value = null
     }
   },
 )
@@ -261,7 +270,17 @@ watch(
     const hasSelected = sources.some((ds) => ds.id === selectedDatasourceId.value)
     if (!hasSelected) {
       const defaultDatasource = sources.find((ds) => ds.is_default)
-      selectedDatasourceId.value = defaultDatasource?.id || sources[0].id
+      const selected = defaultDatasource || sources[0]
+      if (!selected) return
+      selectedDatasourceId.value = selected.id
+
+      // Pre-fill starter query for datasources without a visual builder
+      if (!query.value.trim()) {
+        const defaultQuery = getDefaultMetricsQuery(selected.type as DataSourceType)
+        if (defaultQuery) {
+          query.value = defaultQuery
+        }
+      }
     }
   },
   { immediate: true },
@@ -420,9 +439,35 @@ function toggleDatasourceMenu() {
   showDatasourceMenu.value = !showDatasourceMenu.value
 }
 
+function getDefaultMetricsQuery(type_: DataSourceType): string {
+  switch (type_) {
+    case 'prometheus':
+    case 'victoriametrics':
+      return '' // Builder mode handles this
+    case 'clickhouse':
+      return "SELECT\n  toStartOfInterval(TimeUnix, INTERVAL 1 minute) AS timestamp,\n  avg(Value) AS value,\n  MetricName AS metric\nFROM otel_metrics_gauge\nWHERE TimeUnix >= fromUnixTimestamp({start})\n  AND TimeUnix <= fromUnixTimestamp({end})\nGROUP BY timestamp, metric\nORDER BY timestamp"
+    case 'elasticsearch':
+      return '{"index":"ace-logs","aggs":{"timeseries":{"date_histogram":{"field":"@timestamp","fixed_interval":"1m","min_doc_count":0}}}}'
+    case 'cloudwatch':
+      return '{"namespace":"AWS/EC2","metric_name":"CPUUtilization","stat":"Average","period":60}'
+    default:
+      return ''
+  }
+}
+
 function selectDatasource(datasourceId: string) {
+  const prevDs = metricsDatasources.value.find(d => d.id === selectedDatasourceId.value)
   selectedDatasourceId.value = datasourceId
   showDatasourceMenu.value = false
+
+  // Pre-fill starter query when switching datasource type or query is empty
+  const newDs = metricsDatasources.value.find(d => d.id === datasourceId)
+  if (newDs) {
+    const defaultQuery = getDefaultMetricsQuery(newDs.type as DataSourceType)
+    if (defaultQuery && (!query.value.trim() || (prevDs && prevDs.type !== newDs.type))) {
+      query.value = defaultQuery
+    }
+  }
 }
 
 function handleDocumentClick(event: MouseEvent) {
@@ -443,7 +488,7 @@ function getSmokeQuery(type_: DataSourceType): string {
     return '{"namespace":"AWS/EC2","metric_name":"CPUUtilization","stat":"Average","period":60}'
   }
   if (type_ === 'elasticsearch') {
-    return '{"index":"logs-*","aggs":{"timeseries":{"date_histogram":{"field":"@timestamp","fixed_interval":"1m","min_doc_count":0}}}}'
+    return '{"index":"ace-logs","aggs":{"timeseries":{"date_histogram":{"field":"@timestamp","fixed_interval":"1m","min_doc_count":0}}}}'
   }
   if (type_ === 'loki') {
     return '{job=~".+"}'
@@ -625,7 +670,7 @@ watch(selectedDatasourceId, (newId) => {
         </div>
       </div>
 
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 flex-wrap">
         <button
           data-testid="explore-run-query-btn"
           class="inline-flex items-center gap-2 rounded-sm px-5 py-2.5 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
@@ -656,6 +701,31 @@ watch(selectedDatasourceId, (newId) => {
             :fill="isFavorite(`explore::metrics::${query}`) ? 'currentColor' : 'none'"
           />
         </button>
+
+        <QueryAIAssist
+          :query="query"
+          :datasource-type="activeDatasource?.type || 'prometheus'"
+          :datasource-name="activeDatasource?.name || ''"
+          :disabled="!query.trim() || !selectedDatasourceId"
+          @apply="(q: string) => { query = q }"
+        />
+
+        <button
+          type="button"
+          data-testid="explore-export-btn"
+          class="inline-flex items-center gap-2 rounded-sm px-4 py-2.5 text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"
+          :style="{
+            backgroundColor: 'transparent',
+            color: query.trim() ? 'var(--color-on-surface-variant)' : 'var(--color-outline)',
+            border: '1px solid var(--color-outline-variant)',
+          }"
+          :disabled="!query.trim() || !selectedDatasourceId"
+          @click="showExportModal = true"
+        >
+          <LayoutDashboard :size="16" />
+          <span>Add to Dashboard</span>
+        </button>
+
         <span class="text-xs" :style="{ color: 'var(--color-outline)' }">Ctrl+Enter to run</span>
       </div>
 
@@ -682,6 +752,9 @@ watch(selectedDatasourceId, (newId) => {
       <div v-else-if="hasResults" class="flex flex-col flex-1">
         <div class="flex items-center justify-between px-4 py-3" :style="{ borderBottom: '1px solid var(--color-outline-variant)', backgroundColor: 'var(--color-surface-container-high)' }">
           <span class="text-sm font-mono" :style="{ color: 'var(--color-outline)' }">{{ seriesCount }} series</span>
+          <span v-if="seriesCount > 30" class="text-xs ml-2" :style="{ color: 'var(--color-tertiary)' }">
+            Tip: Add label filters or use an aggregation like <code class="px-1 rounded" :style="{ backgroundColor: 'var(--color-surface)' }">rate()</code> or <code class="px-1 rounded" :style="{ backgroundColor: 'var(--color-surface)' }">sum by()</code> to reduce series count.
+          </span>
         </div>
         <div class="flex-1 p-4 min-h-[400px]">
           <LineChart :series="chartSeries" :height="400" />
@@ -701,5 +774,14 @@ watch(selectedDatasourceId, (newId) => {
         <p class="m-0">Write a query and click "Run Query" to visualize your metrics.</p>
       </div>
     </div>
+
+    <!-- Export to Dashboard Modal -->
+    <ExportToDashboardModal
+      v-if="showExportModal"
+      :query="query"
+      signal="metrics"
+      :datasource-id="selectedDatasourceId"
+      @close="showExportModal = false"
+    />
   </div>
 </template>

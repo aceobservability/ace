@@ -145,12 +145,18 @@ const chartOption = computed(() => {
       },
     },
     legend: {
-      show: props.series.length > 1,
+      show: props.series.length > 1 && props.series.length <= 20,
       bottom: 0,
+      type: 'scroll',
       textStyle: {
         color: chartColors.label,
         fontSize: 11,
       },
+      pageTextStyle: {
+        color: chartColors.label,
+      },
+      pageIconColor: chartColors.label,
+      pageIconInactiveColor: chartColors.grid,
       itemWidth: 16,
       itemHeight: 8,
     },
@@ -158,7 +164,7 @@ const chartOption = computed(() => {
       left: '3%',
       right: '4%',
       top: props.title ? '15%' : '8%',
-      bottom: props.series.length > 1 ? '15%' : '8%',
+      bottom: props.series.length > 1 && props.series.length <= 20 ? '15%' : '8%',
       containLabel: true,
     },
     xAxis: {

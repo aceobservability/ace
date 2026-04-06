@@ -8,10 +8,12 @@ const props = withDefaults(
     modelValue: string
     signal?: ClickHouseSignal
     disabled?: boolean
+    showSignalSelector?: boolean
   }>(),
   {
     signal: 'metrics',
     disabled: false,
+    showSignalSelector: false,
   },
 )
 
@@ -21,11 +23,11 @@ const emit = defineEmits<{
 }>()
 
 const sqlExamples: Record<ClickHouseSignal, string> = {
-  logs: 'SELECT timestamp, message, level\nFROM logs_table\nWHERE timestamp >= toDateTime({start}) AND timestamp <= toDateTime({end})\nORDER BY timestamp DESC\nLIMIT 500',
+  logs: 'SELECT Timestamp AS timestamp, Body AS message, SeverityText AS level\nFROM ace_logs\nWHERE Timestamp >= toDateTime({start}) AND Timestamp <= toDateTime({end})\nORDER BY Timestamp DESC\nLIMIT 500',
   metrics:
-    'SELECT timestamp, value, metric\nFROM metrics_table\nWHERE timestamp >= toDateTime({start}) AND timestamp <= toDateTime({end})\nORDER BY timestamp',
+    'SELECT toStartOfInterval(TimeUnix, INTERVAL 1 minute) AS timestamp, avg(Value) AS value, MetricName AS metric\nFROM otel_metrics_gauge\nWHERE TimeUnix >= fromUnixTimestamp({start}) AND TimeUnix <= fromUnixTimestamp({end})\nGROUP BY timestamp, metric\nORDER BY timestamp',
   traces:
-    'SELECT span_id, parent_span_id, operation_name, service_name, start_time_unix_nano, duration_nano, status\nFROM traces_table\nWHERE start_time_unix_nano BETWEEN {start_ns} AND {end_ns}\nLIMIT 200',
+    'SELECT SpanId AS span_id, ParentSpanId AS parent_span_id, SpanName AS operation_name, ServiceName AS service_name, toUnixTimestamp64Nano(Timestamp) AS start_time_unix_nano, Duration AS duration_nano, StatusCode AS status\nFROM ace_traces\nWHERE Timestamp BETWEEN fromUnixTimestamp64Nano({start_ns}) AND fromUnixTimestamp64Nano({end_ns})\nLIMIT 200',
 }
 
 const columnGuides: Record<ClickHouseSignal, string[]> = {
@@ -57,7 +59,7 @@ function handleQueryInput(event: Event) {
 
 <template>
   <div class="flex flex-col gap-3.5" :class="{ 'opacity-60 pointer-events-none': props.disabled }">
-    <div class="flex flex-col gap-1.5">
+    <div v-if="showSignalSelector" class="flex flex-col gap-1.5">
       <label for="clickhouse-signal" class="text-sm font-medium text-[var(--color-on-surface)]">Signal Type</label>
       <select
         id="clickhouse-signal"

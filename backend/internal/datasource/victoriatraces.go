@@ -105,7 +105,15 @@ func (c *VictoriaTracesClient) SearchTraces(ctx context.Context, req TraceSearch
 }
 
 func (c *VictoriaTracesClient) searchTracesForService(ctx context.Context, req TraceSearchRequest) ([]TraceSummary, error) {
-	params := buildTraceSearchParams(req)
+	// VictoriaTraces Jaeger API expects timestamps in microseconds, not seconds.
+	jaegerReq := req
+	if jaegerReq.Start > 0 && jaegerReq.Start < 1e12 {
+		jaegerReq.Start *= 1_000_000
+	}
+	if jaegerReq.End > 0 && jaegerReq.End < 1e12 {
+		jaegerReq.End *= 1_000_000
+	}
+	params := buildTraceSearchParams(jaegerReq)
 	endpoint := "/select/jaeger/api/traces?" + params.Encode()
 
 	payload, err := doTracingRequest(ctx, c.httpClient, c.datasource, http.MethodGet, endpoint, nil)

@@ -7,6 +7,7 @@ import {
   CircleAlert,
   HeartPulse,
   History,
+  LayoutDashboard,
   Loader2,
   Play,
   Star,
@@ -18,6 +19,7 @@ import { fetchDataSourceLabels, queryDataSource, streamDataSourceLogs } from '..
 import ClickHouseSQLEditor from '../components/ClickHouseSQLEditor.vue'
 import CloudWatchQueryEditor from '../components/CloudWatchQueryEditor.vue'
 import ElasticsearchQueryEditor from '../components/ElasticsearchQueryEditor.vue'
+import ExportToDashboardModal from '../components/ExportToDashboardModal.vue'
 import LogQLQueryBuilder from '../components/LogQLQueryBuilder.vue'
 import LogViewer from '../components/LogViewer.vue'
 import TimeRangePicker from '../components/TimeRangePicker.vue'
@@ -35,7 +37,7 @@ const emit = defineEmits<{
 const route = useRoute()
 const { timeRange, onRefresh, setCustomRange } = useTimeRange()
 const { currentOrg } = useOrganization()
-const { logsDatasources, fetchDatasources } = useDatasource()
+const { logsDatasources } = useDatasource()
 
 // Favorites
 import { useFavorites } from '../composables/useFavorites'
@@ -56,6 +58,7 @@ const TRACE_NAVIGATION_MAX_AGE_MS = 5 * 60 * 1000
 
 const selectedDatasourceId = ref('')
 const query = ref('')
+const showExportModal = ref(false)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const logs = ref<LogEntry[]>([])
@@ -219,16 +222,18 @@ onMounted(() => {
     }
   }
 
-  if (currentOrg.value) {
-    fetchDatasources(currentOrg.value.id)
-  }
 })
 
+// Reset local state when org changes (App.vue handles the datasource fetch)
 watch(
   () => currentOrg.value?.id,
   (orgId, previousOrgId) => {
     if (orgId && orgId !== previousOrgId) {
-      fetchDatasources(orgId)
+      selectedDatasourceId.value = ''
+      query.value = ''
+      logs.value = []
+      error.value = null
+      stopLive()
     }
   },
 )
@@ -244,7 +249,14 @@ watch(
     const hasSelected = sources.some((ds) => ds.id === selectedDatasourceId.value)
     if (!hasSelected) {
       const defaultDatasource = sources.find((ds) => ds.is_default)
-      selectedDatasourceId.value = defaultDatasource?.id || sources[0].id
+      const selected = defaultDatasource || sources[0]
+      if (!selected) return
+      selectedDatasourceId.value = selected.id
+
+      // Pre-fill default query for new datasource
+      if (!query.value.trim()) {
+        query.value = getDefaultLogsQuery(selected.type as DataSourceType)
+      }
     }
   },
   { immediate: true },
@@ -778,9 +790,33 @@ function toggleDatasourceMenu() {
   showDatasourceMenu.value = !showDatasourceMenu.value
 }
 
+function getDefaultLogsQuery(type_: DataSourceType): string {
+  switch (type_) {
+    case 'loki':
+      return '{job=~".+"}'
+    case 'victorialogs':
+      return '*'
+    case 'clickhouse':
+      return "SELECT\n  Timestamp AS timestamp,\n  Body AS message,\n  SeverityText AS level\nFROM ace_logs\nWHERE Timestamp >= toDateTime({start})\n  AND Timestamp <= toDateTime({end})\nORDER BY Timestamp DESC\nLIMIT 100"
+    case 'cloudwatch':
+      return 'fields @timestamp, @message\n| sort @timestamp desc\n| limit 100'
+    case 'elasticsearch':
+      return '*'
+    default:
+      return ''
+  }
+}
+
 function selectDatasource(datasourceId: string) {
+  const prevDs = logsDatasources.value.find(d => d.id === selectedDatasourceId.value)
   selectedDatasourceId.value = datasourceId
   showDatasourceMenu.value = false
+
+  // Pre-fill default query when switching datasource type or query is empty
+  const newDs = logsDatasources.value.find(d => d.id === datasourceId)
+  if (newDs && (!query.value.trim() || (prevDs && prevDs.type !== newDs.type))) {
+    query.value = getDefaultLogsQuery(newDs.type as DataSourceType)
+  }
 }
 
 function handleDocumentClick(event: MouseEvent) {
@@ -905,7 +941,12 @@ watch(
             <div ref="datasourceMenuRef" class="relative">
               <button
                 type="button"
-                class="flex w-full items-center gap-3 rounded bg-[var(--color-surface-container-low)] px-4 py-3 text-left cursor-pointer transition  hover:bg-[var(--color-surface-container-high)] disabled:opacity-60 disabled:cursor-not-allowed"
+                class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left cursor-pointer transition disabled:opacity-60 disabled:cursor-not-allowed"
+                :style="{
+                  backgroundColor: 'var(--color-surface-container-high)',
+                  border: '1px solid var(--color-outline-variant)',
+                  color: 'var(--color-on-surface)',
+                }"
                 data-testid="explore-logs-datasource-btn"
                 :disabled="loading || !hasLogsDatasources"
                 @click="toggleDatasourceMenu"
@@ -923,11 +964,10 @@ watch(
                     <span class="font-mono text-xs uppercase tracking-[0.07em] text-[var(--color-outline)]">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
                   </div>
                   <span
-                    class="ml-auto inline-flex items-center gap-1.5 rounded-sm px-2.5 py-0.5 text-xs border"
-                    :class="{
-                      ' text-[var(--color-outline)]': activeDatasourceHealth === 'checking' || activeDatasourceHealth === 'unknown',
-                      'border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)]': activeDatasourceHealth === 'healthy',
-                      'border-rose-500/25 bg-[var(--color-error)]/10 text-[var(--color-error)]': activeDatasourceHealth === 'unhealthy',
+                    class="ml-auto inline-flex items-center gap-1.5 rounded-sm px-2.5 py-0.5 text-xs"
+                    :style="{
+                      border: '1px solid var(--color-outline-variant)',
+                      color: activeDatasourceHealth === 'healthy' ? 'var(--color-secondary)' : activeDatasourceHealth === 'unhealthy' ? 'var(--color-error)' : 'var(--color-outline)',
                     }"
                     :title="activeDatasourceHealthError || activeDatasourceHealthLabel"
                   >
@@ -1086,6 +1126,19 @@ watch(
               :fill="isFavorite(`explore::logs::${query}`) ? 'currentColor' : 'none'"
             />
           </button>
+
+          <button
+            type="button"
+            data-testid="explore-logs-export-btn"
+            class="inline-flex items-center gap-2 rounded-sm px-4 py-2.5 text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed border border-[var(--color-outline-variant)] bg-transparent"
+            :style="{ color: query.trim() ? 'var(--color-on-surface-variant)' : 'var(--color-outline)' }"
+            :disabled="!query.trim() || !selectedDatasourceId"
+            @click="showExportModal = true"
+          >
+            <LayoutDashboard :size="16" />
+            <span>Add to Dashboard</span>
+          </button>
+
           <span class="text-xs text-[var(--color-outline)]">Ctrl+Enter to run</span>
 
           <span
@@ -1173,10 +1226,18 @@ watch(
             Example: <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">fields @timestamp, @message | filter @message like /error/ | sort @timestamp desc | limit 200</code>
           </p>
           <p v-else-if="isElasticsearchDatasource" class="m-0 text-xs text-[var(--color-outline)]">
-            Examples: <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">service.name:"api" AND level:error</code>, <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">{"index":"logs-*","query":{"query_string":{"query":"error"}}}</code>
+            Examples: <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">service.name:"api" AND level:error</code>, <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">{"index":"ace-logs","query":{"query_string":{"query":"error"}}}</code>
           </p>
           <p v-else class="m-0 text-xs text-[var(--color-outline)]">Examples: <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">{job=~".+"}</code>, <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">{app="api"} |= "error"</code>, <code class="rounded bg-[var(--color-surface-container-high)] px-1.5 py-0.5 font-mono text-xs text-[var(--color-on-surface-variant)]">*</code></p>
         </div>
       </div>
     </div>
+
+    <ExportToDashboardModal
+      v-if="showExportModal"
+      :query="query"
+      signal="logs"
+      :datasource-id="selectedDatasourceId"
+      @close="showExportModal = false"
+    />
 </template>

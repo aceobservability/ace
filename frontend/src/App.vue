@@ -68,12 +68,12 @@ watch(isAuthenticated, async (authenticated) => {
   }
 }, { immediate: true })
 
-// Fetch datasources when org changes
+// Fetch datasources when org changes (single owner — Explore tabs react to shared state)
 watch(() => currentOrg.value?.id, async (newOrgId) => {
   if (newOrgId) {
     await fetchDatasources(newOrgId)
   }
-})
+}, { immediate: true })
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkViewport)

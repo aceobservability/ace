@@ -7,6 +7,7 @@ describe('ClickHouseSQLEditor', () => {
     const wrapper = mount(ClickHouseSQLEditor, {
       props: {
         modelValue: '',
+        showSignalSelector: true,
       },
     })
 
@@ -15,7 +16,7 @@ describe('ClickHouseSQLEditor', () => {
 
     expect((signalSelect.element as HTMLSelectElement).value).toBe('metrics')
     expect((sqlInput.element as HTMLTextAreaElement).placeholder).toContain(
-      'SELECT timestamp, value, metric',
+      'SELECT toStartOfInterval',
     )
     expect(wrapper.text()).toContain('timestamp')
     expect(wrapper.text()).toContain('value')
@@ -25,6 +26,7 @@ describe('ClickHouseSQLEditor', () => {
     const wrapper = mount(ClickHouseSQLEditor, {
       props: {
         modelValue: '',
+        showSignalSelector: true,
       },
     })
 
@@ -53,13 +55,14 @@ describe('ClickHouseSQLEditor', () => {
       props: {
         modelValue: '',
         signal: 'traces',
+        showSignalSelector: true,
       },
     })
 
     expect(wrapper.text()).toContain('span_id')
     expect(wrapper.text()).toContain('start_time_unix_nano')
     expect(wrapper.find('#clickhouse-query').attributes('placeholder')).toContain(
-      'FROM traces_table',
+      'FROM ace_traces',
     )
   })
 })

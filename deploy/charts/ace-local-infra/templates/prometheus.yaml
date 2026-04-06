@@ -46,6 +46,7 @@ spec:
             - --config.file=/etc/prometheus/prometheus.yml
             - --storage.tsdb.path=/prometheus
             - --web.enable-lifecycle
+            - --web.enable-remote-write-receiver
           ports:
             - name: http
               containerPort: 9090
