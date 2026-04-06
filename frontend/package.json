@@ -29,7 +29,7 @@
     "monaco-editor": "^0.55.1",
     "posthog-js": "^1.363.1",
     "react": "^19.2.4",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.2.4",
     "shiki": "^4.0.2",
     "vue": "^3.5.30",
     "vue-echarts": "^8.0.1",
