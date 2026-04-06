@@ -1,4 +1,4 @@
-# Ace Observability Platform — Helm Chart
+# ace
 
 Production-ready Helm chart for deploying the **Ace Observability Platform** to Kubernetes, including the full VictoriaMetrics stack for metrics, logs, and traces.
 
@@ -95,120 +95,144 @@ helm install ace charts/ace --dry-run -f charts/ace/values-dev.yaml -n ace
 | **Traces** | `victoria-metrics-single` (as vtraces) | VictoriaTraces with OTLP ingestion |
 | **Log Shipper** | Vector (DaemonSet) | Ships container logs to VictoriaLogs |
 
-## Values Reference
+## Requirements
 
-### Global
+| Repository | Name | Version |
+|------------|------|---------|
+| https://charts.bitnami.com/bitnami | postgresql | 16.4.1 |
+| https://victoriametrics.github.io/helm-charts/ | vlogs(victoria-logs-single) | 0.11.28 |
+| https://victoriametrics.github.io/helm-charts/ | vmetrics(victoria-metrics-k8s-stack) | 0.45.0 |
+| https://victoriametrics.github.io/helm-charts/ | vtraces(victoria-metrics-single) | 0.18.0 |
 
-| Key | Description | Default |
-|-----|-------------|---------|
-| `nameOverride` | Override chart name | `""` |
-| `fullnameOverride` | Override full release name | `""` |
-| `global.imagePullSecrets` | Image pull secrets | `[]` |
+## Values
 
-### Service Account & RBAC
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `serviceAccount.create` | Create ServiceAccount | `true` |
-| `serviceAccount.annotations` | SA annotations (e.g., IRSA) | `{}` |
-| `rbac.create` | Create ClusterRole for metrics scraping | `true` |
-
-### Backend
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `backend.replicaCount` | Replicas (when HPA disabled) | `2` |
-| `backend.image.repository` | Backend image | `ghcr.io/aceobservability/ace-backend` |
-| `backend.image.tag` | Image tag | `Chart.appVersion` |
-| `backend.autoscaling.enabled` | Enable HPA | `true` |
-| `backend.autoscaling.minReplicas` | HPA min | `2` |
-| `backend.autoscaling.maxReplicas` | HPA max | `10` |
-| `backend.pdb.enabled` | Enable PodDisruptionBudget | `true` |
-| `backend.pdb.minAvailable` | Minimum available pods | `1` |
-| `backend.jwt.secret` | JWT HMAC secret (stored in Secret) | `""` |
-| `backend.jwt.privateKey` | JWT asymmetric private key PEM | `""` |
-| `backend.jwt.publicKey` | JWT asymmetric public key PEM | `""` |
-| `backend.existingSecret` | Use an existing K8s Secret | `""` |
-| `backend.valkey.url` | Valkey/Redis URL for refresh tokens | `""` |
-| `backend.otlp.enabled` | Enable OTLP trace export | `true` |
-| `backend.otlp.endpoint` | OTLP endpoint (auto-detected) | `""` |
-| `backend.prometheus.url` | Metrics query URL (auto-detected) | `""` |
-| `backend.victoriaLogs.url` | Logs query URL (auto-detected) | `""` |
-| `backend.baseURL` | Backend base URL (for SSO callbacks) | `""` |
-| `backend.frontendURL` | Frontend URL (for SSO redirects) | `""` |
-| `backend.posthog.enabled` | Enable PostHog analytics | `false` |
-| `backend.resources` | Resource requests/limits | See values.yaml |
-
-### Frontend
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `frontend.replicaCount` | Replicas (when HPA disabled) | `2` |
-| `frontend.image.repository` | Frontend image | `ghcr.io/aceobservability/ace-frontend` |
-| `frontend.autoscaling.enabled` | Enable HPA | `true` |
-| `frontend.nginxConfigOverride` | Use ConfigMap nginx.conf | `false` |
-| `frontend.resources` | Resource requests/limits | See values.yaml |
-
-### Ingress
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `ingress.enabled` | Enable Ingress | `false` |
-| `ingress.className` | Ingress class | `nginx` |
-| `ingress.annotations` | Annotations (cert-manager, etc.) | See values.yaml |
-| `ingress.hosts` | Host rules | `[{host: ace.example.com}]` |
-| `ingress.tls` | TLS configuration | See values.yaml |
-
-### PostgreSQL
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `postgresql.enabled` | Deploy PostgreSQL subchart | `true` |
-| `postgresql.auth.username` | DB username | `ace` |
-| `postgresql.auth.password` | DB password (**set in production!**) | `""` |
-| `postgresql.auth.database` | DB name | `ace` |
-| `postgresql.primary.persistence.size` | PVC size | `10Gi` |
-| `externalDatabase.url` | External DB connection string | `""` |
-
-### VictoriaMetrics K8s Stack
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `victoria-metrics-k8s-stack.enabled` | Deploy the full metrics stack | `true` |
-| `vmsingle.spec.retentionPeriod` | Metrics retention | `90d` |
-| `vmsingle.spec.storage.resources.requests.storage` | Metrics PVC size | `50Gi` |
-| `vmagent.enabled` | Deploy VMAgent for scraping | `true` |
-| `vmalert.enabled` | Deploy VMAlert for rule evaluation | `true` |
-| `alertmanager.enabled` | Deploy Alertmanager | `true` |
-
-### VictoriaLogs
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `victoria-logs-single.enabled` | Deploy VictoriaLogs | `true` |
-| `server.persistentVolume.size` | Logs PVC size | `50Gi` |
-| `server.extraArgs.retentionPeriod` | Log retention | `30d` |
-
-### VictoriaTraces
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `victoriatraces.enabled` | Deploy VictoriaTraces | `true` |
-| `vtraces.server.persistentVolume.size` | Traces PVC size | `30Gi` |
-
-### Vector (Log Shipper)
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `vector.enabled` | Deploy Vector DaemonSet | `true` |
-| `vector.sink.endpoint` | Custom sink URL (when vlogs disabled) | See values.yaml |
-
-### Network Policy
-
-| Key | Description | Default |
-|-----|-------------|---------|
-| `networkPolicy.enabled` | Enable NetworkPolicy resources | `false` |
-| `networkPolicy.ingressControllerLabels` | Labels for ingress controller pods | `{app.kubernetes.io/name: ingress-nginx}` |
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| backend.affinity | object | `{}` |  |
+| backend.autoscaling | object | `{"enabled":true,"maxReplicas":10,"minReplicas":2,"targetCPUUtilizationPercentage":70,"targetMemoryUtilizationPercentage":80}` | HPA configuration |
+| backend.baseURL | string | `""` | Backend base URL (for SSO callbacks) |
+| backend.existingSecret | string | `""` | Use an existing Secret instead of the chart-managed one. Must contain keys: database-password, jwt-secret, jwt-private-key, jwt-public-key |
+| backend.extraEnv | object | `{}` | Extra environment variables as key-value pairs |
+| backend.frontendURL | string | `""` | Frontend URL (for SSO redirects) |
+| backend.image.pullPolicy | string | `"IfNotPresent"` |  |
+| backend.image.repository | string | `"ghcr.io/aceobservability/ace-backend"` |  |
+| backend.image.tag | string | `""` | Overrides the image tag (default: Chart.appVersion) |
+| backend.jwt | object | `{"privateKey":"","publicKey":"","secret":""}` | JWT configuration (stored in Secret) |
+| backend.jwt.privateKey | string | `""` | RSA/ECDSA private key PEM (optional, for asymmetric JWT) |
+| backend.jwt.publicKey | string | `""` | RSA/ECDSA public key PEM (optional) |
+| backend.jwt.secret | string | `""` | HMAC secret for JWT signing (set one of secret OR privateKey/publicKey) |
+| backend.nodeSelector | object | `{}` |  |
+| backend.otlp | object | `{"enabled":true,"endpoint":""}` | OpenTelemetry tracing configuration |
+| backend.otlp.enabled | bool | `true` | Enable OTLP trace export from the backend |
+| backend.otlp.endpoint | string | `""` | OTLP endpoint (auto-detected from VictoriaTraces subchart if empty) |
+| backend.pdb | object | `{"enabled":true,"minAvailable":1}` | PodDisruptionBudget |
+| backend.podAnnotations | object | `{}` | Pod annotations (e.g., Prometheus scrape config) |
+| backend.podLabels | object | `{}` | Extra pod labels |
+| backend.podSecurityContext.fsGroup | int | `65534` |  |
+| backend.podSecurityContext.runAsNonRoot | bool | `true` |  |
+| backend.podSecurityContext.runAsUser | int | `65534` |  |
+| backend.posthog | object | `{"apiKey":"","enabled":false,"host":""}` | PostHog analytics (optional) |
+| backend.prometheus | object | `{"url":""}` | Prometheus/VictoriaMetrics query endpoint |
+| backend.prometheus.url | string | `""` | Override the metrics query URL (auto-detected from k8s-stack if empty) |
+| backend.replicaCount | int | `2` | Number of replicas (ignored when autoscaling is enabled) |
+| backend.resources.limits.cpu | string | `"500m"` |  |
+| backend.resources.limits.memory | string | `"512Mi"` |  |
+| backend.resources.requests.cpu | string | `"100m"` |  |
+| backend.resources.requests.memory | string | `"128Mi"` |  |
+| backend.securityContext.allowPrivilegeEscalation | bool | `false` |  |
+| backend.securityContext.capabilities.drop[0] | string | `"ALL"` |  |
+| backend.securityContext.readOnlyRootFilesystem | bool | `true` |  |
+| backend.service.port | int | `8080` |  |
+| backend.service.type | string | `"ClusterIP"` |  |
+| backend.tolerations | list | `[]` |  |
+| backend.valkey | object | `{"url":""}` | Valkey (Redis-compatible) for refresh tokens |
+| backend.victoriaLogs | object | `{"url":""}` | VictoriaLogs query endpoint |
+| backend.victoriaLogs.url | string | `""` | Override the logs query URL (auto-detected from vlogs subchart if empty) |
+| externalDatabase.password | string | `nil` | Password (stored in Secret; referenced by DATABASE_URL) |
+| externalDatabase.url | string | `""` | Full connection string (overrides all other fields) |
+| frontend.affinity | object | `{}` |  |
+| frontend.autoscaling.enabled | bool | `true` |  |
+| frontend.autoscaling.maxReplicas | int | `6` |  |
+| frontend.autoscaling.minReplicas | int | `2` |  |
+| frontend.autoscaling.targetCPUUtilizationPercentage | int | `70` |  |
+| frontend.autoscaling.targetMemoryUtilizationPercentage | int | `80` |  |
+| frontend.image.pullPolicy | string | `"IfNotPresent"` |  |
+| frontend.image.repository | string | `"ghcr.io/aceobservability/ace-frontend"` |  |
+| frontend.image.tag | string | `""` |  |
+| frontend.nginxConfigOverride | bool | `false` | Override the default nginx.conf from the container image |
+| frontend.nodeSelector | object | `{}` |  |
+| frontend.podAnnotations | object | `{}` |  |
+| frontend.podLabels | object | `{}` |  |
+| frontend.podSecurityContext.fsGroup | int | `101` |  |
+| frontend.podSecurityContext.runAsNonRoot | bool | `true` |  |
+| frontend.podSecurityContext.runAsUser | int | `101` |  |
+| frontend.replicaCount | int | `2` |  |
+| frontend.resources.limits.cpu | string | `"200m"` |  |
+| frontend.resources.limits.memory | string | `"128Mi"` |  |
+| frontend.resources.requests.cpu | string | `"50m"` |  |
+| frontend.resources.requests.memory | string | `"64Mi"` |  |
+| frontend.securityContext.allowPrivilegeEscalation | bool | `false` |  |
+| frontend.securityContext.capabilities.drop[0] | string | `"ALL"` |  |
+| frontend.securityContext.readOnlyRootFilesystem | bool | `false` |  |
+| frontend.service.port | int | `80` |  |
+| frontend.service.type | string | `"ClusterIP"` |  |
+| frontend.tolerations | list | `[]` |  |
+| fullnameOverride | string | `""` | Override the full release name |
+| global.imagePullSecrets | list | `[]` | Image pull secrets for private registries |
+| ingress.annotations."cert-manager.io/cluster-issuer" | string | `"letsencrypt-prod"` |  |
+| ingress.className | string | `"nginx"` | Ingress class name (e.g., nginx, traefik) |
+| ingress.enabled | bool | `false` |  |
+| ingress.hosts[0].host | string | `"ace.example.com"` |  |
+| ingress.tls[0].hosts[0] | string | `"ace.example.com"` |  |
+| ingress.tls[0].secretName | string | `"ace-tls"` |  |
+| nameOverride | string | `""` | Override the chart name |
+| networkPolicy.enabled | bool | `false` | Enable NetworkPolicy resources |
+| networkPolicy.ingressControllerLabels | object | `{"app.kubernetes.io/name":"ingress-nginx"}` | Labels to match the ingress controller pods (for ingress allowlisting) |
+| postgresql.auth.database | string | `"ace"` |  |
+| postgresql.auth.password | string | `nil` |  |
+| postgresql.auth.username | string | `"ace"` |  |
+| postgresql.enabled | bool | `true` |  |
+| postgresql.primary.persistence.enabled | bool | `true` |  |
+| postgresql.primary.persistence.size | string | `"10Gi"` |  |
+| postgresql.primary.persistence.storageClass | string | `""` |  |
+| postgresql.primary.resources.limits.cpu | string | `"1"` |  |
+| postgresql.primary.resources.limits.memory | string | `"1Gi"` |  |
+| postgresql.primary.resources.requests.cpu | string | `"100m"` |  |
+| postgresql.primary.resources.requests.memory | string | `"256Mi"` |  |
+| rbac.create | bool | `true` | Create ClusterRole/ClusterRoleBinding for metrics scraping |
+| serviceAccount.annotations | object | `{}` | Annotations (e.g., for IRSA on EKS) |
+| serviceAccount.automountServiceAccountToken | bool | `false` | Disable auto-mounting tokens unless needed |
+| serviceAccount.create | bool | `true` | Create a dedicated ServiceAccount |
+| serviceAccount.name | string | `""` | Override the ServiceAccount name |
+| vector.enabled | bool | `true` | Deploy Vector as a DaemonSet to ship logs to VictoriaLogs |
+| vector.image.pullPolicy | string | `"IfNotPresent"` |  |
+| vector.image.repository | string | `"timberio/vector"` |  |
+| vector.image.tag | string | `"0.43.1-alpine"` |  |
+| vector.resources.limits.cpu | string | `"200m"` |  |
+| vector.resources.limits.memory | string | `"256Mi"` |  |
+| vector.resources.requests.cpu | string | `"50m"` |  |
+| vector.resources.requests.memory | string | `"64Mi"` |  |
+| vector.sink | object | `{"endpoint":"http://victoria-logs:9428/insert/elasticsearch/"}` | Sink endpoint (only used when victoria-logs-single is disabled) |
+| victoria-logs-single.enabled | bool | `true` |  |
+| victoria-logs-single.server.extraArgs | object | `{"retentionPeriod":"30d"}` | Log retention period |
+| victoria-logs-single.server.persistentVolume.enabled | bool | `true` |  |
+| victoria-logs-single.server.persistentVolume.size | string | `"50Gi"` |  |
+| victoria-logs-single.server.persistentVolume.storageClass | string | `""` |  |
+| victoria-logs-single.server.resources.limits.cpu | string | `"2"` |  |
+| victoria-logs-single.server.resources.limits.memory | string | `"4Gi"` |  |
+| victoria-logs-single.server.resources.requests.cpu | string | `"200m"` |  |
+| victoria-logs-single.server.resources.requests.memory | string | `"512Mi"` |  |
+| victoria-metrics-k8s-stack.alertmanager | object | `{"enabled":true,"spec":{"resources":{"limits":{"cpu":"100m","memory":"128Mi"},"requests":{"cpu":"50m","memory":"64Mi"}}}}` | Alertmanager for alert routing and notifications |
+| victoria-metrics-k8s-stack.enabled | bool | `true` |  |
+| victoria-metrics-k8s-stack.grafana | object | `{"enabled":false}` | Disable Grafana (Ace is the UI) |
+| victoria-metrics-k8s-stack.kube-state-metrics | object | `{"enabled":true}` | kube-state-metrics for cluster state metrics |
+| victoria-metrics-k8s-stack.prometheus | object | `{"enabled":false}` | Disable default Prometheus (we use VMSingle) |
+| victoria-metrics-k8s-stack.prometheus-node-exporter | object | `{"enabled":true}` | node-exporter for node-level metrics |
+| victoria-metrics-k8s-stack.vmagent | object | `{"enabled":true,"spec":{"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"256Mi"}},"scrapeInterval":"30s"}}` | VMAgent for scraping Kubernetes metrics |
+| victoria-metrics-k8s-stack.vmalert | object | `{"enabled":true,"spec":{"resources":{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"50m","memory":"128Mi"}}}}` | VMAlert for alerting rules evaluation |
+| victoria-metrics-k8s-stack.vmsingle | object | `{"enabled":true,"spec":{"resources":{"limits":{"cpu":"2","memory":"4Gi"},"requests":{"cpu":"200m","memory":"512Mi"}},"retentionPeriod":"90d","storage":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"50Gi"}},"storageClassName":""}}}` | VMSingle for metrics storage |
+| victoriatraces.enabled | bool | `true` |  |
+| vtraces | object | `{"server":{"extraArgs":{"opentelemetry.enabled":"true"},"extraContainerPorts":[{"containerPort":4317,"name":"otlp-grpc","protocol":"TCP"},{"containerPort":4318,"name":"otlp-http","protocol":"TCP"}],"image":{"repository":"victoriametrics/victoria-traces","tag":"v1.8.0-victoriametrics"},"persistentVolume":{"enabled":true,"size":"30Gi","storageClass":""},"resources":{"limits":{"cpu":"2","memory":"4Gi"},"requests":{"cpu":"200m","memory":"512Mi"}}}}` | victoria-metrics-single subchart config (alias: vtraces) |
 
 ## Toggling Components
 

@@ -50,3 +50,25 @@ jobs:
       - name: Run frontend dead-code lint
         run: bun run lint:dead-code
         working-directory: frontend
+
+  helm-docs:
+    name: Helm Docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install helm-docs
+        run: |
+          HELM_DOCS_VERSION="1.14.2"
+          curl -sL "https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz" \
+            | tar xz helm-docs
+          chmod +x helm-docs
+
+      - name: Generate and diff
+        run: |
+          ./helm-docs --chart-search-root charts --log-level warn
+          if ! git diff --exit-code charts/ace/README.md; then
+            echo "::error::charts/ace/README.md is out of date. Run 'helm-docs --chart-search-root charts' and commit the result."
+            exit 1
+          fi

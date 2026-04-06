@@ -5,6 +5,18 @@
     ".": {
       "release-type": "simple",
       "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "charts/ace/Chart.yaml",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "yaml",
+          "path": "charts/ace/Chart.yaml",
+          "jsonpath": "$.appVersion"
+        }
+      ],
       "changelog-sections": [
         {
           "type": "feat",
