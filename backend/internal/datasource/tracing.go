@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // TracingClient is the interface for trace-specific datasource operations.

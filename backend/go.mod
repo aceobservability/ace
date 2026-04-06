@@ -1,4 +1,4 @@
-module github.com/janhoon/dash/backend
+module github.com/aceobservability/ace/backend
 
 go 1.25.8
 

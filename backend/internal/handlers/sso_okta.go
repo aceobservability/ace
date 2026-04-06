@@ -16,11 +16,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/janhoon/dash/backend/internal/audit"
-	"github.com/janhoon/dash/backend/internal/auth"
-	"github.com/janhoon/dash/backend/internal/models"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/oauth2"
+
+	"github.com/aceobservability/ace/backend/internal/audit"
+	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // OktaSSOHandler handles Okta OIDC-based SSO authentication.

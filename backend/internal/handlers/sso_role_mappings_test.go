@@ -9,8 +9,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/janhoon/dash/backend/internal/auth"
-	"github.com/janhoon/dash/backend/internal/models"
+
+	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // ssoRoleMappingTestSetup creates an org, an SSO config for the given provider,

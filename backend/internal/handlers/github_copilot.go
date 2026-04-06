@@ -13,9 +13,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/janhoon/dash/backend/internal/auth"
-	"github.com/janhoon/dash/backend/internal/crypto"
 	"go.uber.org/zap"
+
+	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/crypto"
 )
 
 type GitHubCopilotHandler struct {

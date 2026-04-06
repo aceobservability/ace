@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/crypto"
+	"github.com/aceobservability/ace/backend/internal/crypto"
 )
 
 // hashToken returns a hex-encoded SHA-256 hash of the given token,

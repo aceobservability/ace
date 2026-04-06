@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/janhoon/dash/backend/internal/auth"
-	"github.com/janhoon/dash/backend/internal/authz"
-	"github.com/janhoon/dash/backend/internal/converter"
-	"github.com/janhoon/dash/backend/internal/models"
+
+	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/authz"
+	"github.com/aceobservability/ace/backend/internal/converter"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 func (h *DashboardHandler) Export(w http.ResponseWriter, r *http.Request) {

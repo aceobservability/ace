@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 func TestNormaliseToLogs(t *testing.T) {

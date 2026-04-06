@@ -118,7 +118,7 @@ helm install ace charts/ace --dry-run -f charts/ace/values-dev.yaml -n ace
 | Key | Description | Default |
 |-----|-------------|---------|
 | `backend.replicaCount` | Replicas (when HPA disabled) | `2` |
-| `backend.image.repository` | Backend image | `ghcr.io/janhoon/ace-backend` |
+| `backend.image.repository` | Backend image | `ghcr.io/aceobservability/ace-backend` |
 | `backend.image.tag` | Image tag | `Chart.appVersion` |
 | `backend.autoscaling.enabled` | Enable HPA | `true` |
 | `backend.autoscaling.minReplicas` | HPA min | `2` |
@@ -144,7 +144,7 @@ helm install ace charts/ace --dry-run -f charts/ace/values-dev.yaml -n ace
 | Key | Description | Default |
 |-----|-------------|---------|
 | `frontend.replicaCount` | Replicas (when HPA disabled) | `2` |
-| `frontend.image.repository` | Frontend image | `ghcr.io/janhoon/ace-frontend` |
+| `frontend.image.repository` | Frontend image | `ghcr.io/aceobservability/ace-frontend` |
 | `frontend.autoscaling.enabled` | Enable HPA | `true` |
 | `frontend.nginxConfigOverride` | Use ConfigMap nginx.conf | `false` |
 | `frontend.resources` | Resource requests/limits | See values.yaml |

@@ -9,17 +9,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/analytics"
-	"github.com/janhoon/dash/backend/internal/audit"
-	"github.com/janhoon/dash/backend/internal/auth"
-	"github.com/janhoon/dash/backend/internal/db"
-	"github.com/janhoon/dash/backend/internal/handlers"
-	"github.com/janhoon/dash/backend/internal/httplog"
-	"github.com/janhoon/dash/backend/internal/telemetry"
-	"github.com/janhoon/dash/backend/internal/valkey"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
+
+	"github.com/aceobservability/ace/backend/internal/analytics"
+	"github.com/aceobservability/ace/backend/internal/audit"
+	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/db"
+	"github.com/aceobservability/ace/backend/internal/handlers"
+	"github.com/aceobservability/ace/backend/internal/httplog"
+	"github.com/aceobservability/ace/backend/internal/telemetry"
+	"github.com/aceobservability/ace/backend/internal/valkey"
 )
 
 func main() {

@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // VMAlertClient wraps HTTP calls to VMAlert's API.

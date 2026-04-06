@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/auth"
-	"github.com/janhoon/dash/backend/internal/ssrf"
+	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 type GrafanaDiscoveryHandler struct {

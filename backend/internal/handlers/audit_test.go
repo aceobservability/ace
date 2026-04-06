@@ -9,8 +9,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/janhoon/dash/backend/internal/auth"
-	"github.com/janhoon/dash/backend/internal/models"
+
+	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // auditTestSetup creates an org and up to 4 members with different roles,

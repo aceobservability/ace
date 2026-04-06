@@ -16,7 +16,8 @@ import (
 	cloudwatchtypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
-	"github.com/janhoon/dash/backend/internal/models"
+
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 const (

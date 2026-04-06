@@ -8,7 +8,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/janhoon/dash/backend/internal/models"
+
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 func TestDashboardHandler_Create_MissingTitle(t *testing.T) {

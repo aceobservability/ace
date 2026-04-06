@@ -1,8 +1,8 @@
 # Ace - Monitoring Dashboard
 
-[![CodeQL](https://github.com/janhoon/dash/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/janhoon/dash/actions/workflows/security.yml)
-[![Lint](https://github.com/janhoon/dash/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/janhoon/dash/actions/workflows/lint.yml)
-[![Security](https://github.com/janhoon/dash/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/janhoon/dash/actions/workflows/security.yml)
+[![CodeQL](https://github.com/aceobservability/ace/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/aceobservability/ace/actions/workflows/security.yml)
+[![Lint](https://github.com/aceobservability/ace/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/aceobservability/ace/actions/workflows/lint.yml)
+[![Security](https://github.com/aceobservability/ace/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/aceobservability/ace/actions/workflows/security.yml)
 
 A Grafana-like monitoring dashboard built with Vue.js, Go, and Prometheus.
 
@@ -18,14 +18,14 @@ A Grafana-like monitoring dashboard built with Vue.js, Go, and Prometheus.
 
 Public multi-arch images are published to GHCR on every release:
 
-- `ghcr.io/janhoon/dash-backend`
-- `ghcr.io/janhoon/dash-frontend`
+- `ghcr.io/aceobservability/ace-backend`
+- `ghcr.io/aceobservability/ace-frontend`
 
 Example pulls:
 
 ```bash
-docker pull ghcr.io/janhoon/dash-backend:v0.1.0
-docker pull ghcr.io/janhoon/dash-frontend:v0.1.0
+docker pull ghcr.io/aceobservability/ace-backend:v0.1.0
+docker pull ghcr.io/aceobservability/ace-frontend:v0.1.0
 ```
 
 When building the frontend image yourself, set `VITE_API_URL` at build time:

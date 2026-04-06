@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/janhoon/dash/backend/internal/telemetry"
+
+	"github.com/aceobservability/ace/backend/internal/telemetry"
 )
 
 func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {

@@ -13,8 +13,9 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
-	"github.com/janhoon/dash/backend/internal/auth"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/aceobservability/ace/backend/internal/auth"
 )
 
 func TestMicrosoftSSOConfigureRequiresAdmin(t *testing.T) {

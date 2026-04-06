@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/janhoon/dash/backend/pkg/prometheus"
+	"github.com/aceobservability/ace/backend/pkg/prometheus"
 )
 
 // CacheEntry holds cached data with expiration

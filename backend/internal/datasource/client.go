@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/models"
-	"github.com/janhoon/dash/backend/internal/ssrf"
+	"github.com/aceobservability/ace/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // QueryRequest represents a query request body

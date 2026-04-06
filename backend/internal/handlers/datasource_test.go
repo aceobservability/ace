@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 func TestDataSourceHandler_Create_MissingName(t *testing.T) {

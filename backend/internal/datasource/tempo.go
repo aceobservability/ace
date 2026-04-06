@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // TempoClient is used for trace datasource connectivity checks.

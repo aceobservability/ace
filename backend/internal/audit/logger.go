@@ -7,8 +7,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/janhoon/dash/backend/internal/auth"
 	"go.uber.org/zap"
+
+	"github.com/aceobservability/ace/backend/internal/auth"
 )
 
 // Logger writes immutable audit entries to the audit_log table.

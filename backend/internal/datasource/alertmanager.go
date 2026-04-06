@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // AlertManagerClient wraps HTTP calls to AlertManager's v2 API.
