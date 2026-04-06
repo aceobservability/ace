@@ -12,9 +12,22 @@ keywords:
   - traces
   - victoriametrics
 home: https://github.com/aceobservability/ace
+sources:
+  - https://github.com/aceobservability/ace
 maintainers:
   - name: Jan Hoon
     url: https://github.com/janhoon
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/links: |
+    - name: Source
+      url: https://github.com/aceobservability/ace
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/images: |
+    - name: ace-backend
+      image: ghcr.io/aceobservability/ace-backend
+    - name: ace-frontend
+      image: ghcr.io/aceobservability/ace-frontend
 
 dependencies:
   # -- PostgreSQL database (togglable — disable when using an external DB)
