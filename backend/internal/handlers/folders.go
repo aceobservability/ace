@@ -37,6 +37,7 @@ func (h *FolderHandler) checkOrgMembership(ctx context.Context, userID, orgID uu
 	return role, err
 }
 
+// Create creates a new folder in the specified organization.
 func (h *FolderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -122,6 +123,7 @@ func (h *FolderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(folder)
 }
 
+// List returns all folders the user has view access to in the specified organization.
 func (h *FolderHandler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -195,6 +197,7 @@ func (h *FolderHandler) List(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(folders)
 }
 
+// Get returns a single folder by ID.
 func (h *FolderHandler) Get(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -256,6 +259,7 @@ func (h *FolderHandler) Get(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(folder)
 }
 
+// Update modifies a folder's name, parent, or sort order.
 func (h *FolderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -373,6 +377,7 @@ func (h *FolderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(folder)
 }
 
+// Delete removes a folder by ID.
 func (h *FolderHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {

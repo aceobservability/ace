@@ -42,6 +42,7 @@ func (h *VariableHandler) checkDashboardAccess(ctx context.Context, userID, dash
 	return nil
 }
 
+// List returns all template variables for a dashboard.
 func (h *VariableHandler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -88,6 +89,7 @@ func (h *VariableHandler) List(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(variables)
 }
 
+// BulkCreate creates or upserts multiple template variables for a dashboard.
 func (h *VariableHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -147,6 +149,7 @@ func (h *VariableHandler) BulkCreate(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(variables)
 }
 
+// Update modifies a template variable's properties.
 func (h *VariableHandler) Update(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -206,6 +209,7 @@ func (h *VariableHandler) Update(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(v)
 }
 
+// Delete removes a template variable from its dashboard.
 func (h *VariableHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {

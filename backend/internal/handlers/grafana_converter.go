@@ -22,6 +22,7 @@ func NewGrafanaConverterHandler() *GrafanaConverterHandler {
 	return &GrafanaConverterHandler{}
 }
 
+// Convert transforms a Grafana dashboard JSON into the Ace dashboard format.
 func (h *GrafanaConverterHandler) Convert(w http.ResponseWriter, r *http.Request) {
 	format := converter.NormalizeFormat(r.URL.Query().Get("format"))
 	if format == "" {

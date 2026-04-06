@@ -38,6 +38,7 @@ func (h *DashboardHandler) checkOrgMembership(ctx context.Context, userID, orgID
 	return role, err
 }
 
+// Create creates a new dashboard in the specified organization. Requires admin or editor role.
 func (h *DashboardHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// Get user from auth context
 	userID, ok := auth.GetUserID(r.Context())
@@ -144,6 +145,7 @@ func (h *DashboardHandler) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dashboard)
 }
 
+// List returns all dashboards the user has view access to in the specified organization.
 func (h *DashboardHandler) List(w http.ResponseWriter, r *http.Request) {
 	// Get user from auth context
 	userID, ok := auth.GetUserID(r.Context())
@@ -209,6 +211,7 @@ func (h *DashboardHandler) List(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dashboards)
 }
 
+// Get returns a single dashboard by ID.
 func (h *DashboardHandler) Get(w http.ResponseWriter, r *http.Request) {
 	// Get user from auth context
 	userID, ok := auth.GetUserID(r.Context())
@@ -273,6 +276,7 @@ func (h *DashboardHandler) Get(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dashboard)
 }
 
+// Update modifies a dashboard's title, description, or folder assignment.
 func (h *DashboardHandler) Update(w http.ResponseWriter, r *http.Request) {
 	// Get user from auth context
 	userID, ok := auth.GetUserID(r.Context())
@@ -380,6 +384,7 @@ func (h *DashboardHandler) Update(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dashboard)
 }
 
+// Delete removes a dashboard and its associated panels.
 func (h *DashboardHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	// Get user from auth context
 	userID, ok := auth.GetUserID(r.Context())

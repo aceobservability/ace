@@ -52,18 +52,22 @@ func NewPermissionHandler(pool *pgxpool.Pool) *PermissionHandler {
 	return &PermissionHandler{pool: pool}
 }
 
+// ListFolderPermissions returns the permission entries for a folder. Requires admin role.
 func (h *PermissionHandler) ListFolderPermissions(w http.ResponseWriter, r *http.Request) {
 	h.listPermissions(w, r, folderPermissionResource)
 }
 
+// ReplaceFolderPermissions replaces all permission entries for a folder. Requires admin role.
 func (h *PermissionHandler) ReplaceFolderPermissions(w http.ResponseWriter, r *http.Request) {
 	h.replacePermissions(w, r, folderPermissionResource)
 }
 
+// ListDashboardPermissions returns the permission entries for a dashboard. Requires admin role.
 func (h *PermissionHandler) ListDashboardPermissions(w http.ResponseWriter, r *http.Request) {
 	h.listPermissions(w, r, dashboardPermissionResource)
 }
 
+// ReplaceDashboardPermissions replaces all permission entries for a dashboard. Requires admin role.
 func (h *PermissionHandler) ReplaceDashboardPermissions(w http.ResponseWriter, r *http.Request) {
 	h.replacePermissions(w, r, dashboardPermissionResource)
 }

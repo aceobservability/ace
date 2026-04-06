@@ -4,6 +4,7 @@ export default defineConfig({
   title: "Ace Docs",
   description: "Documentation for the Ace observability platform",
   appearance: "dark",
+  ignoreDeadLinks: [/^https?:\/\/localhost/],
 
   head: [["link", { rel: "icon", href: "/favicon.ico" }]],
 

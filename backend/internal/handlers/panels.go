@@ -60,6 +60,7 @@ func (h *PanelHandler) loadPanelDashboardAccess(ctx context.Context, panelID uui
 	return dashboardID, *orgID, nil
 }
 
+// Create adds a new panel to a dashboard.
 func (h *PanelHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -144,6 +145,7 @@ func (h *PanelHandler) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(panel)
 }
 
+// ListByDashboard returns all panels belonging to a dashboard.
 func (h *PanelHandler) ListByDashboard(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -219,6 +221,7 @@ func (h *PanelHandler) ListByDashboard(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(panels)
 }
 
+// Update modifies a panel's title, type, layout, or query configuration.
 func (h *PanelHandler) Update(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -296,6 +299,7 @@ func (h *PanelHandler) Update(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(panel)
 }
 
+// Delete removes a panel from its dashboard.
 func (h *PanelHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {

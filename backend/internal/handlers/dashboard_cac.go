@@ -15,6 +15,7 @@ import (
 	"github.com/aceobservability/ace/backend/internal/models"
 )
 
+// Export serializes a dashboard and its panels to a portable JSON or YAML document.
 func (h *DashboardHandler) Export(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -181,6 +182,7 @@ func (h *DashboardHandler) Export(w http.ResponseWriter, r *http.Request) {
 	w.Write(payload)
 }
 
+// Import creates a dashboard and its panels from a JSON or YAML document. Requires admin or editor role.
 func (h *DashboardHandler) Import(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {

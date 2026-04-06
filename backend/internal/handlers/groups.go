@@ -34,6 +34,7 @@ func (h *GroupHandler) checkOrgMembership(ctx context.Context, userID, orgID uui
 	return role, err
 }
 
+// Create creates a new user group in the specified organization. Requires admin role.
 func (h *GroupHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -106,6 +107,7 @@ func (h *GroupHandler) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(group)
 }
 
+// List returns all user groups in the specified organization.
 func (h *GroupHandler) List(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -172,6 +174,7 @@ func (h *GroupHandler) List(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(groups)
 }
 
+// Update modifies a user group's name or description. Requires admin role.
 func (h *GroupHandler) Update(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -312,6 +315,7 @@ func (h *GroupHandler) Update(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(group)
 }
 
+// Delete removes a user group from the organization. Requires admin role.
 func (h *GroupHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -367,6 +371,7 @@ func (h *GroupHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "group deleted"})
 }
 
+// ListMembers returns all members of a user group.
 func (h *GroupHandler) ListMembers(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -451,6 +456,7 @@ func (h *GroupHandler) ListMembers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(memberships)
 }
 
+// AddMember adds a user to a group. Requires admin role.
 func (h *GroupHandler) AddMember(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -554,6 +560,7 @@ func (h *GroupHandler) AddMember(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(membership)
 }
 
+// RemoveMember removes a user from a group. Requires admin role.
 func (h *GroupHandler) RemoveMember(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {

@@ -328,6 +328,7 @@ func (h *AIHandler) buildDBProvider(ctx context.Context, providerID, orgID uuid.
 // 1. ListProviders — GET /api/orgs/{id}/ai/providers
 // ---------------------------------------------------------------------------
 
+// ListProviders returns the enabled AI providers for the current organization.
 func (h *AIHandler) ListProviders(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := auth.GetOrgID(r.Context())
 	if !ok {
@@ -418,6 +419,7 @@ func (h *AIHandler) ListProviders(w http.ResponseWriter, r *http.Request) {
 // 2. ListModels — GET /api/orgs/{id}/ai/models?provider_id=X
 // ---------------------------------------------------------------------------
 
+// ListModels returns available models for a given AI provider.
 func (h *AIHandler) ListModels(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := auth.GetOrgID(r.Context())
 	if !ok {
@@ -492,6 +494,7 @@ func isToolIncompatibilityError(errMsg string) bool {
 	return hasStatusCode && hasToolMention
 }
 
+// Chat proxies a chat completion request to the resolved AI provider, with streaming support.
 func (h *AIHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	// Fix #4: Limit request body to 2 MB
 	r.Body = http.MaxBytesReader(w, r.Body, 2*1024*1024)
@@ -613,6 +616,7 @@ func (h *AIHandler) Chat(w http.ResponseWriter, r *http.Request) {
 // 4. CreateProvider — POST /api/orgs/{id}/ai/providers
 // ---------------------------------------------------------------------------
 
+// CreateProvider registers a new AI provider for the organization. Requires admin role.
 func (h *AIHandler) CreateProvider(w http.ResponseWriter, r *http.Request) {
 	// Fix #4: Limit request body to 64 KB for CRUD handlers
 	r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
@@ -699,6 +703,7 @@ func (h *AIHandler) CreateProvider(w http.ResponseWriter, r *http.Request) {
 // 5. UpdateProvider — PUT /api/orgs/{id}/ai/providers/{pid}
 // ---------------------------------------------------------------------------
 
+// UpdateProvider modifies an existing AI provider's configuration. Requires admin role.
 func (h *AIHandler) UpdateProvider(w http.ResponseWriter, r *http.Request) {
 	// Fix #4: Limit request body to 64 KB for CRUD handlers
 	r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
@@ -818,6 +823,7 @@ func (h *AIHandler) UpdateProvider(w http.ResponseWriter, r *http.Request) {
 // 6. DeleteProvider — DELETE /api/orgs/{id}/ai/providers/{pid}
 // ---------------------------------------------------------------------------
 
+// DeleteProvider removes an AI provider from the organization. Requires admin role.
 func (h *AIHandler) DeleteProvider(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := auth.GetOrgID(r.Context())
 	if !ok {
@@ -863,6 +869,7 @@ func (h *AIHandler) DeleteProvider(w http.ResponseWriter, r *http.Request) {
 // 7. TestProvider — POST /api/orgs/{id}/ai/providers/{pid}/test
 // ---------------------------------------------------------------------------
 
+// TestProvider verifies connectivity to an AI provider by listing its models. Requires admin role.
 func (h *AIHandler) TestProvider(w http.ResponseWriter, r *http.Request) {
 	orgID, ok := auth.GetOrgID(r.Context())
 	if !ok {

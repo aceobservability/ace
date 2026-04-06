@@ -56,6 +56,7 @@ type GrafanaConnectResponse struct {
 	Error   string `json:"error,omitempty"`
 }
 
+// Connect tests connectivity to a Grafana instance and returns its version.
 func (h *GrafanaDiscoveryHandler) Connect(w http.ResponseWriter, r *http.Request) {
 	_, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -119,6 +120,7 @@ type GrafanaDashboardSummary struct {
 	Tags  []string `json:"tags,omitempty"`
 }
 
+// ListDashboards returns dashboard summaries from a remote Grafana instance.
 func (h *GrafanaDiscoveryHandler) ListDashboards(w http.ResponseWriter, r *http.Request) {
 	_, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -187,6 +189,7 @@ func (h *GrafanaDiscoveryHandler) ListDashboards(w http.ResponseWriter, r *http.
 	json.NewEncoder(w).Encode(dashboards)
 }
 
+// GetDashboard fetches a single dashboard's full JSON from a remote Grafana instance by UID.
 func (h *GrafanaDiscoveryHandler) GetDashboard(w http.ResponseWriter, r *http.Request) {
 	_, ok := auth.GetUserID(r.Context())
 	if !ok {
