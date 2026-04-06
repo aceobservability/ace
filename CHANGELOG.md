@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.7](https://github.com/aceobservability/ace/compare/v0.11.6...v0.11.7) (2026-04-06)
+
+
+### CI
+
+* push ArtifactHub repo metadata as OCI artifact for verified publisher badge ([#205](https://github.com/aceobservability/ace/issues/205)) ([b66d923](https://github.com/aceobservability/ace/commit/b66d923187a25f05a2fda6e36c082618e8047ce4))
+
 ## [0.11.6](https://github.com/aceobservability/ace/compare/v0.11.5...v0.11.6) (2026-04-06)
 
 

@@ -4,8 +4,8 @@ description: >-
   Ace Observability Platform — unified metrics, logs, and traces powered by
   VictoriaMetrics
 type: application
-version: 0.11.6
-appVersion: 0.11.6
+version: 0.11.7
+appVersion: 0.11.7
 keywords:
   - observability
   - monitoring
