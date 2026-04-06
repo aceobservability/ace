@@ -13,6 +13,8 @@ RUN bun run build
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine
 
+LABEL org.opencontainers.image.source=https://github.com/aceobservability/ace
+
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 

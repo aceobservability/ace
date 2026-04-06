@@ -13,6 +13,8 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o /out/d
 
 FROM gcr.io/distroless/static-debian12:nonroot
 
+LABEL org.opencontainers.image.source=https://github.com/aceobservability/ace
+
 COPY --from=builder /out/dash-api /usr/local/bin/dash-api
 
 EXPOSE 8080
