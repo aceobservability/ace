@@ -163,8 +163,8 @@ func (h *GrafanaDiscoveryHandler) Connect(w http.ResponseWriter, r *http.Request
 }
 
 type GrafanaDashboardSummary struct {
-	UID   string `json:"uid"`
-	Title string `json:"title"`
+	UID   string   `json:"uid"`
+	Title string   `json:"title"`
 	Tags  []string `json:"tags,omitempty"`
 }
 

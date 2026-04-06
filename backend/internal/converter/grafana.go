@@ -51,25 +51,25 @@ type grafanaTimeRange struct {
 
 // PanelDiagnostic provides per-panel conversion status for the fidelity report.
 type PanelDiagnostic struct {
-	Index         int    `json:"index"`
-	Title         string `json:"title"`
-	OriginalType  string `json:"original_type"`
-	MappedType    string `json:"mapped_type"`
-	Status        string `json:"status"` // "mapped", "unsupported", "partial"
-	Warning       string `json:"warning,omitempty"`
-	HasQuery      bool   `json:"has_query"`
-	FieldOverrides int   `json:"field_overrides_dropped,omitempty"`
+	Index          int    `json:"index"`
+	Title          string `json:"title"`
+	OriginalType   string `json:"original_type"`
+	MappedType     string `json:"mapped_type"`
+	Status         string `json:"status"` // "mapped", "unsupported", "partial"
+	Warning        string `json:"warning,omitempty"`
+	HasQuery       bool   `json:"has_query"`
+	FieldOverrides int    `json:"field_overrides_dropped,omitempty"`
 }
 
 // ConversionReport contains structured diagnostics for the entire conversion.
 type ConversionReport struct {
-	TotalPanels      int               `json:"total_panels"`
-	MappedPanels     int               `json:"mapped_panels"`
-	UnsupportedPanels int              `json:"unsupported_panels"`
-	PartialPanels    int               `json:"partial_panels"`
-	VariablesFound   int               `json:"variables_found"`
-	FidelityPercent  int               `json:"fidelity_percent"`
-	PanelDiagnostics []PanelDiagnostic `json:"panel_diagnostics"`
+	TotalPanels       int               `json:"total_panels"`
+	MappedPanels      int               `json:"mapped_panels"`
+	UnsupportedPanels int               `json:"unsupported_panels"`
+	PartialPanels     int               `json:"partial_panels"`
+	VariablesFound    int               `json:"variables_found"`
+	FidelityPercent   int               `json:"fidelity_percent"`
+	PanelDiagnostics  []PanelDiagnostic `json:"panel_diagnostics"`
 }
 
 func ConvertGrafanaDashboard(data []byte) (DashboardDocument, []string, error) {

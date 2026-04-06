@@ -43,7 +43,7 @@ var serviceList = []serviceInfo{
 type flowDef struct {
 	Method      string
 	Path        string
-	Service     string   // entry service (always api-gateway for external)
+	Service     string // entry service (always api-gateway for external)
 	Downstream  []spanDef
 	SuccessRate float64 // 0.0 - 1.0
 }
@@ -264,14 +264,14 @@ func pushTraces(endpoint string, spans []builtSpan, flow flowDef, statusCode int
 			}
 
 			span := map[string]interface{}{
-				"traceId":            s.TraceID,
-				"spanId":             s.SpanID,
-				"name":               s.Operation,
-				"kind":               s.SpanKind,
-				"startTimeUnixNano":  fmt.Sprintf("%d", s.StartNano),
-				"endTimeUnixNano":    fmt.Sprintf("%d", s.EndNano),
-				"attributes":         attrs,
-				"status":             map[string]interface{}{"code": s.StatusCode},
+				"traceId":           s.TraceID,
+				"spanId":            s.SpanID,
+				"name":              s.Operation,
+				"kind":              s.SpanKind,
+				"startTimeUnixNano": fmt.Sprintf("%d", s.StartNano),
+				"endTimeUnixNano":   fmt.Sprintf("%d", s.EndNano),
+				"attributes":        attrs,
+				"status":            map[string]interface{}{"code": s.StatusCode},
 			}
 			if s.ParentID != "" {
 				span["parentSpanId"] = s.ParentID
@@ -303,13 +303,13 @@ func pushTraces(endpoint string, spans []builtSpan, flow flowDef, statusCode int
 // ─── OTLP log push ──────────────────────────────────────────────────────────
 
 type logEntry struct {
-	Timestamp   time.Time
-	Service     string
-	TraceID     string
-	SpanID      string
-	Level       string // INFO, WARN, ERROR
-	Message     string
-	Attributes  map[string]interface{}
+	Timestamp  time.Time
+	Service    string
+	TraceID    string
+	SpanID     string
+	Level      string // INFO, WARN, ERROR
+	Message    string
+	Attributes map[string]interface{}
 }
 
 func generateLogs(spans []builtSpan, flow flowDef, statusCode int, isError bool) []logEntry {
@@ -695,7 +695,7 @@ func pushMetrics(endpoint string, acc *metricAccumulator) error {
 
 		// --- System metrics (synthetic gauges) ---
 		cpuBase := 0.15 + mrand.Float64()*0.25 // 15-40% base CPU
-		memBase := 128 + mrand.Float64()*384    // 128-512 MB base memory
+		memBase := 128 + mrand.Float64()*384   // 128-512 MB base memory
 		// Add some variance per service
 		svcHash := float64(len(svc)%5) * 0.05
 
@@ -947,28 +947,28 @@ func errorMessage(method, path string, status int) string {
 }
 
 func errorType(status int) string {
-	switch {
-	case status == 400:
+	switch status {
+	case 400:
 		return "BadRequestError"
-	case status == 401:
+	case 401:
 		return "UnauthorizedError"
-	case status == 403:
+	case 403:
 		return "ForbiddenError"
-	case status == 404:
+	case 404:
 		return "NotFoundError"
-	case status == 409:
+	case 409:
 		return "ConflictError"
-	case status == 422:
+	case 422:
 		return "ValidationError"
-	case status == 429:
+	case 429:
 		return "RateLimitError"
-	case status == 500:
+	case 500:
 		return "InternalServerError"
-	case status == 502:
+	case 502:
 		return "BadGatewayError"
-	case status == 503:
+	case 503:
 		return "ServiceUnavailableError"
-	case status == 504:
+	case 504:
 		return "GatewayTimeoutError"
 	default:
 		return "HTTPError"
