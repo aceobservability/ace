@@ -16,6 +16,7 @@ import {
   Users,
   X,
 } from 'lucide-vue-next'
+import type { LucideIcon } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createGroup, deleteGroup, listGroupMembers, listGroups } from '../api/groups'
@@ -194,7 +195,7 @@ const isAdmin = computed(() => org.value?.role === 'admin')
 // Sections
 type SettingsSection = 'general' | 'members' | 'groups' | 'datasources' | 'ai' | 'sso'
 
-const settingsSections: Array<{ key: SettingsSection; label: string; icon: any }> = [
+const settingsSections: Array<{ key: SettingsSection; label: string; icon: LucideIcon }> = [
   { key: 'general', label: 'General', icon: Edit2 },
   { key: 'members', label: 'Members', icon: Users },
   { key: 'groups', label: 'Groups & Permissions', icon: Shield },

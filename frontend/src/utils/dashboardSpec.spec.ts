@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { DashboardSpec } from './dashboardSpec'
+import type { DashboardSpec, PanelType } from './dashboardSpec'
 import { saveDashboardSpec, validateDashboardSpec } from './dashboardSpec'
 
 // --- Mocks ---
@@ -119,7 +119,7 @@ describe('validateDashboardSpec', () => {
       panels: [
         {
           title: 'Bad type panel',
-          type: 'invalid_type' as any,
+          type: 'invalid_type' as unknown as PanelType,
           grid_pos: { x: 0, y: 0, w: 6, h: 2 },
           query: { datasource_id: 'ds-1', expr: 'up' },
         },

@@ -18,7 +18,7 @@ const datasourceIdParam = {
   },
 } as const
 
-export const listDatasourcesTool: ToolDefinition = {
+const listDatasourcesTool: ToolDefinition = {
   type: 'function',
   function: {
     name: 'list_datasources',
@@ -31,7 +31,7 @@ export const listDatasourcesTool: ToolDefinition = {
   },
 }
 
-export const getMetricsTool: ToolDefinition = {
+const getMetricsTool: ToolDefinition = {
   type: 'function',
   function: {
     name: 'get_metrics',
@@ -50,7 +50,7 @@ export const getMetricsTool: ToolDefinition = {
   },
 }
 
-export const getLabelsTool: ToolDefinition = {
+const getLabelsTool: ToolDefinition = {
   type: 'function',
   function: {
     name: 'get_labels',
@@ -69,7 +69,7 @@ export const getLabelsTool: ToolDefinition = {
   },
 }
 
-export const getLabelValuesTool: ToolDefinition = {
+const getLabelValuesTool: ToolDefinition = {
   type: 'function',
   function: {
     name: 'get_label_values',
@@ -93,7 +93,7 @@ export const getLabelValuesTool: ToolDefinition = {
   },
 }
 
-export const writeQueryTool: ToolDefinition = {
+const writeQueryTool: ToolDefinition = {
   type: 'function',
   function: {
     name: 'write_query',
@@ -112,7 +112,7 @@ export const writeQueryTool: ToolDefinition = {
   },
 }
 
-export const runQueryTool: ToolDefinition = {
+const runQueryTool: ToolDefinition = {
   type: 'function',
   function: {
     name: 'run_query',
@@ -125,7 +125,7 @@ export const runQueryTool: ToolDefinition = {
   },
 }
 
-export const generateDashboardTool: ToolDefinition = {
+const generateDashboardTool: ToolDefinition = {
   type: 'function',
   function: {
     name: 'generate_dashboard',
@@ -183,7 +183,7 @@ export const generateDashboardTool: ToolDefinition = {
   },
 }
 
-export const getTraceServicesTool: ToolDefinition = {
+const getTraceServicesTool: ToolDefinition = {
   type: 'function',
   function: {
     name: 'get_trace_services',

@@ -1,9 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "ignoreDependencies": ["@vitest/coverage-v8"],
-  "ignore": [
-    "src/views/UserSettingsView.vue"
-  ],
+  "ignore": [],
   "rules": {
     "exports": "warn",
     "types": "warn"
