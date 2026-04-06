@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.1](https://github.com/aceobservability/ace/compare/v0.9.0...v0.9.1) (2026-04-06)
+
+
+### Fixed
+
+* Add shared SSRF protection package blocking requests to private/internal IPs, preventing server-side request forgery via user-controlled URLs in Grafana discovery and datasource connection checks
+* Remove unused imports in useSidebar test file
+
 ## [0.9.0](https://github.com/aceobservability/ace/compare/v0.8.0...v0.9.0) (2026-03-24)
 
 
