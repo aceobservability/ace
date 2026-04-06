@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.2](https://github.com/aceobservability/ace/compare/v0.11.1...v0.11.2) (2026-04-06)
+
+
+### Bug Fixes
+
+* use bun instead of npm in release pipeline and Dockerfile ([#194](https://github.com/aceobservability/ace/issues/194)) ([3f90028](https://github.com/aceobservability/ace/commit/3f90028032c9adcff066a46005b4e98d127dc170))
+
 ## [0.11.1](https://github.com/aceobservability/ace/compare/v0.11.0...v0.11.1) (2026-04-06)
 
 
