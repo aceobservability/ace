@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/aceobservability/ace/compare/v0.11.0...v0.11.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* use GitHub App token to trigger release pipeline ([#192](https://github.com/aceobservability/ace/issues/192)) ([f59b4de](https://github.com/aceobservability/ace/commit/f59b4de68677a66fad206ba727c6ef7227580b30))
+
 ## [0.11.0](https://github.com/aceobservability/ace/compare/v0.10.0...v0.11.0) (2026-04-06)
 
 
