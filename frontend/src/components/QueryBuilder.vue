@@ -153,9 +153,12 @@ async function handleLabelChange(filter: LabelFilter, newLabel: string) {
   }
 }
 
-// Get cached label values
+// Get cached label values (capped for performance)
+const MAX_LABEL_VALUES = 500
+
 function getLabelValues(labelName: string): string[] {
-  return labelValuesCache.value.get(labelName) || []
+  const values = labelValuesCache.value.get(labelName) || []
+  return values.slice(0, MAX_LABEL_VALUES)
 }
 </script>
 
@@ -389,7 +392,7 @@ function getLabelValues(labelName: string): string[] {
 
       <!-- Preview -->
       <div class="flex flex-col gap-2 mt-2 pt-4">
-        <label class="text-sm font-medium text-[var(--color-on-surface)]">Generated PromQL</label>
+        <label class="text-sm font-medium text-[var(--color-on-surface)]">Generated Query</label>
         <div class="rounded-sm bg-[var(--color-surface-container-high)] px-4 py-3 min-h-[48px]">
           <code v-if="generatedQuery" class="font-mono text-sm text-[var(--color-primary)] break-all">{{ generatedQuery }}</code>
           <span v-else class="text-[var(--color-outline)] text-sm">Select a metric to generate query</span>
@@ -399,12 +402,12 @@ function getLabelValues(labelName: string): string[] {
 
     <!-- Code Mode -->
     <div v-else class="flex flex-col gap-4">
-      <label class="text-sm font-medium text-[var(--color-on-surface)]">PromQL Query</label>
+      <label class="text-sm font-medium text-[var(--color-on-surface)]">Query</label>
       <MonacoQueryEditor
         v-model="codeQuery"
         :disabled="disabled"
         :height="120"
-        placeholder="Enter PromQL query..."
+        placeholder="Enter query (PromQL / MetricsQL)..."
       />
     </div>
   </div>

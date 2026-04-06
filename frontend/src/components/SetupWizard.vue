@@ -4,6 +4,10 @@ import { useRouter } from 'vue-router'
 import { ArrowRight, CheckCircle2, Database, FileDown, LayoutTemplate, Sparkles } from 'lucide-vue-next'
 const router = useRouter()
 
+const emit = defineEmits<{
+  dismissed: []
+}>()
+
 type WizardStep = 'welcome' | 'connect' | 'import' | 'done'
 
 const currentStep = ref<WizardStep>('welcome')
@@ -39,11 +43,14 @@ function goToTemplates() {
 }
 
 function finish() {
+  localStorage.setItem('ace-setup-wizard-dismissed', 'true')
+  emit('dismissed')
   router.push('/app')
 }
 
 function skipWizard() {
   localStorage.setItem('ace-setup-wizard-dismissed', 'true')
+  emit('dismissed')
   router.push('/app')
 }
 </script>

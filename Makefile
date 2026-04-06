@@ -106,7 +106,7 @@ seed-tilt:
 		printf "Install Go 1.25+ and retry make seed-tilt.\n"; \
 		exit 1; \
 	fi; \
-	cd backend && "$$GO_BIN" run ./cmd/seed -email "$(EMAIL)" -password "$(PASSWORD)" -org victoria -k8s
+	cd backend && "$$GO_BIN" run ./cmd/seed -email "$(EMAIL)" -password "$(PASSWORD)" -k8s
 
 seed-correlated:
 	@set -e; \

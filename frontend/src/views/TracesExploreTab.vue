@@ -74,7 +74,7 @@ const route = useRoute()
 const router = useRouter()
 const { timeRange, isCustomRange, onRefresh } = useTimeRange()
 const { currentOrg } = useOrganization()
-const { tracingDatasources, fetchDatasources } = useDatasource()
+const { tracingDatasources } = useDatasource()
 
 import { useFavorites } from '../composables/useFavorites'
 const { toggleFavorite, isFavorite } = useFavorites()
@@ -151,6 +151,13 @@ function toggleDatasourceMenu() {
 function selectDatasource(datasourceId: string) {
   selectedDatasourceId.value = datasourceId
   showDatasourceMenu.value = false
+
+  // Pre-fill ClickHouse traces with a starter query and auto-run
+  const ds = tracingDatasources.value.find(d => d.id === datasourceId)
+  if (ds?.type === 'clickhouse' && !query.value.trim()) {
+    query.value = "SELECT\n  SpanId AS span_id,\n  ParentSpanId AS parent_span_id,\n  SpanName AS operation_name,\n  ServiceName AS service_name,\n  toUnixTimestamp64Nano(Timestamp) AS start_time_unix_nano,\n  Duration AS duration_nano,\n  StatusCode AS status\nFROM ace_traces\nWHERE Timestamp BETWEEN fromUnixTimestamp64Nano({start_ns}) AND fromUnixTimestamp64Nano({end_ns})\nLIMIT 200"
+    void runSearch()
+  }
 }
 
 function handleDocumentClick(event: MouseEvent) {
@@ -227,6 +234,10 @@ async function loadServices() {
     services.value = await fetchDataSourceTraceServices(selectedDatasourceId.value)
     if (selectedService.value && !services.value.includes(selectedService.value)) {
       selectedService.value = ''
+    }
+    // Auto-search recent traces so users see data immediately
+    if (!hasSearched.value) {
+      void runSearch()
     }
   } catch {
     services.value = []
@@ -669,17 +680,29 @@ watch(
       }
 
       const defaultDatasource = sources.find((ds) => ds.is_default)
-      selectedDatasourceId.value = defaultDatasource?.id || sources[0].id
+      const selected = defaultDatasource || sources[0]
+      if (!selected) return
+      selectedDatasourceId.value = selected.id
+
+      // Pre-fill ClickHouse with a starter query
+      if (selected.type === 'clickhouse' && !query.value.trim()) {
+        query.value = "SELECT\n  SpanId AS span_id,\n  ParentSpanId AS parent_span_id,\n  SpanName AS operation_name,\n  ServiceName AS service_name,\n  toUnixTimestamp64Nano(Timestamp) AS start_time_unix_nano,\n  Duration AS duration_nano,\n  StatusCode AS status\nFROM ace_traces\nWHERE Timestamp BETWEEN fromUnixTimestamp64Nano({start_ns}) AND fromUnixTimestamp64Nano({end_ns})\nLIMIT 200"
+      }
     }
   },
   { immediate: true },
 )
 
+// Reset local state when org changes (App.vue handles the datasource fetch)
 watch(
   () => currentOrg.value?.id,
   (orgId, previousOrgId) => {
     if (orgId && orgId !== previousOrgId) {
-      fetchDatasources(orgId)
+      selectedDatasourceId.value = ''
+      datasourceHealth.value = {}
+      traceSummaries.value = []
+      activeTrace.value = null
+      error.value = null
     }
   },
 )
@@ -765,9 +788,6 @@ onMounted(() => {
       }
     })
   }
-  if (currentOrg.value) {
-    fetchDatasources(currentOrg.value.id)
-  }
 })
 
 onUnmounted(() => {
@@ -789,7 +809,12 @@ onUnmounted(() => {
             <div ref="datasourceMenuRef" class="relative">
               <button
                 type="button"
-                class="flex w-full items-center gap-3 rounded bg-[var(--color-surface-container-low)] px-4 py-3 text-left cursor-pointer transition  hover:bg-[var(--color-surface-container-high)] disabled:opacity-60 disabled:cursor-not-allowed"
+                class="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left cursor-pointer transition disabled:opacity-60 disabled:cursor-not-allowed"
+                :style="{
+                  backgroundColor: 'var(--color-surface-container-high)',
+                  border: '1px solid var(--color-outline-variant)',
+                  color: 'var(--color-on-surface)',
+                }"
                 data-testid="explore-traces-datasource-btn"
                 :disabled="!hasTracingDatasources"
                 @click="toggleDatasourceMenu"
@@ -806,11 +831,10 @@ onUnmounted(() => {
                     <span class="text-xs text-[var(--color-outline)]">{{ dataSourceTypeLabels[activeDatasource.type] }}</span>
                   </div>
                   <span
-                    class="ml-auto inline-flex items-center gap-1.5 rounded-sm px-2.5 py-0.5 text-xs border"
-                    :class="{
-                      ' text-[var(--color-outline)]': activeDatasourceHealth === 'checking' || activeDatasourceHealth === 'unknown',
-                      'border-[var(--color-primary)]/20 bg-[var(--color-primary)]/10 text-[var(--color-primary)]': activeDatasourceHealth === 'healthy',
-                      'border-rose-500/25 bg-[var(--color-error)]/10 text-[var(--color-error)]': activeDatasourceHealth === 'unhealthy',
+                    class="ml-auto inline-flex items-center gap-1.5 rounded-sm px-2.5 py-0.5 text-xs"
+                    :style="{
+                      border: '1px solid var(--color-outline-variant)',
+                      color: activeDatasourceHealth === 'healthy' ? 'var(--color-secondary)' : activeDatasourceHealth === 'unhealthy' ? 'var(--color-error)' : 'var(--color-outline)',
                     }"
                     :title="activeDatasourceHealthError || activeDatasourceHealthLabel"
                   >

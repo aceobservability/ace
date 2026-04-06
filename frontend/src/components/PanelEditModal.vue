@@ -507,6 +507,7 @@ const selectClass = 'w-full rounded-lg px-3 py-2.5 text-sm transition cursor-poi
             v-else-if="isClickHouseDatasource"
             v-model="promqlQuery"
             v-model:signal="querySignal"
+            :show-signal-selector="true"
             :disabled="loading"
           />
           <CloudWatchQueryEditor

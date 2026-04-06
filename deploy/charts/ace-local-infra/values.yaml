@@ -102,47 +102,26 @@ victoriaTraces:
     enabled: false
     size: 5Gi
 
+elasticsearch:
+  enabled: false
+  image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+
+clickhouse:
+  enabled: false
+  image: clickhouse/clickhouse-server:24.12
+
+alertmanager:
+  enabled: false
+  image: prom/alertmanager:v0.27.0
+
+vmalert:
+  enabled: false
+  image: victoriametrics/vmalert:v1.101.0
+
 otelCollector:
   enabled: false
   image: otel/opentelemetry-collector-contrib:0.120.0
-  config: |
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-          http:
-            endpoint: 0.0.0.0:4318
-
-    processors:
-      batch:
-        send_batch_size: 1024
-        timeout: 5s
-
-    exporters:
-      prometheusremotewrite:
-        endpoint: http://victoria-metrics:8428/api/v1/write
-
-      otlphttp/victorialogs:
-        logs_endpoint: http://victoria-logs:9428/insert/opentelemetry/v1/logs
-
-      otlphttp/victoriatraces:
-        traces_endpoint: http://victoria-traces:10428/insert/opentelemetry/v1/traces
-
-    service:
-      pipelines:
-        metrics:
-          receivers: [otlp]
-          processors: [batch]
-          exporters: [prometheusremotewrite]
-        logs:
-          receivers: [otlp]
-          processors: [batch]
-          exporters: [otlphttp/victorialogs]
-        traces:
-          receivers: [otlp]
-          processors: [batch]
-          exporters: [otlphttp/victoriatraces]
+  # Config is generated dynamically from enabled services — see templates/otel-collector.yaml
 
 grafana:
   enabled: false

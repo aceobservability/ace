@@ -292,7 +292,12 @@ function toggleAiPopover(index: number, log: LogEntry) {
           <!-- Message -->
           <div class="flex-1 text-[var(--color-on-surface)] break-all">
             <div class="flex items-start gap-1.5">
-              <span class="shrink-0 text-[var(--color-outline)] text-[0.72rem] leading-[1.35] mt-px">{{ isExpanded(i) ? 'v' : '>' }}</span>
+              <svg
+                class="shrink-0 mt-0.5 transition-all duration-150 group-hover:!text-[var(--color-primary)]"
+                :class="isExpanded(i) ? 'rotate-90' : ''"
+                :style="{ color: isExpanded(i) ? 'var(--color-primary)' : 'var(--color-outline)' }"
+                width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+              ><polyline points="9 18 15 12 9 6"/></svg>
               <span class="whitespace-pre-wrap flex-1">{{ log.line }}</span>
               <button
                 v-if="log.level === 'error' || log.level === 'warn' || log.level === 'warning'"
