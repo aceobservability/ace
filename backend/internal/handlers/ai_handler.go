@@ -17,6 +17,7 @@ import (
 
 	"github.com/aceobservability/ace/backend/internal/auth"
 	"github.com/aceobservability/ace/backend/internal/crypto"
+	"github.com/aceobservability/ace/backend/internal/ratelimit"
 )
 
 // jsonError writes a JSON error response with proper encoding, preventing JSON injection.
@@ -120,38 +121,43 @@ func (bw *bytesWrittenResponseWriter) Flush() {
 
 // AIHandler orchestrates all AI endpoints: provider CRUD, model listing, and chat.
 type AIHandler struct {
-	pool *pgxpool.Pool
+	pool    *pgxpool.Pool
+	limiter *ratelimit.Limiter
 
 	// testProvider allows tests to inject a mock AIProvider, bypassing DB resolution.
 	testProvider AIProvider
 }
 
 // NewAIHandler creates a new AI handler.
-func NewAIHandler(pool *pgxpool.Pool) *AIHandler {
-	return &AIHandler{pool: pool}
+func NewAIHandler(pool *pgxpool.Pool, limiter *ratelimit.Limiter) *AIHandler {
+	return &AIHandler{pool: pool, limiter: limiter}
 }
 
 // providerRow represents a row from the ai_providers table.
 type providerRow struct {
-	ID             uuid.UUID
-	ProviderType   string
-	DisplayName    string
-	BaseURL        string
-	APIKey         *string // nullable
-	Enabled        bool
-	ModelsOverride json.RawMessage // nullable JSONB
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID                     uuid.UUID
+	ProviderType           string
+	DisplayName            string
+	BaseURL                string
+	APIKey                 *string // nullable
+	Enabled                bool
+	ModelsOverride         json.RawMessage // nullable JSONB
+	RateLimitPerUser       int
+	RateLimitWindowSeconds int
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
 }
 
 // providerJSON is the safe JSON representation of a provider (no api_key).
 type providerJSON struct {
-	ID             uuid.UUID        `json:"id"`
-	ProviderType   string           `json:"provider_type"`
-	DisplayName    string           `json:"display_name"`
-	BaseURL        string           `json:"base_url"`
-	Enabled        bool             `json:"enabled"`
-	ModelsOverride *json.RawMessage `json:"models_override,omitempty"`
+	ID                     uuid.UUID        `json:"id"`
+	ProviderType           string           `json:"provider_type"`
+	DisplayName            string           `json:"display_name"`
+	BaseURL                string           `json:"base_url"`
+	Enabled                bool             `json:"enabled"`
+	ModelsOverride         *json.RawMessage `json:"models_override,omitempty"`
+	RateLimitPerUser       int              `json:"rate_limit_per_user"`
+	RateLimitWindowSeconds int              `json:"rate_limit_window_seconds"`
 }
 
 // providerToJSON converts a providerRow to a safe JSON representation,
@@ -162,12 +168,14 @@ func providerToJSON(p providerRow) providerJSON {
 		mo = &p.ModelsOverride
 	}
 	return providerJSON{
-		ID:             p.ID,
-		ProviderType:   p.ProviderType,
-		DisplayName:    p.DisplayName,
-		BaseURL:        p.BaseURL,
-		Enabled:        p.Enabled,
-		ModelsOverride: mo,
+		ID:                     p.ID,
+		ProviderType:           p.ProviderType,
+		DisplayName:            p.DisplayName,
+		BaseURL:                p.BaseURL,
+		Enabled:                p.Enabled,
+		ModelsOverride:         mo,
+		RateLimitPerUser:       p.RateLimitPerUser,
+		RateLimitWindowSeconds: p.RateLimitWindowSeconds,
 	}
 }
 
@@ -184,22 +192,26 @@ type chatRequestBody struct {
 
 // createProviderRequest is the JSON body for creating a provider.
 type createProviderRequest struct {
-	ProviderType   string           `json:"provider_type"`
-	DisplayName    string           `json:"display_name"`
-	BaseURL        string           `json:"base_url"`
-	APIKey         string           `json:"api_key"`
-	Enabled        *bool            `json:"enabled"`
-	ModelsOverride *json.RawMessage `json:"models_override,omitempty"`
+	ProviderType           string           `json:"provider_type"`
+	DisplayName            string           `json:"display_name"`
+	BaseURL                string           `json:"base_url"`
+	APIKey                 string           `json:"api_key"`
+	Enabled                *bool            `json:"enabled"`
+	ModelsOverride         *json.RawMessage `json:"models_override,omitempty"`
+	RateLimitPerUser       *int             `json:"rate_limit_per_user,omitempty"`
+	RateLimitWindowSeconds *int             `json:"rate_limit_window_seconds,omitempty"`
 }
 
 // updateProviderRequest is the JSON body for updating a provider.
 type updateProviderRequest struct {
-	ProviderType   *string          `json:"provider_type,omitempty"`
-	DisplayName    *string          `json:"display_name,omitempty"`
-	BaseURL        *string          `json:"base_url,omitempty"`
-	APIKey         *string          `json:"api_key,omitempty"`
-	Enabled        *bool            `json:"enabled,omitempty"`
-	ModelsOverride *json.RawMessage `json:"models_override,omitempty"`
+	ProviderType           *string          `json:"provider_type,omitempty"`
+	DisplayName            *string          `json:"display_name,omitempty"`
+	BaseURL                *string          `json:"base_url,omitempty"`
+	APIKey                 *string          `json:"api_key,omitempty"`
+	Enabled                *bool            `json:"enabled,omitempty"`
+	ModelsOverride         *json.RawMessage `json:"models_override,omitempty"`
+	RateLimitPerUser       *int             `json:"rate_limit_per_user,omitempty"`
+	RateLimitWindowSeconds *int             `json:"rate_limit_window_seconds,omitempty"`
 }
 
 // ---------------------------------------------------------------------------
@@ -229,20 +241,21 @@ func (h *AIHandler) requireAdmin(ctx context.Context, w http.ResponseWriter, use
 // Helper: resolve provider from provider_id
 // ---------------------------------------------------------------------------
 
-func (h *AIHandler) resolveProvider(ctx context.Context, providerID string, userID, orgID uuid.UUID) (AIProvider, error) {
+func (h *AIHandler) resolveProvider(ctx context.Context, providerID string, userID, orgID uuid.UUID) (AIProvider, providerQuota, error) {
 	// Test bypass
 	if h.testProvider != nil {
-		return h.testProvider, nil
+		return h.testProvider, providerQuota{}, nil
 	}
 
 	if providerID == "copilot" {
-		return h.buildCopilotProvider(ctx, userID)
+		p, err := h.buildCopilotProvider(ctx, userID)
+		return p, providerQuota{}, err
 	}
 
 	// Try to parse as UUID — it's a DB provider
 	pid, err := uuid.Parse(providerID)
 	if err != nil {
-		return nil, fmt.Errorf("unknown provider: %s", providerID)
+		return nil, providerQuota{}, fmt.Errorf("unknown provider: %s", providerID)
 	}
 
 	return h.buildDBProvider(ctx, pid, orgID)
@@ -269,31 +282,46 @@ func (h *AIHandler) buildCopilotProvider(ctx context.Context, userID uuid.UUID) 
 	return &CopilotProvider{EncryptedGHToken: encryptedToken}, nil
 }
 
-func (h *AIHandler) buildDBProvider(ctx context.Context, providerID, orgID uuid.UUID) (*OpenAICompatibleProvider, error) {
+// providerQuota holds the per-user rate limit config for a provider.
+type providerQuota struct {
+	ProviderID uuid.UUID
+	Limit      int
+	WindowSecs int
+}
+
+func (h *AIHandler) buildDBProvider(ctx context.Context, providerID, orgID uuid.UUID) (*OpenAICompatibleProvider, providerQuota, error) {
 	if h.pool == nil {
-		return nil, fmt.Errorf("failed to load provider")
+		return nil, providerQuota{}, fmt.Errorf("failed to load provider")
 	}
 
 	var p providerRow
 	err := h.pool.QueryRow(ctx,
-		`SELECT id, provider_type, display_name, base_url, api_key, enabled, models_override
+		`SELECT id, provider_type, display_name, base_url, api_key, enabled, models_override,
+		        rate_limit_per_user, rate_limit_window_seconds
 		 FROM ai_providers WHERE id = $1 AND organization_id = $2`,
 		providerID, orgID,
-	).Scan(&p.ID, &p.ProviderType, &p.DisplayName, &p.BaseURL, &p.APIKey, &p.Enabled, &p.ModelsOverride)
+	).Scan(&p.ID, &p.ProviderType, &p.DisplayName, &p.BaseURL, &p.APIKey, &p.Enabled, &p.ModelsOverride,
+		&p.RateLimitPerUser, &p.RateLimitWindowSeconds)
 	if err != nil {
-		return nil, fmt.Errorf("provider not found")
+		return nil, providerQuota{}, fmt.Errorf("provider not found")
 	}
 
 	apiKey := ""
 	if p.APIKey != nil && *p.APIKey != "" {
 		decrypted, err := crypto.DecryptToken(*p.APIKey)
 		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt provider API key: %w", err)
+			return nil, providerQuota{}, fmt.Errorf("failed to decrypt provider API key: %w", err)
 		}
 		apiKey = decrypted
 	}
 
-	return NewOpenAICompatibleProvider(p.BaseURL, apiKey, p.DisplayName), nil
+	quota := providerQuota{
+		ProviderID: p.ID,
+		Limit:      p.RateLimitPerUser,
+		WindowSecs: p.RateLimitWindowSeconds,
+	}
+
+	return NewOpenAICompatibleProvider(p.BaseURL, apiKey, p.DisplayName), quota, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -319,7 +347,8 @@ func (h *AIHandler) ListProviders(w http.ResponseWriter, r *http.Request) {
 	var providers []providerJSON
 	if h.pool != nil {
 		rows, err := h.pool.Query(ctx,
-			`SELECT id, provider_type, display_name, base_url, enabled, models_override
+			`SELECT id, provider_type, display_name, base_url, enabled, models_override,
+			        rate_limit_per_user, rate_limit_window_seconds
 			 FROM ai_providers WHERE organization_id = $1 AND enabled = true`,
 			orgID,
 		)
@@ -329,7 +358,7 @@ func (h *AIHandler) ListProviders(w http.ResponseWriter, r *http.Request) {
 			defer rows.Close()
 			for rows.Next() {
 				var p providerRow
-				if err := rows.Scan(&p.ID, &p.ProviderType, &p.DisplayName, &p.BaseURL, &p.Enabled, &p.ModelsOverride); err != nil {
+				if err := rows.Scan(&p.ID, &p.ProviderType, &p.DisplayName, &p.BaseURL, &p.Enabled, &p.ModelsOverride, &p.RateLimitPerUser, &p.RateLimitWindowSeconds); err != nil {
 					zap.L().Error("list providers row scan failed", zap.Error(err))
 					continue
 				}
@@ -410,7 +439,7 @@ func (h *AIHandler) ListModels(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 
-	provider, err := h.resolveProvider(ctx, providerID, userID, orgID)
+	provider, _, err := h.resolveProvider(ctx, providerID, userID, orgID)
 	if err != nil {
 		jsonError(w, err.Error(), http.StatusNotFound)
 		return
@@ -503,10 +532,32 @@ func (h *AIHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	// Resolve provider
-	provider, err := h.resolveProvider(ctx, reqBody.ProviderID, userID, orgID)
+	provider, quota, err := h.resolveProvider(ctx, reqBody.ProviderID, userID, orgID)
 	if err != nil {
 		jsonError(w, err.Error(), http.StatusNotFound)
 		return
+	}
+
+	// Per-user rate limiting
+	if h.limiter != nil && quota.Limit > 0 {
+		allowed, remaining, resetAt := h.limiter.Allow(userID, quota.ProviderID, quota.Limit, quota.WindowSecs)
+		if !allowed {
+			retryAfter := int(time.Until(resetAt).Seconds()) + 1
+			w.Header().Set("Retry-After", fmt.Sprintf("%d", retryAfter))
+			w.Header().Set("X-RateLimit-Limit", fmt.Sprintf("%d", quota.Limit))
+			w.Header().Set("X-RateLimit-Remaining", "0")
+			w.Header().Set("X-RateLimit-Reset", fmt.Sprintf("%d", resetAt.Unix()))
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusTooManyRequests)
+			json.NewEncoder(w).Encode(map[string]any{
+				"error":               "rate limit exceeded",
+				"retry_after_seconds": retryAfter,
+			})
+			return
+		}
+		w.Header().Set("X-RateLimit-Limit", fmt.Sprintf("%d", quota.Limit))
+		w.Header().Set("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
+		w.Header().Set("X-RateLimit-Reset", fmt.Sprintf("%d", resetAt.Unix()))
 	}
 
 	// System prompt injection
@@ -617,13 +668,22 @@ func (h *AIHandler) CreateProvider(w http.ResponseWriter, r *http.Request) {
 		enabled = *reqBody.Enabled
 	}
 
+	rateLimitPerUser := 0
+	if reqBody.RateLimitPerUser != nil {
+		rateLimitPerUser = *reqBody.RateLimitPerUser
+	}
+	rateLimitWindowSeconds := 3600
+	if reqBody.RateLimitWindowSeconds != nil {
+		rateLimitWindowSeconds = *reqBody.RateLimitWindowSeconds
+	}
+
 	var p providerRow
 	err := h.pool.QueryRow(ctx,
-		`INSERT INTO ai_providers (organization_id, provider_type, display_name, base_url, api_key, enabled, models_override)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
-		 RETURNING id, provider_type, display_name, base_url, enabled, models_override, created_at, updated_at`,
-		orgID, reqBody.ProviderType, reqBody.DisplayName, reqBody.BaseURL, encryptedKey, enabled, reqBody.ModelsOverride,
-	).Scan(&p.ID, &p.ProviderType, &p.DisplayName, &p.BaseURL, &p.Enabled, &p.ModelsOverride, &p.CreatedAt, &p.UpdatedAt)
+		`INSERT INTO ai_providers (organization_id, provider_type, display_name, base_url, api_key, enabled, models_override, rate_limit_per_user, rate_limit_window_seconds)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		 RETURNING id, provider_type, display_name, base_url, enabled, models_override, rate_limit_per_user, rate_limit_window_seconds, created_at, updated_at`,
+		orgID, reqBody.ProviderType, reqBody.DisplayName, reqBody.BaseURL, encryptedKey, enabled, reqBody.ModelsOverride, rateLimitPerUser, rateLimitWindowSeconds,
+	).Scan(&p.ID, &p.ProviderType, &p.DisplayName, &p.BaseURL, &p.Enabled, &p.ModelsOverride, &p.RateLimitPerUser, &p.RateLimitWindowSeconds, &p.CreatedAt, &p.UpdatedAt)
 	if err != nil {
 		zap.L().Error("failed to create provider", zap.Error(err))
 		jsonError(w, "failed to create provider", http.StatusInternalServerError)
@@ -676,10 +736,12 @@ func (h *AIHandler) UpdateProvider(w http.ResponseWriter, r *http.Request) {
 	// Load existing provider
 	var existing providerRow
 	err = h.pool.QueryRow(ctx,
-		`SELECT id, provider_type, display_name, base_url, api_key, enabled, models_override
+		`SELECT id, provider_type, display_name, base_url, api_key, enabled, models_override,
+		        rate_limit_per_user, rate_limit_window_seconds
 		 FROM ai_providers WHERE id = $1 AND organization_id = $2`,
 		pid, orgID,
-	).Scan(&existing.ID, &existing.ProviderType, &existing.DisplayName, &existing.BaseURL, &existing.APIKey, &existing.Enabled, &existing.ModelsOverride)
+	).Scan(&existing.ID, &existing.ProviderType, &existing.DisplayName, &existing.BaseURL, &existing.APIKey, &existing.Enabled, &existing.ModelsOverride,
+		&existing.RateLimitPerUser, &existing.RateLimitWindowSeconds)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			jsonError(w, "provider not found", http.StatusNotFound)
@@ -705,6 +767,12 @@ func (h *AIHandler) UpdateProvider(w http.ResponseWriter, r *http.Request) {
 	if reqBody.ModelsOverride != nil {
 		existing.ModelsOverride = *reqBody.ModelsOverride
 	}
+	if reqBody.RateLimitPerUser != nil {
+		existing.RateLimitPerUser = *reqBody.RateLimitPerUser
+	}
+	if reqBody.RateLimitWindowSeconds != nil {
+		existing.RateLimitWindowSeconds = *reqBody.RateLimitWindowSeconds
+	}
 
 	// Fix #1: SSRF validation on base_url (validate the final URL after applying updates)
 	if err := validateBaseURL(existing.BaseURL); err != nil {
@@ -728,12 +796,14 @@ func (h *AIHandler) UpdateProvider(w http.ResponseWriter, r *http.Request) {
 	var updated providerRow
 	err = h.pool.QueryRow(ctx,
 		`UPDATE ai_providers
-		 SET provider_type = $1, display_name = $2, base_url = $3, api_key = $4, enabled = $5, models_override = $6, updated_at = NOW()
-		 WHERE id = $7 AND organization_id = $8
-		 RETURNING id, provider_type, display_name, base_url, enabled, models_override, created_at, updated_at`,
+		 SET provider_type = $1, display_name = $2, base_url = $3, api_key = $4, enabled = $5, models_override = $6,
+		     rate_limit_per_user = $7, rate_limit_window_seconds = $8, updated_at = NOW()
+		 WHERE id = $9 AND organization_id = $10
+		 RETURNING id, provider_type, display_name, base_url, enabled, models_override, rate_limit_per_user, rate_limit_window_seconds, created_at, updated_at`,
 		existing.ProviderType, existing.DisplayName, existing.BaseURL, encryptedKey, existing.Enabled, existing.ModelsOverride,
-		pid, orgID,
-	).Scan(&updated.ID, &updated.ProviderType, &updated.DisplayName, &updated.BaseURL, &updated.Enabled, &updated.ModelsOverride, &updated.CreatedAt, &updated.UpdatedAt)
+		existing.RateLimitPerUser, existing.RateLimitWindowSeconds, pid, orgID,
+	).Scan(&updated.ID, &updated.ProviderType, &updated.DisplayName, &updated.BaseURL, &updated.Enabled, &updated.ModelsOverride,
+		&updated.RateLimitPerUser, &updated.RateLimitWindowSeconds, &updated.CreatedAt, &updated.UpdatedAt)
 	if err != nil {
 		zap.L().Error("failed to update provider", zap.Error(err))
 		jsonError(w, "failed to update provider", http.StatusInternalServerError)
@@ -819,7 +889,7 @@ func (h *AIHandler) TestProvider(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load provider from DB
-	provider, err := h.buildDBProvider(ctx, pid, orgID)
+	provider, _, err := h.buildDBProvider(ctx, pid, orgID)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{

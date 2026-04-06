@@ -2,11 +2,42 @@ package auth
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
 )
+
+// trustedProxies holds the list of trusted proxy CIDRs.
+// When non-empty, X-Forwarded-For is only trusted from these IPs.
+var trustedProxies []net.IPNet
+
+// SetTrustedProxies configures the trusted proxy CIDRs.
+// Call once at startup before registering routes.
+func SetTrustedProxies(proxies []net.IPNet) {
+	trustedProxies = proxies
+}
+
+func isTrustedProxy(remoteAddr string) bool {
+	if len(trustedProxies) == 0 {
+		return true // no config = trust all (backward compat)
+	}
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		host = remoteAddr
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return false
+	}
+	for _, network := range trustedProxies {
+		if network.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
 
 // Context keys for user information
 type contextKey string
@@ -54,7 +85,7 @@ func AuthMiddleware(jwtManager *JWTManager) func(http.Handler) http.Handler {
 			ctx = context.WithValue(ctx, UserNameKey, claims.Name)
 
 			ip := r.RemoteAddr
-			if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+			if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" && isTrustedProxy(r.RemoteAddr) {
 				ip = strings.Split(fwd, ",")[0]
 			}
 			ctx = context.WithValue(ctx, IPAddressKey, strings.TrimSpace(ip))

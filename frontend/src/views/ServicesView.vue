@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { Activity } from 'lucide-vue-next'
+import { Activity, Star } from 'lucide-vue-next'
 import { onMounted, onUnmounted, ref } from 'vue'
 import EmptyState from '../components/EmptyState.vue'
 import StatusDot from '../components/StatusDot.vue'
 import { useCommandContext } from '../composables/useCommandContext'
+import { useFavorites } from '../composables/useFavorites'
 
 const { registerContext, deregisterContext } = useCommandContext()
+const { toggleFavorite, isFavorite } = useFavorites()
 
 interface ServiceMetrics {
   latencyMs: number
@@ -123,11 +125,23 @@ onUnmounted(() => {
           <StatusDot :status="service.status" :size="8" />
           <h3
             data-testid="service-name"
-            class="font-display text-base font-semibold"
+            class="font-display text-base font-semibold flex-1"
             :style="{ color: 'var(--color-on-surface)' }"
           >
             {{ service.name }}
           </h3>
+          <button
+            class="shrink-0 bg-transparent border-none cursor-pointer p-1"
+            :data-testid="`favorite-svc-${service.name}`"
+            :title="isFavorite(`svc::${service.name}`) ? 'Remove from favorites' : 'Add to favorites'"
+            @click.stop="toggleFavorite({ id: `svc::${service.name}`, title: service.name, type: 'service' })"
+          >
+            <Star
+              :size="14"
+              :fill="isFavorite(`svc::${service.name}`) ? 'currentColor' : 'none'"
+              :style="{ color: isFavorite(`svc::${service.name}`) ? 'var(--color-primary)' : 'var(--color-outline)' }"
+            />
+          </button>
         </div>
 
         <div class="flex flex-col gap-2">

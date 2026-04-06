@@ -10,6 +10,7 @@ import {
   Plus,
   Radio,
   RefreshCw,
+  Star,
   Trash2,
   X,
 } from 'lucide-vue-next'
@@ -24,6 +25,7 @@ import {
 import { useAuth } from '../composables/useAuth'
 import { useCommandContext } from '../composables/useCommandContext'
 import { useDatasource } from '../composables/useDatasource'
+import { useFavorites } from '../composables/useFavorites'
 import { useOrganization } from '../composables/useOrganization'
 import { fetchAlerts, fetchGroups } from '../composables/useVMAlert'
 import AiAlertTriage from '../components/AiAlertTriage.vue'
@@ -43,6 +45,7 @@ const { currentOrg } = useOrganization()
 const { user } = useAuth()
 const { alertingDatasources, fetchDatasources } = useDatasource()
 const { registerContext, deregisterContext } = useCommandContext()
+const { toggleFavorite, isFavorite } = useFavorites()
 
 const selectedDatasourceId = ref('')
 const activeTab = ref<'alerts' | 'groups' | 'am-alerts' | 'am-silences' | 'am-receivers'>('alerts')
@@ -629,7 +632,20 @@ onUnmounted(() => {
                   />
                 </td>
                 <td class="px-4 py-3">
-                  <span class="text-sm font-semibold" :style="{ color: 'var(--color-on-surface)' }">{{ alert.name }}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold" :style="{ color: 'var(--color-on-surface)' }">{{ alert.name }}</span>
+                    <button
+                      class="shrink-0 bg-transparent border-none cursor-pointer p-0.5"
+                      :title="isFavorite(`alert::${selectedDatasourceId}::${alert.name}`) ? 'Remove from favorites' : 'Add to favorites'"
+                      @click.stop="toggleFavorite({ id: `alert::${selectedDatasourceId}::${alert.name}`, title: alert.name, type: 'alert' })"
+                    >
+                      <Star
+                        :size="12"
+                        :fill="isFavorite(`alert::${selectedDatasourceId}::${alert.name}`) ? 'currentColor' : 'none'"
+                        :style="{ color: isFavorite(`alert::${selectedDatasourceId}::${alert.name}`) ? 'var(--color-primary)' : 'var(--color-outline)' }"
+                      />
+                    </button>
+                  </div>
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex flex-wrap gap-1.5" v-if="alert.labels && Object.keys(alert.labels).length > 0">
@@ -949,7 +965,21 @@ onUnmounted(() => {
                 />
               </td>
               <td class="px-4 py-3">
-                <span class="text-sm font-semibold" :style="{ color: 'var(--color-on-surface)' }">{{ alert.labels?.alertname || '--' }}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-semibold" :style="{ color: 'var(--color-on-surface)' }">{{ alert.labels?.alertname || '--' }}</span>
+                  <button
+                    v-if="alert.fingerprint"
+                    class="shrink-0 bg-transparent border-none cursor-pointer p-0.5"
+                    :title="isFavorite(`alert::${selectedDatasourceId}::${alert.fingerprint}`) ? 'Remove from favorites' : 'Add to favorites'"
+                    @click.stop="toggleFavorite({ id: `alert::${selectedDatasourceId}::${alert.fingerprint}`, title: alert.labels?.alertname || 'Alert', type: 'alert' })"
+                  >
+                    <Star
+                      :size="12"
+                      :fill="isFavorite(`alert::${selectedDatasourceId}::${alert.fingerprint}`) ? 'currentColor' : 'none'"
+                      :style="{ color: isFavorite(`alert::${selectedDatasourceId}::${alert.fingerprint}`) ? 'var(--color-primary)' : 'var(--color-outline)' }"
+                    />
+                  </button>
+                </div>
               </td>
               <td class="px-4 py-3">
                 <span class="text-xs font-mono" :style="{ color: 'var(--color-on-surface-variant)' }">{{ alert.labels?.severity || 'none' }}</span>

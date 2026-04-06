@@ -9,9 +9,11 @@ import {
   History,
   Loader2,
   Play,
+  Star,
   X,
 } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { fetchDataSourceLabels, queryDataSource, streamDataSourceLogs } from '../api/datasources'
 import ClickHouseSQLEditor from '../components/ClickHouseSQLEditor.vue'
 import CloudWatchQueryEditor from '../components/CloudWatchQueryEditor.vue'
@@ -30,9 +32,14 @@ const emit = defineEmits<{
   'datasource-changed': [payload: { id: string; name: string; type: string }]
 }>()
 
+const route = useRoute()
 const { timeRange, onRefresh, setCustomRange } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { logsDatasources, fetchDatasources } = useDatasource()
+
+// Favorites
+import { useFavorites } from '../composables/useFavorites'
+const { toggleFavorite, isFavorite } = useFavorites()
 
 type DatasourceHealthStatus = 'unknown' | 'checking' | 'healthy' | 'unhealthy'
 
@@ -192,6 +199,11 @@ function applyTraceLogsNavigationContext(type_: DataSourceType) {
 }
 
 onMounted(() => {
+  // Populate query from URL param (e.g., from explore favorites)
+  if (route.query.q && typeof route.query.q === 'string') {
+    query.value = route.query.q
+  }
+
   consumeTraceLogsNavigationContext()
 
   if (activeDatasource.value) {
@@ -1058,6 +1070,22 @@ watch(
             <span>{{ isLive ? 'Stop Live' : 'Start Live' }}</span>
           </button>
 
+          <button
+            v-if="query.trim()"
+            class="inline-flex items-center gap-1.5 rounded-sm px-3 py-2.5 text-sm transition border cursor-pointer"
+            :style="{
+              backgroundColor: isFavorite(`explore::logs::${query}`) ? 'var(--color-primary-muted)' : 'var(--color-surface-container-high)',
+              borderColor: isFavorite(`explore::logs::${query}`) ? 'var(--color-primary)' : 'var(--color-stroke-subtle)',
+              color: isFavorite(`explore::logs::${query}`) ? 'var(--color-primary)' : 'var(--color-on-surface-variant)',
+            }"
+            :title="isFavorite(`explore::logs::${query}`) ? 'Remove from favorites' : 'Save to favorites'"
+            @click="toggleFavorite({ id: `explore::logs::${query}`, title: query.length > 40 ? query.slice(0, 40) + '...' : query, type: 'explore' })"
+          >
+            <Star
+              :size="14"
+              :fill="isFavorite(`explore::logs::${query}`) ? 'currentColor' : 'none'"
+            />
+          </button>
           <span class="text-xs text-[var(--color-outline)]">Ctrl+Enter to run</span>
 
           <span

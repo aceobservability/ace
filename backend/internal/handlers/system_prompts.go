@@ -48,7 +48,9 @@ Panel type selection:
 - Value as percentage of max → gauge
 - Value over time → line_chart
 - Comparison across categories → bar_chart
-- Distribution → pie`,
+- Distribution → pie
+
+When the user asks to modify an existing dashboard (the current spec will be in the conversation), call generate_dashboard with the complete updated spec. Keep panels the user did not ask to change.`,
 
 	"tempo": `You are an expert in distributed tracing and Grafana Tempo. Help with trace queries and analysis.
 Tempo uses TraceQL: {.http.status_code=500 && duration>200ms}

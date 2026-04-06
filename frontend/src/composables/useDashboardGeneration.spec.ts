@@ -180,8 +180,8 @@ describe('useDashboardGeneration', () => {
         'MyDS',
       )
 
-      // Should set error because no generate_dashboard was called
-      expect(error.value).toBe('Could not generate a dashboard. Try a more specific prompt.')
+      // Content-only response (no spec) is valid (e.g. during refinement), so no error
+      expect(error.value).toBeNull()
     })
 
     it('sets error when max iterations exhausted without generate_dashboard', async () => {

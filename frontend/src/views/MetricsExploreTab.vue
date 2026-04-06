@@ -9,9 +9,11 @@ import {
   History,
   Loader2,
   Play,
+  Star,
   X,
 } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { queryDataSource } from '../api/datasources'
 import ClickHouseSQLEditor from '../components/ClickHouseSQLEditor.vue'
 import CloudWatchQueryEditor from '../components/CloudWatchQueryEditor.vue'
@@ -21,6 +23,7 @@ import LineChart from '../components/LineChart.vue'
 import QueryBuilder from '../components/QueryBuilder.vue'
 import TimeRangePicker from '../components/TimeRangePicker.vue'
 import { useDatasource } from '../composables/useDatasource'
+import { useFavorites } from '../composables/useFavorites'
 import { useOrganization } from '../composables/useOrganization'
 import {
   type PrometheusQueryData,
@@ -37,9 +40,11 @@ const emit = defineEmits<{
   'datasource-changed': [payload: { id: string; name: string; type: string }]
 }>()
 
+const route = useRoute()
 const { timeRange, onRefresh, setCustomRange } = useTimeRange()
 const { currentOrg } = useOrganization()
 const { metricsDatasources, fetchDatasources } = useDatasource()
+const { toggleFavorite, isFavorite } = useFavorites()
 const queryEditor = useQueryEditor()
 
 type DatasourceHealthStatus = 'unknown' | 'checking' | 'healthy' | 'unhealthy'
@@ -201,6 +206,11 @@ function applyTraceMetricsNavigationContext() {
 
 // Load history from session storage
 onMounted(() => {
+  // Populate query from URL param (e.g., from explore favorites)
+  if (route.query.q && typeof route.query.q === 'string') {
+    query.value = route.query.q
+  }
+
   consumeTraceMetricsNavigationContext()
 
   if (activeDatasource.value) {
@@ -629,6 +639,22 @@ watch(selectedDatasourceId, (newId) => {
         >
           <Play :size="16" />
           <span>{{ loading ? 'Running...' : 'Run Query' }}</span>
+        </button>
+        <button
+          v-if="query.trim()"
+          class="inline-flex items-center gap-1.5 rounded-sm px-3 py-2.5 text-sm transition border cursor-pointer"
+          :style="{
+            backgroundColor: isFavorite(`explore::metrics::${query}`) ? 'var(--color-primary-muted)' : 'var(--color-surface-container-high)',
+            borderColor: isFavorite(`explore::metrics::${query}`) ? 'var(--color-primary)' : 'var(--color-stroke-subtle)',
+            color: isFavorite(`explore::metrics::${query}`) ? 'var(--color-primary)' : 'var(--color-on-surface-variant)',
+          }"
+          :title="isFavorite(`explore::metrics::${query}`) ? 'Remove from favorites' : 'Save to favorites'"
+          @click="toggleFavorite({ id: `explore::metrics::${query}`, title: query.length > 40 ? query.slice(0, 40) + '...' : query, type: 'explore' })"
+        >
+          <Star
+            :size="14"
+            :fill="isFavorite(`explore::metrics::${query}`) ? 'currentColor' : 'none'"
+          />
         </button>
         <span class="text-xs" :style="{ color: 'var(--color-outline)' }">Ctrl+Enter to run</span>
       </div>

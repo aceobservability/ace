@@ -62,7 +62,7 @@ func (m *mockAIProvider) Chat(_ context.Context, req ChatRequest, w http.Respons
 func TestListProviders_EmptyArray_WhenNoProviders(t *testing.T) {
 	// With a nil pool we cannot query DB; the handler should gracefully
 	// return an empty array when both DB paths fail.
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	userID := uuid.New()
 	orgID := uuid.New()
@@ -88,7 +88,7 @@ func TestListProviders_EmptyArray_WhenNoProviders(t *testing.T) {
 // === ListModels tests =======================================================
 
 func TestListModels_UnknownProvider_Returns404(t *testing.T) {
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	userID := uuid.New()
 	orgID := uuid.New()
@@ -104,7 +104,7 @@ func TestListModels_UnknownProvider_Returns404(t *testing.T) {
 }
 
 func TestListModels_MissingProviderID_Returns400(t *testing.T) {
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	userID := uuid.New()
 	orgID := uuid.New()
@@ -124,7 +124,7 @@ func TestListModels_MissingProviderID_Returns400(t *testing.T) {
 func TestChat_SystemPromptPrepended_ForKnownDatasource(t *testing.T) {
 	t.Setenv("JWT_SECRET", "test-secret-for-ai-handler-tests")
 
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	mock := &mockAIProvider{}
 	// Inject the mock via the testProvider bypass.
@@ -181,7 +181,7 @@ func TestChat_SystemPromptPrepended_ForKnownDatasource(t *testing.T) {
 func TestChat_DefaultSystemPrompt_WhenDatasourceUnknown(t *testing.T) {
 	t.Setenv("JWT_SECRET", "test-secret-for-ai-handler-tests")
 
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 	mock := &mockAIProvider{}
 	h.testProvider = mock
 
@@ -222,7 +222,7 @@ func TestChat_CopilotProvider_RoutesByProviderID(t *testing.T) {
 	// When provider_id is "copilot" and there's no DB, we get an error
 	// about not being able to load the copilot connection. This verifies
 	// the routing logic tries the copilot path.
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	userID := uuid.New()
 	orgID := uuid.New()
@@ -254,7 +254,7 @@ func TestChat_CopilotProvider_RoutesByProviderID(t *testing.T) {
 func TestChat_UUIDProvider_RoutesByProviderID(t *testing.T) {
 	// When provider_id is a UUID and there's no DB, we get an error about
 	// not being able to load the provider. This verifies UUID routing.
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	userID := uuid.New()
 	orgID := uuid.New()
@@ -282,7 +282,7 @@ func TestChat_UUIDProvider_RoutesByProviderID(t *testing.T) {
 }
 
 func TestChat_InvalidBody_Returns400(t *testing.T) {
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	userID := uuid.New()
 	orgID := uuid.New()
@@ -300,7 +300,7 @@ func TestChat_InvalidBody_Returns400(t *testing.T) {
 }
 
 func TestChat_EmptyMessages_Returns400(t *testing.T) {
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	userID := uuid.New()
 	orgID := uuid.New()
@@ -329,7 +329,7 @@ func TestChat_EmptyMessages_Returns400(t *testing.T) {
 
 func TestCreateProvider_NonAdmin_Returns403(t *testing.T) {
 	// With nil pool, the admin check query will fail, which should be 403.
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	userID := uuid.New()
 	orgID := uuid.New()
@@ -356,7 +356,7 @@ func TestCreateProvider_NonAdmin_Returns403(t *testing.T) {
 }
 
 func TestUpdateProvider_NonAdmin_Returns403(t *testing.T) {
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	userID := uuid.New()
 	orgID := uuid.New()
@@ -381,7 +381,7 @@ func TestUpdateProvider_NonAdmin_Returns403(t *testing.T) {
 }
 
 func TestDeleteProvider_NonAdmin_Returns403(t *testing.T) {
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	userID := uuid.New()
 	orgID := uuid.New()
@@ -400,7 +400,7 @@ func TestDeleteProvider_NonAdmin_Returns403(t *testing.T) {
 }
 
 func TestTestProvider_NonAdmin_Returns403(t *testing.T) {
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	userID := uuid.New()
 	orgID := uuid.New()
@@ -423,7 +423,7 @@ func TestTestProvider_NonAdmin_Returns403(t *testing.T) {
 func TestChat_ToolDegradation_RetriesWithoutTools(t *testing.T) {
 	t.Setenv("JWT_SECRET", "test-secret-for-ai-handler-tests")
 
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	callCount := 0
 	mock := &mockToolDegradationProvider{
@@ -476,7 +476,7 @@ func TestChat_ToolDegradation_RetriesWithoutTools(t *testing.T) {
 func TestChat_ToolDegradation_NonToolError_NotRetried(t *testing.T) {
 	t.Setenv("JWT_SECRET", "test-secret-for-ai-handler-tests")
 
-	h := NewAIHandler(nil)
+	h := NewAIHandler(nil, nil)
 
 	callCount := 0
 	mock := &mockToolDegradationProvider{

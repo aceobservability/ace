@@ -24,6 +24,8 @@ export interface AIProviderInfo {
   base_url: string
   enabled: boolean
   models_override?: Array<{ id: string; name: string }>
+  rate_limit_per_user: number
+  rate_limit_window_seconds: number
   created_at: string
   updated_at: string
 }
@@ -35,6 +37,8 @@ export interface CreateProviderRequest {
   api_key?: string
   enabled?: boolean
   models_override?: Array<{ id: string; name: string }>
+  rate_limit_per_user?: number
+  rate_limit_window_seconds?: number
 }
 
 export interface UpdateProviderRequest {
@@ -43,6 +47,8 @@ export interface UpdateProviderRequest {
   api_key?: string
   enabled?: boolean
   models_override?: Array<{ id: string; name: string }>
+  rate_limit_per_user?: number
+  rate_limit_window_seconds?: number
 }
 
 interface AIModel {

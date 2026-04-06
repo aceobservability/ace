@@ -47,6 +47,8 @@ vi.mock('../composables/useFavorites', () => ({
     toggleFavorite: vi.fn(),
     isFavorite: () => false,
     addRecent: vi.fn(),
+    favoriteRoute: () => '/app',
+    favoritesForType: () => [],
   }),
 }))
 
