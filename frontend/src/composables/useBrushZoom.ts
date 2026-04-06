@@ -7,15 +7,21 @@ interface BrushRect {
   height: number
 }
 
+// Runtime shape of a vue-echarts VChart instance. We use Ref<unknown> in the
+// signature to avoid vue-tsc conflicts between component-definition and
+// component-instance types, then cast to this interface internally.
 interface ChartInstance {
   $el: HTMLElement
-  containPixel: (finder: string, point: number[]) => boolean
-  convertFromPixel: (finder: string, point: number[]) => number[]
-  getModel?: () => unknown
+  containPixel(finder: string, point: number[]): boolean
+  convertFromPixel(finder: string, point: number[]): number[]
+}
+
+function asChart(v: unknown): ChartInstance | null {
+  return v && typeof v === 'object' && '$el' in v ? (v as ChartInstance) : null
 }
 
 export function useBrushZoom(
-  chartRef: Ref<ChartInstance | null>,
+  chartRef: Ref<unknown>,
   onBrushZoom: (startMs: number, endMs: number) => void,
   onResetZoom: () => void,
 ) {
@@ -27,7 +33,7 @@ export function useBrushZoom(
   let gridHeight = 0
 
   function handleMouseDown(event: { offsetX: number; offsetY: number }) {
-    const chart = chartRef.value
+    const chart = asChart(chartRef.value)
     if (!chart) return
 
     if (!chart.containPixel('grid', [event.offsetX, event.offsetY])) return
@@ -37,14 +43,14 @@ export function useBrushZoom(
     // Fallback: matches ECharts default grid (top: '8%', bottom: '8%', no title).
     // When props.title is set the chart uses top: '15%'; coordinateSystem.getRect()
     // below returns the accurate position for that case.
-    const el = chart.$el as HTMLElement
+    const el = chart.$el
     const containerHeight = el.clientHeight
     gridTop = containerHeight * 0.08
     gridHeight = containerHeight * 0.84
 
     // Try to get more accurate grid bounds from the chart model
     try {
-      const model = (chart as unknown as { getModel?: () => unknown }).getModel?.()
+      const model = (chart as { getModel?: () => unknown }).getModel?.()
       if (model) {
         const gridModel = (
           model as { getComponent?: (type: string) => unknown }
@@ -73,10 +79,10 @@ export function useBrushZoom(
   }
 
   function onWindowMouseMove(event: MouseEvent) {
-    const chart = chartRef.value
+    const chart = asChart(chartRef.value)
     if (!chart || !isDragging.value) return
 
-    const el = chart.$el as HTMLElement
+    const el = chart.$el
     const rect = el.getBoundingClientRect()
     const currentX = event.clientX - rect.left
 
@@ -93,7 +99,7 @@ export function useBrushZoom(
 
     if (!isDragging.value) return
 
-    const chart = chartRef.value
+    const chart = asChart(chartRef.value)
     if (!chart) {
       isDragging.value = false
       brushRect.left = 0
@@ -103,7 +109,7 @@ export function useBrushZoom(
       return
     }
 
-    const el = chart.$el as HTMLElement
+    const el = chart.$el
     const rect = el.getBoundingClientRect()
     const endX = event.clientX - rect.left
 
