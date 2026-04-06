@@ -36,215 +36,203 @@ type dashboardDef struct {
 // datasource_id is injected at seed time after lookup.
 func defaultDashboards() []dashboardDef {
 	return []dashboardDef{
-		prometheusDashboard(),
-		victoriaMetricsDashboard(),
-		lokiDashboard(),
-		victoriaLogsDashboard(),
-		tempoDashboard(),
+		httpServiceOverview(),
+		applicationPerformance(),
+		databaseHealth(),
+		infrastructureOverview(),
+		logIntelligence(),
+		traceExplorer(),
 	}
 }
 
-func prometheusDashboard() dashboardDef {
+// Dashboard 1: HTTP Service Overview — compact stats, gauges, pie, one trend.
+// Only api-gateway has HTTP metrics, so we focus on gateway stats + DB pool distribution.
+func httpServiceOverview() dashboardDef {
 	return dashboardDef{
-		Title:          "Prometheus — Self-Monitoring",
-		Description:    "Prometheus server health and performance metrics",
-		DatasourceType: "prometheus",
-		Panels: []panel{
-			{
-				Title:   "Process CPU Usage",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 0, "y": 0, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `rate(process_cpu_seconds_total[5m])`, "signal": "metrics"},
-			},
-			{
-				Title:   "Heap Memory Allocated",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 6, "y": 0, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `go_memstats_heap_alloc_bytes`, "signal": "metrics"},
-			},
-			{
-				Title:   "Goroutines",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 0, "y": 4, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `go_goroutines`, "signal": "metrics"},
-			},
-			{
-				Title:   "HTTP Request Rate",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 6, "y": 4, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `sum by (handler) (rate(prometheus_http_requests_total[5m]))`, "signal": "metrics"},
-			},
-			{
-				Title:   "TSDB Head Series",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 0, "y": 8, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `prometheus_tsdb_head_series`, "signal": "metrics"},
-			},
-			{
-				Title:   "Samples Appended Rate",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 6, "y": 8, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `rate(prometheus_tsdb_head_samples_appended_total[5m])`, "signal": "metrics"},
-			},
-			{
-				Title:   "Up Targets",
-				Type:    "stat",
-				GridPos: map[string]int{"x": 0, "y": 12, "w": 4, "h": 3},
-				Query:   map[string]any{"expr": `count(up == 1)`, "signal": "metrics", "showSparkline": false},
-			},
-			{
-				Title:   "Down Targets",
-				Type:    "stat",
-				GridPos: map[string]int{"x": 4, "y": 12, "w": 4, "h": 3},
-				Query: map[string]any{
-					"expr": `count(up == 0)`, "signal": "metrics",
-					"showSparkline": false,
-					"thresholds":    []map[string]any{{"value": 1, "color": "#ef4444"}},
-				},
-			},
-			{
-				Title:   "TSDB Storage Size",
-				Type:    "gauge",
-				GridPos: map[string]int{"x": 8, "y": 12, "w": 4, "h": 3},
-				Query: map[string]any{
-					"expr":   `prometheus_tsdb_storage_blocks_bytes + prometheus_tsdb_wal_storage_size_bytes`,
-					"signal": "metrics", "min": 0, "max": 536870912, "unit": "bytes",
-				},
-			},
-		},
-	}
-}
-
-func victoriaMetricsDashboard() dashboardDef {
-	return dashboardDef{
-		Title:          "VictoriaMetrics — Self-Monitoring",
-		Description:    "VictoriaMetrics server scrape and ingestion metrics",
+		Title:          "HTTP Service Overview",
+		Description:    "Gateway traffic, latency percentiles, DB connections by service, and resource gauges",
 		DatasourceType: "victoriametrics",
 		Panels: []panel{
-			{
-				Title:   "Scrape Duration",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 0, "y": 0, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `scrape_duration_seconds`, "signal": "metrics"},
-			},
-			{
-				Title:   "Samples Scraped",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 6, "y": 0, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `scrape_samples_scraped`, "signal": "metrics"},
-			},
-			{
-				Title:   "Samples Post-Relabeling",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 0, "y": 4, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `scrape_samples_post_metric_relabeling`, "signal": "metrics"},
-			},
-			{
-				Title:   "Series Added",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 6, "y": 4, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `scrape_series_added`, "signal": "metrics"},
-			},
-			{
-				Title:   "Scrape Target Up",
-				Type:    "stat",
-				GridPos: map[string]int{"x": 0, "y": 8, "w": 6, "h": 3},
-				Query: map[string]any{
-					"expr": `up`, "signal": "metrics",
-					"showSparkline": true,
-					"thresholds":    []map[string]any{{"value": 0, "color": "#ef4444"}},
-				},
-			},
-			{
-				Title:   "Scrape Timeout",
-				Type:    "stat",
-				GridPos: map[string]int{"x": 6, "y": 8, "w": 6, "h": 3},
-				Query:   map[string]any{"expr": `scrape_timeout_seconds`, "signal": "metrics", "showSparkline": false},
-			},
+			// Row 1: Six compact stats
+			{Title: "Requests/s", Type: "stat", GridPos: map[string]int{"x": 0, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `sum(rate(http_server_requests_total[5m]))`, "signal": "metrics", "showSparkline": true}},
+			{Title: "Errors/s", Type: "stat", GridPos: map[string]int{"x": 2, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `sum(rate(http_server_errors_total[5m]))`, "signal": "metrics", "showSparkline": true,
+					"thresholds": []map[string]any{{"value": 0.1, "color": "#D4A11E"}, {"value": 1, "color": "#D95C54"}}}},
+			{Title: "P50 (ms)", Type: "stat", GridPos: map[string]int{"x": 4, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `avg(http_server_request_duration_p50_milliseconds)`, "signal": "metrics", "showSparkline": true, "unit": "ms"}},
+			{Title: "P95 (ms)", Type: "stat", GridPos: map[string]int{"x": 6, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `avg(http_server_request_duration_p95_milliseconds)`, "signal": "metrics", "showSparkline": true, "unit": "ms"}},
+			{Title: "P99 (ms)", Type: "stat", GridPos: map[string]int{"x": 8, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `avg(http_server_request_duration_p99_milliseconds)`, "signal": "metrics", "showSparkline": true, "unit": "ms",
+					"thresholds": []map[string]any{{"value": 200, "color": "#D4A11E"}, {"value": 500, "color": "#D95C54"}}}},
+			{Title: "Active Reqs", Type: "stat", GridPos: map[string]int{"x": 10, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `sum(http_server_active_requests)`, "signal": "metrics", "showSparkline": true}},
+			// Row 2: Request rate trend + DB connections pie (actual multi-series data)
+			{Title: "Gateway Request Rate", Type: "line_chart", GridPos: map[string]int{"x": 0, "y": 2, "w": 8, "h": 4},
+				Query: map[string]any{"expr": `rate(http_server_requests_total[5m])`, "signal": "metrics"}},
+			{Title: "DB Connections by Service", Type: "pie", GridPos: map[string]int{"x": 8, "y": 2, "w": 4, "h": 4},
+				Query: map[string]any{"expr": `sum by (job) (db_pool_active_connections)`, "signal": "metrics"}},
+			// Row 3: Gauges + bar_gauge for per-service DB connections
+			{Title: "CPU", Type: "gauge", GridPos: map[string]int{"x": 0, "y": 6, "w": 3, "h": 3},
+				Query: map[string]any{"expr": `avg(system_cpu_utilization_ratio) * 100`, "signal": "metrics", "min": 0, "max": 100, "unit": "%"}},
+			{Title: "Active DB Connections", Type: "bar_gauge", GridPos: map[string]int{"x": 3, "y": 6, "w": 9, "h": 3},
+				Query: map[string]any{"expr": `sum by (job) (db_pool_active_connections)`, "signal": "metrics"}},
 		},
 	}
 }
 
-func lokiDashboard() dashboardDef {
+// Dashboard 2: Application Performance — focused on what has multi-series data.
+// DB pool metrics have 6 services. HTTP metrics only have 1. Design around DB + resources.
+func applicationPerformance() dashboardDef {
 	return dashboardDef{
-		Title:          "Loki — Log Explorer",
-		Description:    "Log volume and recent log entries from Loki",
-		DatasourceType: "loki",
+		Title:          "Application Performance",
+		Description:    "Latency, DB pool distribution, resource gauges, and query performance",
+		DatasourceType: "victoriametrics",
 		Panels: []panel{
-			{
-				Title:   "Log Volume (all streams)",
-				Type:    "bar_chart",
-				GridPos: map[string]int{"x": 0, "y": 0, "w": 12, "h": 4},
-				Query:   map[string]any{"expr": `sum(count_over_time({job=~".+"}[5m]))`, "signal": "metrics"},
-			},
-			{
-				Title:   "Error Rate",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 0, "y": 4, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `sum(count_over_time({job=~".+"} |= "error"[5m]))`, "signal": "metrics"},
-			},
-			{
-				Title:   "Warning Rate",
-				Type:    "line_chart",
-				GridPos: map[string]int{"x": 6, "y": 4, "w": 6, "h": 4},
-				Query:   map[string]any{"expr": `sum(count_over_time({job=~".+"} |= "warn"[5m]))`, "signal": "metrics"},
-			},
-			{
-				Title:   "Recent Logs",
-				Type:    "logs",
-				GridPos: map[string]int{"x": 0, "y": 8, "w": 12, "h": 6},
-				Query:   map[string]any{"expr": `{job=~".+"}`, "signal": "logs"},
-			},
-			{
-				Title:   "Error Logs",
-				Type:    "logs",
-				GridPos: map[string]int{"x": 0, "y": 14, "w": 12, "h": 6},
-				Query:   map[string]any{"expr": `{job=~".+"} |= "error"`, "signal": "logs"},
-			},
+			// Row 1: Key stats
+			{Title: "Avg Latency", Type: "stat", GridPos: map[string]int{"x": 0, "y": 0, "w": 3, "h": 2},
+				Query: map[string]any{"expr": `sum(rate(http_server_request_duration_milliseconds_sum[5m])) / sum(rate(http_server_request_duration_milliseconds_count[5m]))`, "signal": "metrics", "showSparkline": true, "unit": "ms"}},
+			{Title: "P99 Latency", Type: "stat", GridPos: map[string]int{"x": 3, "y": 0, "w": 3, "h": 2},
+				Query: map[string]any{"expr": `avg(http_server_request_duration_p99_milliseconds)`, "signal": "metrics", "showSparkline": true, "unit": "ms",
+					"thresholds": []map[string]any{{"value": 200, "color": "#D4A11E"}, {"value": 500, "color": "#D95C54"}}}},
+			{Title: "Goroutines", Type: "gauge", GridPos: map[string]int{"x": 6, "y": 0, "w": 3, "h": 2},
+				Query: map[string]any{"expr": `sum(process_runtime_goroutines)`, "signal": "metrics", "min": 0, "max": 500}},
+			{Title: "Memory", Type: "stat", GridPos: map[string]int{"x": 9, "y": 0, "w": 3, "h": 2},
+				Query: map[string]any{"expr": `sum(process_runtime_memory_bytes)`, "signal": "metrics", "showSparkline": true, "unit": "bytes"}},
+			// Row 2: DB query rate by system (pie) + DB query duration trend
+			{Title: "Query Volume: PostgreSQL vs Redis", Type: "pie", GridPos: map[string]int{"x": 0, "y": 2, "w": 4, "h": 4},
+				Query: map[string]any{"expr": `sum by (db_system) (rate(db_client_operation_duration_milliseconds_count[5m]))`, "signal": "metrics"}},
+			{Title: "Avg DB Query Duration by Service", Type: "line_chart", GridPos: map[string]int{"x": 4, "y": 2, "w": 8, "h": 4},
+				Query: map[string]any{"expr": `sum by (job) (rate(db_client_operation_duration_milliseconds_sum[5m])) / sum by (job) (rate(db_client_operation_duration_milliseconds_count[5m]))`, "signal": "metrics"}},
+			// Row 3: Idle connections bar_gauge + memory trend
+			{Title: "Idle Connections by Service", Type: "bar_gauge", GridPos: map[string]int{"x": 0, "y": 6, "w": 6, "h": 3},
+				Query: map[string]any{"expr": `sum by (job) (db_pool_idle_connections)`, "signal": "metrics"}},
+			{Title: "Memory Over Time", Type: "line_chart", GridPos: map[string]int{"x": 6, "y": 6, "w": 6, "h": 3},
+				Query: map[string]any{"expr": `sum(process_runtime_memory_bytes)`, "signal": "metrics"}},
 		},
 	}
 }
 
-func victoriaLogsDashboard() dashboardDef {
+// Dashboard 3: Database Health — stats, gauge, pie, bar_gauge, one line chart.
+func databaseHealth() dashboardDef {
 	return dashboardDef{
-		Title:          "Victoria Logs — Log Explorer",
-		Description:    "Recent log entries from Victoria Logs",
+		Title:          "Database Health",
+		Description:    "Connection pool, query latency, and database system breakdown",
+		DatasourceType: "victoriametrics",
+		Panels: []panel{
+			// Row 1: Stats + gauge
+			{Title: "Active Conns", Type: "stat", GridPos: map[string]int{"x": 0, "y": 0, "w": 3, "h": 2},
+				Query: map[string]any{"expr": `sum(db_pool_active_connections)`, "signal": "metrics", "showSparkline": true}},
+			{Title: "Idle Conns", Type: "stat", GridPos: map[string]int{"x": 3, "y": 0, "w": 3, "h": 2},
+				Query: map[string]any{"expr": `sum(db_pool_idle_connections)`, "signal": "metrics", "showSparkline": true}},
+			{Title: "Avg Query (ms)", Type: "stat", GridPos: map[string]int{"x": 6, "y": 0, "w": 3, "h": 2},
+				Query: map[string]any{"expr": `sum(rate(db_client_operation_duration_milliseconds_sum[5m])) / sum(rate(db_client_operation_duration_milliseconds_count[5m]))`, "signal": "metrics", "showSparkline": true, "unit": "ms"}},
+			{Title: "CPU", Type: "gauge", GridPos: map[string]int{"x": 9, "y": 0, "w": 3, "h": 2},
+				Query: map[string]any{"expr": `avg(system_cpu_utilization_ratio) * 100`, "signal": "metrics", "min": 0, "max": 100, "unit": "%"}},
+			// Row 2: Active connections bar_gauge + DB system pie
+			{Title: "Active Connections by Service", Type: "bar_gauge", GridPos: map[string]int{"x": 0, "y": 2, "w": 8, "h": 3},
+				Query: map[string]any{"expr": `sum by (job) (db_pool_active_connections)`, "signal": "metrics"}},
+			{Title: "PostgreSQL vs Redis", Type: "pie", GridPos: map[string]int{"x": 8, "y": 2, "w": 4, "h": 3},
+				Query: map[string]any{"expr": `sum by (db_system) (rate(db_client_operation_duration_milliseconds_count[5m]))`, "signal": "metrics"}},
+			// Row 3: Connection pool trend
+			{Title: "Connection Pool Over Time", Type: "line_chart", GridPos: map[string]int{"x": 0, "y": 5, "w": 12, "h": 4},
+				Query: map[string]any{"expr": `label_replace(sum(db_pool_active_connections), "pool", "active", "", "") or label_replace(sum(db_pool_idle_connections), "pool", "idle", "", "")`, "signal": "metrics"}},
+		},
+	}
+}
+
+// Dashboard 4: Infrastructure Overview — CPU gauge, memory pie, goroutine bar_gauge.
+// No count(up) (returns 1), no scrape_series_added (returns 0).
+func infrastructureOverview() dashboardDef {
+	return dashboardDef{
+		Title:          "Infrastructure Overview",
+		Description:    "CPU utilization, memory distribution, goroutines, and connection pools across services",
+		DatasourceType: "victoriametrics",
+		Panels: []panel{
+			// Row 1: Gauges + stats
+			{Title: "CPU", Type: "gauge", GridPos: map[string]int{"x": 0, "y": 0, "w": 3, "h": 3},
+				Query: map[string]any{"expr": `avg(system_cpu_utilization_ratio) * 100`, "signal": "metrics", "min": 0, "max": 100, "unit": "%"}},
+			{Title: "Total Memory", Type: "stat", GridPos: map[string]int{"x": 3, "y": 0, "w": 3, "h": 3},
+				Query: map[string]any{"expr": `sum(process_runtime_memory_bytes)`, "signal": "metrics", "showSparkline": true, "unit": "bytes"}},
+			{Title: "Goroutines", Type: "stat", GridPos: map[string]int{"x": 6, "y": 0, "w": 3, "h": 3},
+				Query: map[string]any{"expr": `sum(process_runtime_goroutines)`, "signal": "metrics", "showSparkline": true}},
+			{Title: "Active Requests", Type: "stat", GridPos: map[string]int{"x": 9, "y": 0, "w": 3, "h": 3},
+				Query: map[string]any{"expr": `sum(http_server_active_requests)`, "signal": "metrics", "showSparkline": true}},
+			// Row 2: Memory pie + goroutines bar_gauge
+			{Title: "Memory by Service", Type: "pie", GridPos: map[string]int{"x": 0, "y": 3, "w": 4, "h": 4},
+				Query: map[string]any{"expr": `sum by (job) (process_runtime_memory_bytes)`, "signal": "metrics"}},
+			{Title: "Goroutines by Service", Type: "bar_gauge", GridPos: map[string]int{"x": 4, "y": 3, "w": 8, "h": 4},
+				Query: map[string]any{"expr": `sum by (job) (process_runtime_goroutines)`, "signal": "metrics"}},
+			// Row 3: Scrape duration + DB pool bar_chart
+			{Title: "Scrape Duration", Type: "line_chart", GridPos: map[string]int{"x": 0, "y": 7, "w": 6, "h": 3},
+				Query: map[string]any{"expr": `scrape_duration_seconds`, "signal": "metrics"}},
+			{Title: "DB Pool by Service", Type: "bar_chart", GridPos: map[string]int{"x": 6, "y": 7, "w": 6, "h": 3},
+				Query: map[string]any{"expr": `sum by (job) (db_pool_active_connections)`, "signal": "metrics"}},
+		},
+	}
+}
+
+// Dashboard 5: Log Intelligence — service-filtered log views.
+func logIntelligence() dashboardDef {
+	return dashboardDef{
+		Title:          "Log Intelligence",
+		Description:    "Service-level log analysis: gateway, orders, payments, errors, and slow queries",
 		DatasourceType: "victorialogs",
 		Panels: []panel{
-			{
-				Title:   "Recent Logs",
-				Type:    "logs",
-				GridPos: map[string]int{"x": 0, "y": 0, "w": 12, "h": 8},
-				Query:   map[string]any{"expr": `*`, "signal": "logs"},
-			},
-			{
-				Title:   "Error Logs",
-				Type:    "logs",
-				GridPos: map[string]int{"x": 0, "y": 8, "w": 12, "h": 8},
-				Query:   map[string]any{"expr": `error`, "signal": "logs"},
-			},
+			{Title: "API Gateway", Type: "logs", GridPos: map[string]int{"x": 0, "y": 0, "w": 12, "h": 4},
+				Query: map[string]any{"expr": `service.name:api-gateway`, "signal": "logs"}},
+			{Title: "Order Service", Type: "logs", GridPos: map[string]int{"x": 0, "y": 4, "w": 6, "h": 4},
+				Query: map[string]any{"expr": `service.name:order-service`, "signal": "logs"}},
+			{Title: "Payment Service", Type: "logs", GridPos: map[string]int{"x": 6, "y": 4, "w": 6, "h": 4},
+				Query: map[string]any{"expr": `service.name:payment-service`, "signal": "logs"}},
+			{Title: "Errors (All Services)", Type: "logs", GridPos: map[string]int{"x": 0, "y": 8, "w": 12, "h": 4},
+				Query: map[string]any{"expr": `severity:ERROR OR error`, "signal": "logs"}},
+			{Title: "Slow DB Queries (> 50ms)", Type: "logs", GridPos: map[string]int{"x": 0, "y": 12, "w": 12, "h": 4},
+				Query: map[string]any{"expr": `duration_ms:>50 AND (db.system:postgresql OR db.system:redis)`, "signal": "logs"}},
 		},
 	}
 }
 
-func tempoDashboard() dashboardDef {
+// Dashboard 6: Service Health & Tracing — metrics-driven service overview.
+// Shows the service-level picture that traces represent: which services are busy,
+// which are slow, where errors happen. Uses VictoriaMetrics because dashboards
+// can only target one datasource, and the metrics give instant visual value.
+// A text panel links to Explore > Traces for trace drill-down.
+func traceExplorer() dashboardDef {
 	return dashboardDef{
-		Title:          "Tempo — Trace Explorer",
-		Description:    "Recent traces and latency heatmap from Tempo",
-		DatasourceType: "tempo",
+		Title:          "Service Health & Tracing",
+		Description:    "Service latency, DB performance per service, connection distribution, and resource usage. Drill into traces via Explore.",
+		DatasourceType: "victoriametrics",
 		Panels: []panel{
-			{
-				Title:   "Recent Traces",
-				Type:    "trace_list",
-				GridPos: map[string]int{"x": 0, "y": 0, "w": 12, "h": 8},
-				Query:   map[string]any{"expr": `{}`, "limit": 50},
-			},
-			{
-				Title:   "Trace Latency Heatmap",
-				Type:    "trace_heatmap",
-				GridPos: map[string]int{"x": 0, "y": 8, "w": 12, "h": 6},
-				Query:   map[string]any{"expr": `{}`, "limit": 100},
-			},
+			// Row 1: Service-level stats
+			{Title: "Request Rate", Type: "stat", GridPos: map[string]int{"x": 0, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `sum(rate(http_server_requests_total[5m]))`, "signal": "metrics", "showSparkline": true}},
+			{Title: "Error Rate", Type: "stat", GridPos: map[string]int{"x": 2, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `sum(rate(http_server_errors_total[5m]))`, "signal": "metrics", "showSparkline": true,
+					"thresholds": []map[string]any{{"value": 0.1, "color": "#D4A11E"}, {"value": 1, "color": "#D95C54"}}}},
+			{Title: "P50 (ms)", Type: "stat", GridPos: map[string]int{"x": 4, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `avg(http_server_request_duration_p50_milliseconds)`, "signal": "metrics", "showSparkline": true, "unit": "ms"}},
+			{Title: "P99 (ms)", Type: "stat", GridPos: map[string]int{"x": 6, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `avg(http_server_request_duration_p99_milliseconds)`, "signal": "metrics", "showSparkline": true, "unit": "ms",
+					"thresholds": []map[string]any{{"value": 200, "color": "#D4A11E"}, {"value": 500, "color": "#D95C54"}}}},
+			{Title: "Active Conns", Type: "stat", GridPos: map[string]int{"x": 8, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `sum(db_pool_active_connections)`, "signal": "metrics", "showSparkline": true}},
+			{Title: "Avg Query (ms)", Type: "stat", GridPos: map[string]int{"x": 10, "y": 0, "w": 2, "h": 2},
+				Query: map[string]any{"expr": `sum(rate(db_client_operation_duration_milliseconds_sum[5m])) / sum(rate(db_client_operation_duration_milliseconds_count[5m]))`, "signal": "metrics", "showSparkline": true, "unit": "ms"}},
+			// Row 2: DB query duration by service (shows which service is slowest) + connections pie
+			{Title: "DB Query Duration by Service", Type: "line_chart", GridPos: map[string]int{"x": 0, "y": 2, "w": 8, "h": 4},
+				Query: map[string]any{"expr": `sum by (job) (rate(db_client_operation_duration_milliseconds_sum[5m])) / sum by (job) (rate(db_client_operation_duration_milliseconds_count[5m]))`, "signal": "metrics"}},
+			{Title: "DB Connections", Type: "pie", GridPos: map[string]int{"x": 8, "y": 2, "w": 4, "h": 4},
+				Query: map[string]any{"expr": `sum by (job) (db_pool_active_connections)`, "signal": "metrics"}},
+			// Row 3: Per-service resource bar_gauges
+			{Title: "Goroutines by Service", Type: "bar_gauge", GridPos: map[string]int{"x": 0, "y": 6, "w": 6, "h": 3},
+				Query: map[string]any{"expr": `sum by (job) (process_runtime_goroutines)`, "signal": "metrics"}},
+			{Title: "Idle Connections by Service", Type: "bar_gauge", GridPos: map[string]int{"x": 6, "y": 6, "w": 6, "h": 3},
+				Query: map[string]any{"expr": `sum by (job) (db_pool_idle_connections)`, "signal": "metrics"}},
+			// Row 4: Trace drill-down hint
+			{Title: "Trace Drill-Down", Type: "text", GridPos: map[string]int{"x": 0, "y": 9, "w": 12, "h": 2},
+				Query: map[string]any{"content": "To view individual distributed traces, go to **Explore > Traces** and search by service name. Click any trace to see the full span waterfall, timing breakdown, and cross-service dependencies."}},
 		},
 	}
 }

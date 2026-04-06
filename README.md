@@ -1,268 +1,228 @@
-# Ace - Monitoring Dashboard
+# Ace Observability Platform
 
-[![CodeQL](https://github.com/aceobservability/ace/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/aceobservability/ace/actions/workflows/security.yml)
 [![Lint](https://github.com/aceobservability/ace/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/aceobservability/ace/actions/workflows/lint.yml)
 [![Security](https://github.com/aceobservability/ace/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/aceobservability/ace/actions/workflows/security.yml)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/ace-observability)](https://artifacthub.io/packages/search?repo=ace-observability)
 
-A Grafana-like monitoring dashboard built with Vue.js, Go, and Prometheus.
-
-## Versioning and Releases
-
-- **Versioning:** Semantic Versioning (`vMAJOR.MINOR.PATCH`) with Conventional Commits
-- **Release planning:** `release-please` opens and updates release PRs from changes on `main`
-- **Release output:** merge of the release PR creates a GitHub Release with generated notes and updates `CHANGELOG.md`
-- **Auto-published assets:** backend binaries, frontend artifact tarball, image SBOMs, and checksums
-- **Release guide:** see `RELEASE.md` for the maintainer workflow and versioning rules
-
-## Container Images
-
-Public multi-arch images are published to GHCR on every release:
-
-- `ghcr.io/aceobservability/ace-backend`
-- `ghcr.io/aceobservability/ace-frontend`
-
-Example pulls:
-
-```bash
-docker pull ghcr.io/aceobservability/ace-backend:v0.1.0
-docker pull ghcr.io/aceobservability/ace-frontend:v0.1.0
-```
-
-When building the frontend image yourself, set `VITE_API_URL` at build time:
-
-```bash
-docker build -f frontend/Dockerfile --build-arg VITE_API_URL=https://api.example.com -t ace-frontend:local .
-```
-
-Tag strategy:
-
-- Release tags: `vX.Y.Z`, `X.Y.Z`
-- Moving tags: `X.Y`, `X`, `latest`, `sha-<commit>`
-
-## Tech Stack
-
-- **Frontend:** Vue.js 3 (Composition API + TypeScript)
-- **Backend:** Go API
-- **Database:** PostgreSQL (metadata storage)
-- **Data Source:** Prometheus
+A unified observability platform for metrics, logs, and traces. Built with Vue.js, Go, and the VictoriaMetrics ecosystem. Enterprise auth (RBAC, SSO, audit logging) included free.
 
 ## Features
 
-- **AI-powered chat-to-dashboard** — type a natural language prompt, get a complete dashboard with the right queries and panels
-- **GitHub Copilot integration** — AI query assistant with tool-calling for metric discovery
-- Dashboard CRUD operations with 12-column grid layout
-- Multi-datasource support (VictoriaMetrics, Prometheus, ClickHouse, Elasticsearch, CloudWatch, Loki, Tempo)
-- PromQL/MetricsQL query editor with syntax highlighting
-- Line, bar, gauge, stat, pie, and table visualizations (ECharts)
-- Time range picker with presets, custom ranges, and auto-refresh
-- Drag-and-drop dashboard layout
-- Dark/light mode with organization-level theming
-- Log-to-trace correlation
-- Alert management (VMAlert, Alertmanager)
+- **Multi-datasource support** — VictoriaMetrics, Prometheus, Loki, VictoriaLogs, Tempo, VictoriaTraces, ClickHouse, Elasticsearch, CloudWatch
+- **Visual query builder** — Builder/Code mode toggle with metric search, label filters, aggregation, and live query preview (MetricsQL/PromQL compatible)
+- **AI-powered query assist** — inline AI suggestions with tool-calling for metric discovery. Configurable AI providers or GitHub Copilot integration
+- **Export to dashboard** — save any Explore query directly as a dashboard panel
+- **Grafana dashboard import** — connect to Grafana, browse dashboards, and import with fidelity report
+- **AI chat-to-dashboard** — describe what you want in natural language, get a complete dashboard
+- **16+ panel types** — line, stat, gauge, bar gauge, bar chart, pie, table, heatmap, histogram, scatter, candlestick, state timeline, status history, flame graph, node graph, canvas, logs, trace list, trace heatmap
+- **Drag-and-drop layout** — 12-column grid with resize handles
+- **Live log streaming** — real-time log tailing for Loki and VictoriaLogs
+- **Log-to-trace correlation** — click a trace ID in logs to jump to the trace view
+- **Enterprise auth** — RBAC (Admin/Editor/Viewer/Auditor), Google/Microsoft/Okta SSO, group-to-role mapping, audit logging
+- **Dark/light mode** with the "Kinetic" design system (burnished brass palette, Space Grotesk typography)
+
+## Tech Stack
+
+- **Frontend:** Vue 3 (Composition API + TypeScript), Vite, Tailwind CSS v4, ECharts
+- **Backend:** Go 1.25, net/http
+- **Database:** PostgreSQL 16 (metadata), Valkey (cache)
+- **Supported datasources:** VictoriaMetrics, Prometheus, Loki, VictoriaLogs, Tempo, VictoriaTraces, ClickHouse, Elasticsearch, CloudWatch
+
+## Quick Start
+
+### Option A: Tilt + Kubernetes (recommended for development)
+
+Requires: Go 1.25+, Docker, a local k8s cluster (Colima, kind, or Docker Desktop), kubectl, helm, tilt
+
+```bash
+# Start local k8s cluster (Colima example)
+colima start --kubernetes --cpu 4 --memory 8
+
+# Start the full stack
+tilt up -- victoria-metrics victoria-logs victoria-traces tempo loki prometheus \
+  otel-collector telemetrygen elasticsearch clickhouse alertmanager vmalert grafana
+
+# Seed admin user and datasources with k8s service URLs
+make seed-tilt
+
+# Seed demo dashboards
+cd backend && go run ./cmd/seed-dashboards -org victoria
+
+# Open the app
+open http://localhost:5173
+```
+
+All datasource services are optional. Enable only what you need:
+
+```bash
+# Victoria stack only
+tilt up -- victoria-metrics victoria-logs victoria-traces otel-collector telemetrygen
+
+# LGTM stack only
+tilt up -- prometheus loki tempo otel-collector telemetrygen
+
+# Everything
+tilt up -- victoria-metrics victoria-logs victoria-traces prometheus loki tempo \
+  otel-collector telemetrygen elasticsearch clickhouse alertmanager vmalert grafana
+```
+
+The `otel-collector` config is generated dynamically from enabled services. Telemetrygen produces realistic web app telemetry (HTTP requests, database queries, distributed traces) via OpenTelemetry.
+
+### Option B: Docker Compose
+
+```bash
+# Start infrastructure (pick a datasource profile)
+make compose-up PROFILES=victoria
+
+# Start telemetry generators
+make telemetrygen PROFILES=victoria
+
+# Start backend (hot reload with air)
+make backend
+
+# Start frontend (Vite dev server)
+make frontend
+
+# Seed admin user and datasources
+make seed
+```
+
+Available profiles: `victoria`, `lgtm`, `elk`, `clickhouse`. Combine with commas: `PROFILES=victoria,lgtm`.
+
+### Default Credentials
+
+| Field | Value |
+|-------|-------|
+| Email | `admin@admin.com` |
+| Password | `Admin1234` |
+
+### Local Ports
+
+| Service | Port |
+|---------|------|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:8080 |
+| VictoriaMetrics | http://localhost:8428 |
+| VictoriaLogs | http://localhost:9428 |
+| VictoriaTraces | http://localhost:10428 |
+| Prometheus | http://localhost:9090 |
+| Loki | http://localhost:3100 |
+| Tempo | http://localhost:3200 |
+| Elasticsearch | http://localhost:9200 |
+| ClickHouse | http://localhost:8123 |
+| AlertManager | http://localhost:9093 |
+| VMAlert | http://localhost:8880 |
+| Grafana | http://localhost:3000 |
+| Tilt Dashboard | http://localhost:10350 |
+
+## Seeded Organizations
+
+The seed command creates four organizations, each with datasources for its stack:
+
+| Organization | Datasources |
+|-------------|-------------|
+| **Victoria** | VictoriaMetrics, VictoriaLogs, VictoriaTraces, VMAlert, AlertManager |
+| **LGTM** | Prometheus, Loki, Tempo |
+| **Elastic** | Elasticsearch |
+| **ClickHouse** | ClickHouse |
+
+## Demo Dashboards
+
+Six pre-built dashboards are available for the Victoria organization:
+
+1. **HTTP Service Overview** — request rate, error rate, latency percentiles (P50/P95/P99), status code breakdown
+2. **Application Performance** — avg request duration, latency trends, resource usage
+3. **Database Health** — connection pool stats, query duration, PostgreSQL vs Redis breakdown
+4. **Infrastructure Overview** — service uptime, CPU utilization, scrape health, memory trends
+5. **Log Intelligence** — service-filtered log views (API gateway, orders, payments), error analysis, slow query detection
+6. **Trace Explorer** — latency heatmap, recent distributed traces
+
+Seed them with:
+
+```bash
+cd backend && go run ./cmd/seed-dashboards -org victoria
+```
+
+## Container Images
+
+Published to GHCR on every release (multi-arch: amd64 + arm64):
+
+```bash
+docker pull ghcr.io/aceobservability/ace-backend:latest
+docker pull ghcr.io/aceobservability/ace-frontend:latest
+```
+
+Tags: `vX.Y.Z`, `X.Y.Z`, `X.Y`, `latest`, `sha-<commit>`
 
 ## Development
 
-### Prerequisites
-
-- Node.js 18+
-- Go 1.25+
-- Docker (for image builds and local security tooling)
-- A local Kubernetes cluster (for example: kind, minikube, or Docker Desktop Kubernetes)
-- `kubectl`, `helm`, and `tilt`
-
-### Setup
-
-1. Start your local Kubernetes cluster.
-
-2. Start Tilt from the repo root:
-   ```bash
-   make tilt-up
-   ```
-
-   Tilt will run:
-   - Core services enabled by default: `postgres`, `valkey`, `backend`, `frontend`
-   - External test services disabled by default: `prometheus`, `loki`, `victoria-metrics`, `victoria-logs`, `tempo`
-
-   Open the Tilt UI (shown in the `tilt up` output), then enable optional services from the UI when needed.
-   You can also pre-enable them at startup, for example: `tilt up -- --enable=prometheus --enable=loki`.
-
-3. Access local endpoints:
-   - Postgres: localhost:5432
-   - Valkey: localhost:6379
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:8080
-   - Optional datasource ports (once enabled in Tilt):
-     - Prometheus: http://localhost:9090
-     - Loki: http://localhost:3100
-     - VictoriaMetrics: http://localhost:8428
-     - Victoria Logs: http://localhost:9428
-     - Tempo: http://localhost:3200
-
-4. Stop everything:
-   ```bash
-   make tilt-down
-   ```
-
-### Seed First Admin
-
-Create the first admin user and organization:
-
-```bash
-make seed-admin
-# defaults: EMAIL=admin@admin.com PASSWORD=Admin1234 ORG=default
-
-# or override values
-make seed-admin EMAIL=admin@example.com PASSWORD='AdminPass123' ORG='My Company' NAME='First Admin'
-```
-
-This also seeds five default datasources for the new organization:
-Prometheus (`http://localhost:9090`), VictoriaMetrics (`http://localhost:8428`),
-Loki (`http://localhost:3100`), Victoria Logs (`http://localhost:9428`), and
-Tempo (`http://localhost:3200`).
-
-If the admin user/org already exists, seed only the default datasources:
-
-```bash
-make seed-datasources
-# default ORG=default
-
-# or for another organization slug
-make seed-datasources ORG=my-company
-```
-
-### Elasticsearch + Logstash (ELK) in Ace (without Kibana)
-
-Ace can query Elasticsearch directly for both **logs** and **metrics-style** aggregations, so Kibana is optional for exploration dashboards.
-
-If you run Elasticsearch locally, add an `Elasticsearch (ELK)` datasource in **Data Sources → Add Data Source**:
-
-- URL: `http://localhost:9200`
-- Auth: `none` (for local profile)
-- Default Index Pattern: `ace-logs-*`
-- Timestamp Field: `@timestamp` (optional)
-- Message Field: `message` (optional)
-- Level Field: `level` (optional)
-
-Then use Explore/Dashboards:
-
-- **Logs mode:** Lucene query string (example: `service.name:"backend" AND level:error`) or Elasticsearch JSON body.
-- **Metrics mode:** JSON body with `aggs`, or plain query string and Ace will auto-build a date histogram timeseries.
-
-Example metrics aggregation query:
-```json
-{
-  "index": "ace-logs-*",
-  "query": {
-    "query_string": {
-      "query": "service.name:backend"
-    }
-  },
-  "aggs": {
-    "timeseries": {
-      "date_histogram": {
-        "field": "@timestamp",
-        "fixed_interval": "1m"
-      }
-    }
-  }
-}
-```
-
 ### Running Tests
 
-Frontend:
 ```bash
-cd frontend
-npm run type-check
-npm run test
+# Frontend (Vitest + happy-dom)
+cd frontend && bun run test
+
+# Backend (Go testing)
+cd backend && go test ./...
 ```
 
-Backend:
+### Linting
+
 ```bash
-cd backend
-go test ./...
+make lint          # all linters
+make backend-lint  # golangci-lint
+make frontend-lint # Biome
 ```
 
-### Code Coverage
-Refresh locally:
+### Building
 
 ```bash
-# Backend
-cd backend
-go test ./... -coverprofile=coverage.out
-go tool cover -func=coverage.out
-
 # Frontend
-cd ../frontend
-npm run test:coverage
+cd frontend && bun run build
+
+# Backend
+cd backend && go build ./cmd/api
 ```
-
-### Running Linting
-
-From repo root:
-```bash
-make lint
-```
-
-Run backend lint only:
-```bash
-make backend-lint
-```
-
-Run frontend lint only:
-```bash
-make frontend-lint
-```
-
-Or run commands directly:
-
-Backend:
-```bash
-cd backend
-golangci-lint run ./...
-```
-
-Frontend:
-```bash
-cd frontend
-npm run lint
-npm run lint:dead-code
-```
-
-### Running Security Scans Locally
-
-From repo root:
-
-```bash
-make security-local
-```
-
-This runs:
-
-- `govulncheck` against `backend/` in a Go `1.25.7` Docker container
-- `gitleaks` against the full repository via Docker
-
-### API Endpoints
-
-- `GET /api/health` - Health check endpoint
 
 ## Project Structure
 
 ```
-dash/
-├── frontend/           # Vue.js 3 application
+ace/
+├── frontend/               # Vue 3 application
 │   ├── src/
+│   │   ├── components/     # UI components (QueryBuilder, LogViewer, panels/)
+│   │   ├── composables/    # Shared state (useDatasource, useOrganization, useAIProvider, useToast)
+│   │   ├── views/          # Page views (MetricsExploreTab, LogsExploreTab, TracesExploreTab)
+│   │   └── utils/          # Chart theme, dashboard helpers
 │   └── package.json
-├── backend/            # Go API
-│   ├── cmd/api/        # Application entrypoint
-│   ├── internal/       # Private application code
-│   │   ├── handlers/   # HTTP handlers
-│   │   ├── models/     # Data models
-│   │   └── db/         # Database connection and migrations
-│   └── pkg/            # Public packages
-├── agent/              # Ralph agent for automated development
-├── Tiltfile            # Local dev orchestration (Tilt + Helm)
-├── deploy/charts/      # Helm charts for local infra services
-└── README.md
+├── backend/                # Go API
+│   ├── cmd/
+│   │   ├── api/            # Main API server
+│   │   ├── seed/           # Admin user + org + datasource seeder
+│   │   ├── seed-dashboards/# Demo dashboard seeder
+│   │   └── seed-correlated/# Telemetry generator (realistic web app traces/logs/metrics)
+│   └── internal/
+│       ├── handlers/       # HTTP handlers (datasource proxy, AI chat, dashboards, auth, SSO)
+│       ├── datasource/     # Datasource clients (Prometheus, VictoriaMetrics, Loki, Tempo, ClickHouse, ES)
+│       ├── models/         # Data models
+│       ├── db/             # Database connection, migrations
+│       ├── auth/           # JWT, password hashing, middleware
+│       ├── authz/          # RBAC authorization
+│       └── audit/          # Append-only audit logging
+├── deploy/
+│   ├── charts/ace/              # Production Helm chart
+│   ├── charts/ace-local-infra/  # Local dev Helm chart (all datasource services)
+│   └── docker/                  # Docker Compose configs per stack
+├── Tiltfile                # Local dev orchestration
+├── Makefile                # Common commands
+├── DESIGN.md               # Kinetic v2 design system
+└── RELEASE.md              # Release process
 ```
+
+## Versioning and Releases
+
+- Semantic Versioning (`vMAJOR.MINOR.PATCH`) with Conventional Commits
+- `release-please` opens release PRs from changes on `main`
+- Merge creates a GitHub Release with notes + CHANGELOG update
+- Auto-published: backend binaries, frontend tarball, container images, SBOMs, checksums
+- See `RELEASE.md` for maintainer workflow
