@@ -1,6 +1,6 @@
 @agent/prd.json @agent/progress.txt
 
-You are working on the "dash" project (Grafana-like monitoring dashboard).
+You are working on the "ace" project (Grafana-like monitoring dashboard).
 
 ## Execution Mode: One Task Per Session
 

@@ -40,7 +40,7 @@ Use Conventional Commit messages for all merge commits/PR titles to keep release
   - `linux/amd64`, `linux/arm64`
   - `darwin/amd64`, `darwin/arm64`
   - `windows/amd64`
-- Frontend bundle tarball (`dash-frontend_<version>.tar.gz`)
+- Frontend bundle tarball (`ace-frontend_<version>.tar.gz`)
 - `checksums.txt` (SHA256)
 - Image SBOM files (`*.spdx.json`)
 

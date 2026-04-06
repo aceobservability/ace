@@ -20,7 +20,7 @@ var testPool *pgxpool.Pool
 func TestMain(m *testing.M) {
 	dbURL := os.Getenv("TEST_DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://dash:dash@localhost:5432/dash_test?sslmode=disable"
+		dbURL = "postgres://ace:ace@localhost:5432/ace_test?sslmode=disable"
 	}
 
 	ctx := context.Background()
