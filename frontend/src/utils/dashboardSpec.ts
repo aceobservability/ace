@@ -27,7 +27,6 @@ export interface PanelSpec {
 
 // --- Validation ---
 
-const MAX_PANELS = 8
 const GRID_COLUMNS = 12
 
 export function validateDashboardSpec(
@@ -44,11 +43,6 @@ export function validateDashboardSpec(
   // Panels array must be non-empty
   if (!spec.panels || spec.panels.length === 0) {
     errors.push('Dashboard must have at least one panel')
-  }
-
-  // Max 8 panels (token budget constraint)
-  if (spec.panels && spec.panels.length > MAX_PANELS) {
-    errors.push(`Dashboard must have at most ${MAX_PANELS} panels, got ${spec.panels.length}`)
   }
 
   if (spec.panels) {

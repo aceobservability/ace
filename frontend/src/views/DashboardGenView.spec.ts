@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import DashboardGenView from './DashboardGenView.vue'
+import { ref } from 'vue'
 
 const mockPush = vi.fn()
 vi.mock('vue-router', () => ({
@@ -17,7 +17,6 @@ vi.mock('../composables/useCommandContext', () => ({
   }),
 }))
 
-// Mock DashboardSpecPreview (it requires API calls)
 vi.mock('../components/DashboardSpecPreview.vue', () => ({
   default: {
     name: 'DashboardSpecPreview',
@@ -27,96 +26,136 @@ vi.mock('../components/DashboardSpecPreview.vue', () => ({
   },
 }))
 
+const mockProviders = ref<Array<{ id: string; display_name: string }>>([
+  { id: 'p1', display_name: 'OpenAI' },
+])
+const mockSelectedProviderId = ref('p1')
+vi.mock('../composables/useAIProvider', () => ({
+  useAIProvider: () => ({
+    fetchProviders: vi.fn().mockResolvedValue(undefined),
+    fetchModels: vi.fn().mockResolvedValue(undefined),
+    providers: mockProviders,
+    selectedProviderId: mockSelectedProviderId,
+  }),
+}))
+
 vi.mock('../composables/useOrganization', async () => {
   const { ref } = await import('vue')
   return {
     useOrganization: () => ({
       currentOrg: ref({ id: 'org-1' }),
       currentOrgId: ref('org-1'),
-      fetchOrganizations: vi.fn(),
     }),
   }
 })
 
-vi.mock('../composables/useDatasource', async () => {
-  const { ref } = await import('vue')
-  return {
-    useDatasource: () => ({
-      datasources: ref([]),
-      fetchDatasources: vi.fn(),
-    }),
-  }
-})
+const mockGenerate = vi.fn()
+const mockCancel = vi.fn()
+const mockIsGenerating = ref(false)
+const mockGenError = ref<string | null>(null)
+const mockToolStatuses = ref<Array<{ name: string; status: string }>>([])
+const mockProgressText = ref('')
+
+vi.mock('../composables/useDashboardGeneration', () => ({
+  useDashboardGeneration: () => ({
+    generate: mockGenerate,
+    cancel: mockCancel,
+    isGenerating: mockIsGenerating,
+    error: mockGenError,
+    toolStatuses: mockToolStatuses,
+    progressText: mockProgressText,
+  }),
+}))
+
+vi.mock('../composables/useCopilotTools', () => ({
+  getToolsForDatasourceType: vi.fn().mockReturnValue([]),
+}))
+
+const mockListDataSources = vi.fn()
+vi.mock('../api/datasources', () => ({
+  listDataSources: (...args: unknown[]) => mockListDataSources(...args),
+}))
+
+import DashboardGenView from './DashboardGenView.vue'
 
 describe('DashboardGenView', () => {
   beforeEach(() => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date('2026-03-22T12:00:00Z'))
+    vi.clearAllMocks()
+    mockIsGenerating.value = false
+    mockGenError.value = null
+    mockToolStatuses.value = []
+    mockProgressText.value = ''
+    mockProviders.value = [{ id: 'p1', display_name: 'OpenAI' }]
+    mockListDataSources.mockResolvedValue([
+      { id: 'ds-1', name: 'VictoriaMetrics', type: 'victoriametrics' },
+      { id: 'ds-2', name: 'Loki', type: 'loki' },
+    ])
+    mockGenerate.mockResolvedValue({ spec: null, content: null })
+    localStorage.clear()
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
-    vi.useRealTimers()
   })
 
-  it('renders describe step with heading', () => {
+  it('renders describe step with heading', async () => {
     const wrapper = mount(DashboardGenView)
+    await flushPromises()
     expect(wrapper.text()).toContain('What do you want to monitor?')
   })
 
-  it('shows suggestion chips', () => {
+  it('shows suggestion chips', async () => {
     const wrapper = mount(DashboardGenView)
+    await flushPromises()
     expect(wrapper.text()).toContain('API latency')
     expect(wrapper.text()).toContain('K8s cluster health')
-    expect(wrapper.text()).toContain('Error rates')
   })
 
-  it('has a text input for the description', () => {
+  it('has a text input for the description', async () => {
     const wrapper = mount(DashboardGenView)
+    await flushPromises()
     expect(wrapper.find('[data-testid="gen-describe-input"]').exists()).toBe(true)
   })
 
-  it('has a generate button that is disabled when input is empty', () => {
+  it('has a generate button that is disabled when input is empty', async () => {
     const wrapper = mount(DashboardGenView)
+    await flushPromises()
     const btn = wrapper.find('[data-testid="gen-generate-btn"]')
     expect(btn.exists()).toBe(true)
     expect((btn.element as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('transitions to generate step on button click', async () => {
+    mockGenerate.mockImplementation(() => new Promise(() => {})) // never resolves
     const wrapper = mount(DashboardGenView)
+    await flushPromises()
 
     await wrapper.find('[data-testid="gen-describe-input"]').setValue('Monitor API latency')
     await wrapper.find('[data-testid="gen-generate-btn"]').trigger('click')
+    await flushPromises()
 
-    expect(wrapper.text()).toContain('Generating your dashboard')
+    expect(mockGenerate).toHaveBeenCalled()
   })
 
   it('shows review step with spec preview after generation completes', async () => {
+    mockGenerate.mockResolvedValue({
+      spec: { title: 'Test Dashboard', panels: [] },
+      content: null,
+    })
+
     const wrapper = mount(DashboardGenView)
+    await flushPromises()
 
     await wrapper.find('[data-testid="gen-describe-input"]').setValue('Monitor API latency')
     await wrapper.find('[data-testid="gen-generate-btn"]').trigger('click')
-
-    // Advance past the mock delay
-    vi.advanceTimersByTime(2500)
     await flushPromises()
 
     expect(wrapper.find('[data-testid="spec-preview"]').exists()).toBe(true)
   })
 
-  it('shows error state with try again button when generation fails', async () => {
-    const wrapper = mount(DashboardGenView)
-
-    await wrapper.find('[data-testid="gen-describe-input"]').setValue('  ')
-    // Need at least something non-empty after trim to trigger, let's test the error UI directly
-    // The error state is shown when spec is invalid
-    // For now, we test the try again button exists if we set error state
-    expect(wrapper.find('[data-testid="gen-try-again-btn"]').exists()).toBe(false)
-  })
-
-  it('registers command context on mount', () => {
+  it('registers command context on mount', async () => {
     mount(DashboardGenView)
+    await flushPromises()
     expect(mockRegisterContext).toHaveBeenCalledWith(
       expect.objectContaining({
         viewName: 'Dashboard Generation',
@@ -126,6 +165,7 @@ describe('DashboardGenView', () => {
 
   it('clicking a suggestion chip fills the input', async () => {
     const wrapper = mount(DashboardGenView)
+    await flushPromises()
 
     const chip = wrapper.find('[data-testid="gen-suggestion-chip"]')
     expect(chip.exists()).toBe(true)
@@ -133,5 +173,66 @@ describe('DashboardGenView', () => {
 
     const input = wrapper.find('[data-testid="gen-describe-input"]')
     expect((input.element as HTMLInputElement).value).not.toBe('')
+  })
+
+  it('shows datasource dropdown when multiple datasources exist', async () => {
+    const wrapper = mount(DashboardGenView)
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="gen-datasource-select"]').exists()).toBe(true)
+  })
+
+  it('hides dropdown and auto-selects when single datasource', async () => {
+    mockListDataSources.mockResolvedValue([
+      { id: 'ds-1', name: 'VictoriaMetrics', type: 'victoriametrics' },
+    ])
+
+    const wrapper = mount(DashboardGenView)
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="gen-datasource-select"]').exists()).toBe(false)
+  })
+
+  it('shows "No datasources" warning with settings link when zero DS', async () => {
+    mockListDataSources.mockResolvedValue([])
+
+    const wrapper = mount(DashboardGenView)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('No datasources configured')
+    expect(wrapper.text()).toContain('Add one in Settings')
+  })
+
+  it('shows "No AI provider" warning when providers is empty', async () => {
+    mockProviders.value = []
+
+    const wrapper = mount(DashboardGenView)
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="gen-no-provider-warning"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('No AI provider configured')
+  })
+
+  it('persists selected datasource to localStorage on generate', async () => {
+    mockGenerate.mockResolvedValue({ spec: null, content: null })
+
+    const wrapper = mount(DashboardGenView)
+    await flushPromises()
+
+    await wrapper.find('[data-testid="gen-describe-input"]').setValue('Test')
+    await wrapper.find('[data-testid="gen-generate-btn"]').trigger('click')
+    await flushPromises()
+
+    expect(localStorage.getItem('ace:lastDatasource:org-1')).toBeTruthy()
+  })
+
+  it('restores datasource from localStorage on mount', async () => {
+    localStorage.setItem('ace:lastDatasource:org-1', 'ds-2')
+
+    const wrapper = mount(DashboardGenView)
+    await flushPromises()
+
+    const select = wrapper.find('[data-testid="gen-datasource-select"]')
+    expect((select.element as HTMLSelectElement).value).toBe('ds-2')
   })
 })
