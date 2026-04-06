@@ -28,6 +28,10 @@ for name in optional_resources:
 
 config.set_enabled_resources(enabled_resources)
 
+# Colima with k3s shares the Docker daemon, so images built locally are already
+# available to the cluster. allow_k8s_contexts permits Tilt to deploy to it.
+allow_k8s_contexts('colima')
+
 docker_build(
     'ace-backend',
     '.',

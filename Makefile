@@ -1,4 +1,4 @@
-.PHONY: help dev backend seed seed-correlated frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs telemetrygen demo demo-down
+.PHONY: help dev backend seed seed-tilt seed-correlated frontend backend-test frontend-test test backend-lint frontend-lint lint security-local check tilt-up tilt-down compose-up compose-down compose-reset compose-logs telemetrygen demo demo-down
 
 EMAIL ?= admin@admin.com
 PASSWORD ?= Admin1234
@@ -92,6 +92,21 @@ seed:
 		exit 1; \
 	fi; \
 	cd backend && "$$GO_BIN" run ./cmd/seed -email "$(EMAIL)" -password "$(PASSWORD)"
+
+seed-tilt:
+	@set -e; \
+	GO_BIN=""; \
+	if [ -x "$$HOME/.go-sdk/go1.25.7/bin/go" ]; then \
+		GO_BIN="$$HOME/.go-sdk/go1.25.7/bin/go"; \
+	elif command -v go >/dev/null 2>&1; then \
+		GO_BIN="$$(command -v go)"; \
+	fi; \
+	if [ -z "$$GO_BIN" ]; then \
+		printf "Go is not installed.\n"; \
+		printf "Install Go 1.25+ and retry make seed-tilt.\n"; \
+		exit 1; \
+	fi; \
+	cd backend && "$$GO_BIN" run ./cmd/seed -email "$(EMAIL)" -password "$(PASSWORD)" -org victoria -k8s
 
 seed-correlated:
 	@set -e; \

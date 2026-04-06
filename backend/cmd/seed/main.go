@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"unicode"
 
 	"github.com/google/uuid"
@@ -16,9 +17,10 @@ import (
 )
 
 type datasource struct {
-	Name string
-	Type string
-	URL  string
+	Name   string
+	Type   string
+	URL    string
+	K8sURL string // URL when backend runs inside k8s; empty = skip in k8s mode
 }
 
 type org struct {
@@ -32,9 +34,9 @@ var orgs = []org{
 		Name: "Victoria",
 		Slug: "victoria",
 		Datasources: []datasource{
-			{Name: "VictoriaMetrics", Type: "victoriametrics", URL: "http://localhost:8428"},
-			{Name: "Victoria Logs", Type: "victorialogs", URL: "http://localhost:9428"},
-			{Name: "VictoriaTraces", Type: "victoriatraces", URL: "http://localhost:10428"},
+			{Name: "VictoriaMetrics", Type: "victoriametrics", URL: "http://localhost:8428", K8sURL: "http://victoria-metrics:8428"},
+			{Name: "Victoria Logs", Type: "victorialogs", URL: "http://localhost:9428", K8sURL: "http://victoria-logs:9428"},
+			{Name: "VictoriaTraces", Type: "victoriatraces", URL: "http://localhost:10428", K8sURL: "http://victoria-traces:10428"},
 			{Name: "VMAlert", Type: "vmalert", URL: "http://localhost:8880"},
 			{Name: "AlertManager", Type: "alertmanager", URL: "http://localhost:9093"},
 		},
@@ -57,9 +59,9 @@ var orgs = []org{
 		Name: "LGTM",
 		Slug: "lgtm",
 		Datasources: []datasource{
-			{Name: "Mimir", Type: "prometheus", URL: "http://localhost:9009"},
-			{Name: "Loki", Type: "loki", URL: "http://localhost:3100"},
-			{Name: "Tempo", Type: "tempo", URL: "http://localhost:3200"},
+			{Name: "Mimir", Type: "prometheus", URL: "http://localhost:9009", K8sURL: "http://mimir:9009"},
+			{Name: "Loki", Type: "loki", URL: "http://localhost:3100", K8sURL: "http://loki:3100"},
+			{Name: "Tempo", Type: "tempo", URL: "http://localhost:3200", K8sURL: "http://tempo:3200"},
 		},
 	},
 }
@@ -67,15 +69,18 @@ var orgs = []org{
 func main() {
 	email := flag.String("email", "", "Admin user email (required)")
 	password := flag.String("password", "", "Admin user password (required)")
+	orgFilter := flag.String("org", "", "Seed only the named organization (e.g. victoria)")
+	k8s := flag.Bool("k8s", false, "Use k8s-internal service URLs instead of localhost")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: seed [options]\n\n")
-		fmt.Fprintf(os.Stderr, "Seed the database with an admin user and 4 organizations (victoria, elastic, clickhouse, lgtm)\n")
+		fmt.Fprintf(os.Stderr, "Seed the database with an admin user and organizations\n")
 		fmt.Fprintf(os.Stderr, "with their stack-specific datasources.\n\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		flag.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nExample:\n")
+		fmt.Fprintf(os.Stderr, "\nExamples:\n")
 		fmt.Fprintf(os.Stderr, "  go run ./cmd/seed -email admin@admin.com -password Admin1234\n")
+		fmt.Fprintf(os.Stderr, "  go run ./cmd/seed -email admin@admin.com -password Admin1234 -org victoria -k8s\n")
 	}
 
 	flag.Parse()
@@ -88,6 +93,24 @@ func main() {
 	}
 	if err := validatePassword(*password); err != nil {
 		log.Fatalf("Error: %v", err)
+	}
+
+	// Filter orgs if requested
+	seedOrgs := orgs
+	if *orgFilter != "" {
+		seedOrgs = nil
+		for _, o := range orgs {
+			if o.Slug == *orgFilter {
+				seedOrgs = append(seedOrgs, o)
+			}
+		}
+		if len(seedOrgs) == 0 {
+			slugs := make([]string, len(orgs))
+			for i, o := range orgs {
+				slugs[i] = o.Slug
+			}
+			log.Fatalf("Error: unknown org %q. Available: %s", *orgFilter, strings.Join(slugs, ", "))
+		}
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")
@@ -135,7 +158,7 @@ func main() {
 	}
 
 	// Seed each organization
-	for _, o := range orgs {
+	for _, o := range seedOrgs {
 		var orgID uuid.UUID
 		err = tx.QueryRow(ctx, "SELECT id FROM organizations WHERE slug = $1", o.Slug).Scan(&orgID)
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -171,8 +194,17 @@ func main() {
 		}
 
 		// Seed datasources
-		created := 0
+		created, skipped := 0, 0
 		for _, ds := range o.Datasources {
+			dsURL := ds.URL
+			if *k8s {
+				if ds.K8sURL == "" {
+					skipped++
+					continue
+				}
+				dsURL = ds.K8sURL
+			}
+
 			var dsID uuid.UUID
 			err = tx.QueryRow(ctx,
 				"SELECT id FROM datasources WHERE organization_id = $1 AND type = $2 LIMIT 1",
@@ -181,7 +213,7 @@ func main() {
 				_, err = tx.Exec(ctx,
 					`INSERT INTO datasources (id, organization_id, name, type, url, is_default, auth_type)
 					 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-					uuid.New(), orgID, ds.Name, ds.Type, ds.URL, true, "none")
+					uuid.New(), orgID, ds.Name, ds.Type, dsURL, true, "none")
 				if err != nil {
 					log.Fatalf("Failed to create datasource '%s' for org '%s': %v", ds.Name, o.Slug, err)
 				}
@@ -190,7 +222,11 @@ func main() {
 				log.Fatalf("Failed to check datasource '%s' for org '%s': %v", ds.Name, o.Slug, err)
 			}
 		}
-		fmt.Printf("  Datasources: %d created, %d already existed\n", created, len(o.Datasources)-created)
+		if skipped > 0 {
+			fmt.Printf("  Datasources: %d created, %d skipped (no k8s URL)\n", created, skipped)
+		} else {
+			fmt.Printf("  Datasources: %d created, %d already existed\n", created, len(o.Datasources)-created)
+		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {

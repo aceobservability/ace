@@ -17,6 +17,12 @@ NAMESPACE = 'ace-demo'
 CHART_PATH = './deploy/charts/ace-local-infra'
 DEMO_VALUES = './deploy/docker/demo/demo-values.yaml'
 
+# Allow common local k8s contexts. Colima's k3s shares the Docker daemon, so
+# docker_build images are already available without a registry.
+allow_k8s_contexts('colima')
+allow_k8s_contexts('k3d-ace-demo')
+allow_k8s_contexts('docker-desktop')
+
 # --- Docker builds -----------------------------------------------------------
 
 docker_build(
@@ -73,6 +79,15 @@ k8s_resource('grafana', labels=['grafana'], port_forwards=['3000:3000'],
 # Ace backend
 k8s_resource('backend', labels=['app'], port_forwards=['8080:8080'],
              resource_deps=['namespace', 'postgres', 'valkey'])
+
+# --- Auto-seed (admin user + Victoria org with k8s URLs) ---------------------
+
+local_resource(
+    'seed',
+    cmd='make seed-tilt',
+    resource_deps=['backend'],
+    labels=['infra'],
+)
 
 # --- Ace frontend (Vite dev server) ------------------------------------------
 
