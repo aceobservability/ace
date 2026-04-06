@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/janhoon/dash/backend/internal/models"
+	"github.com/janhoon/dash/backend/internal/ssrf"
 )
 
 // QueryRequest represents a query request body
@@ -134,7 +135,12 @@ func TestConnection(ctx context.Context, ds models.DataSource) error {
 }
 
 func runHTTPConnectionCheck(ctx context.Context, ds models.DataSource, endpoints []string) error {
-	httpClient := &http.Client{Timeout: 10 * time.Second}
+	// Validate the base URL against SSRF before making any requests.
+	if _, err := ssrf.ValidateURL(ds.URL); err != nil {
+		return fmt.Errorf("datasource url rejected: %w", err)
+	}
+
+	httpClient := ssrf.SafeClient(10 * time.Second)
 
 	var lastErr error
 	for _, endpoint := range endpoints {

@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/janhoon/dash/backend/internal/auth"
+	"github.com/janhoon/dash/backend/internal/ssrf"
 )
 
 type GrafanaDiscoveryHandler struct {
@@ -18,13 +18,12 @@ type GrafanaDiscoveryHandler struct {
 }
 
 func NewGrafanaDiscoveryHandler() *GrafanaDiscoveryHandler {
+	c := ssrf.SafeClient(5 * time.Second)
+	c.CheckRedirect = func(_ *http.Request, _ []*http.Request) error {
+		return http.ErrUseLastResponse // don't follow redirects
+	}
 	return &GrafanaDiscoveryHandler{
-		client: &http.Client{
-			Timeout: 5 * time.Second,
-			CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
-				return http.ErrUseLastResponse // don't follow redirects
-			},
-		},
+		client: c,
 	}
 }
 
@@ -33,58 +32,10 @@ const (
 	grafanaMaxDashboards   = 500
 )
 
-// validateGrafanaURL applies strict SSRF protection: block private networks,
-// loopback, link-local, and cloud metadata endpoints.
+// validateGrafanaURL validates that the URL is safe from SSRF attacks using
+// the shared ssrf package.
 func validateGrafanaURL(raw string) (*url.URL, error) {
-	u, err := url.Parse(raw)
-	if err != nil {
-		return nil, fmt.Errorf("invalid url: %w", err)
-	}
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return nil, fmt.Errorf("url must use http or https scheme")
-	}
-	hostname := u.Hostname()
-	if hostname == "" {
-		return nil, fmt.Errorf("url must include a hostname")
-	}
-
-	// Check direct IP
-	if ip := net.ParseIP(hostname); ip != nil {
-		if err := checkGrafanaIP(ip); err != nil {
-			return nil, err
-		}
-		return u, nil
-	}
-
-	// Resolve hostname to check all IPs
-	ips, err := net.LookupHost(hostname)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve hostname: %w", err)
-	}
-	for _, ipStr := range ips {
-		if ip := net.ParseIP(ipStr); ip != nil {
-			if err := checkGrafanaIP(ip); err != nil {
-				return nil, err
-			}
-		}
-	}
-	return u, nil
-}
-
-func checkGrafanaIP(ip net.IP) error {
-	if ip.Equal(net.ParseIP("169.254.169.254")) {
-		return fmt.Errorf("url must not target cloud metadata endpoint")
-	}
-	if ip.IsLoopback() {
-		return fmt.Errorf("url must not target loopback address")
-	}
-	if ip.IsPrivate() {
-		return fmt.Errorf("url must not target private network address")
-	}
-	if ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
-		return fmt.Errorf("url must not target link-local address")
-	}
-	return nil
+	return ssrf.ValidateURL(raw)
 }
 
 // sanitizeString strips HTML tags and script content from imported strings.

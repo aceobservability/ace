@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockRoutePath = { value: '/app/dashboards' }
 const mockPush = vi.fn()
@@ -144,7 +144,7 @@ describe('useSidebar', () => {
 
     it('when pinned, toggleSection switches section instead of collapsing', () => {
       mockRoutePath.value = '/app/services'
-      const { isPinned, expandedSection, togglePin, toggleSection } = useSidebar()
+      const { expandedSection, togglePin, toggleSection } = useSidebar()
       togglePin()
       expect(expandedSection.value).toBe('services')
       toggleSection('dashboards')
