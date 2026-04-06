@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.10.0](https://github.com/aceobservability/ace/compare/v0.9.0...v0.10.0) (2026-04-06)
+
+
+### Features
+
+* add structured HTTP request logging with zap ([#156](https://github.com/aceobservability/ace/issues/156)) ([c3f0669](https://github.com/aceobservability/ace/commit/c3f0669065b6384db56ba2d0c88da86df570ec80))
+* chart types expansion — Tier 2 (5 observability panel types) ([#151](https://github.com/aceobservability/ace/issues/151)) ([e4b806b](https://github.com/aceobservability/ace/commit/e4b806bfc21a26ee9d327614d4aa8e4fe5720171))
+* chart types expansion — Tier 3 (5 completeness panel types) ([#154](https://github.com/aceobservability/ace/issues/154)) ([42bbdbf](https://github.com/aceobservability/ace/commit/42bbdbf7193a808a9075d7fa9cee92ca8f2d389b))
+* enterprise auth phase 2 — Okta SSO, group-to-role mapping, admin UI ([#157](https://github.com/aceobservability/ace/issues/157)) ([164249f](https://github.com/aceobservability/ace/commit/164249fd813175aac8327bfbece69263f871707f))
+* Grafana auto-discovery, AI sidebar, template variables, and demo infra ([7f8e3da](https://github.com/aceobservability/ace/commit/7f8e3da87b78feeb757fbb3f21cd86fa7d9f9cca))
+* implement multi-provider AI support ([#153](https://github.com/aceobservability/ace/issues/153)) ([57ae758](https://github.com/aceobservability/ace/commit/57ae7589bbf53dc3d382f9f315686f5a1529e0ae))
+* k3d + Tilt demo environment with auto-seed and Colima support ([2305d56](https://github.com/aceobservability/ace/commit/2305d5698ef3c213df07ee074f1ae1df8efae804))
+* refactor sidebar into unified component, migrate to bun, and update panels ([405813c](https://github.com/aceobservability/ace/commit/405813c930367955f7e7178871c805e748356a5a))
+
+
+### Bug Fixes
+
+* mock useDatasource in HomeView tests ([#155](https://github.com/aceobservability/ace/issues/155)) ([566523f](https://github.com/aceobservability/ace/commit/566523f341c72ca7c1734c64073c02cbfebbb455))
+
 ## [0.9.0](https://github.com/aceobservability/ace/compare/v0.8.0...v0.9.0) (2026-03-24)
 
 
