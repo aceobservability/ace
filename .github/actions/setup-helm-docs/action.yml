@@ -16,9 +16,10 @@ runs:
         HELM_DOCS_VERSION: ${{ inputs.version }}
       run: |
         set -euo pipefail
-        curl -sL "https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz" \
-          -o helm-docs.tar.gz
+        archive="helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz"
+        curl -sL "https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/${archive}" \
+          -o "$archive"
         curl -sL "https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/checksums.txt" \
-          | grep "helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz" | sha256sum -c -
-        tar xzf helm-docs.tar.gz helm-docs
+          | grep "$archive" | sha256sum -c -
+        tar xzf "$archive" helm-docs
         chmod +x helm-docs
