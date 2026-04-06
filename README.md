@@ -1,15 +1,15 @@
 # Ace - Monitoring Dashboard
 
-[![CodeQL](https://github.com/janhoon/dash/actions/workflows/security.yml/badge.svg?branch=master)](https://github.com/janhoon/dash/actions/workflows/security.yml)
-[![Lint](https://github.com/janhoon/dash/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/janhoon/dash/actions/workflows/lint.yml)
-[![Security](https://github.com/janhoon/dash/actions/workflows/security.yml/badge.svg?branch=master)](https://github.com/janhoon/dash/actions/workflows/security.yml)
+[![CodeQL](https://github.com/janhoon/dash/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/janhoon/dash/actions/workflows/security.yml)
+[![Lint](https://github.com/janhoon/dash/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/janhoon/dash/actions/workflows/lint.yml)
+[![Security](https://github.com/janhoon/dash/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/janhoon/dash/actions/workflows/security.yml)
 
 A Grafana-like monitoring dashboard built with Vue.js, Go, and Prometheus.
 
 ## Versioning and Releases
 
 - **Versioning:** Semantic Versioning (`vMAJOR.MINOR.PATCH`) with Conventional Commits
-- **Release planning:** `release-please` opens and updates release PRs from changes on `master`
+- **Release planning:** `release-please` opens and updates release PRs from changes on `main`
 - **Release output:** merge of the release PR creates a GitHub Release with generated notes and updates `CHANGELOG.md`
 - **Auto-published assets:** backend binaries, frontend artifact tarball, image SBOMs, and checksums
 - **Release guide:** see `RELEASE.md` for the maintainer workflow and versioning rules
