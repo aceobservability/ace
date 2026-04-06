@@ -246,6 +246,7 @@ async function sendChatRequest(
   datasourceName: string,
   messages: ChatRequestMessage[],
   tools?: ToolDefinition[],
+  signal?: AbortSignal,
 ): Promise<{ content: string | null; toolCalls: ToolCall[] }> {
   const orgId = currentOrgId.value
   if (!orgId) throw new Error('No organization selected')
@@ -262,11 +263,20 @@ async function sendChatRequest(
     body.stream = false
   }
 
-  const response = await fetch(`${API_BASE}/api/orgs/${orgId}/ai/chat`, {
+  const fetchOptions: RequestInit = {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(body),
-  })
+    ...(signal ? { signal } : {}),
+  }
+
+  let response = await fetch(`${API_BASE}/api/orgs/${orgId}/ai/chat`, fetchOptions)
+
+  // Retry once on 429 after 2s
+  if (response.status === 429) {
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+    response = await fetch(`${API_BASE}/api/orgs/${orgId}/ai/chat`, fetchOptions)
+  }
 
   if (!response.ok) {
     const errData = await response.json().catch(() => ({}))

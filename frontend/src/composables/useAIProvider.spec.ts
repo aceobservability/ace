@@ -297,6 +297,87 @@ describe('useAIProvider', () => {
         sendChatRequest('prometheus', 'my-prom', [{ role: 'user', content: 'Hello' }]),
       ).rejects.toThrow('Server error')
     })
+
+    it('retries once on 429, returns result on success', async () => {
+      let callCount = 0
+      const fetchSpy = vi.fn().mockImplementation(async () => {
+        callCount++
+        if (callCount === 1) {
+          return { ok: false, status: 429, json: async () => ({ error: 'Rate limited' }) }
+        }
+        return {
+          ok: true,
+          headers: { get: () => 'application/json' },
+          json: async () => ({
+            choices: [{ message: { content: 'Success after retry', tool_calls: [] } }],
+          }),
+        }
+      })
+      vi.stubGlobal('fetch', fetchSpy)
+
+      const { useAIProvider } = await import('./useAIProvider')
+      const { sendChatRequest, selectedProviderId } = useAIProvider()
+      selectedProviderId.value = 'p1'
+
+      const result = await sendChatRequest('prometheus', 'my-prom', [
+        { role: 'user', content: 'Hello' },
+      ])
+
+      expect(result.content).toBe('Success after retry')
+      expect(fetchSpy).toHaveBeenCalledTimes(2)
+    })
+
+    it('throws after 429 on retry', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 429,
+          json: async () => ({ error: 'Rate limited' }),
+        }),
+      )
+
+      const { useAIProvider } = await import('./useAIProvider')
+      const { sendChatRequest, selectedProviderId } = useAIProvider()
+      selectedProviderId.value = 'p1'
+
+      await expect(
+        sendChatRequest('prometheus', 'my-prom', [{ role: 'user', content: 'Hello' }]),
+      ).rejects.toThrow('Rate limited')
+    })
+
+    it('aborts fetch when AbortSignal fires', async () => {
+      const controller = new AbortController()
+      const fetchSpy = vi.fn().mockImplementation(async (_url: string, opts: RequestInit) => {
+        if (opts.signal?.aborted) {
+          throw new DOMException('Aborted', 'AbortError')
+        }
+        return {
+          ok: true,
+          headers: { get: () => 'application/json' },
+          json: async () => ({
+            choices: [{ message: { content: 'done', tool_calls: [] } }],
+          }),
+        }
+      })
+      vi.stubGlobal('fetch', fetchSpy)
+
+      const { useAIProvider } = await import('./useAIProvider')
+      const { sendChatRequest, selectedProviderId } = useAIProvider()
+      selectedProviderId.value = 'p1'
+
+      controller.abort()
+
+      await expect(
+        sendChatRequest(
+          'prometheus',
+          'my-prom',
+          [{ role: 'user', content: 'Hello' }],
+          undefined,
+          controller.signal,
+        ),
+      ).rejects.toThrow()
+    })
   })
 
   describe('org switch', () => {

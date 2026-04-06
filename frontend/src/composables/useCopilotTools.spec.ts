@@ -190,14 +190,14 @@ describe('useCopilotToolExecutor', () => {
     vi.mocked(fetchDataSourceMetricNames).mockResolvedValue(['up', 'http_requests_total'])
     const { executeTool } = useCopilotToolExecutor(mockDsId, mockOrgId, mockDsType)
     await executeTool(makeToolCall('get_metrics', { datasource_id: 'ds-override' }))
-    expect(fetchDataSourceMetricNames).toHaveBeenCalledWith('ds-override', undefined)
+    expect(fetchDataSourceMetricNames).toHaveBeenCalledWith('ds-override', undefined, undefined)
   })
 
   it('get_metrics falls back to context datasource_id', async () => {
     vi.mocked(fetchDataSourceMetricNames).mockResolvedValue(['up'])
     const { executeTool } = useCopilotToolExecutor(mockDsId, mockOrgId, mockDsType)
     await executeTool(makeToolCall('get_metrics'))
-    expect(fetchDataSourceMetricNames).toHaveBeenCalledWith('ds-default', undefined)
+    expect(fetchDataSourceMetricNames).toHaveBeenCalledWith('ds-default', undefined, undefined)
   })
 
   it('get_metrics returns error when no datasource available', async () => {
@@ -211,7 +211,7 @@ describe('useCopilotToolExecutor', () => {
     vi.mocked(fetchDataSourceLabels).mockResolvedValue(['job', 'instance'])
     const { executeTool } = useCopilotToolExecutor(mockDsId, mockOrgId, mockDsType)
     await executeTool(makeToolCall('get_labels', { datasource_id: 'ds-2' }))
-    expect(fetchDataSourceLabels).toHaveBeenCalledWith('ds-2', undefined)
+    expect(fetchDataSourceLabels).toHaveBeenCalledWith('ds-2', undefined, undefined)
   })
 
   it('get_label_values uses override datasource_id', async () => {
@@ -220,7 +220,7 @@ describe('useCopilotToolExecutor', () => {
     await executeTool(
       makeToolCall('get_label_values', { label: 'instance', datasource_id: 'ds-3' }),
     )
-    expect(fetchDataSourceLabelValues).toHaveBeenCalledWith('ds-3', 'instance', undefined)
+    expect(fetchDataSourceLabelValues).toHaveBeenCalledWith('ds-3', 'instance', undefined, undefined)
   })
 
   it('get_trace_services returns services list', async () => {
@@ -229,6 +229,6 @@ describe('useCopilotToolExecutor', () => {
     const result = await executeTool(makeToolCall('get_trace_services'))
     expect(result).toContain('frontend')
     expect(result).toContain('api')
-    expect(fetchDataSourceTraceServices).toHaveBeenCalledWith('ds-default')
+    expect(fetchDataSourceTraceServices).toHaveBeenCalledWith('ds-default', undefined)
   })
 })

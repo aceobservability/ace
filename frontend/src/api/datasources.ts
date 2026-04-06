@@ -249,9 +249,10 @@ interface TraceServicesResponse {
   error?: string
 }
 
-export async function fetchDataSourceTraceServices(id: string): Promise<string[]> {
+export async function fetchDataSourceTraceServices(id: string, signal?: AbortSignal): Promise<string[]> {
   const response = await fetch(`${API_BASE}/api/datasources/${id}/traces/services`, {
     headers: getAuthHeaders(),
+    ...(signal ? { signal } : {}),
   })
 
   if (!response.ok) {
@@ -503,13 +504,14 @@ export async function fetchTraceDatasources(
   return response.json()
 }
 
-export async function fetchDataSourceLabels(id: string, metric?: string): Promise<string[]> {
+export async function fetchDataSourceLabels(id: string, metric?: string, signal?: AbortSignal): Promise<string[]> {
   const params = new URLSearchParams()
   if (metric) params.set('metric', metric)
   const qs = params.toString()
 
   const response = await fetch(`${API_BASE}/api/datasources/${id}/labels${qs ? `?${qs}` : ''}`, {
     headers: getAuthHeaders(),
+    ...(signal ? { signal } : {}),
   })
 
   if (!response.ok) {
@@ -529,6 +531,7 @@ export async function fetchDataSourceLabelValues(
   id: string,
   labelName: string,
   metric?: string,
+  signal?: AbortSignal,
 ): Promise<string[]> {
   const params = new URLSearchParams()
   if (metric) params.set('metric', metric)
@@ -536,7 +539,7 @@ export async function fetchDataSourceLabelValues(
 
   const response = await fetch(
     `${API_BASE}/api/datasources/${id}/labels/${encodeURIComponent(labelName)}/values${qs ? `?${qs}` : ''}`,
-    { headers: getAuthHeaders() },
+    { headers: getAuthHeaders(), ...(signal ? { signal } : {}) },
   )
 
   if (!response.ok) {
@@ -552,14 +555,14 @@ export async function fetchDataSourceLabelValues(
   return body.data || []
 }
 
-export async function fetchDataSourceMetricNames(id: string, search?: string): Promise<string[]> {
+export async function fetchDataSourceMetricNames(id: string, search?: string, signal?: AbortSignal): Promise<string[]> {
   const params = new URLSearchParams()
   if (search) params.set('search', search)
   const qs = params.toString()
 
   const response = await fetch(
     `${API_BASE}/api/datasources/${id}/metric-names${qs ? `?${qs}` : ''}`,
-    { headers: getAuthHeaders() },
+    { headers: getAuthHeaders(), ...(signal ? { signal } : {}) },
   )
 
   if (!response.ok) {

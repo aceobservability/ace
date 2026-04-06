@@ -247,7 +247,7 @@ export function useCopilotToolExecutor(
   const queryEditor = useQueryEditor()
   const router = useRouter()
 
-  async function executeTool(toolCall: ToolCall): Promise<string> {
+  async function executeTool(toolCall: ToolCall, signal?: AbortSignal): Promise<string> {
     const args = JSON.parse(toolCall.function.arguments || '{}')
 
     switch (toolCall.function.name) {
@@ -262,7 +262,7 @@ export function useCopilotToolExecutor(
         const dsId = resolveDatasourceId(args, datasourceId())
         if (!dsId)
           return 'Error: no datasource selected. Call list_datasources first to get a datasource ID.'
-        const metrics = await fetchDataSourceMetricNames(dsId, args.search as string | undefined)
+        const metrics = await fetchDataSourceMetricNames(dsId, args.search as string | undefined, signal)
         if (metrics.length === 0) return 'No metrics found'
         if (metrics.length > 100) {
           return `Found ${metrics.length} metrics. Showing first 100:\n${metrics.slice(0, 100).join('\n')}`
@@ -274,7 +274,7 @@ export function useCopilotToolExecutor(
         const dsId = resolveDatasourceId(args, datasourceId())
         if (!dsId)
           return 'Error: no datasource selected. Call list_datasources first to get a datasource ID.'
-        const labels = await fetchDataSourceLabels(dsId, args.metric as string | undefined)
+        const labels = await fetchDataSourceLabels(dsId, args.metric as string | undefined, signal)
         if (labels.length === 0) return 'No labels found'
         return labels.join('\n')
       }
@@ -288,6 +288,7 @@ export function useCopilotToolExecutor(
           dsId,
           args.label as string,
           args.metric as string | undefined,
+          signal,
         )
         if (values.length === 0) return `No values found for label "${args.label}"`
         if (values.length > 100) {
@@ -300,7 +301,7 @@ export function useCopilotToolExecutor(
         const dsId = resolveDatasourceId(args, datasourceId())
         if (!dsId)
           return 'Error: no datasource selected. Call list_datasources first to get a datasource ID.'
-        const services = await fetchDataSourceTraceServices(dsId)
+        const services = await fetchDataSourceTraceServices(dsId, signal)
         if (services.length === 0) return 'No services found'
         return services.join('\n')
       }

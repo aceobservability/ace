@@ -98,7 +98,7 @@ describe('CmdKChatView integration — real tool executor', () => {
     })
     await flushPromises()
 
-    expect(fetchDataSourceMetricNames).toHaveBeenCalledWith('ds-vm', undefined)
+    expect(fetchDataSourceMetricNames).toHaveBeenCalledWith('ds-vm', undefined, expect.anything())
   })
 
   it('logs context: get_labels tool call uses context datasource ID', async () => {
@@ -124,7 +124,7 @@ describe('CmdKChatView integration — real tool executor', () => {
     })
     await flushPromises()
 
-    expect(fetchDataSourceLabels).toHaveBeenCalledWith('ds-loki', undefined)
+    expect(fetchDataSourceLabels).toHaveBeenCalledWith('ds-loki', undefined, expect.anything())
   })
 
   it('no context: list_datasources then override works', async () => {
@@ -161,6 +161,6 @@ describe('CmdKChatView integration — real tool executor', () => {
     await flushPromises()
 
     expect(listDataSources).toHaveBeenCalledWith('org-1')
-    expect(fetchDataSourceMetricNames).toHaveBeenCalledWith('ds-1', undefined)
+    expect(fetchDataSourceMetricNames).toHaveBeenCalledWith('ds-1', undefined, expect.anything())
   })
 })
