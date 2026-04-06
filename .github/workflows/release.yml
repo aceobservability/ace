@@ -358,6 +358,12 @@ jobs:
           sed -i "s/^version:.*/version: ${version}/" charts/ace/Chart.yaml
           sed -i "s/^appVersion:.*/appVersion: \"${version}\"/" charts/ace/Chart.yaml
 
+      - name: Add Helm repositories
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo add victoriametrics https://victoriametrics.github.io/helm-charts/
+          helm repo update
+
       - name: Build Helm dependencies
         run: helm dependency build charts/ace
 
