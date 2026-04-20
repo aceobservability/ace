@@ -25,7 +25,7 @@
     "dompurify": "^3.3.3",
     "echarts": "^6.0.0",
     "lucide-vue-next": "^1.0.0",
-    "marked": "^17.0.5",
+    "marked": "^18.0.2",
     "monaco-editor": "^0.55.1",
     "posthog-js": "^1.363.1",
     "react": "^19.2.4",
