@@ -1,4 +1,5 @@
-import { API_BASE, getAuthHeaders } from './sso'
+import { API_BASE } from './base'
+import { getAuthHeaders } from './sso'
 
 export interface SSOConfigRoleMapping {
   id: string

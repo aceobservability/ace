@@ -13,8 +13,7 @@ import type {
   TraceSummary,
   UpdateDataSourceRequest,
 } from '../types/datasource'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+import { API_BASE } from './base'
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('access_token')

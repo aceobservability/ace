@@ -99,17 +99,16 @@ backend:
     enabled: true
     minAvailable: 1
 
-  # -- Use an existing Secret instead of the chart-managed one.
-  # Must contain keys: database-password, jwt-secret, jwt-private-key, jwt-public-key
+  # -- Use an existing Secret instead of the chart-managed one. Required keys depend on mode: database-password for internal PostgreSQL, external-database-password when referenced by externalDatabase.url, and jwt-secret or jwt-private-key/jwt-public-key for JWT key material.
   existingSecret: ""
 
   # -- JWT configuration (stored in Secret)
   jwt:
-    # -- HMAC secret for JWT signing (set one of secret OR privateKey/publicKey)
+    # -- Shared JWT/encryption secret material (set this or privateKey/publicKey when not using backend.existingSecret)
     secret: ""
-    # -- RSA/ECDSA private key PEM (optional, for asymmetric JWT)
+    # -- RSA private key PEM for JWT signing (must be set together with publicKey)
     privateKey: ""
-    # -- RSA/ECDSA public key PEM (optional)
+    # -- RSA public key PEM for JWT verification (must be set together with privateKey)
     publicKey: ""
 
   # -- Valkey (Redis-compatible) for refresh tokens
@@ -223,9 +222,9 @@ ingress:
 # External Database (when postgresql.enabled=false)
 # =============================================================================
 externalDatabase:
-  # -- Full connection string (overrides all other fields)
+  # -- Full connection string (overrides internal PostgreSQL; may reference $(EXTERNAL_DATABASE_PASSWORD))
   url: ""
-  # -- Password (stored in Secret; referenced by DATABASE_URL)
+  # -- Password stored in Secret and exposed as EXTERNAL_DATABASE_PASSWORD when externalDatabase.url references it
   password: null
 
 # =============================================================================
@@ -235,7 +234,8 @@ postgresql:
   enabled: true
   auth:
     username: ace
-    password: null  # Set via --set or external secret in production!
+    # -- Required for chart-managed internal PostgreSQL unless backend.existingSecret or externalDatabase.url is used.
+    password: null
     database: ace
   primary:
     persistence:

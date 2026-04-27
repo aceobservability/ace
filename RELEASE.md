@@ -8,6 +8,7 @@ This project uses automated SemVer releases based on Conventional Commits.
 - Scope: one repo-wide version for backend and frontend together
 - Release branch: `main`
 - Initial release baseline: `v0.1.0`
+- Release metadata updated by `release-please`: `.release-please-manifest.json`, `VERSION`, `frontend/package.json`, and `charts/ace/Chart.yaml` (`version` and `appVersion`)
 
 ## How version bumps are decided
 

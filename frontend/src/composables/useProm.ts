@@ -1,7 +1,6 @@
 import { type Ref, ref, watch } from 'vue'
 import { trackEvent } from '../analytics'
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+import { API_BASE as API_BASE_URL } from '../api/base'
 
 // Types for Prometheus API response
 interface PrometheusMetricResult {

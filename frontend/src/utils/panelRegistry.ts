@@ -12,6 +12,15 @@ export type PanelCategory = 'charts' | 'stats' | 'observability' | 'widgets'
 /** Describes what data a panel needs from the editor. */
 export type PanelQueryMode = 'metrics' | 'logs' | 'traces' | 'none'
 
+/** Communicates whether a registered panel is fully wired or still needs setup/work. */
+export type PanelSupportStatus = 'ready' | 'setup_required' | 'unsupported'
+
+export interface PanelEmptyState {
+  title: string
+  description: string
+  actionLabel?: string
+}
+
 export interface PanelRegistration {
   /** Unique identifier, e.g. 'heatmap' */
   type: string
@@ -28,6 +37,10 @@ export interface PanelRegistration {
   icon: Component
   /** What data/signal this panel requires. Defaults to 'metrics' when omitted. */
   queryMode?: PanelQueryMode
+  /** Optional support status for panels that should not look fully live/wired. */
+  supportStatus?: PanelSupportStatus
+  /** Actionable empty-state copy used when the panel has no live backend integration/data. */
+  emptyState?: PanelEmptyState
 }
 
 // ---------------------------------------------------------------------------

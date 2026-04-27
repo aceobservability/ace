@@ -115,7 +115,8 @@ services:
 
   ace-backend:
     build:
-      context: ../../../backend
+      context: ../../..
+      dockerfile: backend/Dockerfile
     ports:
       - "8080:8080"
     environment:
@@ -132,7 +133,10 @@ services:
 
   ace-frontend:
     build:
-      context: ../../../frontend
+      context: ../../..
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8080
     ports:
       - "5173:80"
     depends_on:

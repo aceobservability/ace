@@ -9,6 +9,14 @@ import OnboardingBanner from '../components/OnboardingBanner.vue'
 import { useCommandContext } from '../composables/useCommandContext'
 import { useDatasource } from '../composables/useDatasource'
 import { useFavorites } from '../composables/useFavorites'
+import {
+  dataSourceTypeLabels,
+  isAlertingType,
+  isLogsType,
+  isMetricsType,
+  isTracingType,
+  type DataSource,
+} from '../types/datasource'
 
 const { registerContext, deregisterContext } = useCommandContext()
 const { datasources } = useDatasource()
@@ -23,34 +31,54 @@ const onboardingDismissed = computed(() => {
   return localStorage.getItem('ace-onboarding-dismissed') === 'true'
 })
 
-// Mock health data
-const healthServices = [
-  { name: 'API Gateway', status: 'healthy' as const, uptime: '99.98%', latency: '12ms' },
-  { name: 'Auth Service', status: 'healthy' as const, uptime: '99.95%', latency: '8ms' },
-  { name: 'Database Primary', status: 'warning' as const, uptime: '99.80%', latency: '45ms' },
-  { name: 'Cache Layer', status: 'healthy' as const, uptime: '99.99%', latency: '2ms' },
-  { name: 'Message Queue', status: 'healthy' as const, uptime: '99.97%', latency: '5ms' },
-  { name: 'Search Engine', status: 'critical' as const, uptime: '98.50%', latency: '120ms' },
-]
+interface DataSourceSummary {
+  name: string
+  status: 'info'
+  typeLabel: string
+  signalLabel: string
+  roleLabel: string
+}
 
-// Mock AI insights
-const aiInsights = [
+function signalLabelForDataSource(source: DataSource): string {
+  const signals: string[] = []
+  if (isMetricsType(source.type)) signals.push('Metrics')
+  if (isLogsType(source.type)) signals.push('Logs')
+  if (isTracingType(source.type)) signals.push('Traces')
+  if (isAlertingType(source.type)) signals.push('Alerts')
+
+  return signals.length > 0 ? signals.join(' + ') : 'Configuration only'
+}
+
+const dataSourceSummaries = computed<DataSourceSummary[]>(() =>
+  datasources.value.map((source) => ({
+    name: source.name || dataSourceTypeLabels[source.type],
+    status: 'info',
+    typeLabel: dataSourceTypeLabels[source.type],
+    signalLabel: signalLabelForDataSource(source),
+    roleLabel: source.is_default ? 'Default source' : 'Configured',
+  })),
+)
+
+const sampleAiInsights = [
   {
-    title: 'Anomaly Detected',
-    description: 'CPU usage on API Gateway spiked 40% above baseline at 14:32 UTC.',
-    timestamp: '2 minutes ago',
+    title: 'Sample: anomaly triage',
+    description:
+      'Example only: Ace can summarize CPU spikes once telemetry queries and an AI provider are connected.',
+    timestamp: 'Example only',
     type: 'anomaly' as const,
   },
   {
-    title: 'Optimization Suggestion',
-    description: 'Database query latency can be reduced by 30% with index on users.email.',
-    timestamp: '15 minutes ago',
+    title: 'Sample: optimization suggestion',
+    description:
+      'Example only: recommendations are generated from real query results; no live insight is shown here.',
+    timestamp: 'Example only',
     type: 'optimization' as const,
   },
   {
-    title: 'Capacity Forecast',
-    description: 'Message Queue will reach 80% capacity in approximately 3 days at current growth rate.',
-    timestamp: '1 hour ago',
+    title: 'Sample: capacity forecast',
+    description:
+      'Example only: forecasts require historical metrics from your configured datasources.',
+    timestamp: 'Example only',
     type: 'forecast' as const,
   },
 ]
@@ -203,82 +231,73 @@ onUnmounted(() => {
 
     <!-- 5. Two-Column Panels -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <!-- Left Panel: System Health -->
+      <!-- Left Panel: Configured Data Sources (not live health) -->
       <section
-        data-testid="system-health-grid"
+        data-testid="datasource-summary-grid"
         class="rounded-xl p-5 animate-fade-in"
         :style="{
           backgroundColor: 'var(--color-surface-container-low)',
           border: '1px solid var(--color-outline-variant)',
         }"
       >
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-2">
           <span
             class="text-[11px] uppercase tracking-widest font-semibold"
             :style="{ color: 'var(--color-secondary)' }"
           >
-            System Health
+            Configured Data Sources
           </span>
           <span
             class="text-[11px]"
             :style="{ color: 'var(--color-on-surface-variant)' }"
           >
-            {{ healthServices.length }} services
+            {{ dataSourceSummaries.length }} connected
           </span>
         </div>
+        <p
+          data-testid="datasource-summary-note"
+          class="mt-0 mb-4 text-xs"
+          :style="{ color: 'var(--color-on-surface-variant)' }"
+        >
+          Inventory from your configured datasources. Ace is not inferring live service health here.
+        </p>
         <div class="flex flex-col gap-1.5">
           <div
-            v-for="service in healthServices"
-            :key="service.name"
-            data-testid="health-card"
+            v-for="source in dataSourceSummaries"
+            :key="source.name"
+            data-testid="datasource-summary-card"
             class="flex items-center gap-3 rounded-lg px-3 py-2"
             :style="{
-              backgroundColor:
-                service.status === 'critical'
-                  ? 'rgba(239,68,68,0.08)'
-                  : service.status === 'warning'
-                    ? 'rgba(249,115,22,0.08)'
-                    : 'var(--color-surface-container-high)',
-              border:
-                service.status === 'critical'
-                  ? '1px solid rgba(239,68,68,0.12)'
-                  : service.status === 'warning'
-                    ? '1px solid rgba(249,115,22,0.12)'
-                    : '1px solid transparent',
+              backgroundColor: 'var(--color-surface-container-high)',
+              border: '1px solid transparent',
             }"
           >
-            <StatusDot :status="service.status" :size="6" />
+            <StatusDot :status="source.status" :size="6" />
             <span
               class="text-sm flex-1"
               :style="{ color: 'var(--color-on-surface)' }"
             >
-              {{ service.name }}
+              {{ source.name }}
             </span>
             <span
               class="font-mono text-[13px]"
               :style="{ color: 'var(--color-on-surface-variant)' }"
             >
-              {{ service.latency }}
+              {{ source.typeLabel }}
             </span>
             <span
               class="font-mono text-[13px]"
-              :style="{
-                color:
-                  service.status === 'critical'
-                    ? 'var(--color-error)'
-                    : service.status === 'warning'
-                      ? 'var(--color-tertiary)'
-                      : 'var(--color-secondary)',
-              }"
+              :style="{ color: 'var(--color-secondary)' }"
             >
-              {{ service.uptime }}
+              {{ source.signalLabel }} · {{ source.roleLabel }}
             </span>
           </div>
         </div>
       </section>
 
-      <!-- Right Panel: AI Insights -->
+      <!-- Right Panel: Sample AI Insights -->
       <section
+        data-testid="sample-ai-insights"
         class="rounded-xl p-5 animate-fade-in"
         :style="{
           backgroundColor: 'var(--color-surface-container-low)',
@@ -286,7 +305,7 @@ onUnmounted(() => {
           animationDelay: '50ms',
         }"
       >
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-2">
             <span
               class="inline-block shrink-0"
@@ -301,19 +320,26 @@ onUnmounted(() => {
               class="text-[11px] uppercase tracking-widest font-semibold"
               :style="{ color: 'var(--color-primary)' }"
             >
-              AI Insights
+              Sample AI Insights
             </span>
           </div>
           <span
             class="text-[11px]"
             :style="{ color: 'var(--color-outline)' }"
           >
-            {{ aiInsights.length }} insights
+            Examples only
           </span>
         </div>
+        <p
+          data-testid="sample-ai-insights-note"
+          class="mt-0 mb-4 text-xs"
+          :style="{ color: 'var(--color-on-surface-variant)' }"
+        >
+          Illustrative examples only — these cards are not generated from your current telemetry.
+        </p>
         <div class="flex flex-col gap-2">
           <AiInsightCard
-            v-for="(insight, index) in aiInsights"
+            v-for="(insight, index) in sampleAiInsights"
             :key="index"
             :title="insight.title"
             :description="insight.description"

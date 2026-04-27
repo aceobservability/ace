@@ -1,6 +1,7 @@
 FROM oven/bun:1-alpine AS builder
 
-ARG VITE_API_URL=http://localhost:8080
+# Optional build-time override. Empty default keeps production calls same-origin under /api.
+ARG VITE_API_URL=
 ENV VITE_API_URL=$VITE_API_URL
 
 WORKDIR /app

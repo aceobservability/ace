@@ -3,8 +3,7 @@ import { AlertCircle, Lock, LogIn, Mail, User, UserPlus } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+import { API_BASE } from '../api/base'
 
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   google: 'Google',

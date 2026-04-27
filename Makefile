@@ -44,14 +44,14 @@ dev:
 backend:
 	@set -e; \
 	GO_BIN=""; \
-	if [ -x "$$HOME/.go-sdk/go1.25.7/bin/go" ]; then \
-		GO_BIN="$$HOME/.go-sdk/go1.25.7/bin/go"; \
+	if [ -x "$$HOME/.go-sdk/go1.25.9/bin/go" ]; then \
+		GO_BIN="$$HOME/.go-sdk/go1.25.9/bin/go"; \
 	elif command -v go >/dev/null 2>&1; then \
 		GO_BIN="$$(command -v go)"; \
 	fi; \
 	if [ -z "$$GO_BIN" ]; then \
 		printf "Go is not installed.\n"; \
-		printf "Install Go 1.25+ and retry make backend.\n"; \
+		printf "Install Go 1.25.9+ and retry make backend.\n"; \
 		exit 1; \
 	fi; \
 	GO_TAG="$$($$GO_BIN env GOVERSION 2>/dev/null)"; \
@@ -63,11 +63,15 @@ backend:
 	GO_MAJOR="$${GO_VER%%.*}"; \
 	GO_REST="$${GO_VER#*.}"; \
 	GO_MINOR="$${GO_REST%%.*}"; \
+	GO_PATCH="$${GO_REST#*.}"; \
+	if [ "$$GO_PATCH" = "$$GO_REST" ]; then GO_PATCH="0"; fi; \
 	GO_MAJOR_NUM="$${GO_MAJOR%%[^0-9]*}"; \
 	GO_MINOR_NUM="$${GO_MINOR%%[^0-9]*}"; \
-	if [ "$$GO_MAJOR_NUM" -lt 1 ] || { [ "$$GO_MAJOR_NUM" -eq 1 ] && [ "$$GO_MINOR_NUM" -lt 25 ]; }; then \
-		printf "Go %s is too old for backend/go.mod (requires 1.25+).\n" "$$GO_TAG"; \
-		printf "Install Go 1.25+ or put it first on PATH.\n"; \
+	GO_PATCH_NUM="$${GO_PATCH%%[^0-9]*}"; \
+	if [ -z "$$GO_PATCH_NUM" ]; then GO_PATCH_NUM="0"; fi; \
+	if [ "$$GO_MAJOR_NUM" -lt 1 ] || { [ "$$GO_MAJOR_NUM" -eq 1 ] && { [ "$$GO_MINOR_NUM" -lt 25 ] || { [ "$$GO_MINOR_NUM" -eq 25 ] && [ "$$GO_PATCH_NUM" -lt 9 ]; }; }; }; then \
+		printf "Go %s is too old for backend/go.mod (requires 1.25.9+).\n" "$$GO_TAG"; \
+		printf "Install Go 1.25.9+ or put it first on PATH.\n"; \
 		exit 1; \
 	fi; \
 	GO_BIN_DIR="$${GO_BIN%/go}"; \
@@ -84,14 +88,14 @@ backend:
 seed:
 	@set -e; \
 	GO_BIN=""; \
-	if [ -x "$$HOME/.go-sdk/go1.25.7/bin/go" ]; then \
-		GO_BIN="$$HOME/.go-sdk/go1.25.7/bin/go"; \
+	if [ -x "$$HOME/.go-sdk/go1.25.9/bin/go" ]; then \
+		GO_BIN="$$HOME/.go-sdk/go1.25.9/bin/go"; \
 	elif command -v go >/dev/null 2>&1; then \
 		GO_BIN="$$(command -v go)"; \
 	fi; \
 	if [ -z "$$GO_BIN" ]; then \
 		printf "Go is not installed.\n"; \
-		printf "Install Go 1.25+ and retry make seed.\n"; \
+		printf "Install Go 1.25.9+ and retry make seed.\n"; \
 		exit 1; \
 	fi; \
 	cd backend && "$$GO_BIN" run ./cmd/seed -email "$(EMAIL)" -password "$(PASSWORD)"
@@ -99,14 +103,14 @@ seed:
 seed-tilt:
 	@set -e; \
 	GO_BIN=""; \
-	if [ -x "$$HOME/.go-sdk/go1.25.7/bin/go" ]; then \
-		GO_BIN="$$HOME/.go-sdk/go1.25.7/bin/go"; \
+	if [ -x "$$HOME/.go-sdk/go1.25.9/bin/go" ]; then \
+		GO_BIN="$$HOME/.go-sdk/go1.25.9/bin/go"; \
 	elif command -v go >/dev/null 2>&1; then \
 		GO_BIN="$$(command -v go)"; \
 	fi; \
 	if [ -z "$$GO_BIN" ]; then \
 		printf "Go is not installed.\n"; \
-		printf "Install Go 1.25+ and retry make seed-tilt.\n"; \
+		printf "Install Go 1.25.9+ and retry make seed-tilt.\n"; \
 		exit 1; \
 	fi; \
 	cd backend && "$$GO_BIN" run ./cmd/seed -email "$(EMAIL)" -password "$(PASSWORD)" -k8s
@@ -114,14 +118,14 @@ seed-tilt:
 seed-correlated:
 	@set -e; \
 	GO_BIN=""; \
-	if [ -x "$$HOME/.go-sdk/go1.25.7/bin/go" ]; then \
-		GO_BIN="$$HOME/.go-sdk/go1.25.7/bin/go"; \
+	if [ -x "$$HOME/.go-sdk/go1.25.9/bin/go" ]; then \
+		GO_BIN="$$HOME/.go-sdk/go1.25.9/bin/go"; \
 	elif command -v go >/dev/null 2>&1; then \
 		GO_BIN="$$(command -v go)"; \
 	fi; \
 	if [ -z "$$GO_BIN" ]; then \
 		printf "Go is not installed.\n"; \
-		printf "Install Go 1.25+ and retry make seed-correlated.\n"; \
+		printf "Install Go 1.25.9+ and retry make seed-correlated.\n"; \
 		exit 1; \
 	fi; \
 	cd backend && "$$GO_BIN" run ./cmd/seed-correlated --otlp-url $(OTLP_URL) --count $(COUNT) --spread $(SPREAD)
@@ -171,8 +175,8 @@ security-local:
 		printf "Install Docker to run gitleaks and retry make security-local.\n"; \
 		exit 1; \
 	fi; \
-	printf "Running govulncheck (backend, Go 1.25.7 container)...\n"; \
-	docker run --rm -v "$$PWD:/repo" -w /repo/backend golang:1.25.7 /bin/sh -c 'go run golang.org/x/vuln/cmd/govulncheck@latest ./...'; \
+	printf "Running govulncheck (backend, Go 1.25.9 container)...\n"; \
+	docker run --rm -v "$$PWD:/repo" -w /repo/backend golang:1.25.9 /bin/sh -c 'go run golang.org/x/vuln/cmd/govulncheck@latest ./...'; \
 	printf "Running gitleaks (repo)...\n"; \
 	docker run --rm -v "$$PWD:/repo" -w /repo ghcr.io/gitleaks/gitleaks:latest detect --source . --redact --no-banner
 

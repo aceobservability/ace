@@ -222,6 +222,7 @@ const dsLoading = ref(false)
 const dsError = ref<string | null>(null)
 const dsLogs = ref<LogEntry[]>([])
 const dsTraceSummaries = ref<TraceSummary[]>([])
+const dsTraceSpans = ref<TraceSpan[]>([])
 const dsChartData = ref<{
   series: { name: string; data: { timestamp: number; value: number }[] }[]
 }>({ series: [] })
@@ -242,17 +243,19 @@ const traceSearchLimit = computed(() => {
 async function fetchDatasourceData() {
   if (!datasourceId.value) return
 
-  const isTracePanel = props.panel.type === 'trace_list' || props.panel.type === 'trace_heatmap'
+  const isBuiltinTracePanel = props.panel.type === 'trace_list' || props.panel.type === 'trace_heatmap'
+  const isRegistryTracePanel = registryPanel.value?.queryMode === 'traces'
   const hasExplicitTraceSignal = explicitQuerySignal.value === 'traces'
 
   dsLoading.value = true
   dsError.value = null
 
   try {
-    if (isTracePanel) {
+    if (isBuiltinTracePanel) {
       if (hasExplicitTraceSignal) {
         if (!queryExpr.value.trim()) {
           dsTraceSummaries.value = []
+          dsTraceSpans.value = []
           dsLogs.value = []
           dsChartData.value = { series: [] }
           return
@@ -270,18 +273,19 @@ async function fetchDatasourceData() {
         if (traceResult.status === 'error') {
           dsError.value = traceResult.error || 'Query failed'
           dsTraceSummaries.value = []
+          dsTraceSpans.value = []
           return
         }
 
         if (traceResult.resultType !== 'traces') {
           dsError.value = 'Selected datasource did not return trace results'
           dsTraceSummaries.value = []
+          dsTraceSpans.value = []
           return
         }
 
-        dsTraceSummaries.value = convertClickHouseSpansToTraceSummaries(
-          traceResult.data?.traces || [],
-        )
+        dsTraceSpans.value = traceResult.data?.traces || []
+        dsTraceSummaries.value = convertClickHouseSpansToTraceSummaries(dsTraceSpans.value)
       } else {
         dsTraceSummaries.value = await searchDataSourceTraces(datasourceId.value, {
           query: queryExpr.value.trim() || undefined,
@@ -290,8 +294,46 @@ async function fetchDatasourceData() {
           end: endRef.value,
           limit: traceSearchLimit.value,
         })
+        dsTraceSpans.value = []
       }
       dsLogs.value = []
+      dsChartData.value = { series: [] }
+      return
+    }
+
+    if (isRegistryTracePanel) {
+      if (!queryExpr.value.trim()) {
+        dsLogs.value = []
+        dsTraceSummaries.value = []
+        dsTraceSpans.value = []
+        dsChartData.value = { series: [] }
+        return
+      }
+
+      const traceResult = await queryDataSource(datasourceId.value, {
+        query: queryExpr.value,
+        signal: 'traces',
+        start: startRef.value,
+        end: endRef.value,
+        step: 15,
+        limit: traceSearchLimit.value,
+      })
+
+      if (traceResult.status === 'error') {
+        dsError.value = traceResult.error || 'Query failed'
+        dsTraceSpans.value = []
+        return
+      }
+
+      if (traceResult.resultType !== 'traces') {
+        dsError.value = 'Selected datasource did not return trace results'
+        dsTraceSpans.value = []
+        return
+      }
+
+      dsLogs.value = []
+      dsTraceSummaries.value = []
+      dsTraceSpans.value = traceResult.data?.traces || []
       dsChartData.value = { series: [] }
       return
     }
@@ -299,6 +341,7 @@ async function fetchDatasourceData() {
     if (!queryExpr.value) {
       dsLogs.value = []
       dsTraceSummaries.value = []
+      dsTraceSpans.value = []
       dsChartData.value = { series: [] }
       return
     }
@@ -315,21 +358,25 @@ async function fetchDatasourceData() {
     if (result.status === 'error') {
       dsError.value = result.error || 'Query failed'
       dsTraceSummaries.value = []
+      dsTraceSpans.value = []
       return
     }
 
     if (result.resultType === 'logs' && result.data?.logs) {
       dsLogs.value = result.data.logs
       dsTraceSummaries.value = []
+      dsTraceSpans.value = []
       dsChartData.value = { series: [] }
     } else if (result.resultType === 'traces' && result.data?.traces) {
       dsLogs.value = []
       dsChartData.value = { series: [] }
       dsTraceSummaries.value = []
+      dsTraceSpans.value = []
       dsError.value = 'Trace results can only be rendered in trace panels'
     } else if (result.data?.result) {
       dsLogs.value = []
       dsTraceSummaries.value = []
+      dsTraceSpans.value = []
       dsChartData.value = {
         series: result.data.result.map((r) => {
           const labelParts: string[] = []
@@ -351,10 +398,17 @@ async function fetchDatasourceData() {
   } catch (e) {
     dsError.value = e instanceof Error ? e.message : 'Query failed'
     dsTraceSummaries.value = []
+    dsTraceSpans.value = []
   } finally {
     dsLoading.value = false
   }
 }
+
+// Registry-based panel support
+const registryPanel = computed(() => {
+  if (!isRegisteredPanel(props.panel.type)) return null
+  return lookupPanel(props.panel.type)
+})
 
 // Fetch datasource data when params change
 watch(
@@ -369,8 +423,9 @@ watch(
     endRef,
   ],
   () => {
-    const isTracePanel = props.panel.type === 'trace_list' || props.panel.type === 'trace_heatmap'
-    if (datasourceId.value && (isTracePanel || queryExpr.value)) {
+    const isBuiltinTracePanel = props.panel.type === 'trace_list' || props.panel.type === 'trace_heatmap'
+    const isRegistryTracePanel = registryPanel.value?.queryMode === 'traces'
+    if (datasourceId.value && (isBuiltinTracePanel || isRegistryTracePanel || queryExpr.value)) {
       fetchDatasourceData()
     }
   },
@@ -383,6 +438,9 @@ const error = computed(() => (datasourceId.value ? dsError.value : promError.val
 const chartData = computed(() => (datasourceId.value ? dsChartData.value : promChartData.value))
 const logEntries = computed(() => dsLogs.value)
 const traceSummaries = computed(() => dsTraceSummaries.value)
+const tracePayload = computed(() =>
+  dsTraceSpans.value.length > 0 ? dsTraceSpans.value : dsTraceSummaries.value,
+)
 
 function refetch() {
   if (datasourceId.value) {
@@ -493,12 +551,6 @@ const isLogPanel = computed(() => props.panel.type === 'logs')
 const isTraceListPanel = computed(() => props.panel.type === 'trace_list')
 const isTraceHeatmapPanel = computed(() => props.panel.type === 'trace_heatmap')
 
-// Registry-based panel support
-const registryPanel = computed(() => {
-  if (!isRegisteredPanel(props.panel.type)) return null
-  return lookupPanel(props.panel.type)
-})
-
 const registryComponentCache = new Map<string, ReturnType<typeof defineAsyncComponent>>()
 
 const registryComponent = computed(() => {
@@ -515,12 +567,25 @@ const registryProps = computed(() => {
   const raw: RawQueryResult = {
     series: chartData.value.series,
     logs: logEntries.value,
-    traces: traceSummaries.value,
+    traces: tracePayload.value,
   }
-  return registryPanel.value.dataAdapter(raw, props.panel.query)
+  const adaptedProps = registryPanel.value.dataAdapter(raw, props.panel.query)
+  const emptyState = registryPanel.value.emptyState
+  if (!emptyState) return adaptedProps
+
+  return {
+    ...adaptedProps,
+    emptyTitle: emptyState.title,
+    emptyDescription: emptyState.description,
+    emptyActionLabel: emptyState.actionLabel,
+  }
 })
 
 const isRegistryPanel = computed(() => registryPanel.value !== null)
+const registryEmptyState = computed(() => registryPanel.value?.emptyState ?? null)
+const isUnsupportedRegistryPanel = computed(
+  () => registryPanel.value?.supportStatus === 'unsupported',
+)
 
 const hasQuery = computed(() => {
   if (isTraceListPanel.value || isTraceHeatmapPanel.value) {
@@ -531,9 +596,14 @@ const hasQuery = computed(() => {
     return !!datasourceId.value
   }
 
-  // Registry panels: standalone panels (queryMode: 'none') are always ready
+  // Registry panels: standalone panels (queryMode: 'none') are always ready.
+  // Trace registry panels need a datasource-backed trace query so they do not
+  // appear live with empty placeholder data.
   if (isRegistryPanel.value) {
     if (registryPanel.value?.queryMode === 'none') return true
+    if (registryPanel.value?.queryMode === 'traces') {
+      return !!datasourceId.value && !!queryExpr.value
+    }
     return !!datasourceId.value || !!queryExpr.value
   }
 
@@ -701,6 +771,27 @@ function handleRegistryPanelChange(data: Record<string, unknown>) {
       </div>
       <div v-else-if="isTraceHeatmapPanel && traceSummaries.length > 0" class="flex-1 min-h-0">
         <TraceHeatmapPanel :traces="traceSummaries" @open-trace="handleOpenTrace" />
+      </div>
+      <div
+        v-else-if="isUnsupportedRegistryPanel"
+        data-testid="panel-unsupported-empty"
+        class="flex-1 flex flex-col items-center justify-center gap-2 px-6 text-center"
+        :style="{ color: 'var(--color-on-surface-variant)' }"
+      >
+        <AlertCircle :size="40" :style="{ color: 'var(--color-tertiary)' }" />
+        <h4 class="m-0 text-sm font-semibold" :style="{ color: 'var(--color-on-surface)' }">
+          {{ registryEmptyState?.title || 'Panel not supported yet' }}
+        </h4>
+        <p class="m-0 max-w-sm text-xs leading-5">
+          {{ registryEmptyState?.description || 'This panel type is registered but has no live data integration.' }}
+        </p>
+        <span
+          v-if="registryEmptyState?.actionLabel"
+          class="text-[11px] font-semibold uppercase tracking-wide"
+          :style="{ color: 'var(--color-primary)' }"
+        >
+          {{ registryEmptyState.actionLabel }}
+        </span>
       </div>
       <div v-else-if="isRegistryPanel && registryComponent" class="flex-1 min-h-0 overflow-hidden relative">
         <component :is="registryComponent" v-bind="registryProps" @change="handleRegistryPanelChange" />

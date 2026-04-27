@@ -7,6 +7,7 @@ node_modules/
 # Build outputs
 dist/
 build/
+**/.vite/
 
 # Environment files
 .env
@@ -29,6 +30,9 @@ build/
 *.test
 *.out
 vendor/
+/backend/api
+/backend/bin/
+/backend/seed-correlated
 
 # Logs
 *.log
@@ -59,11 +63,13 @@ agent/**
 !agent/ralph.sh
 !agent/opencode-auto-allow.json
 !agent/prompt.md
+.claude/
 
-# Local progress tracker
-/progress.txt
+# Local agent state
 .gstack/
 .superpowers/
+
+# Root progress.txt is intentionally tracked per AGENTS.md.
 
 # VitePress build artifacts
 website/.vitepress/dist/

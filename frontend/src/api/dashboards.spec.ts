@@ -31,7 +31,7 @@ describe('Dashboard API', () => {
 
       const result = await listDashboards(orgId)
       expect(mockFetch).toHaveBeenCalledWith(
-        `http://localhost:8080/api/orgs/${orgId}/dashboards`,
+        `/api/orgs/${orgId}/dashboards`,
         expect.objectContaining({
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -55,7 +55,7 @@ describe('Dashboard API', () => {
 
       const result = await getDashboard('1')
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8080/api/dashboards/1',
+        '/api/dashboards/1',
         expect.objectContaining({
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -79,7 +79,7 @@ describe('Dashboard API', () => {
 
       const result = await createDashboard(orgId, { title: 'New Dashboard' })
       expect(mockFetch).toHaveBeenCalledWith(
-        `http://localhost:8080/api/orgs/${orgId}/dashboards`,
+        `/api/orgs/${orgId}/dashboards`,
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -107,7 +107,7 @@ describe('Dashboard API', () => {
 
       const result = await updateDashboard('1', { title: 'Updated' })
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8080/api/dashboards/1',
+        '/api/dashboards/1',
         expect.objectContaining({
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -131,7 +131,7 @@ describe('Dashboard API', () => {
 
       await deleteDashboard('1')
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8080/api/dashboards/1',
+        '/api/dashboards/1',
         expect.objectContaining({ method: 'DELETE' }),
       )
     })

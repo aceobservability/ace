@@ -31,7 +31,7 @@ describe('importDashboardYaml', () => {
     const result = await importDashboardYaml('org-1', yamlPayload)
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:8080/api/orgs/org-1/dashboards/import?format=yaml',
+      '/api/orgs/org-1/dashboards/import?format=yaml',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({

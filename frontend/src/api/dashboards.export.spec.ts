@@ -24,7 +24,7 @@ describe('exportDashboardYaml', () => {
     const result = await exportDashboardYaml('dashboard-1')
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:8080/api/dashboards/dashboard-1/export?format=yaml',
+      '/api/dashboards/dashboard-1/export?format=yaml',
       expect.objectContaining({
         headers: expect.objectContaining({
           'Content-Type': 'application/json',

@@ -1,4 +1,4 @@
-@agent/prd.json @agent/progress.txt
+@agent/prd.json @progress.txt
 
 You are working on the "ace" project (Grafana-like monitoring dashboard).
 
@@ -35,13 +35,13 @@ If no incomplete tasks remain:
 2. Implement only that selected task (small scoped change).
 
 3. Run tests relevant to touched areas:
-   - Frontend: `cd frontend && npm run type-check && npm run test`
+   - Frontend: `cd frontend && bun run type-check && bun run test`
    - Backend: `cd backend && go test ./...`
 
    Frontend fallback policy (to avoid deadlock on unrelated baseline failures):
    - If full frontend tests fail, identify failing test files.
    - If failures are outside files touched for this task, run targeted tests for touched areas and proceed when those pass.
-   - Record both results in progress (`full suite failing (pre-existing)` + `targeted passing`).
+   - Record both results in root `progress.txt` (`full suite failing (pre-existing)` + `targeted passing`).
 
 4. Frontend browser validation (required when any frontend file is changed):
    - Use the `dev-browser` skill to test the implemented UI flow in a real browser.
@@ -51,7 +51,7 @@ If no incomplete tasks remain:
 
 5. If the selected task is complete and tests pass (or only unrelated pre-existing frontend failures remain and targeted touched-area tests pass):
    - Set only that task's `passes` to `true` in `agent/prd.json`
-   - Append a new entry to `agent/progress.txt`:
+   - Append a new entry to root `progress.txt`:
 
 ```
 ## Task <id>: <name> - <timestamp>
@@ -64,7 +64,7 @@ If no incomplete tasks remain:
 6. Commit changes (but do NOT push):
 
 ```bash
-git add <task-related-files> agent/prd.json agent/progress.txt
+git add <task-related-files> progress.txt
 git commit -m "feat: <task id> <short description>"
 ```
 

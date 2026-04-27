@@ -12,7 +12,7 @@
         "dompurify": "^3.3.3",
         "echarts": "^6.0.0",
         "lucide-vue-next": "^1.0.0",
-        "marked": "^17.0.5",
+        "marked": "^18.0.2",
         "monaco-editor": "^0.55.1",
         "posthog-js": "^1.363.1",
         "react": "^19.2.4",
@@ -961,7 +961,7 @@
 
     "make-dir": ["make-dir@4.0.0", "", { "dependencies": { "semver": "^7.5.3" } }, "sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw=="],
 
-    "marked": ["marked@17.0.6", "", { "bin": { "marked": "bin/marked.js" } }, "sha512-gB0gkNafnonOw0obSTEGZTT86IuhILt2Wfx0mWH/1Au83kybTayroZ/V6nS25mN7u8ASy+5fMhgB3XPNrOZdmA=="],
+    "marked": ["marked@18.0.2", "", { "bin": { "marked": "bin/marked.js" } }, "sha512-NsmlUYBS/Zg57rgDWMYdnre6OTj4e+qq/JS2ot3KrYLSoHLw+sDu0Nm1ZGpRgYAq6c+b1ekaY5NzVchMCQnzcg=="],
 
     "mdast-util-from-markdown": ["mdast-util-from-markdown@1.3.1", "", { "dependencies": { "@types/mdast": "^3.0.0", "@types/unist": "^2.0.0", "decode-named-character-reference": "^1.0.0", "mdast-util-to-string": "^3.1.0", "micromark": "^3.0.0", "micromark-util-decode-numeric-character-reference": "^1.0.0", "micromark-util-decode-string": "^1.0.0", "micromark-util-normalize-identifier": "^1.0.0", "micromark-util-symbol": "^1.0.0", "micromark-util-types": "^1.0.0", "unist-util-stringify-position": "^3.0.0", "uvu": "^0.5.0" } }, "sha512-4xTO/M8c82qBcnQc1tgpNtubGUW/Y1tBQ1B0i5CtSoelOLKFYlElIr3bvgREYYO5iRqbMY1YuqZng0GVOI8Qww=="],
 

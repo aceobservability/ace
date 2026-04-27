@@ -20,6 +20,9 @@ const props = withDefaults(
   defineProps<{
     root: FlameNode
     unit?: string
+    emptyTitle?: string
+    emptyDescription?: string
+    emptyActionLabel?: string
   }>(),
   { unit: 'ms' },
 )
@@ -133,6 +136,40 @@ function rectPercentage(rect: FlatRect): string {
   return pct
 }
 
+const emptyStyle = {
+  position: 'absolute' as const,
+  inset: '0',
+  display: 'flex',
+  flexDirection: 'column' as const,
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '0.35rem',
+  color: 'var(--color-on-surface-variant)',
+  fontSize: '0.875rem',
+  textAlign: 'center' as const,
+  padding: '1rem',
+}
+
+const emptyTitleStyle = {
+  color: 'var(--color-on-surface)',
+  fontWeight: '600',
+}
+
+const emptyDescriptionStyle = {
+  maxWidth: '22rem',
+  fontSize: '0.75rem',
+  lineHeight: '1.35',
+}
+
+const emptyActionStyle = {
+  marginTop: '0.25rem',
+  fontSize: '0.6875rem',
+  fontWeight: '600',
+  color: 'var(--color-primary)',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.04em',
+}
+
 // ---------------------------------------------------------------------------
 // Tooltip
 // ---------------------------------------------------------------------------
@@ -241,6 +278,20 @@ function onRectLeave() {
         <div>Total: {{ tooltipRect.totalValue }} {{ props.unit }}</div>
         <div>{{ rectPercentage(tooltipRect) }}% of root</div>
       </template>
+    </div>
+
+    <div
+      v-if="rects.length === 0"
+      data-testid="flame-graph-empty"
+      :style="emptyStyle"
+    >
+      <div :style="emptyTitleStyle">{{ props.emptyTitle || 'No profiling data' }}</div>
+      <div v-if="props.emptyDescription" :style="emptyDescriptionStyle">
+        {{ props.emptyDescription }}
+      </div>
+      <div v-if="props.emptyActionLabel" :style="emptyActionStyle">
+        {{ props.emptyActionLabel }}
+      </div>
     </div>
   </div>
 </template>

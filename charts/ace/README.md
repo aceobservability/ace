@@ -66,14 +66,17 @@ helm install ace charts/ace \
 ## Validation
 
 ```bash
-# Lint the chart
-helm lint charts/ace
+# Lint the chart with dev values (base values intentionally require secret overrides)
+helm lint charts/ace -f charts/ace/values-dev.yaml
 
 # Render templates without installing
 helm template ace charts/ace -f charts/ace/values-dev.yaml
 
 # Dry-run install
 helm install ace charts/ace --dry-run -f charts/ace/values-dev.yaml -n ace
+
+# Confirm missing required production secrets fail fast
+helm template ace charts/ace
 ```
 
 ## Components
@@ -111,16 +114,16 @@ helm install ace charts/ace --dry-run -f charts/ace/values-dev.yaml -n ace
 | backend.affinity | object | `{}` |  |
 | backend.autoscaling | object | `{"enabled":true,"maxReplicas":10,"minReplicas":2,"targetCPUUtilizationPercentage":70,"targetMemoryUtilizationPercentage":80}` | HPA configuration |
 | backend.baseURL | string | `""` | Backend base URL (for SSO callbacks) |
-| backend.existingSecret | string | `""` | Use an existing Secret instead of the chart-managed one. Must contain keys: database-password, jwt-secret, jwt-private-key, jwt-public-key |
+| backend.existingSecret | string | `""` | Use an existing Secret instead of the chart-managed one. Required keys depend on mode: database-password for internal PostgreSQL, external-database-password when referenced by externalDatabase.url, and jwt-secret or jwt-private-key/jwt-public-key for JWT key material. |
 | backend.extraEnv | object | `{}` | Extra environment variables as key-value pairs |
 | backend.frontendURL | string | `""` | Frontend URL (for SSO redirects) |
 | backend.image.pullPolicy | string | `"IfNotPresent"` |  |
 | backend.image.repository | string | `"ghcr.io/aceobservability/ace-backend"` |  |
 | backend.image.tag | string | `""` | Overrides the image tag (default: Chart.appVersion) |
 | backend.jwt | object | `{"privateKey":"","publicKey":"","secret":""}` | JWT configuration (stored in Secret) |
-| backend.jwt.privateKey | string | `""` | RSA/ECDSA private key PEM (optional, for asymmetric JWT) |
-| backend.jwt.publicKey | string | `""` | RSA/ECDSA public key PEM (optional) |
-| backend.jwt.secret | string | `""` | HMAC secret for JWT signing (set one of secret OR privateKey/publicKey) |
+| backend.jwt.privateKey | string | `""` | RSA private key PEM for JWT signing (must be set together with publicKey) |
+| backend.jwt.publicKey | string | `""` | RSA public key PEM for JWT verification (must be set together with privateKey) |
+| backend.jwt.secret | string | `""` | Shared JWT/encryption secret material (set this or privateKey/publicKey when not using backend.existingSecret) |
 | backend.nodeSelector | object | `{}` |  |
 | backend.otlp | object | `{"enabled":true,"endpoint":""}` | OpenTelemetry tracing configuration |
 | backend.otlp.enabled | bool | `true` | Enable OTLP trace export from the backend |
@@ -148,8 +151,8 @@ helm install ace charts/ace --dry-run -f charts/ace/values-dev.yaml -n ace
 | backend.valkey | object | `{"url":""}` | Valkey (Redis-compatible) for refresh tokens |
 | backend.victoriaLogs | object | `{"url":""}` | VictoriaLogs query endpoint |
 | backend.victoriaLogs.url | string | `""` | Override the logs query URL (auto-detected from vlogs subchart if empty) |
-| externalDatabase.password | string | `nil` | Password (stored in Secret; referenced by DATABASE_URL) |
-| externalDatabase.url | string | `""` | Full connection string (overrides all other fields) |
+| externalDatabase.password | string | `nil` | Password stored in Secret and exposed as EXTERNAL_DATABASE_PASSWORD when externalDatabase.url references it |
+| externalDatabase.url | string | `""` | Full connection string (overrides internal PostgreSQL; may reference $(EXTERNAL_DATABASE_PASSWORD)) |
 | frontend.affinity | object | `{}` |  |
 | frontend.autoscaling.enabled | bool | `true` |  |
 | frontend.autoscaling.maxReplicas | int | `6` |  |
@@ -189,7 +192,7 @@ helm install ace charts/ace --dry-run -f charts/ace/values-dev.yaml -n ace
 | networkPolicy.enabled | bool | `false` | Enable NetworkPolicy resources |
 | networkPolicy.ingressControllerLabels | object | `{"app.kubernetes.io/name":"ingress-nginx"}` | Labels to match the ingress controller pods (for ingress allowlisting) |
 | postgresql.auth.database | string | `"ace"` |  |
-| postgresql.auth.password | string | `nil` |  |
+| postgresql.auth.password | string | `nil` | Required for chart-managed internal PostgreSQL unless backend.existingSecret or externalDatabase.url is used. |
 | postgresql.auth.username | string | `"ace"` |  |
 | postgresql.enabled | bool | `true` |  |
 | postgresql.primary.persistence.enabled | bool | `true` |  |
@@ -234,6 +237,16 @@ helm install ace charts/ace --dry-run -f charts/ace/values-dev.yaml -n ace
 | victoriatraces.enabled | bool | `true` |  |
 | vtraces | object | `{"server":{"extraArgs":{"opentelemetry.enabled":"true"},"extraContainerPorts":[{"containerPort":4317,"name":"otlp-grpc","protocol":"TCP"},{"containerPort":4318,"name":"otlp-http","protocol":"TCP"}],"image":{"repository":"victoriametrics/victoria-traces","tag":"v1.8.0-victoriametrics"},"persistentVolume":{"enabled":true,"size":"30Gi","storageClass":""},"resources":{"limits":{"cpu":"2","memory":"4Gi"},"requests":{"cpu":"200m","memory":"512Mi"}}}}` | victoria-metrics-single subchart config (alias: vtraces) |
 
+## Required Secret Values
+
+The chart fails during render when it would otherwise create a backend Secret without keys that the backend Deployment references.
+
+- Internal PostgreSQL (`postgresql.enabled=true`) without `externalDatabase.url` requires `postgresql.auth.password` when the chart manages the backend Secret. If `backend.existingSecret` is set, pre-create that Secret with `database-password` and configure PostgreSQL with the same password/secret.
+- External PostgreSQL requires `externalDatabase.url` when `postgresql.enabled=false`. To keep the password out of the URL value, reference it as `$(EXTERNAL_DATABASE_PASSWORD)` and set `externalDatabase.password`, or set `backend.existingSecret` with an `external-database-password` key.
+- When `backend.existingSecret` is not set, provide either `backend.jwt.secret` or both `backend.jwt.privateKey` and `backend.jwt.publicKey`.
+- The backend can auto-generate RSA JWT signing keys when `jwt-private-key`/`jwt-public-key` are absent. This is convenient for development; provide a key pair or an existing Secret for stable signing keys across production pods and restarts.
+- When `backend.existingSecret` is set, the chart does not create a backend Secret. Include the keys required by your mode: `database-password`, `external-database-password`, `jwt-secret`, `jwt-private-key`, `jwt-public-key`, and `posthog-api-key` as applicable.
+
 ## Toggling Components
 
 Each major component is independently togglable:
@@ -264,7 +277,8 @@ victoria-metrics-k8s-stack:
 postgresql:
   enabled: false
 externalDatabase:
-  url: "postgres://user:pass@external-db:5432/ace?sslmode=require"
+  url: "postgres://user:$(EXTERNAL_DATABASE_PASSWORD)@external-db:5432/ace?sslmode=require"
+  password: "strong-external-db-password"
 ```
 
 ## OTLP Trace Ingestion
@@ -310,7 +324,7 @@ These can be overridden via `backend.prometheus.url`, `backend.victoriaLogs.url`
 ## Security Notes
 
 - All sensitive values (DB password, JWT keys, API keys) are stored in Kubernetes Secrets
-- Use `backend.existingSecret` to reference a pre-created Secret (e.g., from Vault or Sealed Secrets)
+- Use `backend.existingSecret` to reference a pre-created Secret (e.g., from Vault or Sealed Secrets) and include the required keys for your database/JWT mode
 - Pod security contexts enforce non-root execution and drop all capabilities
 - NetworkPolicy resources are available (enable with `networkPolicy.enabled: true`)
 - RBAC is scoped to the minimum required permissions for metrics scraping

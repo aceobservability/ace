@@ -1,8 +1,7 @@
 import { ref, watch } from 'vue'
 import type { DashboardSpec } from '../utils/dashboardSpec'
 import { useOrganization } from './useOrganization'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+import { API_BASE } from '../api/base'
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('access_token')
