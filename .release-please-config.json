@@ -6,6 +6,12 @@
       "release-type": "simple",
       "changelog-path": "CHANGELOG.md",
       "extra-files": [
+        "VERSION",
+        {
+          "type": "json",
+          "path": "frontend/package.json",
+          "jsonpath": "$.version"
+        },
         {
           "type": "yaml",
           "path": "charts/ace/Chart.yaml",

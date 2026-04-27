@@ -18,6 +18,8 @@ backend:
     limits:
       cpu: 200m
       memory: 256Mi
+  jwt:
+    secret: "dev-jwt-secret-change-me"
 
 frontend:
   replicaCount: 1

@@ -45,6 +45,9 @@ interface SimEdge {
 const props = defineProps<{
   nodes: GraphNode[]
   edges: GraphEdge[]
+  emptyTitle?: string
+  emptyDescription?: string
+  emptyActionLabel?: string
 }>()
 
 // ---------------------------------------------------------------------------
@@ -156,6 +159,40 @@ watch([() => props.nodes, () => props.edges], runSimulation, { deep: true })
 // ---------------------------------------------------------------------------
 
 const edgeColor = 'var(--color-outline-variant)'
+
+const emptyStyle = {
+  position: 'absolute' as const,
+  inset: '0',
+  display: 'flex',
+  flexDirection: 'column' as const,
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '0.35rem',
+  color: 'var(--color-on-surface-variant)',
+  fontSize: '0.875rem',
+  textAlign: 'center' as const,
+  padding: '1rem',
+}
+
+const emptyTitleStyle = {
+  color: 'var(--color-on-surface)',
+  fontWeight: '600',
+}
+
+const emptyDescriptionStyle = {
+  maxWidth: '22rem',
+  fontSize: '0.75rem',
+  lineHeight: '1.35',
+}
+
+const emptyActionStyle = {
+  marginTop: '0.25rem',
+  fontSize: '0.6875rem',
+  fontWeight: '600',
+  color: 'var(--color-primary)',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.04em',
+}
 </script>
 
 <template>
@@ -165,6 +202,7 @@ const edgeColor = 'var(--color-outline-variant)'
       width: '100%',
       height: '100%',
       overflow: 'hidden',
+      position: 'relative',
       backgroundColor: 'transparent',
     }"
   >
@@ -239,5 +277,19 @@ const edgeColor = 'var(--color-outline-variant)'
         {{ node.label }}
       </text>
     </svg>
+
+    <div
+      v-if="props.nodes.length === 0"
+      data-testid="node-graph-empty"
+      :style="emptyStyle"
+    >
+      <div :style="emptyTitleStyle">{{ props.emptyTitle || 'No service graph data' }}</div>
+      <div v-if="props.emptyDescription" :style="emptyDescriptionStyle">
+        {{ props.emptyDescription }}
+      </div>
+      <div v-if="props.emptyActionLabel" :style="emptyActionStyle">
+        {{ props.emptyActionLabel }}
+      </div>
+    </div>
   </div>
 </template>

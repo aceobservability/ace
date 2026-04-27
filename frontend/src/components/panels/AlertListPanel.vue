@@ -21,6 +21,9 @@ export interface AlertItem {
 
 const props = defineProps<{
   alerts: AlertItem[]
+  emptyTitle?: string
+  emptyDescription?: string
+  emptyActionLabel?: string
 }>()
 
 // ---------------------------------------------------------------------------
@@ -85,11 +88,35 @@ const containerStyle = computed(() => ({
 
 const emptyStyle = {
   display: 'flex',
+  flexDirection: 'column' as const,
   alignItems: 'center',
   justifyContent: 'center',
+  gap: '0.35rem',
   height: '100%',
   color: 'var(--color-on-surface-variant)',
   fontSize: '0.875rem',
+  textAlign: 'center' as const,
+  padding: '1rem',
+}
+
+const emptyTitleStyle = {
+  color: 'var(--color-on-surface)',
+  fontWeight: '600',
+}
+
+const emptyDescriptionStyle = {
+  maxWidth: '22rem',
+  fontSize: '0.75rem',
+  lineHeight: '1.35',
+}
+
+const emptyActionStyle = {
+  marginTop: '0.25rem',
+  fontSize: '0.6875rem',
+  fontWeight: '600',
+  color: 'var(--color-primary)',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.04em',
 }
 
 const rowStyle = {
@@ -147,9 +174,16 @@ const messageStyle = {
     <!-- Empty state -->
     <div
       v-if="props.alerts.length === 0"
+      data-testid="alert-list-empty"
       :style="emptyStyle"
     >
-      No alerts
+      <div :style="emptyTitleStyle">{{ props.emptyTitle || 'No alerts' }}</div>
+      <div v-if="props.emptyDescription" :style="emptyDescriptionStyle">
+        {{ props.emptyDescription }}
+      </div>
+      <div v-if="props.emptyActionLabel" :style="emptyActionStyle">
+        {{ props.emptyActionLabel }}
+      </div>
     </div>
 
     <!-- Alert rows -->

@@ -1,3 +1,5 @@
+import { API_BASE } from './base'
+
 export interface User {
   id: string
   email: string
@@ -32,8 +34,6 @@ export interface MeResponse extends User {
     role: 'admin' | 'editor' | 'viewer' | 'auditor'
   }>
 }
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('access_token')

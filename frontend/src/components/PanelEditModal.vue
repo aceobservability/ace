@@ -8,7 +8,7 @@ import { useOrganization } from '../composables/useOrganization'
 import { isLogsType, isTracingType } from '../types/datasource'
 import type { Panel } from '../types/panel'
 import { getAllPanels, lookupPanel } from '../utils/panelRegistry'
-import type { PanelQueryMode } from '../utils/panelRegistry'
+import type { PanelQueryMode, PanelRegistration } from '../utils/panelRegistry'
 import './panels/index' // Side-effect: registers all panel types
 import ClickHouseSQLEditor from './ClickHouseSQLEditor.vue'
 import CloudWatchQueryEditor from './CloudWatchQueryEditor.vue'
@@ -57,6 +57,12 @@ const builtinTypes = new Set([
   'line_chart', 'bar_chart', 'pie', 'gauge', 'stat', 'table', 'logs', 'trace_list', 'trace_heatmap',
 ])
 const registeredPanels = computed(() => getAllPanels().filter((p) => !builtinTypes.has(p.type)))
+
+function panelOptionLabel(reg: PanelRegistration): string {
+  if (reg.supportStatus === 'unsupported') return `${reg.label} (not supported)`
+  if (reg.supportStatus === 'setup_required') return `${reg.label} (setup required)`
+  return reg.label
+}
 
 const title = ref(props.panel?.title || '')
 const panelType = ref(props.panel?.type || 'line_chart')
@@ -483,7 +489,7 @@ const selectClass = 'w-full rounded-lg px-3 py-2.5 text-sm transition cursor-poi
                 v-for="reg in registeredPanels"
                 :key="reg.type"
                 :value="reg.type"
-              >{{ reg.label }}</option>
+              >{{ panelOptionLabel(reg) }}</option>
             </select>
           </div>
         </div>

@@ -1,6 +1,6 @@
 [tools]
 air = "latest"
-go = "1.25.8"
+go = "1.25.9"
 golangci-lint = "latest"
 helm = "latest"
 k3d = "latest"

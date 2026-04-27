@@ -29,7 +29,9 @@ vi.mock('../composables/useFavorites', () => ({
   }),
 }))
 
-const mockDatasources = ref<{ id: string; type: string }[]>([])
+const mockDatasources = ref<
+  { id: string; name: string; type: string; is_default?: boolean }[]
+>([])
 
 vi.mock('../composables/useDatasource', () => ({
   useDatasource: () => ({
@@ -84,7 +86,9 @@ describe('HomeView', () => {
     if (opts.hasDataSources === false) {
       mockDatasources.value = []
     } else {
-      mockDatasources.value = [{ id: 'ds-1', type: 'prometheus' }]
+      mockDatasources.value = [
+        { id: 'ds-1', name: 'Prometheus Prod', type: 'prometheus', is_default: true },
+      ]
     }
 
     return mount(HomeView, {
@@ -154,22 +158,29 @@ describe('HomeView', () => {
     expect(inputSection.exists()).toBe(true)
   })
 
-  // --- 2. System Health Grid ---
-  it('renders the system health grid section', () => {
+  // --- 2. Data source inventory ---
+  it('renders configured datasource inventory instead of mock system health', () => {
     wrapper = createWrapper()
 
-    const healthGrid = wrapper.find('[data-testid="system-health-grid"]')
-    expect(healthGrid.exists()).toBe(true)
-    // Should contain at least one health card
-    const healthCards = wrapper.findAll('[data-testid="health-card"]')
-    expect(healthCards.length).toBeGreaterThanOrEqual(1)
+    const summaryGrid = wrapper.find('[data-testid="datasource-summary-grid"]')
+    expect(summaryGrid.exists()).toBe(true)
+    expect(wrapper.text()).toContain('Configured Data Sources')
+    expect(wrapper.text()).toContain('Prometheus Prod')
+    expect(wrapper.find('[data-testid="datasource-summary-note"]').text()).toContain(
+      'not inferring live service health',
+    )
+    expect(wrapper.find('[data-testid="system-health-grid"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-testid="health-card"]')).toHaveLength(0)
   })
 
-  // --- 3. Recent AI Insights ---
-  it('renders the "AI Insights" section with AiInsightCard components', () => {
+  // --- 3. Sample AI insights ---
+  it('renders clearly labeled sample AI insights with AiInsightCard components', () => {
     wrapper = createWrapper()
 
-    expect(wrapper.text()).toContain('AI Insights')
+    expect(wrapper.text()).toContain('Sample AI Insights')
+    expect(wrapper.find('[data-testid="sample-ai-insights-note"]').text()).toContain(
+      'Illustrative examples only',
+    )
     const insightCards = wrapper.findAll('[data-testid="ai-insight-card"]')
     expect(insightCards.length).toBeGreaterThanOrEqual(1)
   })
@@ -277,16 +288,17 @@ describe('HomeView', () => {
     expect(recentSection.exists()).toBe(false)
   })
 
-  it('health cards display service name and metrics', () => {
+  it('datasource summary cards display datasource name and signal coverage', () => {
     wrapper = createWrapper()
 
-    const healthCards = wrapper.findAll('[data-testid="health-card"]')
-    expect(healthCards.length).toBeGreaterThanOrEqual(1)
+    const summaryCards = wrapper.findAll('[data-testid="datasource-summary-card"]')
+    expect(summaryCards.length).toBeGreaterThanOrEqual(1)
 
-    // Each health card should contain a service name and a StatusDot
-    const firstCard = healthCards[0]
+    const firstCard = summaryCards[0]
     expect(firstCard.find('[data-testid="status-dot"]').exists()).toBe(true)
-    expect(firstCard.text()).toBeTruthy()
+    expect(firstCard.text()).toContain('Prometheus Prod')
+    expect(firstCard.text()).toContain('Metrics')
+    expect(firstCard.text()).toContain('Default source')
   })
 
   it('AI command input section has gradient background styling', () => {

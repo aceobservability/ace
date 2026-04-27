@@ -1,0 +1,4 @@
+2026-04-27 — Fixed product-demo Panel QA blockers: registry initialization now precedes the immediate datasource watcher and registry empty-state copy maps to setup-required panel props with regression coverage.
+2026-04-27 — Hardened product-demo surfaces: Home now labels datasource inventory/sample AI insights honestly, Services uses tracing datasource discovery/empty states instead of hardcoded services, and stub panels expose unsupported/setup-required empty-state metadata.
+2026-04-27 — Made `charts/ace` fail fast for missing chart-managed database/JWT secrets, preserved existingSecret/externalDatabase modes, updated Helm docs, and validated failure/dev/prod render cases.
+2026-04-27 — Cleaned repo hygiene: removed tracked generated binaries/local agent artifacts, aligned release metadata to 0.15.0, updated Bun docs/package metadata, and made root `progress.txt` intentionally tracked per `AGENTS.md`.

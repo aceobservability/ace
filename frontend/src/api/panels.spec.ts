@@ -26,7 +26,7 @@ describe('Panel API', () => {
 
       const result = await listPanels('dashboard-123')
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8080/api/dashboards/dashboard-123/panels',
+        '/api/dashboards/dashboard-123/panels',
         {
           headers: {
             'Content-Type': 'application/json',
@@ -57,7 +57,7 @@ describe('Panel API', () => {
         grid_pos: { x: 0, y: 0, w: 6, h: 4 },
       })
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8080/api/dashboards/dashboard-123/panels',
+        '/api/dashboards/dashboard-123/panels',
         expect.objectContaining({
           method: 'POST',
           headers: {
@@ -95,7 +95,7 @@ describe('Panel API', () => {
 
       const result = await updatePanel('panel-1', { title: 'Updated' })
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8080/api/panels/panel-1',
+        '/api/panels/panel-1',
         expect.objectContaining({
           method: 'PUT',
           headers: {
@@ -121,7 +121,7 @@ describe('Panel API', () => {
 
       await deletePanel('panel-1')
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8080/api/panels/panel-1',
+        '/api/panels/panel-1',
         expect.objectContaining({
           method: 'DELETE',
           headers: {

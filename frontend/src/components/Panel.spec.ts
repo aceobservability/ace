@@ -545,6 +545,57 @@ describe('Panel', () => {
       expect(wrapper.find('.mock-registry-panel').exists()).toBe(true)
     })
 
+    it('maps registry emptyState copy to setup-required panel empty props', async () => {
+      const registeredType = 'node_graph'
+      mockIsRegisteredPanel.mockImplementation((type: string) => type === registeredType)
+      mockDataAdapter.mockReturnValue({ nodes: [], edges: [] })
+      mockLookupPanel.mockImplementation((type: string) => {
+        if (type !== registeredType) return null
+        return {
+          type: registeredType,
+          component: () =>
+            Promise.resolve({
+              name: 'MockSetupRequiredPanel',
+              props: ['nodes', 'edges', 'emptyTitle', 'emptyDescription', 'emptyActionLabel'],
+              template: `<div class="mock-registry-panel">
+                <h4>{{ emptyTitle }}</h4>
+                <p>{{ emptyDescription }}</p>
+                <span>{{ emptyActionLabel }}</span>
+              </div>`,
+            }),
+          dataAdapter: mockDataAdapter,
+          defaultQuery: {},
+          category: 'observability',
+          label: 'Node graph',
+          icon: { template: '<span />' },
+          queryMode: 'none',
+          supportStatus: 'setup_required',
+          emptyState: {
+            title: 'Connect trace data to render the service graph',
+            description: 'Configure a telemetry datasource before this panel can show live topology.',
+            actionLabel: 'Add trace datasource',
+          },
+        }
+      })
+
+      const setupRequiredPanel = {
+        ...mockPanel,
+        type: registeredType,
+        query: {},
+      }
+
+      const wrapper = mount(Panel, {
+        props: { panel: setupRequiredPanel },
+      })
+      await flushPromises()
+
+      expect(wrapper.text()).not.toContain('No query configured')
+      expect(wrapper.find('.mock-registry-panel').exists()).toBe(true)
+      expect(wrapper.text()).toContain('Connect trace data to render the service graph')
+      expect(wrapper.text()).toContain('Configure a telemetry datasource')
+      expect(wrapper.text()).toContain('Add trace datasource')
+    })
+
     it('does NOT use registry for known panel types (line_chart)', async () => {
       // Even if registry returns something for line_chart, the built-in branch should win
       mockIsRegisteredPanel.mockReturnValue(true)

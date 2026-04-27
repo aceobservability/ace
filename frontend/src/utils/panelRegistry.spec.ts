@@ -38,6 +38,26 @@ describe('registerPanel', () => {
     expect(isRegisteredPanel('test_panel')).toBe(true)
   })
 
+  it('preserves support status and actionable empty-state metadata', () => {
+    registerPanel({
+      ...mockRegistration,
+      supportStatus: 'unsupported',
+      emptyState: {
+        title: 'Panel not connected',
+        description: 'Use a supported panel until backend wiring is available.',
+        actionLabel: 'Choose another panel',
+      },
+    })
+
+    const result = lookupPanel('test_panel')
+    expect(result?.supportStatus).toBe('unsupported')
+    expect(result?.emptyState).toEqual({
+      title: 'Panel not connected',
+      description: 'Use a supported panel until backend wiring is available.',
+      actionLabel: 'Choose another panel',
+    })
+  })
+
   it('throws on duplicate type registration', () => {
     registerPanel(mockRegistration)
     expect(() => registerPanel(mockRegistration)).toThrow(

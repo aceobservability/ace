@@ -14,7 +14,7 @@ Practical instructions for agentic coding workflows in this repository.
   - `frontend/biome.jsonc` (frontend lint/format policy)
 
 ## 2) Prerequisites
-- Node.js 18+
+- Bun 1.3+ (frontend and docs package manager)
 - Go 1.25+
 - Docker
 - A local Kubernetes cluster (kind/minikube/Docker Desktop Kubernetes)
@@ -41,29 +41,32 @@ Notes:
 
 ### Seed data
 ```bash
-make seed-admin
-make seed-admin EMAIL=admin@example.com PASSWORD='AdminPass123' ORG='my-org' NAME='First Admin' SLUG='my-org'
-make seed-datasources
-make seed-datasources ORG=my-org
+make seed
+make seed EMAIL=admin@example.com PASSWORD='AdminPass123'
+make seed-tilt
 ```
+
+Notes:
+- `make seed` creates the default organizations and datasources for local Docker Compose/dev usage.
+- `make seed-tilt` uses Kubernetes service URLs for Tilt-based environments.
 
 ## 4) Build/lint/test commands
 ### Frontend (`frontend/`)
 ```bash
 cd frontend
-npm install
-npm run dev
-npm run build
-npm run preview
-npm run type-check
-npm run test
-npm run test:watch
-npm run test:coverage
-npm run lint
-npm run lint:dead-code
-npm run format:check
-npm run test -- src/api/datasources.spec.ts
-npm run test -- src/api/datasources.spec.ts -t "throws on 403"
+bun install
+bun run dev
+bun run build
+bun run preview
+bun run type-check
+bun run test
+bun run test:watch
+bun run test:coverage
+bun run lint
+bun run lint:dead-code
+bun run format:check
+bun run test -- src/api/datasources.spec.ts
+bun run test -- src/api/datasources.spec.ts -t "throws on 403"
 ```
 ### Backend (`backend/`)
 ```bash
@@ -87,7 +90,7 @@ make security-local
 ## 5) Lint and formatting reality
 - Backend linting: `golangci-lint` with `govet`, `ineffassign`, `misspell`, `staticcheck`, `unconvert`
 - Backend formatters in CI: `gofmt` and `goimports`
-- Frontend linting: Biome (`npm run lint`) + Knip (`npm run lint:dead-code`)
+- Frontend linting: Biome (`bun run lint`) + Knip (`bun run lint:dead-code`)
 - Biome formatting rules: 2-space indent, single quotes, semicolons as needed, trailing commas, line width 100
 - Before finishing backend edits, run `gofmt -w` on touched Go files
 
@@ -149,5 +152,6 @@ Follow existing code patterns first. Use these defaults when unclear.
 
 ## 10) Progress log policy
 - Maintain root `progress.txt` with recent implementation entries
+- `progress.txt` is intentionally tracked; do not add it to `.gitignore`
 - Keep only the 10 most recent entries
 - When adding a new entry beyond 10, remove the oldest entry

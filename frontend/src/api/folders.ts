@@ -1,6 +1,5 @@
 import type { CreateFolderRequest, Folder, UpdateFolderRequest } from '../types/folder'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+import { API_BASE } from './base'
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('access_token')

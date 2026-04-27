@@ -123,17 +123,19 @@ registerPanel({
 registerPanel({
   type: 'alert_list',
   component: () => import('./AlertListPanel.vue'),
-  dataAdapter: () => {
-    // TODO: Alert list needs backend alert API integration (Tier 2 follow-up).
-    // Currently returns empty — the component will fetch alerts directly once
-    // the backend endpoint is available.
-    return { alerts: [] }
-  },
+  dataAdapter: () => ({ alerts: [] }),
   defaultQuery: {},
   category: 'widgets',
   label: 'Alert List',
   icon: Bell,
   queryMode: 'none',
+  supportStatus: 'setup_required',
+  emptyState: {
+    title: 'Alert list not connected',
+    description:
+      'This panel is waiting on alert API wiring. Use the Alerts page with VMAlert or Alertmanager datasources for live alerts.',
+    actionLabel: 'Open Alerts',
+  },
 })
 
 // Register State Timeline
@@ -229,36 +231,41 @@ registerPanel({
 registerPanel({
   type: 'flame_graph',
   component: () => import('./FlameGraphPanel.vue'),
-  dataAdapter: (_raw: RawQueryResult) => {
-    // Flame graphs typically come from trace/profiling data
-    // For now, return a stub root node
-    // Real integration would parse trace spans into a call tree
-    return {
-      root: { name: 'root', value: 0, children: [] },
-      unit: 'ms',
-    }
-  },
+  dataAdapter: () => ({
+    root: { name: 'root', value: 0, children: [] },
+    unit: 'ms',
+  }),
   defaultQuery: {},
   category: 'observability',
   label: 'Flame Graph',
   icon: Flame,
-  queryMode: 'traces',
+  queryMode: 'none',
+  supportStatus: 'unsupported',
+  emptyState: {
+    title: 'Flame graph requires profiling data',
+    description:
+      'Trace queries are available, but profiling-to-flamegraph conversion is not wired yet. Use Trace List or Trace Detail for live trace data.',
+    actionLabel: 'Use a trace panel',
+  },
 })
 
 // Register Node Graph
 registerPanel({
   type: 'node_graph',
   component: () => import('./NodeGraphPanel.vue'),
-  dataAdapter: (_raw: RawQueryResult) => {
-    // Node graph typically comes from trace service maps
-    // Stub: return empty graph
-    return { nodes: [], edges: [] }
-  },
+  dataAdapter: () => ({ nodes: [], edges: [] }),
   defaultQuery: {},
   category: 'observability',
   label: 'Node Graph',
   icon: Network,
   queryMode: 'traces',
+  supportStatus: 'setup_required',
+  emptyState: {
+    title: 'Service graph not connected',
+    description:
+      'This panel needs backend service-graph wiring before it can render topology. Use Traces Explore for live trace search today.',
+    actionLabel: 'Open Traces Explore',
+  },
 })
 
 // Register Candlestick
@@ -295,61 +302,99 @@ registerPanel({
 registerPanel({
   type: 'trace_detail',
   component: () => import('./TraceDetailPanel.vue'),
-  dataAdapter: (_raw: RawQueryResult) => {
-    // Trace detail gets span data from trace queries
-    // Stub: return empty spans
-    return { spans: [] }
-  },
+  dataAdapter: (raw: RawQueryResult) => ({
+    spans: (raw.traces || []).map((span) => {
+      const traceSpan = span as {
+        spanId?: string
+        parentSpanId?: string
+        operationName?: string
+        serviceName?: string
+        startTimeUnixNano?: number
+        durationNano?: number
+        status?: string
+        tags?: Record<string, string>
+      }
+      return {
+        spanId: traceSpan.spanId || 'unknown-span',
+        parentSpanId: traceSpan.parentSpanId,
+        operationName: traceSpan.operationName || 'unknown operation',
+        serviceName: traceSpan.serviceName || 'unknown service',
+        startTime: Math.floor((traceSpan.startTimeUnixNano || 0) / 1000),
+        duration: Math.max(0, Math.floor((traceSpan.durationNano || 0) / 1000)),
+        status: traceSpan.status === 'error' ? ('error' as const) : ('ok' as const),
+        tags: traceSpan.tags,
+      }
+    }),
+  }),
   defaultQuery: {},
   category: 'observability',
   label: 'Trace Detail',
   icon: GitBranch,
   queryMode: 'traces',
+  supportStatus: 'setup_required',
+  emptyState: {
+    title: 'Run a trace query to populate detail',
+    description:
+      'This panel renders trace spans when a trace datasource query returns span data. It will not show sample spans.',
+    actionLabel: 'Configure trace query',
+  },
 })
 
 // Register Annotation List
 registerPanel({
   type: 'annotation_list',
   component: () => import('./AnnotationListPanel.vue'),
-  dataAdapter: () => {
-    // TODO: Annotation list needs backend annotation API integration
-    return { annotations: [] }
-  },
+  dataAdapter: () => ({ annotations: [] }),
   defaultQuery: {},
   category: 'widgets',
   label: 'Annotation List',
   icon: StickyNote,
   queryMode: 'none',
+  supportStatus: 'unsupported',
+  emptyState: {
+    title: 'Annotations are not connected',
+    description:
+      'Annotation storage is not available in the backend yet. This panel intentionally stays empty instead of showing demo notes.',
+    actionLabel: 'Await annotation API',
+  },
 })
 
 // Register Dashboard List
 registerPanel({
   type: 'dashboard_list',
   component: () => import('./DashboardListPanel.vue'),
-  dataAdapter: () => {
-    // TODO: Dashboard list needs backend dashboard API integration
-    return { dashboards: [] }
-  },
+  dataAdapter: () => ({ dashboards: [] }),
   defaultQuery: {},
   category: 'widgets',
   label: 'Dashboard List',
   icon: LayoutDashboard,
   queryMode: 'none',
+  supportStatus: 'setup_required',
+  emptyState: {
+    title: 'Dashboard list not connected',
+    description:
+      'Dashboard APIs exist, but this embeddable list panel has not been wired to an organization yet. Use the Dashboards page for live dashboard lists.',
+    actionLabel: 'Open Dashboards',
+  },
 })
 
 // Register Geomap
 registerPanel({
   type: 'geomap',
   component: () => import('./GeomapPanel.vue'),
-  dataAdapter: (_raw: RawQueryResult) => {
-    // Geo data typically comes from metrics with location labels
-    // Stub for now
-    return { points: [] }
-  },
+  dataAdapter: () => ({ points: [] }),
   defaultQuery: {},
   category: 'charts',
   label: 'Geomap',
   icon: Globe,
+  queryMode: 'none',
+  supportStatus: 'unsupported',
+  emptyState: {
+    title: 'Geomap requires location fields',
+    description:
+      'Ace does not infer geographic points from generic metrics yet. Configure a future geo-aware query before using this panel.',
+    actionLabel: 'Use another chart',
+  },
 })
 
 // Register Canvas (Excalidraw whiteboard)

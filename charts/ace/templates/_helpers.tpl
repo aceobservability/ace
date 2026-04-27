@@ -86,6 +86,41 @@ ServiceAccount name.
 {{- end }}
 
 {{/*
+Backend Secret name.
+*/}}
+{{- define "ace.backendSecretName" -}}
+{{- .Values.backend.existingSecret | default (include "ace.fullname" .) }}
+{{- end }}
+
+{{/*
+Validate secret-related values before rendering resources.
+*/}}
+{{- define "ace.validateValues" -}}
+{{- $existingSecret := .Values.backend.existingSecret -}}
+{{- $externalDatabaseURL := .Values.externalDatabase.url -}}
+{{- $externalDatabasePassword := .Values.externalDatabase.password -}}
+{{- $postgresqlEnabled := .Values.postgresql.enabled -}}
+{{- $jwtSecret := .Values.backend.jwt.secret -}}
+{{- $jwtPrivateKey := .Values.backend.jwt.privateKey -}}
+{{- $jwtPublicKey := .Values.backend.jwt.publicKey -}}
+{{- if and (not $postgresqlEnabled) (not $externalDatabaseURL) -}}
+{{- fail "externalDatabase.url is required when postgresql.enabled=false." -}}
+{{- end -}}
+{{- if and $externalDatabaseURL (contains "$(EXTERNAL_DATABASE_PASSWORD)" $externalDatabaseURL) (not $externalDatabasePassword) (not $existingSecret) -}}
+{{- fail "externalDatabase.password or backend.existingSecret is required when externalDatabase.url references $(EXTERNAL_DATABASE_PASSWORD)." -}}
+{{- end -}}
+{{- if and (not $externalDatabaseURL) $postgresqlEnabled (not $existingSecret) -}}
+{{- $_ := required "postgresql.auth.password is required when using chart-managed internal PostgreSQL secrets. Set postgresql.auth.password, set backend.existingSecret with a database-password key, or set externalDatabase.url." .Values.postgresql.auth.password -}}
+{{- end -}}
+{{- if or (and $jwtPrivateKey (not $jwtPublicKey)) (and $jwtPublicKey (not $jwtPrivateKey)) -}}
+{{- fail "backend.jwt.privateKey and backend.jwt.publicKey must be set together." -}}
+{{- end -}}
+{{- if and (not $existingSecret) (not $jwtSecret) (not (and $jwtPrivateKey $jwtPublicKey)) -}}
+{{- fail "backend.jwt.secret or both backend.jwt.privateKey and backend.jwt.publicKey are required when backend.existingSecret is not set." -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Database URL — built from subchart values or external config.
 */}}
 {{- define "ace.databaseURL" -}}

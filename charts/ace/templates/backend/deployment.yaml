@@ -49,15 +49,23 @@ spec:
             - configMapRef:
                 name: {{ include "ace.fullname" . }}
           env:
-            # Database URL — password injected from secret
+            # Database URL — password injected from secret when configured separately
             {{- if .Values.externalDatabase.url }}
+            {{- if or .Values.externalDatabase.password .Values.backend.existingSecret }}
+            - name: EXTERNAL_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ace.backendSecretName" . }}
+                  key: external-database-password
+                  optional: {{ if .Values.backend.existingSecret }}true{{ else }}false{{ end }}
+            {{- end }}
             - name: DATABASE_URL
               value: {{ .Values.externalDatabase.url | quote }}
             {{- else }}
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.backend.existingSecret | default (include "ace.fullname" .) }}
+                  name: {{ include "ace.backendSecretName" . }}
                   key: database-password
             - name: DATABASE_URL
               value: {{ include "ace.databaseURL" . | quote }}
@@ -66,26 +74,26 @@ spec:
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.backend.existingSecret | default (include "ace.fullname" .) }}
+                  name: {{ include "ace.backendSecretName" . }}
                   key: jwt-secret
                   optional: true
             - name: JWT_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.backend.existingSecret | default (include "ace.fullname" .) }}
+                  name: {{ include "ace.backendSecretName" . }}
                   key: jwt-private-key
                   optional: true
             - name: JWT_PUBLIC_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.backend.existingSecret | default (include "ace.fullname" .) }}
+                  name: {{ include "ace.backendSecretName" . }}
                   key: jwt-public-key
                   optional: true
             {{- if .Values.backend.posthog.enabled }}
             - name: POSTHOG_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.backend.existingSecret | default (include "ace.fullname" .) }}
+                  name: {{ include "ace.backendSecretName" . }}
                   key: posthog-api-key
                   optional: true
             {{- end }}
