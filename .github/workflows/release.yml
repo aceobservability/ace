@@ -346,7 +346,7 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
 
       - name: Install Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@v5
 
       - name: Log in to GHCR (Helm)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
@@ -359,7 +359,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install ORAS
-        uses: oras-project/setup-oras@v1
+        uses: oras-project/setup-oras@v2
 
       - name: Add Helm repositories
         run: |
@@ -460,7 +460,7 @@ jobs:
           path: release-assets/sbom
 
       - name: Upload assets to GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           files: |
