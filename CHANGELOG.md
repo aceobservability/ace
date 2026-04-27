@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.16.0](https://github.com/aceobservability/ace/compare/v0.15.0...v0.16.0) (2026-04-27)
+
+
+### Features
+
+* auto-generated documentation site with VitePress + docgen ([#226](https://github.com/aceobservability/ace/issues/226)) ([093cba3](https://github.com/aceobservability/ace/commit/093cba3d88763da1e0275d648cf69f52cdecbec3))
+* brush-to-zoom on time series charts ([#225](https://github.com/aceobservability/ace/issues/225)) ([eb05c62](https://github.com/aceobservability/ace/commit/eb05c623eda5b3b88a28bb55a647456f1b1db725))
+* dashboard export/import v2 YAML overhaul + themed range sliders ([#222](https://github.com/aceobservability/ace/issues/222)) ([22ef845](https://github.com/aceobservability/ace/commit/22ef8457ba67b07e481e2a77d0639323dcef9e2a))
+* sync crosshair and tooltip across dashboard panels ([#224](https://github.com/aceobservability/ace/issues/224)) ([d4eae34](https://github.com/aceobservability/ace/commit/d4eae34e6b64545b759918215e78b65bf5fd3527))
+
 ## [0.15.0](https://github.com/aceobservability/ace/compare/v0.14.0...v0.15.0) (2026-04-06)
 
 
