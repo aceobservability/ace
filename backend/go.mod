@@ -1,6 +1,6 @@
 module github.com/aceobservability/ace/backend
 
-go 1.25.9
+go 1.25.11
 
 require (
 	github.com/alicebob/miniredis/v2 v2.37.0
@@ -66,7 +66,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
