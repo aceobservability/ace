@@ -123,6 +123,9 @@ services:
       DATABASE_URL: postgres://ace:ace@postgres:5432/ace?sslmode=disable
       VALKEY_URL: valkey://valkey:6379
       JWT_SECRET: demo-secret-change-in-production
+      # Browser reaches the backend same-origin via the frontend proxy, so OAuth
+      # callback URLs must use the public frontend origin, not the backend's port.
+      BASE_URL: http://localhost:5173
     depends_on:
       postgres:
         condition: service_healthy
