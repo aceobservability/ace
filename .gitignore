@@ -63,7 +63,10 @@ agent/**
 !agent/ralph.sh
 !agent/opencode-auto-allow.json
 !agent/prompt.md
-.claude/
+# Keep shared skills tracked; ignore local Claude state
+.claude/*
+!.claude/skills/
+.claude/skills/*/scripts/*.local.*
 
 # Local agent state
 .gstack/
