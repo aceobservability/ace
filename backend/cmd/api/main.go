@@ -339,8 +339,9 @@ func main() {
 	handler = auditLogger.Middleware(handler)
 
 	// Create server
+	listenAddr := resolveListenAddr(os.Getenv)
 	server := &http.Server{
-		Addr:        ":8080",
+		Addr:        listenAddr,
 		Handler:     handler,
 		ReadTimeout: 15 * time.Second,
 		// WriteTimeout is 0 to allow SSE streaming responses to run as long as
@@ -352,7 +353,7 @@ func main() {
 
 	// Start server in goroutine
 	go func() {
-		logger.Info("starting server", zap.String("addr", ":8080"))
+		logger.Info("starting server", zap.String("addr", listenAddr))
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("server error", zap.Error(err))
 		}
@@ -387,4 +388,15 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// resolveListenAddr returns the HTTP listen address for the backend. It uses
+// ACE_LISTEN_ADDR when set (e.g. "127.0.0.1:9090" so the standalone image can
+// bind the backend to loopback behind nginx) and falls back to ":8080". getenv
+// is injected so the resolution stays a pure, unit-testable function.
+func resolveListenAddr(getenv func(string) string) string {
+	if addr := getenv("ACE_LISTEN_ADDR"); addr != "" {
+		return addr
+	}
+	return ":8080"
 }
