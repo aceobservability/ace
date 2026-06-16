@@ -135,10 +135,11 @@ services:
     build:
       context: ../../..
       dockerfile: frontend/Dockerfile
-      args:
-        VITE_API_URL: http://localhost:8080
+    # Browser talks same-origin to the frontend; nginx proxies /api to the backend.
+    environment:
+      ACE_BACKEND_URL: http://ace-backend:8080
     ports:
-      - "5173:80"
+      - "5173:8080"
     depends_on:
       - ace-backend
 
