@@ -70,24 +70,32 @@ The `otel-collector` config is generated dynamically from enabled services. Tele
 
 ### Option B: Docker Compose
 
+Run the steps in this order (compose first, so postgres is up before seeding):
+
 ```bash
-# Start infrastructure (pick a datasource profile)
+# 1. Start infrastructure (postgres + valkey + one datasource stack)
 make compose-up PROFILES=victoria
 
-# Start telemetry generators
+# 2. (Optional) start telemetry generators for that stack
 make telemetrygen PROFILES=victoria
 
-# Start backend (hot reload with air)
-make backend
-
-# Start frontend (Vite dev server)
-make frontend
-
-# Seed admin user and datasources
+# 3. Seed admin user and datasources (needs postgres from step 1)
 make seed
+
+# 4. Start backend + frontend on the host (hot reload)
+make dev          # or run `make backend` and `make frontend` separately
 ```
 
-Available profiles: `victoria`, `lgtm`, `elk`, `clickhouse`. Combine with commas: `PROFILES=victoria,lgtm`.
+Compose runs infrastructure only — the backend and frontend run natively on the host (steps 3–4), which keeps the hot-reload loop fast.
+
+Available profiles: `victoria`, `lgtm`, `elk`, `clickhouse`. **Run one stack at a time** — they are mutually exclusive because every stack's OTel collector binds the same OTLP ports (`4317`/`4318`).
+
+To switch stacks, tear the current one down first (your seeded database persists in the named volume):
+
+```bash
+make compose-down              # stop current stack; volumes are kept
+make compose-up PROFILES=lgtm  # bring up the new stack — no re-seed needed
+```
 
 ### Default Credentials
 
