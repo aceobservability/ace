@@ -4,6 +4,16 @@ status: accepted
 
 # Standalone image and runtime API proxy
 
+> **Implementation status:** This records an *accepted decision*, not the current
+> state of the tree. It is delivered incrementally across #265–#269: configurable
+> `ACE_LISTEN_ADDR` (#265, landed), the runtime `/api` proxy and removal of
+> `VITE_API_URL`/`ACE_BACKEND_URL` wiring (#266), the combined image and its
+> loopback binding (#267), compose + smoke test (#268), and release (#269). Until
+> those land, the present-tense statements below describe the target, not behaviour
+> you can rely on from the existing images — e.g. setting `ACE_BACKEND_URL` has no
+> effect yet, and the standalone image's loopback bind is enforced by #267's
+> packaging (the backend default remains `:8080`).
+
 To let operators run Ace on a single low-power host without building images or
 cloning the repo (issue #255), we publish a second **combined image**
 (`ghcr.io/aceobservability/ace-standalone`) that bundles the frontend and
