@@ -1,0 +1,12 @@
+#!/bin/sh
+# Crash detection: if nginx dies, bring the whole container down rather than let
+# s6 restart it in place — a combined image with no public listener is not doing
+# its job. The atomic mkdir marker ensures the first finish to run (here, the
+# service that actually died) sets the container exit code; see the backend
+# finish script for the full rationale.
+echo "ace-standalone: nginx exited (code=$1 signal=$2), halting container" >&2
+if mkdir /run/ace-halting 2>/dev/null; then
+  if [ "$1" -eq 256 ]; then code=1; else code="$1"; fi
+  echo "$code" >/run/s6-linux-init-container-results/exitcode
+fi
+exec /run/s6/basedir/bin/halt

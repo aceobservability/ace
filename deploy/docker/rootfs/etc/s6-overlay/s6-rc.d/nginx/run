@@ -1,0 +1,8 @@
+#!/bin/sh
+# nginx owns the public :8080 — it serves the SPA and reverse-proxies /api to the
+# loopback backend (the proxy block is baked into conf.d/api-proxy.inc at build
+# time from the shared #266 render script). nginx uses its own privilege model:
+# the master starts as root (so it can open the log streams) and forks workers as
+# the unprivileged nginx user via the base image's `user nginx;` directive. Run in
+# the foreground so s6 supervises the master process directly.
+exec /usr/sbin/nginx -g "daemon off;"
