@@ -1,4 +1,6 @@
-FROM golang:1.25.9-alpine AS build
+# Pinned to the Go minor line so it tracks go.mod's `go 1.25` directive (see
+# backend/Dockerfile) and never drifts on the patch version.
+FROM golang:1.25-alpine AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download

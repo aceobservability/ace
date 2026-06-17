@@ -391,7 +391,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 }
 
 // resolveListenAddr returns the HTTP listen address for the backend. It uses
-// ACE_LISTEN_ADDR when set (e.g. "127.0.0.1:9090" so the standalone image can
+// ACE_LISTEN_ADDR when set (e.g. "127.0.0.1:8081" so the standalone image can
 // bind the backend to loopback behind nginx) and falls back to ":8080". getenv
 // is injected so the resolution stays a pure, unit-testable function.
 func resolveListenAddr(getenv func(string) string) string {

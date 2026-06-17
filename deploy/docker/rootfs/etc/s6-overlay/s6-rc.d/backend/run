@@ -1,0 +1,18 @@
+#!/command/with-contenv sh
+# The backend in the combined image binds loopback only: nginx owns the public
+# :8080 and reverse-proxies /api to 127.0.0.1:8081, so the browser never reaches
+# the backend directly. ACE_LISTEN_ADDR (see backend/cmd/api/main.go) is hardwired
+# here rather than left to the operator — exposing the backend would defeat the
+# single-origin design. See docs/adr/0001-standalone-image-and-runtime-api-proxy.md.
+#
+# Port 8081 (not 9090) on purpose: the backend dials localhost:9090 by default for
+# PROMETHEUS_URL (main.go), so binding the backend there would make the legacy
+# Prometheus path proxy back to the backend itself when PROMETHEUS_URL is unset.
+#
+# s6-overlay's PID1 runs as root so signal-driven graceful shutdown works (rootless
+# s6 has only limited support and drops SIGTERM); the application itself drops to the
+# unprivileged nginx user via s6-setuidgid so no app code runs as root. with-contenv
+# re-exports the container environment (DATABASE_URL, VALKEY_URL, JWT_SECRET, ...) so
+# `docker run -e` values reach the backend.
+export ACE_LISTEN_ADDR=127.0.0.1:8081
+exec s6-setuidgid nginx /usr/local/bin/ace-api
