@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.0](https://github.com/aceobservability/ace/compare/v0.16.0...v1.0.0) (2026-06-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **frontend:** VITE_API_URL is removed. Builds that set it must instead run the frontend image with ACE_BACKEND_URL (or front the app with an ingress that routes /api).
+
+### Features
+
+* **backend:** configurable listen address via ACE_LISTEN_ADDR ([#270](https://github.com/aceobservability/ace/issues/270)) ([1ae31ae](https://github.com/aceobservability/ace/commit/1ae31ae053a21d1955eec0c79c0fc4e94c781de1))
+* **deploy:** ace-standalone combined image (nginx + backend under s6-overlay) ([#273](https://github.com/aceobservability/ace/issues/273)) ([e5aac10](https://github.com/aceobservability/ace/commit/e5aac10dfc642eb25e6059f10fe501fea1216dba))
+* **frontend:** runtime-configurable API URL via same-origin /api proxy ([#272](https://github.com/aceobservability/ace/issues/272)) ([c680841](https://github.com/aceobservability/ace/commit/c680841285c6f6daedbf09e97dd2a3e7e2657067))
+
 ## [0.16.0](https://github.com/aceobservability/ace/compare/v0.15.0...v0.16.0) (2026-06-16)
 
 
