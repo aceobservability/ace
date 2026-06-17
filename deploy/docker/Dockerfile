@@ -2,7 +2,7 @@
 # container that bundles the SPA and the backend behind one nginx, for simple
 # single-host deployments (e.g. a low-power VM). Datastores (Postgres, Valkey)
 # stay external. Two processes run under s6-overlay — nginx owns the public
-# :8080 and proxies /api to the backend bound on loopback :9090.
+# :8080 and proxies /api to the backend bound on loopback :8081.
 # See docs/adr/0001-standalone-image-and-runtime-api-proxy.md.
 #
 # Build context is the repo root (matches backend/ and frontend/ Dockerfiles):
@@ -73,7 +73,7 @@ COPY --from=frontend /app/dist /usr/share/nginx/html
 # long read timeout) defined in exactly one place.
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY frontend/docker-entrypoint.d/30-render-api-proxy.sh /usr/local/bin/render-api-proxy.sh
-RUN ACE_BACKEND_URL=http://127.0.0.1:9090 \
+RUN ACE_BACKEND_URL=http://127.0.0.1:8081 \
     ACE_API_PROXY_CONF=/etc/nginx/conf.d/api-proxy.inc \
     sh /usr/local/bin/render-api-proxy.sh
 
