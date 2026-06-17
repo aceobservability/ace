@@ -19,7 +19,11 @@ COPY frontend/ ./
 RUN bun run build
 
 # ---- Backend build (mirrors backend/Dockerfile; cross-compiled per target) ----
-FROM --platform=$BUILDPLATFORM golang:1.25.11-alpine AS backend
+# Pinned to the Go minor line (not a patch) so it tracks backend/go.mod's `go 1.25`
+# directive and picks up patch releases automatically — same policy as the release
+# binary build (check-latest). Keeps every Dockerfile on one Go version with nothing
+# to hand-synchronise.
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS backend
 ARG TARGETOS
 ARG TARGETARCH
 WORKDIR /src
@@ -74,10 +78,9 @@ RUN ACE_BACKEND_URL=http://127.0.0.1:9090 \
     sh /usr/local/bin/render-api-proxy.sh
 
 # s6 service definitions (nginx + backend longruns, crash-detection finish scripts).
+# The run/finish scripts and the shared halt-container.sh are committed mode 0755,
+# which COPY preserves — no chmod layer needed.
 COPY deploy/docker/rootfs/ /
-RUN chmod 0755 \
-      /etc/s6-overlay/s6-rc.d/backend/run /etc/s6-overlay/s6-rc.d/backend/finish \
-      /etc/s6-overlay/s6-rc.d/nginx/run /etc/s6-overlay/s6-rc.d/nginx/finish
 
 # Writable data dir for the backend's persisted JWT signing keys (see DATA_DIR in
 # backend/internal/auth/jwt.go). Owned by the unprivileged nginx user the backend

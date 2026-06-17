@@ -1,17 +1,4 @@
 #!/bin/sh
-# Crash detection: s6 would normally just restart a dead longrun, but for the
-# combined image a missing backend (or nginx) means the container is no longer
-# doing its job, so we bring the whole container down via halt and let the
-# operator's restart policy / orchestrator surface the failure.
-#
-# halt cascades a stop to the *other* service, whose finish script then also
-# runs — so guard the exit-code write with an atomic mkdir marker, letting the
-# service that actually died (the first finish to run) decide the container exit
-# code. $1 is the exit code (256 when killed by a signal); clamp that to 1 so a
-# crash is a non-zero exit while a clean `docker stop` (services exit 0) stays 0.
-echo "ace-standalone: backend exited (code=$1 signal=$2), halting container" >&2
-if mkdir /run/ace-halting 2>/dev/null; then
-  if [ "$1" -eq 256 ]; then code=1; else code="$1"; fi
-  echo "$code" >/run/s6-linux-init-container-results/exitcode
-fi
-exec /run/s6/basedir/bin/halt
+# Crash detection: bring the whole container down if the backend dies rather than
+# let s6 restart it in place. See halt-container.sh for the full rationale.
+exec /etc/s6-overlay/scripts/halt-container.sh backend "$@"
