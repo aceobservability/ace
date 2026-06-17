@@ -1,4 +1,6 @@
-FROM --platform=$BUILDPLATFORM golang:1.25.9-alpine AS builder
+# Pinned to the Go minor line so it tracks go.mod's `go 1.25` directive and picks up
+# patch releases automatically (same policy as the release binary build).
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
 
 ARG TARGETOS
 ARG TARGETARCH

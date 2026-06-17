@@ -175,8 +175,8 @@ security-local:
 		printf "Install Docker to run gitleaks and retry make security-local.\n"; \
 		exit 1; \
 	fi; \
-	printf "Running govulncheck (backend, Go 1.25.9 container)...\n"; \
-	docker run --rm -v "$$PWD:/repo" -w /repo/backend golang:1.25.9 /bin/sh -c 'go run golang.org/x/vuln/cmd/govulncheck@latest ./...'; \
+	printf "Running govulncheck (backend, Go 1.25 container)...\n"; \
+	docker run --rm -v "$$PWD:/repo" -w /repo/backend golang:1.25 /bin/sh -c 'go run golang.org/x/vuln/cmd/govulncheck@latest ./...'; \
 	printf "Running gitleaks (repo)...\n"; \
 	docker run --rm -v "$$PWD:/repo" -w /repo ghcr.io/gitleaks/gitleaks:latest detect --source . --redact --no-banner
 
