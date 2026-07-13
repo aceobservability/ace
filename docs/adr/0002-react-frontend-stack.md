@@ -47,9 +47,18 @@ The Vue app uses module-level singleton refs in composables (`useAuth`, `useOrga
 
 ## UI primitives
 
-**Decision:** **Custom Kinetic v2 components on Tailwind CSS v4**, with [**Radix UI**](https://www.radix-ui.com/primitives) primitives where accessibility requires it (dialogs, dropdowns, tabs, tooltips, popovers).
+**Decision:** [**shadcn/ui**](https://ui.shadcn.com/) components on [**Base UI**](https://base-ui.com/) (`@base-ui/react`), themed to Kinetic v2 with Tailwind CSS v4.
 
-Ace does not adopt a full component kit (MUI, Chakra, shadcn-as-framework). DESIGN.md owns typography, color, elevation, and motion. Radix supplies unstyled, accessible behavior; Tailwind tokens from `style.css` supply the Kinetic look. This matches the current Vue approach (hand-built components, no Vuetify/PrimeVue).
+shadcn/ui is a copy-into-the-repo workflow (CLI + `components.json`), not a runtime dependency — we own every file under `components/ui/`. As of July 2026, shadcn defaults to **Base UI** (not Radix) as its headless layer; Base UI is built by the Radix, Floating UI, and Material UI teams and is the direction shadcn is standardizing on.
+
+| Option | Why not (or why yes) |
+|--------|----------------------|
+| **shadcn/ui + Base UI** | ✅ Chosen | Accessible primitives via `@base-ui/react`; shadcn gives battle-tested Dialog, Dropdown, Tabs, Tooltip, etc. as starting points we restyle to DESIGN.md. New projects scaffold with `npx shadcn@latest create` selecting Base UI. |
+| **Radix UI directly** | ❌ | shadcn has moved on; Radix `asChild` APIs differ from Base UI's `render` prop. Starting fresh on Radix would fight the ecosystem and require a later migration. |
+| **Full component kit** (MUI, Chakra) | ❌ | Prescribed look fights Kinetic v2; heavier bundles. |
+| **Hand-built only** | ❌ | Reimplements focus traps, popover positioning, and ARIA patterns shadcn/Base UI already solve. |
+
+**Theming:** Map Kinetic v2 tokens from `style.css` onto shadcn CSS variables at scaffold time, then adjust per-component. Dashboard-specific visuals (panels, charts, query editors) stay custom; shadcn covers shared interactive primitives (modals, menus, form fields, toasts).
 
 ## Forms
 
@@ -76,6 +85,7 @@ Behavior-focused tests assert rendered output and user interactions, not impleme
 - **Lint/format:** Biome (`biome.jsonc` — JSX already supported)
 - **Dead code:** Knip
 - **CSS:** Tailwind v4 via `@tailwindcss/vite`
+- **UI scaffold:** shadcn CLI (`npx shadcn@latest create` / `add`), `components.json` with Base UI as the primitive library
 
 ## Vue → React dependency mapping
 
@@ -86,7 +96,8 @@ Behavior-focused tests assert rendered output and user interactions, not impleme
 | Composables (`useXxx`) | Custom hooks + Zustand stores | `useAuth` → `useAuthStore` + `useAuth()` hook wrapper |
 | `vue-echarts` | `echarts-for-react` | Direct `echarts` imports for `connect`/`disconnect` (crosshair sync) stay as-is |
 | `vue3-grid-layout-next` | `react-grid-layout` | Dashboard panel drag/resize |
-| `lucide-vue-next` | `lucide-react` | Icon names are 1:1 |
+| `lucide-vue-next` | `lucide-react` | Icon names are 1:1; also used by shadcn/ui |
+| Hand-built modals/menus | `shadcn/ui` + `@base-ui/react` | CLI copies into `components/ui/`; themed to Kinetic v2 |
 | `@vitejs/plugin-vue` | `@vitejs/plugin-react-swc` | SWC for fast HMR/build |
 | `vue-tsc` | `typescript` (`tsc -b` / `tsc --noEmit`) | Strict mode preserved |
 | `@vue/test-utils` | `@testing-library/react` | See Testing above |
@@ -103,4 +114,5 @@ Behavior-focused tests assert rendered output and user interactions, not impleme
 - **Docker/CI:** `frontend/Dockerfile` keeps `bun run build`; only build output tooling changes.
 - **No `VITE_*` API URL:** `API_BASE = ''` stays ([ADR-0001](./0001-standalone-image-and-runtime-api-proxy.md)).
 - **Type-check script** becomes `tsc --noEmit` (or `tsc -b`) instead of `vue-tsc`.
+- **UI scaffold:** Foundation ([#294](https://github.com/aceobservability/ace/issues/294)) runs `shadcn create` with Base UI and seeds Kinetic v2 CSS variables before feature ports.
 - **Follow-up not in this ADR:** component-level migration order, folder layout inside `src/`, and Copilot/AI sidebar porting are tracked on [#292](https://github.com/aceobservability/ace/issues/292) sub-issues.
