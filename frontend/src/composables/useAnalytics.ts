@@ -1,9 +1,9 @@
 import { computed } from 'vue'
 import {
-  analyticsConsent,
-  analyticsDntEnabled,
-  analyticsReady,
-  analyticsSessionRecordingEnabled,
+  getAnalyticsConsent,
+  getAnalyticsDntEnabled,
+  getAnalyticsReady,
+  getAnalyticsSessionRecordingEnabled,
   identifyUser,
   resetUserAnalytics,
   setAnalyticsConsent,
@@ -12,17 +12,20 @@ import {
 } from '../analytics'
 
 export function useAnalytics() {
+  const ready = computed(() => getAnalyticsReady())
+  const consent = computed(() => getAnalyticsConsent())
+  const dntEnabled = computed(() => getAnalyticsDntEnabled())
+  const sessionRecordingEnabled = computed(() => getAnalyticsSessionRecordingEnabled())
+
   const canTrack = computed(() => {
-    return (
-      analyticsReady.value && analyticsConsent.value === 'granted' && !analyticsDntEnabled.value
-    )
+    return ready.value && consent.value === 'granted' && !dntEnabled.value
   })
 
   return {
-    consent: analyticsConsent,
-    dntEnabled: analyticsDntEnabled,
-    ready: analyticsReady,
-    sessionRecordingEnabled: analyticsSessionRecordingEnabled,
+    consent,
+    dntEnabled,
+    ready,
+    sessionRecordingEnabled,
     canTrack,
     trackEvent,
     identifyUser,
@@ -31,4 +34,3 @@ export function useAnalytics() {
     setSessionRecordingEnabled,
   }
 }
-

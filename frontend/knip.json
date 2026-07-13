@@ -11,7 +11,10 @@
     "src/utils/markdown.ts",
     "src/utils/dashboardSpec.ts",
     "src/analytics/index.ts",
-    "src/lib/utils.ts"
+    "src/lib/utils.ts",
+    "src/lib/theme.ts",
+    "src/lib/analyticsRouter.ts",
+    "src/stores/authStore.ts"
   ],
   "ignoreDependencies": [
     "@vitest/coverage-v8",
@@ -22,7 +25,7 @@
     "monaco-editor",
     "react-hook-form",
     "zod",
-    "zustand",
+
     "d3-force",
     "@types/d3-force",
     "echarts",

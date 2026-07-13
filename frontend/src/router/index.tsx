@@ -1,10 +1,18 @@
 import { lazy } from 'react'
 import { createBrowserRouter, Navigate, useParams, type RouteObject } from 'react-router-dom'
+import { AuthGuard } from '@/layouts/AuthGuard'
 import { AppLayout } from '@/layouts/AppLayout'
+import { createParamRedirect } from '@/lib/redirects'
 
 const PlaceholderPage = lazy(() =>
   import('@/pages/PlaceholderPage').then(m => ({ default: m.PlaceholderPage })),
 )
+
+const DashboardAliasRedirect = createParamRedirect('/app/dashboards/:id')
+const DashboardSettingsAliasRedirect = createParamRedirect('/app/dashboards/:id/settings')
+const DashboardSettingsSectionAliasRedirect = createParamRedirect('/app/dashboards/:id/settings/:section')
+const ExploreTypeAliasRedirect = createParamRedirect('/app/explore/:type')
+const DatasourceEditAliasRedirect = createParamRedirect('/app/datasources/:id/edit')
 
 const defaultDescription =
   'Ace Observability is an open-source monitoring dashboard with multi-datasource support for Prometheus, Loki, Tempo, and VictoriaMetrics.'
@@ -27,6 +35,11 @@ function placeholder(title: string, description?: string) {
 function SettingsOrgSectionRedirect() {
   const { section } = useParams<{ section: string }>()
   return <Navigate to={`/app/settings/${section ?? 'general'}`} replace />
+}
+
+function DashboardSettingsRedirect() {
+  const { id } = useParams<{ id: string }>()
+  return <Navigate to={`/app/dashboards/${id}/settings/general`} replace />
 }
 
 const appRoutes: RouteObject[] = [
@@ -55,7 +68,7 @@ const appRoutes: RouteObject[] = [
   },
   {
     path: '/app/dashboards/:id/settings',
-    element: <Navigate to="general" replace />,
+    element: <DashboardSettingsRedirect />,
   },
   {
     path: '/app/dashboards/:id/settings/:section',
@@ -124,34 +137,36 @@ export const router = createBrowserRouter([
     element: <Navigate to="/app" replace />,
   },
   {
-    path: '/login',
-    handle: withMeta('Sign in | Ace', 'Sign in to Ace to manage dashboards, alerts, and observability workflows.', {
-      public: true,
-    }),
-    element: placeholder('Sign in'),
-  },
-  {
-    element: <AppLayout />,
-    children: appRoutes,
-  },
-  // Backward-compat aliases
-  { path: '/dashboards', element: <Navigate to="/app/dashboards" replace /> },
-  { path: '/dashboards/:id', element: <Navigate to="/app/dashboards/:id" replace /> },
-  { path: '/dashboards/:id/settings', element: <Navigate to="/app/dashboards/:id/settings" replace /> },
-  {
-    path: '/dashboards/:id/settings/:section',
-    element: <Navigate to="/app/dashboards/:id/settings/:section" replace />,
-  },
-  { path: '/alerts', element: <Navigate to="/app/alerts" replace /> },
-  { path: '/explore', element: <Navigate to="/app/explore/metrics" replace /> },
-  { path: '/explore/:type', element: <Navigate to="/app/explore/:type" replace /> },
-  { path: '/settings/org/:id', element: <Navigate to="/app/settings/general" replace /> },
-  { path: '/settings/org/:id/:section', element: <SettingsOrgSectionRedirect /> },
-  { path: '/datasources/:id/edit', element: <Navigate to="/app/datasources/:id/edit" replace /> },
-  {
-    path: '/convert/grafana',
-    element: (
-      <Navigate to={{ pathname: '/app/dashboards', search: '?newDashboardMode=grafana' }} replace />
-    ),
+    element: <AuthGuard />,
+    children: [
+      {
+        path: '/login',
+        handle: withMeta('Sign in | Ace', 'Sign in to Ace to manage dashboards, alerts, and observability workflows.', {
+          public: true,
+        }),
+        element: placeholder('Sign in'),
+      },
+      {
+        element: <AppLayout />,
+        children: appRoutes,
+      },
+      // Backward-compat aliases
+      { path: '/dashboards', element: <Navigate to="/app/dashboards" replace /> },
+      { path: '/dashboards/:id', element: <DashboardAliasRedirect /> },
+      { path: '/dashboards/:id/settings', element: <DashboardSettingsAliasRedirect /> },
+      { path: '/dashboards/:id/settings/:section', element: <DashboardSettingsSectionAliasRedirect /> },
+      { path: '/alerts', element: <Navigate to="/app/alerts" replace /> },
+      { path: '/explore', element: <Navigate to="/app/explore/metrics" replace /> },
+      { path: '/explore/:type', element: <ExploreTypeAliasRedirect /> },
+      { path: '/settings/org/:id', element: <Navigate to="/app/settings/general" replace /> },
+      { path: '/settings/org/:id/:section', element: <SettingsOrgSectionRedirect /> },
+      { path: '/datasources/:id/edit', element: <DatasourceEditAliasRedirect /> },
+      {
+        path: '/convert/grafana',
+        element: (
+          <Navigate to={{ pathname: '/app/dashboards', search: '?newDashboardMode=grafana' }} replace />
+        ),
+      },
+    ],
   },
 ])
