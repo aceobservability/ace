@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.18.0](https://github.com/aceobservability/ace/compare/v0.17.0...v0.18.0) (2026-07-13)
+
+
+### Features
+
+* **frontend:** React foundation scaffold ([#294](https://github.com/aceobservability/ace/issues/294)) ([#312](https://github.com/aceobservability/ace/issues/312)) ([6b263a1](https://github.com/aceobservability/ace/commit/6b263a1dd90d136dd52c17edfcd5dd7b9db2536c))
+
+
+### Documentation
+
+* **adr:** lock React frontend stack for Vue rewrite ([#293](https://github.com/aceobservability/ace/issues/293)) ([7fd9bad](https://github.com/aceobservability/ace/commit/7fd9bad5cb5eaf6a35cb9c667d17c8157b6e320d))
+* **adr:** use shadcn/ui on Base UI instead of Radix ([#293](https://github.com/aceobservability/ace/issues/293)) ([51cae17](https://github.com/aceobservability/ace/commit/51cae179265ce0d32e7d137e4cd39d48baaa19a1))
+
+
+### CI
+
+* regenerate website docs on release PRs ([#313](https://github.com/aceobservability/ace/issues/313)) ([4bd2614](https://github.com/aceobservability/ace/commit/4bd26142a095ee063ea3e63cfc6808ebe5b43437))
+
 ## [0.17.0](https://github.com/aceobservability/ace/compare/v0.16.0...v0.17.0) (2026-07-13)
 
 
