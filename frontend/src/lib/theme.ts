@@ -1,4 +1,6 @@
-/** Kinetic v2 is dark-only — ensure document root carries the dark class. */
+import { useThemeStore } from '@/stores/themeStore'
+
+/** Apply stored theme preference (defaults to dark / Kinetic v2). */
 export function bootstrapTheme() {
-  document.documentElement.classList.add('dark')
+  useThemeStore.getState().initialize()
 }

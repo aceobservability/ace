@@ -6,6 +6,7 @@ const CURRENT_ORG_KEY = 'current_org_id'
 type OrgState = {
   currentOrgId: string | null
   initializeFromMemberships: (memberships: OrganizationMembership[]) => void
+  selectOrganization: (orgId: string) => void
   clear: () => void
 }
 
@@ -37,6 +38,11 @@ export const useOrgStore = create<OrgState>(set => ({
 
   initializeFromMemberships(memberships) {
     const orgId = resolveOrgId(memberships)
+    persistOrgId(orgId)
+    set({ currentOrgId: orgId })
+  },
+
+  selectOrganization(orgId) {
     persistOrgId(orgId)
     set({ currentOrgId: orgId })
   },
