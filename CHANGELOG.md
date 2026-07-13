@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.17.0](https://github.com/aceobservability/ace/compare/v0.16.0...v0.17.0) (2026-07-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* **frontend:** VITE_API_URL is removed. Builds that set it must instead run the frontend image with ACE_BACKEND_URL (or front the app with an ingress that routes /api).
+
+### Features
+
+* **backend:** configurable listen address via ACE_LISTEN_ADDR ([#270](https://github.com/aceobservability/ace/issues/270)) ([1ae31ae](https://github.com/aceobservability/ace/commit/1ae31ae053a21d1955eec0c79c0fc4e94c781de1))
+* **deploy:** ace-standalone combined image (nginx + backend under s6-overlay) ([#273](https://github.com/aceobservability/ace/issues/273)) ([e5aac10](https://github.com/aceobservability/ace/commit/e5aac10dfc642eb25e6059f10fe501fea1216dba))
+* **frontend:** runtime-configurable API URL via same-origin /api proxy ([#272](https://github.com/aceobservability/ace/issues/272)) ([c680841](https://github.com/aceobservability/ace/commit/c680841285c6f6daedbf09e97dd2a3e7e2657067))
+* standalone release pipeline and turnkey docker-compose ([#268](https://github.com/aceobservability/ace/issues/268), [#269](https://github.com/aceobservability/ace/issues/269)) ([#290](https://github.com/aceobservability/ace/issues/290)) ([7bd4378](https://github.com/aceobservability/ace/commit/7bd43787a2bcb5cd4bcef6819ee825de4dc4c79a))
+
+
+### CI
+
+* keep release-please on 0.x until v1.0.0 is intentional ([#291](https://github.com/aceobservability/ace/issues/291)) ([4a36971](https://github.com/aceobservability/ace/commit/4a36971639eb3a73f3d8b86656e141192c5565e0))
+
 ## [0.16.0](https://github.com/aceobservability/ace/compare/v0.15.0...v0.16.0) (2026-06-16)
 
 
