@@ -1,7 +1,49 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignoreDependencies": ["@vitest/coverage-v8"],
-  "ignore": ["src/env.d.ts"],
+  "entry": [
+    "src/main.tsx",
+    "src/api/**/*.ts",
+    "src/promql/**/*.ts",
+    "src/logquery/**/*.ts",
+    "src/types/**/*.ts",
+    "src/utils/chartTheme.ts",
+    "src/utils/formatting.ts",
+    "src/utils/markdown.ts",
+    "src/utils/dashboardSpec.ts",
+    "src/analytics/index.ts",
+    "src/lib/utils.ts"
+  ],
+  "ignoreDependencies": [
+    "@vitest/coverage-v8",
+    "@base-ui/react",
+    "@excalidraw/excalidraw",
+    "@hookform/resolvers",
+    "@tanstack/react-query",
+    "monaco-editor",
+    "react-hook-form",
+    "zod",
+    "zustand",
+    "d3-force",
+    "@types/d3-force",
+    "echarts",
+    "posthog-js",
+    "@testing-library/user-event"
+  ],
+  "ignore": [
+    "src/env.d.ts",
+    "src/**/*.vue",
+    "src/components/**/*.vue",
+    "src/components/**/*.spec.ts",
+    "src/components/panels/**",
+    "src/views/**/*.spec.ts",
+    "src/views/**",
+    "src/composables/**",
+    "src/plugins/**",
+    "src/router/vue-router.legacy.ts",
+    "src/utils/panelRegistry.spec.ts",
+    "src/monaco/**",
+    "src/utils/datasourceLogos.ts"
+  ],
   "rules": {
     "exports": "warn",
     "types": "warn"

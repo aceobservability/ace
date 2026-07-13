@@ -1,5 +1,7 @@
-import type { Component } from 'vue'
 import type { RawQueryResult } from '../types/panel'
+
+/** Lazy panel component loader — React `lazy()` or Vue `defineAsyncComponent` factory. */
+export type PanelComponentLoader = () => Promise<unknown>
 
 export type { RawQueryResult }
 
@@ -24,8 +26,8 @@ export interface PanelEmptyState {
 export interface PanelRegistration {
   /** Unique identifier, e.g. 'heatmap' */
   type: string
-  /** Lazy-loaded Vue component factory */
-  component: () => Promise<Component>
+  /** Lazy-loaded panel component factory */
+  component: PanelComponentLoader
   /** Transforms raw query result into chart-specific option data */
   dataAdapter: (raw: RawQueryResult, query?: Record<string, unknown>) => Record<string, unknown>
   /** Default query object shown in the panel editor */
@@ -34,7 +36,7 @@ export interface PanelRegistration {
   /** Human-readable display name, e.g. "Heatmap" */
   label: string
   /** Lucide icon component */
-  icon: Component
+  icon: PanelComponentLoader
   /** What data/signal this panel requires. Defaults to 'metrics' when omitted. */
   queryMode?: PanelQueryMode
   /** Optional support status for panels that should not look fully live/wired. */

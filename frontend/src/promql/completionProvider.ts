@@ -1,5 +1,5 @@
 import type * as Monaco from 'monaco-editor'
-import { fetchLabels, fetchLabelValues, fetchMetrics } from '../composables/useProm'
+import { fetchLabels, fetchLabelValues, fetchMetrics } from '@/promql/client'
 import { PROMQL_FUNCTIONS, PROMQL_KEYWORDS, PROMQL_LANGUAGE_ID } from './language'
 
 // Cache for metrics and labels
