@@ -20,7 +20,7 @@ This project uses automated SemVer releases based on Conventional Commits.
 
 - `feat:` -> minor bump (`0.1.0` -> `0.2.0`)
 - `fix:` -> patch bump (`0.1.0` -> `0.1.1`)
-- `feat!:` or `BREAKING CHANGE:` footer -> major bump (`0.x` -> `1.0.0` when applicable)
+- `feat!:` or `BREAKING CHANGE:` footer -> major bump (`0.x` -> `1.0.0`) once we ship `v1.0.0`; until then `bump-minor-pre-major` in `.release-please-config.json` keeps breaking changes on `0.x` (e.g. `0.16.0` -> `0.17.0`)
 - `docs:`, `ci:`, `refactor:`, etc. are included in notes but do not force a bump by themselves
 
 Use Conventional Commit messages for all merge commits/PR titles to keep release automation accurate.
