@@ -182,7 +182,7 @@ export async function logout(refreshToken: string): Promise<void> {
 
 export async function fetchSSOProviders(orgSlug: string): Promise<SSOProvider[]> {
   try {
-    const response = await fetch(`${API_BASE}/api/orgs/${orgSlug}/sso/providers`)
+    const response = await fetch(`${API_BASE}/api/orgs/${encodeURIComponent(orgSlug)}/sso/providers`)
     if (!response.ok) return []
     return (await response.json()) as SSOProvider[]
   } catch {
