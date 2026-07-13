@@ -1,4 +1,5 @@
 import { API_BASE } from './base'
+import { clearTokens, getAccessToken, getRefreshToken, storeTokens } from '@/lib/tokenStorage'
 
 export interface User {
   id: string
@@ -6,6 +7,17 @@ export interface User {
   name?: string
   created_at: string
   updated_at: string
+}
+
+export type OrganizationMembership = {
+  id: string
+  name: string
+  slug: string
+  role: 'admin' | 'editor' | 'viewer' | 'auditor'
+}
+
+export interface MeResponse extends User {
+  organizations: OrganizationMembership[]
 }
 
 interface AuthResponse {
@@ -26,21 +38,43 @@ interface RegisterRequest {
   name?: string
 }
 
-export interface MeResponse extends User {
-  organizations: Array<{
-    id: string
-    name: string
-    slug: string
-    role: 'admin' | 'editor' | 'viewer' | 'auditor'
-  }>
+type MeApiOrganization = {
+  organization_id: string
+  organization_name: string
+  organization_slug: string
+  role: OrganizationMembership['role']
 }
 
-function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem('access_token')
+type MeApiResponse = User & {
+  organizations?: MeApiOrganization[]
+}
+
+export type SSOProvider = {
+  provider: string
+}
+
+function normalizeMe(me: MeApiResponse): MeResponse {
+  return {
+    ...me,
+    organizations: (me.organizations ?? []).map(org => ({
+      id: org.organization_id,
+      name: org.organization_name,
+      slug: org.organization_slug,
+      role: org.role,
+    })),
+  }
+}
+
+export function getAuthHeaders(): HeadersInit {
+  const token = getAccessToken()
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   }
+}
+
+function persistAuthResponse(response: AuthResponse): void {
+  storeTokens(response.access_token, response.refresh_token, response.expires_in)
 }
 
 export async function login(data: LoginRequest): Promise<AuthResponse> {
@@ -56,7 +90,9 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
     const error = await response.json().catch(() => ({}))
     throw new Error(error.error || 'Login failed')
   }
-  return response.json()
+  const auth = (await response.json()) as AuthResponse
+  persistAuthResponse(auth)
+  return auth
 }
 
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
@@ -76,7 +112,9 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
     const error = await response.json().catch(() => ({}))
     throw new Error(error.error || 'Registration failed')
   }
-  return response.json()
+  const auth = (await response.json()) as AuthResponse
+  persistAuthResponse(auth)
+  return auth
 }
 
 export async function getMe(): Promise<MeResponse> {
@@ -89,7 +127,34 @@ export async function getMe(): Promise<MeResponse> {
     }
     throw new Error('Failed to get user info')
   }
-  return response.json()
+  const me = (await response.json()) as MeApiResponse
+  return normalizeMe(me)
+}
+
+export async function refreshTokens(): Promise<AuthResponse> {
+  const refreshToken = getRefreshToken()
+  if (!refreshToken) {
+    throw new Error('No refresh token')
+  }
+
+  const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  })
+
+  if (!response.ok) {
+    clearTokens()
+    if (response.status === 401) {
+      throw new Error('Session expired')
+    }
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.error || 'Token refresh failed')
+  }
+
+  const auth = (await response.json()) as AuthResponse
+  persistAuthResponse(auth)
+  return auth
 }
 
 export async function logout(refreshToken: string): Promise<void> {
@@ -101,4 +166,18 @@ export async function logout(refreshToken: string): Promise<void> {
   if (!response.ok) {
     throw new Error('Logout failed')
   }
+}
+
+export async function fetchSSOProviders(orgSlug: string): Promise<SSOProvider[]> {
+  try {
+    const response = await fetch(`${API_BASE}/api/orgs/${orgSlug}/sso/providers`)
+    if (!response.ok) return []
+    return (await response.json()) as SSOProvider[]
+  } catch {
+    return []
+  }
+}
+
+export function storeSessionFromTokens(accessToken: string, refreshToken: string, expiresIn = 900): void {
+  storeTokens(accessToken, refreshToken, expiresIn)
 }

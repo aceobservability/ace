@@ -7,6 +7,10 @@ import { createParamRedirect } from '@/lib/redirects'
 const PlaceholderPage = lazy(() =>
   import('@/pages/PlaceholderPage').then(m => ({ default: m.PlaceholderPage })),
 )
+const LoginPage = lazy(() => import('@/pages/LoginPage').then(m => ({ default: m.LoginPage })))
+const AuthCallbackPage = lazy(() =>
+  import('@/pages/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })),
+)
 
 const DashboardAliasRedirect = createParamRedirect('/app/dashboards/:id')
 const DashboardSettingsAliasRedirect = createParamRedirect('/app/dashboards/:id/settings')
@@ -144,7 +148,12 @@ export const router = createBrowserRouter([
         handle: withMeta('Sign in | Ace', 'Sign in to Ace to manage dashboards, alerts, and observability workflows.', {
           public: true,
         }),
-        element: placeholder('Sign in'),
+        element: <LoginPage />,
+      },
+      {
+        path: '/auth/callback',
+        handle: withMeta('Signing in | Ace', undefined, { public: true }),
+        element: <AuthCallbackPage />,
       },
       {
         element: <AppLayout />,

@@ -24,7 +24,10 @@ export function AuthGuard() {
   const isPublic = meta?.public === true
 
   if (isPublic && location.pathname === '/login' && isAuthenticated) {
-    return <Navigate to="/app" replace />
+    const params = new URLSearchParams(location.search)
+    const redirect = params.get('redirect')
+    const destination = redirect?.startsWith('/') ? redirect : '/app'
+    return <Navigate to={destination} replace />
   }
 
   if (!isPublic && !isAuthenticated) {
