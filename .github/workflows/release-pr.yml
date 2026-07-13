@@ -72,11 +72,17 @@ jobs:
           fi
           printf "branch=%s\n" "$branch" >> "$GITHUB_OUTPUT"
 
+      - name: Setup Go
+        if: steps.pr-info.outputs.branch != ''
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+
       - name: Install helm-docs
         if: steps.pr-info.outputs.branch != ''
         uses: ./.github/actions/setup-helm-docs
 
-      - name: Generate Helm docs
+      - name: Generate docs
         if: steps.pr-info.outputs.branch != ''
         run: |
           set -euo pipefail
@@ -84,12 +90,13 @@ jobs:
           git checkout "${{ steps.pr-info.outputs.branch }}"
 
           ./helm-docs --chart-search-root charts --log-level warn
+          bash scripts/build-docs.sh --skip-build
 
           # Commit if changed
-          if ! git diff --quiet charts/ace/README.md; then
+          if ! git diff --quiet charts/ace/README.md website/; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add charts/ace/README.md
-            git commit -m "docs: regenerate Helm chart README"
+            git add charts/ace/README.md website/
+            git commit -m "docs: regenerate generated docs for release"
             git push origin "${{ steps.pr-info.outputs.branch }}"
           fi
