@@ -1,6 +1,3 @@
-import { ref } from 'vue'
-import type { Router } from 'vue-router'
-
 type AnalyticsConsent = 'pending' | 'granted' | 'denied'
 
 interface AnalyticsUser {
@@ -23,15 +20,24 @@ interface PostHogLike {
   set_config?: (config: Record<string, unknown>) => void
 }
 
+export type AnalyticsRoute = {
+  fullPath: string
+  name?: string | symbol | null
+}
+
+export type AnalyticsRouter = {
+  afterEach: (callback: (to: AnalyticsRoute) => void) => void
+}
+
 const POSTHOG_HOST_DEFAULT = 'https://eu.posthog.com'
 const CONSENT_STORAGE_KEY = 'ace.analytics.consent'
 const SESSION_RECORDING_STORAGE_KEY = 'ace.analytics.session_recording'
 
-const analyticsReady = ref(false)
-const analyticsInitialized = ref(false)
-const analyticsDntEnabled = ref(false)
-const analyticsConsent = ref<AnalyticsConsent>('pending')
-const analyticsSessionRecordingEnabled = ref(false)
+let analyticsReady = false
+let analyticsInitialized = false
+let analyticsDntEnabled = false
+let analyticsConsent: AnalyticsConsent = 'pending'
+let analyticsSessionRecordingEnabled = false
 
 let posthogClient: PostHogLike | null = null
 let routerHookRegistered = false
@@ -47,7 +53,7 @@ function readDoNotTrackEnabled(): boolean {
     (navigator as Navigator & { msDoNotTrack?: string }).msDoNotTrack,
   ]
 
-  return values.some((value) => value === '1' || value === 'yes')
+  return values.some(value => value === '1' || value === 'yes')
 }
 
 function readStoredConsent(): AnalyticsConsent {
@@ -76,7 +82,7 @@ function applyConsent() {
     return
   }
 
-  if (analyticsConsent.value === 'granted') {
+  if (analyticsConsent === 'granted') {
     posthogClient.opt_in_capturing?.()
     return
   }
@@ -90,21 +96,20 @@ function applySessionRecording() {
   }
 
   posthogClient.set_config?.({
-    disable_session_recording:
-      !analyticsSessionRecordingEnabled.value || analyticsConsent.value !== 'granted',
+    disable_session_recording: !analyticsSessionRecordingEnabled || analyticsConsent !== 'granted',
   })
 }
 
 function shouldCaptureEvents(): boolean {
-  return analyticsReady.value && analyticsConsent.value === 'granted' && !analyticsDntEnabled.value
+  return analyticsReady && analyticsConsent === 'granted' && !analyticsDntEnabled
 }
 
-function registerPageViewTracking(router: Router) {
+function registerPageViewTracking(router: AnalyticsRouter) {
   if (routerHookRegistered) {
     return
   }
 
-  router.afterEach((to) => {
+  router.afterEach(to => {
     trackEvent('$pageview', {
       path: to.fullPath,
       route_name: typeof to.name === 'string' ? to.name : undefined,
@@ -115,21 +120,21 @@ function registerPageViewTracking(router: Router) {
   routerHookRegistered = true
 }
 
-export async function initializeAnalytics(router?: Router) {
-  if (analyticsInitialized.value) {
+export async function initializeAnalytics(router?: AnalyticsRouter) {
+  if (analyticsInitialized) {
     if (router) {
       registerPageViewTracking(router)
     }
     return
   }
 
-  analyticsInitialized.value = true
-  analyticsConsent.value = readStoredConsent()
-  analyticsSessionRecordingEnabled.value = readStoredSessionRecording()
-  analyticsDntEnabled.value = readDoNotTrackEnabled()
+  analyticsInitialized = true
+  analyticsConsent = readStoredConsent()
+  analyticsSessionRecordingEnabled = readStoredSessionRecording()
+  analyticsDntEnabled = readDoNotTrackEnabled()
 
-  if (analyticsDntEnabled.value) {
-    analyticsConsent.value = 'denied'
+  if (analyticsDntEnabled) {
+    analyticsConsent = 'denied'
     return
   }
 
@@ -150,12 +155,12 @@ export async function initializeAnalytics(router?: Router) {
     capture_pageleave: false,
     autocapture: false,
     disable_session_recording:
-      !analyticsSessionRecordingEnabled.value || analyticsConsent.value !== 'granted',
+      !analyticsSessionRecordingEnabled || analyticsConsent !== 'granted',
     persistence: 'localStorage+cookie',
   })
 
   posthogClient = posthog
-  analyticsReady.value = true
+  analyticsReady = true
 
   applyConsent()
   applySessionRecording()
@@ -193,7 +198,7 @@ export function resetUserAnalytics() {
 }
 
 export function setAnalyticsConsent(consent: AnalyticsConsent) {
-  analyticsConsent.value = consent
+  analyticsConsent = consent
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem(CONSENT_STORAGE_KEY, consent)
   }
@@ -202,11 +207,25 @@ export function setAnalyticsConsent(consent: AnalyticsConsent) {
 }
 
 export function setSessionRecordingEnabled(enabled: boolean) {
-  analyticsSessionRecordingEnabled.value = enabled
+  analyticsSessionRecordingEnabled = enabled
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem(SESSION_RECORDING_STORAGE_KEY, String(enabled))
   }
   applySessionRecording()
 }
 
-export { analyticsReady, analyticsDntEnabled, analyticsConsent, analyticsSessionRecordingEnabled }
+export function getAnalyticsReady() {
+  return analyticsReady
+}
+
+export function getAnalyticsDntEnabled() {
+  return analyticsDntEnabled
+}
+
+export function getAnalyticsConsent() {
+  return analyticsConsent
+}
+
+export function getAnalyticsSessionRecordingEnabled() {
+  return analyticsSessionRecordingEnabled
+}

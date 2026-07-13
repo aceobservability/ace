@@ -88,6 +88,28 @@
   --motion-slow: 240ms;
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* shadcn/ui — mapped to Kinetic v2 tokens */
+  --background: var(--color-surface);
+  --foreground: var(--color-on-surface);
+  --card: var(--color-surface-container-low);
+  --card-foreground: var(--color-on-surface);
+  --popover: var(--color-surface-bright);
+  --popover-foreground: var(--color-on-surface);
+  --primary: var(--color-primary);
+  --primary-foreground: #0B0D0F;
+  --secondary: var(--color-secondary);
+  --secondary-foreground: #0B0D0F;
+  --muted: var(--color-surface-container-high);
+  --muted-foreground: var(--color-on-surface-variant);
+  --accent: var(--color-primary-muted);
+  --accent-foreground: var(--color-on-surface);
+  --destructive: var(--color-error);
+  --destructive-foreground: var(--color-on-surface);
+  --border: var(--color-stroke-subtle);
+  --input: var(--color-stroke-subtle);
+  --ring: var(--color-primary);
+  --radius: 0.5rem;
 }
 
 @theme {
