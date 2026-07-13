@@ -25,7 +25,6 @@
     "monaco-editor",
     "react-hook-form",
     "zod",
-
     "d3-force",
     "@types/d3-force",
     "echarts",
