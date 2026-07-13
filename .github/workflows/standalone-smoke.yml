@@ -1,0 +1,29 @@
+name: Standalone Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - deploy/docker/standalone/**
+      - deploy/docker/Dockerfile
+      - .github/workflows/standalone-smoke.yml
+
+concurrency:
+  group: standalone-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Standalone stack smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run smoke test
+        env:
+          ACE_PORT: 18080
+          JWT_SECRET: smoke-test-ci-secret
+        run: ./deploy/docker/standalone/smoke.sh

@@ -90,6 +90,19 @@ Compose runs infrastructure only — the backend and frontend run natively on th
 
 Available profiles: `victoria`, `lgtm`, `elk`, `clickhouse`. **Run one stack at a time** — they are mutually exclusive because every stack's OTel collector binds the same OTLP ports (`4317`/`4318`).
 
+### Option C: Standalone Docker (single VM, no build)
+
+For a low-power VM or any host where you want a ready-to-run stack without cloning the repo or building images:
+
+```bash
+cd deploy/docker/standalone
+cp .env.example .env
+# Set JWT_SECRET in .env (required): openssl rand -base64 48
+docker compose up -d
+```
+
+This pulls the published `ghcr.io/aceobservability/ace-standalone` image plus Postgres and Valkey. The SPA and API share one origin on port `8080` (`/api` is proxied inside the container). See `deploy/docker/standalone/README.md` for configuration and first-user setup.
+
 To switch stacks, tear the current one down first (your seeded database persists in the named volume):
 
 ```bash
@@ -220,7 +233,7 @@ ace/
 ├── deploy/
 │   ├── charts/ace/              # Production Helm chart
 │   ├── charts/ace-local-infra/  # Local dev Helm chart (all datasource services)
-│   └── docker/                  # Docker Compose configs per stack
+│   └── docker/                  # Docker Compose configs (dev stacks + standalone)
 ├── Tiltfile                # Local dev orchestration
 ├── Makefile                # Common commands
 ├── DESIGN.md               # Kinetic v2 design system
