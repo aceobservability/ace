@@ -146,11 +146,30 @@ jobs:
           name: frontend-package
           path: dist-release/*.tar.gz
 
-  docker-backend:
-    name: Publish Backend Image
+  docker-images:
+    name: Publish ${{ matrix.title }}
     runs-on: ubuntu-latest
     needs:
       - secret-scan
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: ace-backend
+            dockerfile: backend/Dockerfile
+            title: Backend Image
+            description: Ace backend API service
+            sbom_prefix: backend
+          - image: ace-frontend
+            dockerfile: frontend/Dockerfile
+            title: Frontend Image
+            description: Ace frontend SPA
+            sbom_prefix: frontend
+          - image: ace-standalone
+            dockerfile: deploy/docker/Dockerfile
+            title: Standalone Image
+            description: Ace combined frontend and backend image
+            sbom_prefix: standalone
     env:
       PRERELEASE: ${{ github.event.release.prerelease }}
     steps:
@@ -172,15 +191,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Compute backend image tags
+      - name: Compute image tags
         id: vars
+        env:
+          IMAGE_NAME: ${{ matrix.image }}
         run: |
           set -euo pipefail
           version="${RELEASE_TAG#v}"
           major="${version%%.*}"
           remainder="${version#*.}"
           minor="${remainder%%.*}"
-          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ace-backend"
+          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${IMAGE_NAME}"
 
           {
             printf "image_repo=%s\n" "$repo"
@@ -196,30 +217,30 @@ jobs:
             printf "EOF\n"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Build and push backend image
+      - name: Build and push image
         id: build
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: backend/Dockerfile
+          file: ${{ matrix.dockerfile }}
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.vars.outputs.tags }}
           labels: |
-            org.opencontainers.image.title=Ace Backend
-            org.opencontainers.image.description=Ace backend API service
+            org.opencontainers.image.title=Ace ${{ matrix.title }}
+            org.opencontainers.image.description=${{ matrix.description }}
             org.opencontainers.image.version=${{ env.RELEASE_TAG }}
             org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
 
-      - name: Sign backend image (keyless)
+      - name: Sign image (keyless)
         env:
           COSIGN_YES: true
         run: cosign sign "${{ steps.vars.outputs.image_repo }}@${{ steps.build.outputs.digest }}"
 
-      - name: Attest backend image provenance
+      - name: Attest image provenance
         uses: actions/attest-build-provenance@v4
         with:
           subject-name: ${{ steps.vars.outputs.image_repo }}
@@ -229,129 +250,27 @@ jobs:
       - name: Install syft
         uses: anchore/sbom-action/download-syft@v0
 
-      - name: Generate backend image SBOM
-        run: |
-          syft "${{ steps.vars.outputs.image_repo }}@${{ steps.build.outputs.digest }}" \
-            -o spdx-json=sbom-backend-image-${RELEASE_TAG#v}.spdx.json
-
-      - name: Upload backend image SBOM
-        uses: actions/upload-artifact@v7
-        with:
-          name: sbom-backend-image
-          path: sbom-backend-image-*.spdx.json
-
-  docker-frontend:
-    name: Publish Frontend Image
-    runs-on: ubuntu-latest
-    needs:
-      - secret-scan
-    env:
-      PRERELEASE: ${{ github.event.release.prerelease }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ env.RELEASE_TAG }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Compute frontend image tags
-        id: vars
-        run: |
-          set -euo pipefail
-          version="${RELEASE_TAG#v}"
-          major="${version%%.*}"
-          remainder="${version#*.}"
-          minor="${remainder%%.*}"
-          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ace-frontend"
-
-          {
-            printf "image_repo=%s\n" "$repo"
-            printf "tags<<EOF\n"
-            printf "%s:%s\n" "$repo" "$RELEASE_TAG"
-            printf "%s:%s\n" "$repo" "$version"
-            printf "%s:%s.%s\n" "$repo" "$major" "$minor"
-            printf "%s:%s\n" "$repo" "$major"
-            printf "%s:sha-%s\n" "$repo" "${GITHUB_SHA::7}"
-            if [ "$PRERELEASE" != "true" ]; then
-              printf "%s:latest\n" "$repo"
-            fi
-            printf "EOF\n"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Build and push frontend image
-        id: build
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: frontend/Dockerfile
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.vars.outputs.tags }}
-          labels: |
-            org.opencontainers.image.title=Ace Frontend
-            org.opencontainers.image.description=Ace frontend SPA
-            org.opencontainers.image.version=${{ env.RELEASE_TAG }}
-            org.opencontainers.image.revision=${{ github.sha }}
-
-      - name: Install cosign
-        uses: sigstore/cosign-installer@v3
-
-      - name: Sign frontend image (keyless)
+      - name: Generate image SBOM
         env:
-          COSIGN_YES: true
-        run: cosign sign "${{ steps.vars.outputs.image_repo }}@${{ steps.build.outputs.digest }}"
-
-      - name: Attest frontend image provenance
-        uses: actions/attest-build-provenance@v4
-        with:
-          subject-name: ${{ steps.vars.outputs.image_repo }}
-          subject-digest: ${{ steps.build.outputs.digest }}
-          push-to-registry: true
-
-      - name: Install syft
-        uses: anchore/sbom-action/download-syft@v0
-
-      - name: Generate frontend image SBOM
+          SBOM_PREFIX: ${{ matrix.sbom_prefix }}
         run: |
           syft "${{ steps.vars.outputs.image_repo }}@${{ steps.build.outputs.digest }}" \
-            -o spdx-json=sbom-frontend-image-${RELEASE_TAG#v}.spdx.json
+            -o "spdx-json=sbom-${SBOM_PREFIX}-image-${RELEASE_TAG#v}.spdx.json"
 
-      - name: Upload frontend image SBOM
+      - name: Upload image SBOM
         uses: actions/upload-artifact@v7
         with:
-          name: sbom-frontend-image
-          path: sbom-frontend-image-*.spdx.json
+          name: sbom-${{ matrix.sbom_prefix }}-image
+          path: sbom-${{ matrix.sbom_prefix }}-image-*.spdx.json
 
-  docker-combined:
-    name: Publish Standalone Image
+  smoke-standalone:
+    name: Smoke test standalone stack
     runs-on: ubuntu-latest
     needs:
-      - secret-scan
-    env:
-      PRERELEASE: ${{ github.event.release.prerelease }}
+      - docker-images
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          ref: ${{ env.RELEASE_TAG }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GHCR
         uses: docker/login-action@v4
@@ -360,73 +279,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Compute standalone image tags
-        id: vars
+      - name: Run smoke test against published image
         run: |
           set -euo pipefail
-          version="${RELEASE_TAG#v}"
-          major="${version%%.*}"
-          remainder="${version#*.}"
-          minor="${remainder%%.*}"
           repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ace-standalone"
-
-          {
-            printf "image_repo=%s\n" "$repo"
-            printf "tags<<EOF\n"
-            printf "%s:%s\n" "$repo" "$RELEASE_TAG"
-            printf "%s:%s\n" "$repo" "$version"
-            printf "%s:%s.%s\n" "$repo" "$major" "$minor"
-            printf "%s:%s\n" "$repo" "$major"
-            printf "%s:sha-%s\n" "$repo" "${GITHUB_SHA::7}"
-            if [ "$PRERELEASE" != "true" ]; then
-              printf "%s:latest\n" "$repo"
-            fi
-            printf "EOF\n"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Build and push standalone image
-        id: build
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: deploy/docker/Dockerfile
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.vars.outputs.tags }}
-          labels: |
-            org.opencontainers.image.title=Ace Standalone
-            org.opencontainers.image.description=Ace combined frontend and backend image
-            org.opencontainers.image.version=${{ env.RELEASE_TAG }}
-            org.opencontainers.image.revision=${{ github.sha }}
-
-      - name: Install cosign
-        uses: sigstore/cosign-installer@v3
-
-      - name: Sign standalone image (keyless)
-        env:
-          COSIGN_YES: true
-        run: cosign sign "${{ steps.vars.outputs.image_repo }}@${{ steps.build.outputs.digest }}"
-
-      - name: Attest standalone image provenance
-        uses: actions/attest-build-provenance@v4
-        with:
-          subject-name: ${{ steps.vars.outputs.image_repo }}
-          subject-digest: ${{ steps.build.outputs.digest }}
-          push-to-registry: true
-
-      - name: Install syft
-        uses: anchore/sbom-action/download-syft@v0
-
-      - name: Generate standalone image SBOM
-        run: |
-          syft "${{ steps.vars.outputs.image_repo }}@${{ steps.build.outputs.digest }}" \
-            -o spdx-json=sbom-standalone-image-${RELEASE_TAG#v}.spdx.json
-
-      - name: Upload standalone image SBOM
-        uses: actions/upload-artifact@v7
-        with:
-          name: sbom-standalone-image
-          path: sbom-standalone-image-*.spdx.json
+          ACE_STANDALONE_IMAGE="${repo}:${RELEASE_TAG}" \
+          ACE_PORT=18080 \
+          JWT_SECRET=smoke-test-ci-secret \
+            ./deploy/docker/standalone/smoke.sh
 
   helm-chart:
     name: Publish Helm Chart
@@ -517,9 +377,7 @@ jobs:
     needs:
       - build-backend-binaries
       - build-frontend-artifact
-      - docker-backend
-      - docker-frontend
-      - docker-combined
+      - docker-images
       - helm-chart
       - checksums
     steps:
