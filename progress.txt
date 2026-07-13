@@ -1,3 +1,4 @@
+2026-07-13 — Issue #293: ADR-0002 locks React stack for Vue rewrite — Vite SPA, React Router v7, Zustand, TanStack Query, Radix + Tailwind, RHF + Zod, Vitest + Testing Library; Vue dependency mapping documented.
 2026-07-13 — Issues #269 + #268 follow-up: matrix-collapsed `docker-images` release job, post-publish `smoke-standalone` in release.yml (fixes release race), simplified smoke.sh/workflow, Postgres/image pinning docs, Go 1.25.12 + regenerated website docs.
 2026-07-13 — Issues #269 + #268: Standalone release pipeline (`docker-combined` job for `ace-standalone`), turnkey compose stack (`deploy/docker/standalone/`) with JWT_SECRET-required `.env`, deploy docs, and CI smoke workflow asserting GET / and GET /api/health through the proxy.
 2026-04-27 — Fixed product-demo Panel QA blockers: registry initialization now precedes the immediate datasource watcher and registry empty-state copy maps to setup-required panel props with regression coverage.
