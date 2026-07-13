@@ -1,0 +1,57 @@
+# Ace standalone deployment — combined app image + Postgres + Valkey.
+# No build step: pulls the published ace-standalone image from GHCR.
+#
+# Quick start:
+#   cp .env.example .env
+#   # set JWT_SECRET in .env (required)
+#   docker compose up -d
+#
+# UI: http://localhost:8080  (SPA + /api on the same origin)
+
+name: ace-standalone
+
+services:
+  postgres:
+    image: postgres:${POSTGRES_VERSION:-16-alpine}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ace}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ace}
+      POSTGRES_DB: ${POSTGRES_DB:-ace}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-ace}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  valkey:
+    image: valkey/valkey:${VALKEY_VERSION:-7}
+    volumes:
+      - valkey_data:/data
+    healthcheck:
+      test: ['CMD', 'valkey-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ace:
+    image: ${ACE_STANDALONE_IMAGE:-ghcr.io/aceobservability/ace-standalone:latest}
+    ports:
+      - '${ACE_PORT:-8080}:8080'
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-ace}:${POSTGRES_PASSWORD:-ace}@postgres:5432/${POSTGRES_DB:-ace}?sslmode=disable
+      VALKEY_URL: valkey://valkey:6379
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env — run: openssl rand -base64 48}
+    volumes:
+      - ace_data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  valkey_data:
+  ace_data:

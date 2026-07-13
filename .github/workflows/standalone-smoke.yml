@@ -1,0 +1,63 @@
+name: Standalone Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - deploy/docker/standalone/**
+      - deploy/docker/Dockerfile
+      - .github/workflows/standalone-smoke.yml
+  release:
+    types:
+      - published
+
+concurrency:
+  group: standalone-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Standalone stack smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Log in to GHCR (release)
+        if: github.event_name == 'release'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull published standalone image (release)
+        if: github.event_name == 'release'
+        run: |
+          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ace-standalone"
+          docker pull "${repo}:${{ github.event.release.tag_name }}"
+
+      - name: Configure smoke test
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "release" ]; then
+            repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ace-standalone"
+            {
+              printf 'ACE_STANDALONE_IMAGE=%s:%s\n' "$repo" "${{ github.event.release.tag_name }}"
+              printf 'SKIP_BUILD=1\n'
+            } >> "$GITHUB_ENV"
+          else
+            {
+              printf 'ACE_STANDALONE_IMAGE=ace-standalone:smoke\n'
+              printf 'SKIP_BUILD=0\n'
+            } >> "$GITHUB_ENV"
+          fi
+          {
+            printf 'ACE_PORT=18080\n'
+            printf 'JWT_SECRET=smoke-test-ci-secret\n'
+          } >> "$GITHUB_ENV"
+
+      - name: Run smoke test
+        run: ./deploy/docker/standalone/smoke.sh
