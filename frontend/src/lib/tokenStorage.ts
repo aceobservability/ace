@@ -40,8 +40,15 @@ export function clearTokens(): void {
 }
 
 export function isAccessTokenExpired(): boolean {
+  return shouldRefreshAccessToken()
+}
+
+/** True when the access token should be refreshed before use. */
+export function shouldRefreshAccessToken(): boolean {
+  if (!hasStoredSession()) return false
   const expiresAt = getTokenExpiresAt()
-  if (!expiresAt) return false
+  // Legacy sessions (Vue migration) lack expiry metadata — refresh to be safe.
+  if (!expiresAt) return true
   return Date.now() >= expiresAt - REFRESH_BUFFER_SECONDS * 1000
 }
 

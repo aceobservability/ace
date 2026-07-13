@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { storeSessionFromTokens } from '@/api/auth'
+import { clearTokens } from '@/lib/tokenStorage'
+import { consumeSsoRedirect } from '@/lib/ssoRedirect'
 import { useAuthStore } from '@/stores/authStore'
 
 function parseHashTokens(hash: string): { accessToken: string | null; refreshToken: string | null } {
@@ -11,13 +13,19 @@ function parseHashTokens(hash: string): { accessToken: string | null; refreshTok
   }
 }
 
+function stripHashFromUrl(): void {
+  history.replaceState(null, '', window.location.pathname + window.location.search)
+}
+
 export function AuthCallbackPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { applySession } = useAuthStore()
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const { accessToken, refreshToken } = parseHashTokens(window.location.hash)
+    const { accessToken, refreshToken } = parseHashTokens(location.hash)
+    stripHashFromUrl()
 
     if (!accessToken || !refreshToken) {
       setError('Sign-in failed — missing tokens from identity provider.')
@@ -28,12 +36,14 @@ export function AuthCallbackPage() {
       try {
         storeSessionFromTokens(accessToken, refreshToken)
         await applySession()
-        navigate('/app', { replace: true })
+        const destination = consumeSsoRedirect() ?? '/app'
+        navigate(destination, { replace: true })
       } catch {
+        clearTokens()
         setError('Sign-in failed — could not establish a session.')
       }
     })()
-  }, [applySession, navigate])
+  }, [applySession, location.hash, navigate])
 
   if (error) {
     return (

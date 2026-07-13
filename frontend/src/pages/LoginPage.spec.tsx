@@ -47,7 +47,7 @@ describe('LoginPage', () => {
       token_type: 'Bearer',
       expires_in: 900,
     })
-    vi.spyOn(authApi, 'getMe').mockResolvedValue({
+    vi.spyOn(authApi, 'getMeWithRefresh').mockResolvedValue({
       id: 'user-1',
       email: 'user@example.com',
       created_at: '2026-01-01T00:00:00Z',

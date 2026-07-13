@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation, useMatches } from 'react-router-dom'
+import { safeRedirectPath } from '@/lib/safeRedirect'
 import type { RouteMeta } from '@/router'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -25,8 +26,7 @@ export function AuthGuard() {
 
   if (isPublic && location.pathname === '/login' && isAuthenticated) {
     const params = new URLSearchParams(location.search)
-    const redirect = params.get('redirect')
-    const destination = redirect?.startsWith('/') ? redirect : '/app'
+    const destination = safeRedirectPath(params.get('redirect')) ?? '/app'
     return <Navigate to={destination} replace />
   }
 

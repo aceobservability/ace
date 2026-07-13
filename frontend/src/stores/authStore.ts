@@ -1,7 +1,7 @@
 import { identifyUser, resetUserAnalytics, trackEvent } from '@/analytics'
 import type { MeResponse, OrganizationMembership, User } from '@/api/auth'
 import * as authApi from '@/api/auth'
-import { clearTokens, getRefreshToken, hasStoredSession, isAccessTokenExpired } from '@/lib/tokenStorage'
+import { clearTokens, getRefreshToken, hasStoredSession, shouldRefreshAccessToken } from '@/lib/tokenStorage'
 import { useOrgStore } from '@/stores/orgStore'
 import { create } from 'zustand'
 
@@ -18,6 +18,8 @@ type AuthState = {
   applySession: () => Promise<void>
   refreshSession: () => Promise<boolean>
 }
+
+let initPromise: Promise<boolean> | null = null
 
 function applyUserSession(me: MeResponse): void {
   const user: User = {
@@ -49,13 +51,40 @@ function clearSession(): void {
 
 async function ensureFreshAccessToken(): Promise<boolean> {
   if (!hasStoredSession()) return false
-  if (!isAccessTokenExpired()) return true
+  if (!shouldRefreshAccessToken()) return true
 
   try {
     await authApi.refreshTokens()
     return true
   } catch {
     clearSession()
+    return false
+  }
+}
+
+async function loadSession(set: (partial: Partial<AuthState>) => void): Promise<boolean> {
+  set({ loading: true })
+
+  if (!hasStoredSession()) {
+    useOrgStore.getState().clear()
+    set({ loading: false, initialized: true, isAuthenticated: false })
+    return false
+  }
+
+  try {
+    const hasToken = await ensureFreshAccessToken()
+    if (!hasToken) {
+      set({ loading: false, initialized: true, isAuthenticated: false })
+      return false
+    }
+
+    const me = await authApi.getMeWithRefresh()
+    applyUserSession(me)
+    set({ loading: false, initialized: true, isAuthenticated: true })
+    return true
+  } catch {
+    clearSession()
+    set({ loading: false, initialized: true, isAuthenticated: false })
     return false
   }
 }
@@ -72,33 +101,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return get().isAuthenticated
     }
 
-    set({ loading: true })
-
-    if (!hasStoredSession()) {
-      set({ loading: false, initialized: true, isAuthenticated: false })
-      return false
-    }
-
-    try {
-      const hasToken = await ensureFreshAccessToken()
-      if (!hasToken) {
-        set({ loading: false, initialized: true, isAuthenticated: false })
-        return false
-      }
-
-      const me = await authApi.getMe()
-      applyUserSession(me)
-      set({ loading: false, initialized: true, isAuthenticated: true })
-      return true
-    } catch {
-      clearSession()
-      set({ loading: false, initialized: true, isAuthenticated: false })
-      return false
-    }
+    initPromise ??= loadSession(set).finally(() => {
+      initPromise = null
+    })
+    return initPromise
   },
 
   async applySession() {
-    const me = await authApi.getMe()
+    const me = await authApi.getMeWithRefresh()
     applyUserSession(me)
     set({ isAuthenticated: true, loading: false, initialized: true })
   },

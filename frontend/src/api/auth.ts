@@ -131,6 +131,18 @@ export async function getMe(): Promise<MeResponse> {
   return normalizeMe(me)
 }
 
+export async function getMeWithRefresh(): Promise<MeResponse> {
+  try {
+    return await getMe()
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Not authenticated' && getRefreshToken()) {
+      await refreshTokens()
+      return await getMe()
+    }
+    throw error
+  }
+}
+
 export async function refreshTokens(): Promise<AuthResponse> {
   const refreshToken = getRefreshToken()
   if (!refreshToken) {

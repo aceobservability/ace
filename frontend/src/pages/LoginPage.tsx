@@ -5,6 +5,8 @@ import { API_BASE } from '@/api/base'
 import type { SSOProvider } from '@/api/auth'
 import { fetchSSOProviders } from '@/api/auth'
 import { Button } from '@/components/ui/button'
+import { safeRedirectPath } from '@/lib/safeRedirect'
+import { storeSsoRedirect } from '@/lib/ssoRedirect'
 import { useAuthStore } from '@/stores/authStore'
 
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
@@ -36,7 +38,12 @@ export function LoginPage() {
 
   useEffect(() => {
     const org = searchParams.get('org')
-    if (!org) return
+    if (!org) {
+      setOrgSlug(null)
+      setSsoProviders([])
+      setSsoLoading(false)
+      return
+    }
 
     setOrgSlug(org)
     setSsoLoading(true)
@@ -48,6 +55,7 @@ export function LoginPage() {
 
   function handleSSOLogin(provider: string) {
     if (!orgSlug) return
+    storeSsoRedirect(searchParams.get('redirect'))
     window.location.href = `${API_BASE}/api/auth/${provider}/login?org=${encodeURIComponent(orgSlug)}`
   }
 
@@ -63,8 +71,8 @@ export function LoginPage() {
         await register(email, password, name || undefined)
       }
 
-      const redirect = searchParams.get('redirect')
-      navigate(redirect?.startsWith('/') ? redirect : '/app', { replace: true })
+      const destination = safeRedirectPath(searchParams.get('redirect')) ?? '/app'
+      navigate(destination, { replace: true })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'An error occurred')
     } finally {

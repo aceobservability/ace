@@ -26,7 +26,7 @@ describe('useAuthStore', () => {
 
   it('initializes session from stored tokens', async () => {
     storeTokens('access-1', 'refresh-1', 900)
-    vi.spyOn(authApi, 'getMe').mockResolvedValue({
+    vi.spyOn(authApi, 'getMeWithRefresh').mockResolvedValue({
       id: 'user-1',
       email: 'user@example.com',
       name: 'User',
@@ -40,6 +40,33 @@ describe('useAuthStore', () => {
     expect(authenticated).toBe(true)
     expect(useAuthStore.getState().user?.email).toBe('user@example.com')
     expect(useAuthStore.getState().userOrganizations).toHaveLength(1)
+  })
+
+  it('refreshes legacy sessions without expiry metadata before loading', async () => {
+    localStorage.setItem('access_token', 'stale-access')
+    localStorage.setItem('refresh_token', 'refresh-1')
+
+    const refreshSpy = vi.spyOn(authApi, 'refreshTokens').mockImplementation(async () => {
+      storeTokens('fresh-access', 'fresh-refresh', 900)
+      return {
+        access_token: 'fresh-access',
+        refresh_token: 'fresh-refresh',
+        token_type: 'Bearer',
+        expires_in: 900,
+      }
+    })
+    vi.spyOn(authApi, 'getMeWithRefresh').mockResolvedValue({
+      id: 'user-1',
+      email: 'user@example.com',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+      organizations: [],
+    })
+
+    const authenticated = await useAuthStore.getState().initialize()
+
+    expect(refreshSpy).toHaveBeenCalledTimes(1)
+    expect(authenticated).toBe(true)
   })
 
   it('refreshes expired access tokens before loading the session', async () => {
@@ -57,7 +84,7 @@ describe('useAuthStore', () => {
         expires_in: 900,
       }
     })
-    vi.spyOn(authApi, 'getMe').mockResolvedValue({
+    vi.spyOn(authApi, 'getMeWithRefresh').mockResolvedValue({
       id: 'user-1',
       email: 'user@example.com',
       created_at: '2026-01-01T00:00:00Z',
@@ -80,7 +107,7 @@ describe('useAuthStore', () => {
       token_type: 'Bearer',
       expires_in: 900,
     })
-    vi.spyOn(authApi, 'getMe').mockResolvedValue({
+    vi.spyOn(authApi, 'getMeWithRefresh').mockResolvedValue({
       id: 'user-1',
       email: 'user@example.com',
       created_at: '2026-01-01T00:00:00Z',
