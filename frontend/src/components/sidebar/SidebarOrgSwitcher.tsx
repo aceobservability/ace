@@ -61,7 +61,9 @@ export function SidebarOrgSwitcher({
           data-testid="org-switcher-popup"
           className="animate-fade-in fixed z-[60] overflow-hidden"
           style={{
-            left: expanded ? '248px' : 'calc(52px + 4px)',
+            left: expanded
+              ? 'calc(var(--sidebar-rail-width, 52px) + var(--sidebar-flyout-width, 196px) + 4px)'
+              : 'calc(var(--sidebar-rail-width, 52px) + 4px)',
             top: 'calc(12px + 32px + 4px)',
             width: '220px',
             backgroundColor: 'var(--color-surface-bright)',

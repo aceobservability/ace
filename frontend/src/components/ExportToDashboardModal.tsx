@@ -115,10 +115,19 @@ export function ExportToDashboardModal({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-center justify-center" onClick={onClose}>
-      <div className="absolute inset-0" style={{ backgroundColor: 'var(--overlay-scrim)' }} />
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
+      <button
+        type="button"
+        aria-label="Close"
+        className="absolute inset-0 cursor-default border-none p-0"
+        style={{ backgroundColor: 'var(--overlay-scrim)' }}
+        onClick={onClose}
+      />
 
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="export-dashboard-title"
         className="relative mx-4 w-full max-w-[480px] animate-fade-in rounded-xl"
         style={{
           backgroundColor: 'var(--color-surface-bright)',
@@ -126,7 +135,7 @@ export function ExportToDashboardModal({
           border: '1px solid var(--color-outline-variant)',
         }}
         data-testid="export-dashboard-modal"
-        onClick={event => event.stopPropagation()}
+        onMouseDown={event => event.stopPropagation()}
       >
         <div
           className="flex items-center justify-between px-6 py-4"
@@ -135,6 +144,7 @@ export function ExportToDashboardModal({
           <div className="flex items-center gap-2">
             <LayoutDashboard size={18} style={{ color: 'var(--color-primary)' }} />
             <h2
+              id="export-dashboard-title"
               className="m-0 font-display text-lg font-semibold"
               style={{ color: 'var(--color-on-surface)' }}
             >
@@ -177,12 +187,14 @@ export function ExportToDashboardModal({
             <div className="flex flex-col gap-5 px-6 py-5">
               <div className="flex flex-col gap-2">
                 <label
+                  htmlFor="export-dashboard-select"
                   className="text-xs font-semibold uppercase tracking-wide"
                   style={{ color: 'var(--color-outline)' }}
                 >
                   Dashboard
                 </label>
                 <select
+                  id="export-dashboard-select"
                   value={selectedDashboardId}
                   onChange={event => setSelectedDashboardId(event.target.value)}
                   className="w-full cursor-pointer rounded-sm px-3 py-2.5 text-sm"
@@ -206,12 +218,14 @@ export function ExportToDashboardModal({
               {isNewDashboard ? (
                 <div className="flex flex-col gap-2">
                   <label
+                    htmlFor="export-new-dashboard-name"
                     className="text-xs font-semibold uppercase tracking-wide"
                     style={{ color: 'var(--color-outline)' }}
                   >
                     Dashboard Name
                   </label>
                   <input
+                    id="export-new-dashboard-name"
                     value={newDashboardName}
                     onChange={event => setNewDashboardName(event.target.value)}
                     type="text"
@@ -229,12 +243,14 @@ export function ExportToDashboardModal({
 
               <div className="flex flex-col gap-2">
                 <label
+                  htmlFor="export-panel-title"
                   className="text-xs font-semibold uppercase tracking-wide"
                   style={{ color: 'var(--color-outline)' }}
                 >
                   Panel Title
                 </label>
                 <input
+                  id="export-panel-title"
                   value={panelTitle}
                   onChange={event => setPanelTitle(event.target.value)}
                   type="text"
@@ -249,13 +265,13 @@ export function ExportToDashboardModal({
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label
+              <fieldset className="m-0 flex flex-col gap-2 border-none p-0">
+                <legend
                   className="text-xs font-semibold uppercase tracking-wide"
                   style={{ color: 'var(--color-outline)' }}
                 >
                   Query
-                </label>
+                </legend>
                 <code
                   className="block truncate rounded-sm px-3 py-2 font-mono text-xs"
                   style={{
@@ -266,7 +282,7 @@ export function ExportToDashboardModal({
                 >
                   {query}
                 </code>
-              </div>
+              </fieldset>
 
               {error ? (
                 <div className="text-sm" style={{ color: 'var(--color-error)' }}>

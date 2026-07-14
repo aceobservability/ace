@@ -27,6 +27,7 @@ export function useTimeRange() {
   const resetZoom = useTimeRangeStore(state => state.resetZoom)
   const cleanup = useTimeRangeStore(state => state.cleanup)
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: lastRefreshTime bumps relative presets on auto-refresh
   const timeRange = useMemo(
     () => calculateTimeRange({ selectedPreset, isCustomRange, customRange }),
     [selectedPreset, isCustomRange, customRange, lastRefreshTime],

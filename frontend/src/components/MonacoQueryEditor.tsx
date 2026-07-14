@@ -69,6 +69,7 @@ export function MonacoQueryEditor({
   const placeholderId = useId()
   const showPlaceholder = !value && !isFocused
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Monaco editor is created once; theme/language/value sync in separate effects
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -146,14 +147,14 @@ export function MonacoQueryEditor({
   }, [])
 
   useEffect(() => {
+    editorRef.current?.updateOptions({ readOnly: disabled })
+  }, [disabled])
+
+  useEffect(() => {
     if (editorRef.current && editorRef.current.getValue() !== value) {
       editorRef.current.setValue(value)
     }
   }, [value])
-
-  useEffect(() => {
-    editorRef.current?.updateOptions({ readOnly: disabled })
-  }, [disabled])
 
   useEffect(() => {
     monaco.editor.setTheme(isDark ? 'promql-dark' : 'promql-light')
@@ -166,6 +167,7 @@ export function MonacoQueryEditor({
     }
   }, [language])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: relayout when editor height prop changes
   useEffect(() => {
     editorRef.current?.layout()
   }, [height])

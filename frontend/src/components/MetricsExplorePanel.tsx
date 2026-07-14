@@ -444,6 +444,7 @@ export function MetricsExplorePanel({ onDatasourceChanged }: MetricsExplorePanel
     )
   }, [metricsDatasources])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: run when navigation/health context for active datasource changes
   useEffect(() => {
     if (!activeDatasource) return
 
@@ -470,6 +471,7 @@ export function MetricsExplorePanel({ onDatasourceChanged }: MetricsExplorePanel
     pendingStartMs,
   ])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: close menu when datasource selection changes
   useEffect(() => {
     setShowDatasourceMenu(false)
   }, [selectedDatasourceId])
@@ -540,7 +542,8 @@ export function MetricsExplorePanel({ onDatasourceChanged }: MetricsExplorePanel
   const favoriteId = `explore::metrics::${query}`
 
   return (
-    <div className="flex flex-1 flex-col gap-6" onKeyDown={handleKeydown}>
+    // biome-ignore lint/a11y/noStaticElementInteractions: panel-level Ctrl/Cmd+Enter to run query
+    <section className="flex flex-1 flex-col gap-6" onKeyDown={handleKeydown}>
       <div
         className="flex flex-col gap-4 rounded-lg p-4"
         style={{ backgroundColor: 'var(--color-surface-container-low)' }}
@@ -548,6 +551,7 @@ export function MetricsExplorePanel({ onDatasourceChanged }: MetricsExplorePanel
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 max-md:grid-cols-1">
           <div className="flex flex-col gap-2.5">
             <label
+              htmlFor="explore-datasource-btn"
               className="text-xs font-semibold tracking-wide uppercase"
               style={{ color: 'var(--color-outline)' }}
             >
@@ -555,6 +559,7 @@ export function MetricsExplorePanel({ onDatasourceChanged }: MetricsExplorePanel
             </label>
             <div ref={datasourceMenuRef} className="relative">
               <button
+                id="explore-datasource-btn"
                 type="button"
                 className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60"
                 style={{
@@ -684,12 +689,12 @@ export function MetricsExplorePanel({ onDatasourceChanged }: MetricsExplorePanel
           </div>
 
           <div className="flex flex-col gap-2.5">
-            <label
+            <span
               className="text-xs font-semibold tracking-wide uppercase"
               style={{ color: 'var(--color-outline)' }}
             >
               Query Range
-            </label>
+            </span>
             <TimeRangePicker stacked />
           </div>
         </div>
@@ -704,7 +709,7 @@ export function MetricsExplorePanel({ onDatasourceChanged }: MetricsExplorePanel
             />
           ) : (
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-[var(--color-on-surface)]">Query</label>
+              <span className="text-sm font-medium text-[var(--color-on-surface)]">Query</span>
               <MonacoQueryEditor
                 value={query}
                 onChange={setQuery}
@@ -766,6 +771,7 @@ export function MetricsExplorePanel({ onDatasourceChanged }: MetricsExplorePanel
                   </div>
                   {queryHistory.map((historyQuery, index) => (
                     <button
+                      // biome-ignore lint/suspicious/noArrayIndexKey: duplicate queries in history are rare; index disambiguates
                       key={`${historyQuery}-${index}`}
                       type="button"
                       className="block w-full cursor-pointer border-none bg-transparent px-4 py-2.5 text-left transition"
@@ -963,6 +969,6 @@ export function MetricsExplorePanel({ onDatasourceChanged }: MetricsExplorePanel
           onClose={() => setShowExportModal(false)}
         />
       ) : null}
-    </div>
+    </section>
   )
 }

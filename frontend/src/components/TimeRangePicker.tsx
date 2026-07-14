@@ -256,7 +256,7 @@ export function TimeRangePicker({ stacked = false, showStatus = true }: TimeRang
                     'var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.24), 0 1px 2px rgba(0,0,0,0.16))',
                 }}
                 role="listbox"
-                onClick={event => event.stopPropagation()}
+                onMouseDown={event => event.stopPropagation()}
               >
                 <div
                   className="px-3 py-1.5 font-mono text-[0.6875rem] font-semibold uppercase tracking-wide"
@@ -320,13 +320,14 @@ export function TimeRangePicker({ stacked = false, showStatus = true }: TimeRang
       </div>
 
       {isOpen ? (
+        // biome-ignore lint/a11y/noStaticElementInteractions: stop mousedown from closing parent picker
         <div
           className="absolute top-[calc(100%+4px)] left-0 z-[1000] min-w-[220px] animate-fade-in rounded shadow-lg"
           style={{
             backgroundColor: 'var(--color-surface-bright)',
             border: '1px solid var(--color-outline-variant)',
           }}
-          onClick={event => event.stopPropagation()}
+          onMouseDown={event => event.stopPropagation()}
         >
           {!showCustomRange ? (
             <>

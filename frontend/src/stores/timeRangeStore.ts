@@ -46,6 +46,16 @@ type PreZoomSnapshot = {
 const refreshCallbacks = new Set<() => void | Promise<void>>()
 let refreshIntervalId: ReturnType<typeof setInterval> | null = null
 
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    if (refreshIntervalId !== null) {
+      clearInterval(refreshIntervalId)
+      refreshIntervalId = null
+    }
+    refreshCallbacks.clear()
+  })
+}
+
 function formatDateTime(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')

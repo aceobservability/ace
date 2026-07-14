@@ -167,7 +167,7 @@ export function QueryBuilder({
       {mode === 'builder' ? (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-[var(--color-on-surface)]">Metric</label>
+            <label htmlFor="query-metric-search-input" className="text-sm font-medium text-[var(--color-on-surface)]">Metric</label>
             <div className="relative">
               <div className="relative flex items-center">
                 <Search
@@ -175,6 +175,7 @@ export function QueryBuilder({
                   className="pointer-events-none absolute left-3 text-[var(--color-outline)]"
                 />
                 <input
+                  id="query-metric-search-input"
                   value={metricSearch}
                   onChange={event => setMetricSearch(event.target.value)}
                   type="text"
@@ -195,16 +196,17 @@ export function QueryBuilder({
               {showMetricDropdown && filteredMetrics.length > 0 ? (
                 <div className="absolute top-[calc(100%+4px)] right-0 left-0 z-[100] max-h-[250px] overflow-y-auto rounded-sm bg-[var(--color-surface-container-low)] shadow-lg">
                   {filteredMetrics.map(m => (
-                    <div
+                    <button
                       key={m}
-                      className={`cursor-pointer px-3 py-2 font-mono text-sm text-[var(--color-on-surface)] transition-colors duration-150 hover:bg-[var(--color-surface-container-high)] ${m === metric ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]' : ''}`}
+                      type="button"
+                      className={`w-full cursor-pointer border-none bg-transparent px-3 py-2 text-left font-mono text-sm text-[var(--color-on-surface)] transition-colors duration-150 hover:bg-[var(--color-surface-container-high)] ${m === metric ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]' : ''}`}
                       onMouseDown={event => {
                         event.preventDefault()
                         selectMetric(m)
                       }}
                     >
                       {m}
-                    </div>
+                    </button>
                   ))}
                   {loadingMetrics ? (
                     <div className="py-3 text-center text-sm text-[var(--color-outline)]">
@@ -218,9 +220,9 @@ export function QueryBuilder({
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-[var(--color-on-surface)]">
+              <span className="text-sm font-medium text-[var(--color-on-surface)]">
                 Label Filters
-              </label>
+              </span>
               <button
                 type="button"
                 className="flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-variant)] transition-all duration-200 hover:enabled:bg-[var(--color-surface-container-high)] hover:enabled:text-[var(--color-on-surface)]"
@@ -316,11 +318,12 @@ export function QueryBuilder({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-[var(--color-on-surface)]">
+            <label htmlFor="query-aggregation-select" className="text-sm font-medium text-[var(--color-on-surface)]">
               Aggregation
             </label>
             <div className="flex items-center gap-4">
               <select
+                id="query-aggregation-select"
                 value={aggregation}
                 onChange={event => setAggregation(event.target.value as typeof aggregation)}
                 data-testid="query-aggregation-select"
@@ -336,8 +339,9 @@ export function QueryBuilder({
 
               {aggregationRequiresRange ? (
                 <div className="flex items-center gap-2">
-                  <label className="text-sm text-[var(--color-outline)]">Range:</label>
+                  <label htmlFor="query-range-input" className="text-sm text-[var(--color-outline)]">Range:</label>
                   <input
+                    id="query-range-input"
                     value={rangeInterval}
                     onChange={event => setRangeInterval(event.target.value)}
                     type="text"
@@ -351,8 +355,9 @@ export function QueryBuilder({
 
               {aggregationRequiresK ? (
                 <div className="flex items-center gap-2">
-                  <label className="text-sm text-[var(--color-outline)]">K:</label>
+                  <label htmlFor="query-k-input" className="text-sm text-[var(--color-outline)]">K:</label>
                   <input
+                    id="query-k-input"
                     value={kValue}
                     onChange={event => setKValue(Number(event.target.value))}
                     type="number"
@@ -407,9 +412,9 @@ export function QueryBuilder({
           ) : null}
 
           <div className="mt-2 flex flex-col gap-2 pt-4">
-            <label className="text-sm font-medium text-[var(--color-on-surface)]">
+            <span className="text-sm font-medium text-[var(--color-on-surface)]">
               Generated Query
-            </label>
+            </span>
             <div className="min-h-[48px] rounded-sm bg-[var(--color-surface-container-high)] px-4 py-3">
               {generatedQuery ? (
                 <code className="font-mono text-sm break-all text-[var(--color-primary)]">
@@ -425,7 +430,7 @@ export function QueryBuilder({
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <label className="text-sm font-medium text-[var(--color-on-surface)]">Query</label>
+          <span className="text-sm font-medium text-[var(--color-on-surface)]">Query</span>
           <MonacoQueryEditor
             value={codeQuery}
             onChange={setCodeQuery}
