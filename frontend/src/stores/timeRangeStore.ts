@@ -100,7 +100,7 @@ async function triggerRefresh(setRefreshing: (value: boolean) => void, setLastRe
   const promises = Array.from(refreshCallbacks).map(callback => {
     try {
       const result = callback()
-      return result instanceof Promise ? result : Promise.resolve()
+      return result instanceof Promise ? result.catch(() => {}) : Promise.resolve()
     } catch {
       return Promise.resolve()
     }

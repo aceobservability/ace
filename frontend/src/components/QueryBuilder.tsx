@@ -86,7 +86,7 @@ export function QueryBuilder({
     if (!codeQuery) return true
     if (mode === 'builder' && generatedQuery) return true
     if (codeQuery === generatedQuery) return true
-    if (codeQuery && !metric) return false
+    if (!metric) return false
     return true
   }, [codeQuery, generatedQuery, metric, mode])
 
