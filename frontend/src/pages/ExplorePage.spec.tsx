@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
@@ -55,6 +55,37 @@ vi.mock('@/components/QueryBuilder', () => ({
   ),
 }))
 
+vi.mock('@/components/LogQLQueryBuilder', () => ({
+  LogQLQueryBuilder: ({
+    value,
+    onChange,
+    disabled,
+  }: {
+    value: string
+    onChange: (value: string) => void
+    disabled?: boolean
+  }) => (
+    <input
+      data-testid="logql-query-builder-mock"
+      value={value}
+      disabled={disabled}
+      onChange={event => onChange(event.target.value)}
+    />
+  ),
+}))
+
+vi.mock('@/components/LogViewer', () => ({
+  LogViewer: ({ logs }: { logs: Array<{ line: string }> }) => (
+    <div data-testid="log-viewer-mock" data-log-count={logs.length}>
+      {logs.map(log => (
+        <div key={log.line} data-testid="log-viewer-row-mock">
+          {log.line}
+        </div>
+      ))}
+    </div>
+  ),
+}))
+
 vi.mock('echarts/core', () => ({
   init: vi.fn(() => ({
     setOption: vi.fn(),
@@ -82,12 +113,25 @@ vi.mock('echarts/components', () => ({
   GridComponent: {},
 }))
 
-const mockDatasource: DataSource = {
+const mockMetricsDatasource: DataSource = {
   id: 'ds-1',
   organization_id: 'org-1',
   name: 'Prometheus Prod',
   type: 'prometheus',
   url: 'http://prometheus:9090',
+  is_default: true,
+  auth_type: 'none',
+  trace_id_field: 'trace_id',
+  created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z',
+}
+
+const mockLogsDatasource: DataSource = {
+  id: 'ds-logs-1',
+  organization_id: 'org-1',
+  name: 'Loki Prod',
+  type: 'loki',
+  url: 'http://loki:3100',
   is_default: true,
   auth_type: 'none',
   trace_id_field: 'trace_id',
@@ -141,7 +185,7 @@ describe('ExplorePage', () => {
     useTimeRangeStore.getState()._reset()
 
     vi.spyOn(dashboardsApi, 'listDashboards').mockResolvedValue([])
-    vi.spyOn(datasourcesApi, 'listDataSources').mockResolvedValue([mockDatasource])
+    vi.spyOn(datasourcesApi, 'listDataSources').mockResolvedValue([mockMetricsDatasource])
     vi.spyOn(datasourcesApi, 'fetchDataSourceMetricNames').mockResolvedValue(['up', 'http_requests_total'])
     vi.spyOn(datasourcesApi, 'fetchDataSourceLabels').mockResolvedValue(['instance', 'job'])
     vi.spyOn(datasourcesApi, 'fetchDataSourceLabelValues').mockResolvedValue(['localhost:9090'])
@@ -170,19 +214,81 @@ describe('ExplorePage', () => {
     expect(screen.getByTestId('time-range-picker-btn')).toBeTruthy()
   })
 
-  it('shows placeholder for logs and traces tabs', async () => {
+  it('shows placeholder for traces tab', async () => {
     const user = userEvent.setup()
     renderExplore()
 
     await waitFor(() => {
-      expect(screen.getByTestId('explore-tab-logs')).toBeTruthy()
+      expect(screen.getByTestId('explore-tab-traces')).toBeTruthy()
     })
-
-    await user.click(screen.getByTestId('explore-tab-logs'))
-    expect(screen.getByTestId('explore-placeholder-logs')).toBeTruthy()
 
     await user.click(screen.getByTestId('explore-tab-traces'))
     expect(screen.getByTestId('explore-placeholder-traces')).toBeTruthy()
+  })
+
+  it('renders logs explore tab at /app/explore/logs', async () => {
+    vi.spyOn(datasourcesApi, 'listDataSources').mockResolvedValue([mockLogsDatasource])
+    renderExplore('/app/explore/logs')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('explore-logs-datasource-btn')).toBeTruthy()
+    })
+
+    expect(screen.getByTestId('time-range-picker-btn')).toBeTruthy()
+    expect(screen.getByTestId('explore-logs-run-query-btn')).toBeTruthy()
+  })
+
+  it('executes a logs query and renders log rows with mocked API', async () => {
+    vi.spyOn(datasourcesApi, 'listDataSources').mockResolvedValue([mockLogsDatasource])
+    vi.spyOn(datasourcesApi, 'queryDataSource').mockImplementation(async (_id, payload) => {
+      if (payload.query === '{job=~".+"}') {
+        return {
+          status: 'success',
+          resultType: 'logs',
+          data: {
+            resultType: 'logs',
+            logs: [
+              {
+                timestamp: '2026-01-01T12:00:00Z',
+                line: 'error connecting to database',
+                labels: { job: 'api' },
+                level: 'error',
+              },
+            ],
+          },
+        } satisfies DataSourceQueryResult
+      }
+      return {
+        status: 'success',
+        resultType: 'logs',
+        data: { resultType: 'logs', logs: [] },
+      } satisfies DataSourceQueryResult
+    })
+
+    renderExplore('/app/explore/logs')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('explore-logs-datasource-btn').textContent).toContain('Loki Prod')
+    })
+
+    const queryInput = await screen.findByTestId('logql-query-builder-mock')
+    fireEvent.change(queryInput, { target: { value: '{job=~".+"}' } })
+
+    fireEvent.click(screen.getByTestId('explore-logs-run-query-btn'))
+
+    await waitFor(() => {
+      expect(datasourcesApi.queryDataSource).toHaveBeenCalledWith(
+        'ds-logs-1',
+        expect.objectContaining({ query: '{job=~".+"}' }),
+      )
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('log-viewer-mock')).toBeTruthy()
+    })
+
+    expect(screen.getByTestId('log-viewer-mock').getAttribute('data-log-count')).toBe('1')
+    expect(screen.getByText('error connecting to database')).toBeTruthy()
   })
 
   it('executes a query and renders chart results with mocked API', async () => {
