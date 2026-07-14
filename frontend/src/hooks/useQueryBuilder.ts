@@ -30,6 +30,10 @@ export const LABEL_OPERATORS = [
   { value: '!~', label: '!~' },
 ] as const
 
+function escapePromQLLabelValue(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
+
 type AggregationFunction = (typeof AGGREGATION_FUNCTIONS)[number]['value']
 export type LabelOperator = (typeof LABEL_OPERATORS)[number]['value']
 
@@ -84,7 +88,7 @@ export function useQueryBuilder(initialQuery = '', datasourceId = '') {
     if (labelFilters.length > 0) {
       const filters = labelFilters
         .filter(f => f.label && f.value)
-        .map(f => `${f.label}${f.operator}"${f.value}"`)
+        .map(f => `${f.label}${f.operator}"${escapePromQLLabelValue(f.value)}"`)
         .join(',')
 
       if (filters) {

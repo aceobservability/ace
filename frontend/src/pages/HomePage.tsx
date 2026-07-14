@@ -69,7 +69,9 @@ export function HomePage() {
   const hasDataSources = datasources.length > 0
   const showWizard =
     !hasDataSources && !wizardDismissedByUser && !isSetupWizardDismissed()
-  const onboardingDismissed = localStorage.getItem('ace-onboarding-dismissed') === 'true'
+  const [onboardingDismissed] = useState(
+    () => localStorage.getItem('ace-onboarding-dismissed') === 'true',
+  )
 
   const dataSourceSummaries = useMemo(
     () =>
