@@ -38,6 +38,8 @@ export function SidebarUserMenu({ isOpen, onClose }: SidebarUserMenuProps) {
   return (
     <div
       ref={menuRef}
+      role="menu"
+      tabIndex={-1}
       data-testid="user-menu"
       className="animate-fade-in fixed z-[60] overflow-hidden"
       style={{

@@ -230,7 +230,7 @@ export function AppSidebar() {
                 favorites={flyout.filteredFavorites}
                 recents={flyout.filteredRecents}
                 highlightedIndex={flyout.highlightedIndex}
-                favoritesOffset={0}
+                favoritesOffset={flyout.filteredFavorites.length}
                 query={flyout.query}
                 hasAnyResults={flyout.hasAnyResults}
                 currentPath={location.pathname}

@@ -1,10 +1,17 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useKeyboardShortcutsStore } from '@/lib/keyboardShortcuts'
 
 export function ShortcutsOverlay() {
+  const dialogRef = useRef<HTMLDivElement>(null)
   const showHelp = useKeyboardShortcutsStore(state => state.showHelp)
   const shortcuts = useKeyboardShortcutsStore(state => state.shortcuts)
   const setShowHelp = useKeyboardShortcutsStore(state => state.setShowHelp)
+
+  useEffect(() => {
+    if (showHelp) {
+      dialogRef.current?.focus()
+    }
+  }, [showHelp])
 
   const groupedShortcuts = useMemo(() => {
     const groups: Record<string, typeof shortcuts> = {}
@@ -26,9 +33,11 @@ export function ShortcutsOverlay() {
   }
 
   return (
-    <div onKeyDown={handleKeydown}>
-      <div
-        className="fixed inset-0 z-50"
+    <>
+      <button
+        type="button"
+        aria-label="Close keyboard shortcuts"
+        className="fixed inset-0 z-50 cursor-default border-none p-0"
         style={{
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           backdropFilter: 'blur(4px)',
@@ -36,10 +45,13 @@ export function ShortcutsOverlay() {
         onClick={close}
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Keyboard shortcuts"
-        className="fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl p-6 shadow-2xl"
+        tabIndex={-1}
+        className="fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl p-6 shadow-2xl outline-none"
+        onKeyDown={handleKeydown}
         style={{
           maxWidth: '480px',
           backgroundColor: 'color-mix(in srgb, var(--color-surface-container-highest) 85%, transparent)',
@@ -99,6 +111,6 @@ export function ShortcutsOverlay() {
           ))}
         </div>
       </div>
-    </div>
+    </>
   )
 }

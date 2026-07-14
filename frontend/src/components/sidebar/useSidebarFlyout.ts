@@ -52,7 +52,7 @@ export function useSidebarFlyout({
   const sectionFavorites = useMemo(() => {
     if (!sectionFavoriteType) return []
     return favoritesForType(sectionFavoriteType).slice(0, 5)
-  }, [expandedSection, sectionFavoriteType, favoritesForType])
+  }, [sectionFavoriteType, favoritesForType])
 
   const filteredSubNav = filterByQuery(currentSubNav, query, 'label')
   const filteredFavorites = filterByQuery(dashboardFavorites, query, 'title')

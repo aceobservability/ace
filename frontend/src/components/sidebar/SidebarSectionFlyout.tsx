@@ -32,7 +32,10 @@ export function SidebarSectionFlyout({
   return (
     <>
       {favorites.length > 0 && (
-        <div role="group" aria-labelledby="sidebar-section-favorites-label">
+        <fieldset
+          aria-labelledby="sidebar-section-favorites-label"
+          className="m-0 min-w-0 border-0 p-0"
+        >
           <SidebarSectionLabel id="sidebar-section-favorites-label">Favorites</SidebarSectionLabel>
           {favorites.map((fav, idx) => (
             <button
@@ -47,7 +50,7 @@ export function SidebarSectionFlyout({
             </button>
           ))}
           <div style={{ height: '1px', backgroundColor: 'var(--color-stroke-subtle)', margin: '4px 10px' }} />
-        </div>
+        </fieldset>
       )}
 
       {subNav.map((item, idx) => {

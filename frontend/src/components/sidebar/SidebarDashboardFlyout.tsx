@@ -26,7 +26,10 @@ export function SidebarDashboardFlyout({
 }: SidebarDashboardFlyoutProps) {
   return (
     <>
-      <div role="group" aria-labelledby="sidebar-favorites-label">
+      <fieldset
+        aria-labelledby="sidebar-favorites-label"
+        className="m-0 min-w-0 border-0 p-0"
+      >
         <SidebarSectionLabel id="sidebar-favorites-label">Favorites</SidebarSectionLabel>
         {favorites.length > 0 ? (
           favorites.map((fav, idx) => (
@@ -47,11 +50,11 @@ export function SidebarDashboardFlyout({
             <span>Star dashboards to pin them here</span>
           </div>
         ) : null}
-      </div>
+      </fieldset>
 
       <div style={{ height: '1px', backgroundColor: 'var(--color-stroke-subtle)', margin: '4px 10px' }} />
 
-      <div role="group" aria-labelledby="sidebar-recents-label">
+      <fieldset aria-labelledby="sidebar-recents-label" className="m-0 min-w-0 border-0 p-0">
         <SidebarSectionLabel id="sidebar-recents-label">Recents</SidebarSectionLabel>
         {recents.length > 0 ? (
           recents.map((recent, rIdx) => (
@@ -82,7 +85,7 @@ export function SidebarDashboardFlyout({
             <span>Recently visited dashboards appear here</span>
           </div>
         ) : null}
-      </div>
+      </fieldset>
 
       <div style={{ height: '1px', backgroundColor: 'var(--color-stroke-subtle)', margin: '4px 10px' }} />
 

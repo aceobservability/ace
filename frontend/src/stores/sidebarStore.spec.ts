@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { resetGlobalKeyboard } from '@/lib/globalKeyboard'
 import { routeToSection } from '@/lib/navigation'
 import { useSidebarStore } from '@/stores/sidebarStore'
