@@ -241,6 +241,8 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
   const lastLiveTimestampSecRef = useRef<number | null>(null)
   const liveAbortControllerRef = useRef<AbortController | null>(null)
   const liveReconnectTimerRef = useRef<number | null>(null)
+  const isLiveRef = useRef(false)
+  const openLiveStreamRef = useRef<() => Promise<void>>(async () => {})
   const highlightTimeoutIdsRef = useRef<Map<string, number>>(new Map())
   const labelsCacheRef = useRef<Map<string, string[]>>(new Map())
   const pendingNavigationRef = useRef({
@@ -400,6 +402,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
 
   const stopLive = useCallback(
     (resetError = true) => {
+      isLiveRef.current = false
       setIsLive(false)
       setLiveState('idle')
       if (resetError) {
@@ -443,7 +446,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
         {
           onLog: appendStreamLog,
           onStatus: (status, message) => {
-            if (!isLive) return
+            if (!isLiveRef.current) return
 
             if (status === 'connected') {
               setLiveState('connected')
@@ -461,14 +464,14 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
             }
           },
           onError: message => {
-            if (!isLive) return
+            if (!isLiveRef.current) return
             setLiveError(message)
           },
         },
         liveAbortControllerRef.current.signal,
       )
 
-      if (!isLive) return
+      if (!isLiveRef.current) return
 
       setLiveError('Live stream disconnected')
       setLiveState('reconnecting')
@@ -478,10 +481,10 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
       )
       setLiveReconnectAttempt(prev => prev + 1)
       liveReconnectTimerRef.current = window.setTimeout(() => {
-        void openLiveStream()
+        void openLiveStreamRef.current()
       }, delayMs)
     } catch (e) {
-      if (!isLive) return
+      if (!isLiveRef.current) return
       if (e instanceof Error && e.name === 'AbortError') return
 
       setLiveError(e instanceof Error ? e.message : 'Live stream failed')
@@ -492,7 +495,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
       )
       setLiveReconnectAttempt(prev => prev + 1)
       liveReconnectTimerRef.current = window.setTimeout(() => {
-        void openLiveStream()
+        void openLiveStreamRef.current()
       }, delayMs)
     }
   }, [
@@ -506,6 +509,8 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
     query,
     selectedDatasourceId,
   ])
+
+  openLiveStreamRef.current = openLiveStream
 
   const runQuery = useCallback(async () => {
     const wasLive = isLive
@@ -563,6 +568,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
       addToHistory(query)
 
       if (wasLive) {
+        isLiveRef.current = true
         setIsLive(true)
         setLiveState('connecting')
         setLiveError(null)
@@ -608,6 +614,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
       return
     }
 
+    isLiveRef.current = true
     setIsLive(true)
     setLiveState('connecting')
     setLiveError(null)
@@ -1255,7 +1262,14 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
             <span>{error}</span>
           </div>
         ) : liveError && isLive ? (
-          <div className="flex items-center gap-2 rounded border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+          <div
+            className="flex items-center gap-2 rounded border p-4 text-sm"
+            style={{
+              borderColor: 'color-mix(in srgb, var(--color-tertiary) 25%, transparent)',
+              backgroundColor: 'color-mix(in srgb, var(--color-tertiary) 10%, transparent)',
+              color: 'var(--color-tertiary)',
+            }}
+          >
             <AlertCircle size={16} />
             <span>{liveError}</span>
           </div>
