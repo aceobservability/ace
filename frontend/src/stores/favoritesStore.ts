@@ -1,78 +1,15 @@
+import {
+  type FavoriteItem,
+  type RecentDashboard,
+  persistFavorites,
+  persistRecents,
+  readFavorites,
+  readRecents,
+} from '@/lib/favorites'
 import { create } from 'zustand'
 
-const FAVORITES_KEY = 'ace-favorites'
-const RECENTS_KEY = 'ace-recents'
-const MAX_RECENTS = 10
-
-export type FavoriteItem = {
-  id: string
-  title: string
-  type: 'dashboard' | 'service' | 'alert' | 'explore'
-}
-
-export type RecentDashboard = {
-  id: string
-  title: string
-  visitedAt: number
-}
-
-function readFavorites(): FavoriteItem[] {
-  try {
-    const stored = localStorage.getItem(FAVORITES_KEY)
-    if (!stored) return []
-    const parsed: unknown = JSON.parse(stored)
-    if (!Array.isArray(parsed)) return []
-
-    if (parsed.length > 0 && typeof parsed[0] === 'string') {
-      const migrated: FavoriteItem[] = parsed.map((id: string) => ({
-        id,
-        title: '(untitled)',
-        type: 'dashboard' as const,
-      }))
-      localStorage.setItem(FAVORITES_KEY, JSON.stringify(migrated))
-      return migrated
-    }
-
-    return parsed as FavoriteItem[]
-  } catch {
-    return []
-  }
-}
-
-function readRecents(): RecentDashboard[] {
-  try {
-    const stored = localStorage.getItem(RECENTS_KEY)
-    return stored ? (JSON.parse(stored) as RecentDashboard[]) : []
-  } catch {
-    return []
-  }
-}
-
-function persistFavorites(favorites: FavoriteItem[]): void {
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites))
-}
-
-function persistRecents(recents: RecentDashboard[]): void {
-  localStorage.setItem(RECENTS_KEY, JSON.stringify(recents))
-}
-
-export function favoriteRoute(item: FavoriteItem): string {
-  switch (item.type) {
-    case 'dashboard':
-      return `/app/dashboards/${item.id}`
-    case 'service':
-      return '/app/services'
-    case 'alert':
-      return '/app/alerts'
-    case 'explore': {
-      const [, exploreType, ...queryParts] = item.id.split('::')
-      const query = queryParts.join('::')
-      return `/app/explore/${exploreType || 'metrics'}?q=${encodeURIComponent(query || '')}`
-    }
-    default:
-      return '/app'
-  }
-}
+export type { FavoriteItem, RecentDashboard } from '@/lib/favorites'
+export { favoriteRoute } from '@/lib/favorites'
 
 type FavoritesState = {
   favorites: FavoriteItem[]
@@ -112,7 +49,7 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
 
   addRecent(dashboard) {
     const filtered = get().recentDashboards.filter(d => d.id !== dashboard.id)
-    const updated = [dashboard, ...filtered].slice(0, MAX_RECENTS)
+    const updated = [dashboard, ...filtered].slice(0, 10)
     persistRecents(updated)
     set({ recentDashboards: updated })
   },

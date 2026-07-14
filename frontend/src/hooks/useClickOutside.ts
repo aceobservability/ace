@@ -4,12 +4,15 @@ export function useClickOutside<T extends HTMLElement>(
   ref: RefObject<T | null>,
   enabled: boolean,
   callback: () => void,
+  excludeRefs: RefObject<HTMLElement | null>[] = [],
 ): void {
   useEffect(() => {
     if (!enabled) return
 
     function handler(event: PointerEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
+      const target = event.target as Node
+      if (excludeRefs.some(exclude => exclude.current?.contains(target))) return
+      if (ref.current && !ref.current.contains(target)) {
         callback()
       }
     }
@@ -18,5 +21,5 @@ export function useClickOutside<T extends HTMLElement>(
     return () => {
       document.removeEventListener('pointerdown', handler)
     }
-  }, [ref, enabled, callback])
+  }, [ref, enabled, callback, excludeRefs])
 }

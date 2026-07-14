@@ -3,48 +3,13 @@ import { Outlet, useMatches } from 'react-router-dom'
 import { AppSidebar } from '@/components/AppSidebar'
 import { ShortcutsOverlay } from '@/components/ShortcutsOverlay'
 import { ToastNotification } from '@/components/ToastNotification'
+import { useDatasources } from '@/hooks/useDatasources'
 import { useOrgBranding } from '@/hooks/useOrgBranding'
+import { useRouteSeo } from '@/hooks/useRouteSeo'
 import type { RouteMeta } from '@/router'
 import { useAiSidebarStore } from '@/stores/aiSidebarStore'
-import { useDatasourceStore } from '@/stores/datasourceStore'
 import { useOrgStore } from '@/stores/orgStore'
-import { registerSidebarKeydownListener, useSidebarStore } from '@/stores/sidebarStore'
-
-function applySeoMetadata(meta: RouteMeta | undefined) {
-  const title = meta?.title ?? 'Ace'
-  const description =
-    meta?.description ??
-    'Ace Observability is an open-source monitoring dashboard with multi-datasource support for Prometheus, Loki, Tempo, and VictoriaMetrics.'
-  const url = `${window.location.origin}${window.location.pathname}${window.location.search}`
-
-  document.title = title
-
-  const upsertMeta = (attribute: 'name' | 'property', key: string, content: string) => {
-    const selector = `meta[${attribute}="${key}"]`
-    let tag = document.querySelector(selector)
-    if (!tag) {
-      tag = document.createElement('meta')
-      tag.setAttribute(attribute, key)
-      document.head.append(tag)
-    }
-    tag.setAttribute('content', content)
-  }
-
-  upsertMeta('name', 'description', description)
-  upsertMeta('property', 'og:title', title)
-  upsertMeta('property', 'og:description', description)
-  upsertMeta('property', 'og:url', url)
-  upsertMeta('name', 'twitter:title', title)
-  upsertMeta('name', 'twitter:description', description)
-
-  let canonical = document.querySelector('link[rel="canonical"]')
-  if (!canonical) {
-    canonical = document.createElement('link')
-    canonical.setAttribute('rel', 'canonical')
-    document.head.append(canonical)
-  }
-  canonical.setAttribute('href', url)
-}
+import { useSidebarStore } from '@/stores/sidebarStore'
 
 function NarrowViewportOverlay() {
   return (
@@ -78,21 +43,14 @@ export function AppLayout() {
   const isPinned = useSidebarStore(state => state.isPinned)
   const aiSidebarOpen = useAiSidebarStore(state => state.isOpen)
   const currentOrgId = useOrgStore(state => state.currentOrgId)
-  const fetchDatasources = useDatasourceStore(state => state.fetchDatasources)
 
   const [viewportTooNarrow, setViewportTooNarrow] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < 1280,
   )
 
   useOrgBranding()
-
-  useEffect(() => {
-    registerSidebarKeydownListener()
-  }, [])
-
-  useEffect(() => {
-    applySeoMetadata(meta)
-  }, [meta])
+  useRouteSeo(meta)
+  useDatasources(currentOrgId)
 
   useEffect(() => {
     function checkViewport() {
@@ -102,12 +60,6 @@ export function AppLayout() {
     window.addEventListener('resize', checkViewport)
     return () => window.removeEventListener('resize', checkViewport)
   }, [])
-
-  useEffect(() => {
-    if (currentOrgId) {
-      void fetchDatasources(currentOrgId)
-    }
-  }, [currentOrgId, fetchDatasources])
 
   const mainMargin = useMemo(() => {
     const isExpanded =
