@@ -1,4 +1,4 @@
-type KeydownHandler = (event: KeyboardEvent) => boolean | void
+type KeydownHandler = (event: KeyboardEvent) => boolean | undefined
 
 const handlers = new Set<KeydownHandler>()
 let listenerAttached = false

@@ -1,0 +1,57 @@
+.monaco-editor {
+  border-radius: 2px;
+}
+
+.monaco-editor .margin {
+  background: var(--color-surface-container-high);
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider {
+  background: var(--color-outline-variant);
+  border-radius: 2px;
+}
+
+.monaco-editor .monaco-scrollable-element > .scrollbar > .slider:hover {
+  background: var(--color-outline);
+}
+
+.monaco-editor .suggest-widget {
+  border-radius: 2px;
+}
+
+.monaco-editor .suggest-widget .monaco-list-row.focused {
+  background-color: var(--color-surface-container-high);
+}
+
+.monaco-editor .monaco-hover {
+  border-radius: 2px;
+}
+
+.monaco-editor .overflow-guard > .overflowingContentWidgets,
+body > .monaco-editor-overlaymessage,
+body > .monaco-aria-container {
+  z-index: 9999;
+}
+
+.overflowingContentWidgets .suggest-widget {
+  background: var(--color-surface-container-low);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 2px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.overflowingContentWidgets .suggest-widget .monaco-list-row.focused,
+.overflowingContentWidgets .suggest-widget .monaco-list-row:hover {
+  background-color: var(--color-surface-container-high);
+}
+
+.overflowingContentWidgets .monaco-hover {
+  background: var(--color-surface-container-low);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 2px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.overflowingContentWidgets .monaco-hover-content {
+  padding: 8px 12px;
+}

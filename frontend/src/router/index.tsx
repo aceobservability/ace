@@ -8,6 +8,7 @@ const PlaceholderPage = lazy(() =>
   import('@/pages/PlaceholderPage').then(m => ({ default: m.PlaceholderPage })),
 )
 const HomePage = lazy(() => import('@/pages/HomePage').then(m => ({ default: m.HomePage })))
+const ExplorePage = lazy(() => import('@/pages/ExplorePage').then(m => ({ default: m.ExplorePage })))
 const LoginPage = lazy(() => import('@/pages/LoginPage').then(m => ({ default: m.LoginPage })))
 const AuthCallbackPage = lazy(() =>
   import('@/pages/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })),
@@ -97,7 +98,7 @@ const appRoutes: RouteObject[] = [
   {
     path: '/app/explore/:type',
     handle: withMeta('Explore — Ace'),
-    element: placeholder('Explore'),
+    element: <ExplorePage />,
   },
   {
     path: '/app/settings',

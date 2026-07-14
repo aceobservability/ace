@@ -1,6 +1,8 @@
 import { API_BASE } from './base'
 import { clearTokens, getAccessToken, getRefreshToken, storeTokens } from '@/lib/tokenStorage'
 
+const NOT_AUTHENTICATED = 'Not authenticated'
+
 export interface User {
   id: string
   email: string
@@ -123,7 +125,7 @@ export async function getMe(): Promise<MeResponse> {
   })
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error('Not authenticated')
+      throw new Error(NOT_AUTHENTICATED)
     }
     throw new Error('Failed to get user info')
   }
@@ -135,7 +137,7 @@ export async function getMeWithRefresh(): Promise<MeResponse> {
   try {
     return await getMe()
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not authenticated' && getRefreshToken()) {
+    if (error instanceof Error && error.message === NOT_AUTHENTICATED && getRefreshToken()) {
       await refreshTokens()
       return await getMe()
     }
