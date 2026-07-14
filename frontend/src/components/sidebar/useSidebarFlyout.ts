@@ -29,10 +29,8 @@ export function useSidebarFlyout({
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
 
   useEffect(() => {
-    if (!expandedSection || expandedSection === 'home') {
-      setSearchQuery('')
-      setHighlightedIndex(-1)
-    }
+    setSearchQuery('')
+    setHighlightedIndex(-1)
   }, [expandedSection])
 
   const query = searchQuery.trim().toLowerCase()
