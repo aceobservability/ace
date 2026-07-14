@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
+  type FavoriteNavType,
   sectionSubNav,
   sectionTypeMap,
-  type FavoriteNavType,
 } from '@/components/sidebar/navigationConfig'
 import type { FavoriteItem, RecentDashboard } from '@/lib/favorites'
+import type { SidebarSectionId } from '@/lib/navigation'
 import {
   buildDashboardNavigableItems,
   buildSectionNavigableItems,
   filterByQuery,
 } from '@/lib/sidebarFilter'
-import type { SidebarSectionId } from '@/lib/navigation'
 
 type UseSidebarFlyoutOptions = {
   expandedSection: SidebarSectionId | null
@@ -29,6 +29,8 @@ export function useSidebarFlyout({
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
 
   useEffect(() => {
+    // Reset flyout state when switching sections (including keyboard shortcuts).
+    void expandedSection
     setSearchQuery('')
     setHighlightedIndex(-1)
   }, [expandedSection])
@@ -38,7 +40,7 @@ export function useSidebarFlyout({
 
   const dashboardFavorites = useMemo(() => {
     if (expandedSection !== 'dashboards') return []
-    return favorites.filter(f => f.type === 'dashboard').slice(0, 5)
+    return favorites.filter((f) => f.type === 'dashboard').slice(0, 5)
   }, [expandedSection, favorites])
 
   const dashboardRecents = useMemo(() => {
@@ -67,7 +69,13 @@ export function useSidebarFlyout({
       return buildDashboardNavigableItems(filteredFavorites, filteredRecents)
     }
     return buildSectionNavigableItems(filteredSectionFavorites, filteredSubNav)
-  }, [expandedSection, filteredFavorites, filteredRecents, filteredSectionFavorites, filteredSubNav])
+  }, [
+    expandedSection,
+    filteredFavorites,
+    filteredRecents,
+    filteredSectionFavorites,
+    filteredSubNav,
+  ])
 
   function resetSearch() {
     setSearchQuery('')
@@ -76,7 +84,9 @@ export function useSidebarFlyout({
 
   function moveHighlight(delta: number) {
     if (allNavigableItems.length === 0) return
-    setHighlightedIndex(prev => Math.min(Math.max(prev + delta, -1), allNavigableItems.length - 1))
+    setHighlightedIndex((prev) =>
+      Math.min(Math.max(prev + delta, -1), allNavigableItems.length - 1),
+    )
   }
 
   return {
