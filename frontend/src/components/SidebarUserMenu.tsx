@@ -1,5 +1,5 @@
 import { Keyboard, LogOut, Moon, Sun } from 'lucide-react'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useClickOutside } from '@/hooks/useClickOutside'
 import { useKeyboardShortcutsStore } from '@/lib/keyboardShortcuts'
 import { useAuthStore } from '@/stores/authStore'
@@ -19,6 +19,12 @@ export function SidebarUserMenu({ isOpen, onClose }: SidebarUserMenuProps) {
 
   useClickOutside(menuRef, isOpen, onClose)
 
+  useEffect(() => {
+    if (isOpen) {
+      menuRef.current?.focus()
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   async function handleLogout() {
@@ -32,7 +38,10 @@ export function SidebarUserMenu({ isOpen, onClose }: SidebarUserMenuProps) {
   }
 
   function handleKeydown(e: React.KeyboardEvent) {
-    if (e.key === 'Escape') onClose()
+    if (e.key === 'Escape') {
+      e.stopPropagation()
+      onClose()
+    }
   }
 
   return (
@@ -41,7 +50,7 @@ export function SidebarUserMenu({ isOpen, onClose }: SidebarUserMenuProps) {
       role="menu"
       tabIndex={-1}
       data-testid="user-menu"
-      className="animate-fade-in fixed z-[60] overflow-hidden"
+      className="animate-fade-in fixed z-[60] overflow-hidden outline-none"
       style={{
         left: '8px',
         bottom: '52px',
