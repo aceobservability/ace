@@ -293,6 +293,7 @@ export function LogQLQueryBuilder({
     return labelValuesCache.get(labelName) || []
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset label cache when datasource changes
   useEffect(() => {
     setLabelValuesCache(new Map())
     setLoadingLabelValues(null)
@@ -367,9 +368,9 @@ export function LogQLQueryBuilder({
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-[var(--color-on-surface)]">
+              <span className="text-sm font-medium text-[var(--color-on-surface)]">
                 Stream Filters
-              </label>
+              </span>
               <button
                 type="button"
                 className="flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-xs font-medium text-[var(--color-on-surface-variant)] transition-all duration-200 hover:enabled:bg-[var(--color-surface-container-high)] hover:enabled:text-[var(--color-on-surface)]"
@@ -469,7 +470,10 @@ export function LogQLQueryBuilder({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-[var(--color-on-surface)]">
+            <label
+              htmlFor="logql-line-filter-value-input"
+              className="text-sm font-medium text-[var(--color-on-surface)]"
+            >
               {lineFilterLabel}
             </label>
             <div className="flex items-center gap-2">
@@ -487,6 +491,7 @@ export function LogQLQueryBuilder({
                 ))}
               </select>
               <input
+                id="logql-line-filter-value-input"
                 data-testid="logql-line-filter-value-input"
                 className="min-w-0 flex-1 rounded-sm bg-[var(--color-surface-container-high)] px-3 py-2 text-sm text-[var(--color-on-surface)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]/20"
                 type="text"
@@ -499,9 +504,9 @@ export function LogQLQueryBuilder({
           </div>
 
           <div className="mt-2 flex flex-col gap-2 pt-4">
-            <label className="text-sm font-medium text-[var(--color-on-surface)]">
+            <span className="text-sm font-medium text-[var(--color-on-surface)]">
               {generatedQueryLabel}
-            </label>
+            </span>
             <div className="min-h-[48px] rounded-sm bg-[var(--color-surface-container-high)] px-4 py-3">
               {generatedQuery ? (
                 <code className="break-all font-mono text-sm text-[var(--color-primary)]">
@@ -517,9 +522,9 @@ export function LogQLQueryBuilder({
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <label className="text-sm font-medium text-[var(--color-on-surface)]">
+          <span className="text-sm font-medium text-[var(--color-on-surface)]">
             {codeEditorLabel}
-          </label>
+          </span>
           <MonacoQueryEditor
             value={codeQuery}
             onChange={setCodeQuery}

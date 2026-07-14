@@ -814,6 +814,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
     }
   }, [activeDatasource, applyTraceLogsNavigationContext, checkDatasourceHealth, datasourceHealth])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset UI when datasource selection changes
   useEffect(() => {
     setShowDatasourceMenu(false)
     stopLive()
@@ -1118,9 +1119,9 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
                       <X size={14} />
                     </button>
                   </div>
-                  {queryHistory.map((historyQuery, index) => (
+                  {queryHistory.map(historyQuery => (
                     <button
-                      key={`${historyQuery}-${index}`}
+                      key={historyQuery}
                       type="button"
                       className="block w-full cursor-pointer border-none bg-transparent px-4 py-2.5 text-left transition hover:bg-[var(--color-surface-container-high)]"
                       onClick={() => selectHistoryQuery(historyQuery)}

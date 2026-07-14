@@ -444,7 +444,6 @@ export function MetricsExplorePanel({ onDatasourceChanged }: MetricsExplorePanel
     )
   }, [metricsDatasources])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: run when navigation/health context for active datasource changes
   useEffect(() => {
     if (!activeDatasource) return
 

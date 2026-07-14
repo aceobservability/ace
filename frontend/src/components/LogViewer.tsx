@@ -257,13 +257,22 @@ export function LogViewer({
             linkedTraceDatasourceId && extractTraceId(log, traceIdField)
 
           return (
-            <div key={`${getLogKey(log)}-${index}`}>
+            <div key={getLogKey(log)}>
+              {/* biome-ignore lint/a11y/useSemanticElements: row contains nested trace link button */}
               <div
+                role="button"
+                tabIndex={0}
                 className={`group flex cursor-pointer items-start gap-4 px-4 py-2 font-mono text-xs transition hover:bg-[var(--color-surface-container-high)] ${
                   expanded ? 'bg-[var(--color-surface-container-high)]' : ''
                 } ${isHighlighted(log) ? 'animate-[row-highlight-fade_2.4s_ease-out]' : ''}`}
                 data-testid="log-viewer-row"
                 onClick={() => toggleRow(index)}
+                onKeyDown={event => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    toggleRow(index)
+                  }
+                }}
               >
                 <span className="w-44 shrink-0 text-[var(--color-outline)]">
                   {formatTimestamp(log.timestamp)}
@@ -313,7 +322,7 @@ export function LogViewer({
                       strokeWidth="2.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      aria-hidden
+                      aria-hidden="true"
                     >
                       <polyline points="9 18 15 12 9 6" />
                     </svg>
