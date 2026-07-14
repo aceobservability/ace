@@ -9,6 +9,9 @@ const PlaceholderPage = lazy(() =>
 )
 const HomePage = lazy(() => import('@/pages/HomePage').then(m => ({ default: m.HomePage })))
 const ExplorePage = lazy(() => import('@/pages/ExplorePage').then(m => ({ default: m.ExplorePage })))
+const DashboardsPage = lazy(() =>
+  import('@/pages/DashboardsPage').then(m => ({ default: m.DashboardsPage })),
+)
 const LoginPage = lazy(() => import('@/pages/LoginPage').then(m => ({ default: m.LoginPage })))
 const AuthCallbackPage = lazy(() =>
   import('@/pages/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })),
@@ -60,7 +63,7 @@ const appRoutes: RouteObject[] = [
   {
     path: '/app/dashboards',
     handle: withMeta('Dashboards | Ace', 'Browse and organize dashboards in Ace.'),
-    element: placeholder('Dashboards'),
+    element: <DashboardsPage />,
   },
   {
     path: '/app/dashboards/new/ai',
