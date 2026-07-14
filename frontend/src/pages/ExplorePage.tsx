@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { LogsExplorePanel } from '@/components/LogsExplorePanel'
 import { MetricsExplorePanel } from '@/components/MetricsExplorePanel'
+import { TracesExplorePanel } from '@/components/TracesExplorePanel'
 
 type ExploreType = 'metrics' | 'logs' | 'traces'
 
@@ -70,16 +71,7 @@ export function ExplorePage() {
       ) : activeType === 'logs' ? (
         <LogsExplorePanel key="logs" />
       ) : (
-        <div
-          className="flex flex-1 flex-col items-center justify-center rounded-lg py-16 text-center"
-          style={{
-            backgroundColor: 'var(--color-surface-container-low)',
-            color: 'var(--color-outline)',
-          }}
-          data-testid="explore-placeholder-traces"
-        >
-          <p className="m-0 text-sm">Traces explore is coming soon.</p>
-        </div>
+        <TracesExplorePanel key="traces" />
       )}
     </div>
   )
