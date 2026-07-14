@@ -15,6 +15,18 @@ type LogViewerProps = {
   linkedTraceDatasourceId?: string | null
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function getLogKey(log: LogEntry): string {
+  const labels = Object.entries(log.labels || {})
+    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+    .map(([key, value]) => `${key}=${value}`)
+    .join(',')
+  return `${log.timestamp}|${labels}|${log.line}`
+}
+
 function extractTraceId(entry: LogEntry, traceIdField: string): string | null {
   const field = traceIdField || 'trace_id'
 
@@ -29,7 +41,7 @@ function extractTraceId(entry: LogEntry, traceIdField: string): string | null {
     // Not JSON
   }
 
-  const regex = new RegExp(`(?:${field}[=:]["']?)([a-f0-9]{16,64})`, 'i')
+  const regex = new RegExp(`(?:${escapeRegExp(field)}[=:]["']?)([a-f0-9]{16,64})`, 'i')
   const match = entry.line.match(regex)
   if (match) return match[1] ?? null
 
@@ -181,34 +193,29 @@ export function LogViewer({
   linkedTraceDatasourceId = null,
 }: LogViewerProps) {
   const navigate = useNavigate()
-  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
   const displayLogs = useMemo(() => logs.slice(0, 1000), [logs])
   const highlightedLogKeySet = useMemo(() => new Set(highlightedLogKeys), [highlightedLogKeys])
-  const detectedFieldsByRow = useMemo(
-    () => displayLogs.map(log => getMessageFields(log)),
-    [displayLogs],
-  )
-
-  function getLogKey(log: LogEntry): string {
-    const labels = Object.entries(log.labels || {})
-      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-      .map(([key, value]) => `${key}=${value}`)
-      .join(',')
-    return `${log.timestamp}|${labels}|${log.line}`
-  }
+  const detectedFieldsByLogKey = useMemo(() => {
+    const fieldsByLogKey = new Map<string, DetectedField[]>()
+    for (const log of displayLogs) {
+      fieldsByLogKey.set(getLogKey(log), getMessageFields(log))
+    }
+    return fieldsByLogKey
+  }, [displayLogs])
 
   function isHighlighted(log: LogEntry): boolean {
     return highlightedLogKeySet.has(getLogKey(log))
   }
 
-  function toggleRow(index: number) {
+  function toggleRow(logKey: string) {
     setExpandedRows(prev => {
       const next = new Set(prev)
-      if (next.has(index)) {
-        next.delete(index)
+      if (next.has(logKey)) {
+        next.delete(logKey)
       } else {
-        next.add(index)
+        next.add(logKey)
       }
       return next
     })
@@ -251,13 +258,14 @@ export function LogViewer({
       </div>
 
       <div className="flex-1 overflow-auto">
-        {displayLogs.map((log, index) => {
-          const expanded = expandedRows.has(index)
+        {displayLogs.map(log => {
+          const logKey = getLogKey(log)
+          const expanded = expandedRows.has(logKey)
           const traceId =
             linkedTraceDatasourceId && extractTraceId(log, traceIdField)
 
           return (
-            <div key={getLogKey(log)}>
+            <div key={logKey}>
               {/* biome-ignore lint/a11y/useSemanticElements: row contains nested trace link button */}
               <div
                 role="button"
@@ -266,11 +274,11 @@ export function LogViewer({
                   expanded ? 'bg-[var(--color-surface-container-high)]' : ''
                 } ${isHighlighted(log) ? 'animate-[row-highlight-fade_2.4s_ease-out]' : ''}`}
                 data-testid="log-viewer-row"
-                onClick={() => toggleRow(index)}
+                onClick={() => toggleRow(logKey)}
                 onKeyDown={event => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault()
-                    toggleRow(index)
+                    toggleRow(logKey)
                   }
                 }}
               >
@@ -348,9 +356,9 @@ export function LogViewer({
                   <div className="mb-2 text-[0.7rem] font-semibold uppercase tracking-[0.04em] text-[var(--color-outline)]">
                     Detected Fields
                   </div>
-                  {detectedFieldsByRow[index]?.length ? (
+                  {detectedFieldsByLogKey.get(logKey)?.length ? (
                     <div className="grid gap-1.5">
-                      {detectedFieldsByRow[index].map(field => (
+                      {detectedFieldsByLogKey.get(logKey)?.map(field => (
                         <div
                           key={field.key}
                           className="grid grid-cols-[minmax(120px,220px)_1fr] gap-2.5 max-sm:grid-cols-1 max-sm:gap-1"
