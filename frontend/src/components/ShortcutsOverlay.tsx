@@ -27,6 +27,7 @@ export function ShortcutsOverlay() {
     })
   }, [showHelp, setShowHelp])
 
+
   const groupedShortcuts = useMemo(() => {
     const groups: Record<string, typeof shortcuts> = {}
     for (const shortcut of shortcuts) {

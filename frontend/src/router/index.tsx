@@ -7,6 +7,8 @@ import { createParamRedirect } from '@/lib/redirects'
 const PlaceholderPage = lazy(() =>
   import('@/pages/PlaceholderPage').then(m => ({ default: m.PlaceholderPage })),
 )
+const HomePage = lazy(() => import('@/pages/HomePage').then(m => ({ default: m.HomePage })))
+const ExplorePage = lazy(() => import('@/pages/ExplorePage').then(m => ({ default: m.ExplorePage })))
 const LoginPage = lazy(() => import('@/pages/LoginPage').then(m => ({ default: m.LoginPage })))
 const AuthCallbackPage = lazy(() =>
   import('@/pages/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })),
@@ -53,7 +55,7 @@ const appRoutes: RouteObject[] = [
       'Ace — Command Center',
       'Your observability command center — dashboards, services, alerts, and insights at a glance.',
     ),
-    element: placeholder('Command Center'),
+    element: <HomePage />,
   },
   {
     path: '/app/dashboards',
@@ -96,7 +98,7 @@ const appRoutes: RouteObject[] = [
   {
     path: '/app/explore/:type',
     handle: withMeta('Explore — Ace'),
-    element: placeholder('Explore'),
+    element: <ExplorePage />,
   },
   {
     path: '/app/settings',
