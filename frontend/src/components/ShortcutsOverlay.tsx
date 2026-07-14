@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
+import { registerKeydownHandler } from '@/lib/globalKeyboard'
 import { useKeyboardShortcutsStore } from '@/lib/keyboardShortcuts'
 
 export function ShortcutsOverlay() {
@@ -12,6 +13,19 @@ export function ShortcutsOverlay() {
       dialogRef.current?.focus()
     }
   }, [showHelp])
+
+  useEffect(() => {
+    if (!showHelp) return
+    return registerKeydownHandler(event => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        setShowHelp(false)
+        return true
+      }
+      return false
+    })
+  }, [showHelp, setShowHelp])
 
   const groupedShortcuts = useMemo(() => {
     const groups: Record<string, typeof shortcuts> = {}
@@ -29,7 +43,10 @@ export function ShortcutsOverlay() {
   }
 
   function handleKeydown(e: React.KeyboardEvent) {
-    if (e.key === 'Escape') close()
+    if (e.key === 'Escape') {
+      e.stopPropagation()
+      close()
+    }
   }
 
   return (

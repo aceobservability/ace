@@ -30,9 +30,9 @@ export function useSidebarKeyboardShortcuts(currentPath: string) {
         event.preventDefault()
         const { section, route } = SHORTCUT_NAV[event.key]
         navigate(route)
-        if (section !== 'home') {
-          useSidebarStore.setState({ expandedSection: section })
-        }
+        useSidebarStore.setState({
+          expandedSection: section === 'home' ? null : section,
+        })
         return true
       }
 
