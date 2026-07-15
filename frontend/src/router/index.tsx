@@ -12,6 +12,9 @@ const ExplorePage = lazy(() => import('@/pages/ExplorePage').then(m => ({ defaul
 const DashboardsPage = lazy(() =>
   import('@/pages/DashboardsPage').then(m => ({ default: m.DashboardsPage })),
 )
+const DashboardDetailPage = lazy(() =>
+  import('@/pages/DashboardDetailPage').then(m => ({ default: m.DashboardDetailPage })),
+)
 const LoginPage = lazy(() => import('@/pages/LoginPage').then(m => ({ default: m.LoginPage })))
 const AuthCallbackPage = lazy(() =>
   import('@/pages/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })),
@@ -73,7 +76,7 @@ const appRoutes: RouteObject[] = [
   {
     path: '/app/dashboards/:id',
     handle: withMeta('Dashboard | Ace'),
-    element: placeholder('Dashboard'),
+    element: <DashboardDetailPage />,
   },
   {
     path: '/app/dashboards/:id/settings',
