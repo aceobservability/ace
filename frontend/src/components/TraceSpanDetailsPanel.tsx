@@ -407,7 +407,7 @@ export function TraceSpanDetailsPanel({
 
               return (
                 <article
-                  key={`${log.timestampUnixNano}-${log.body ?? ''}-${JSON.stringify(log.fields ?? {})}`}
+                  key={`${log.timestampUnixNano}-${JSON.stringify(log.fields ?? {})}`}
                   className="flex flex-col gap-2 rounded-sm p-2.5"
                 >
                   <div className="flex items-center justify-between gap-2 text-xs text-[var(--color-outline)]">

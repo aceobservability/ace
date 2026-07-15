@@ -90,14 +90,6 @@ export function DashboardList({ searchQuery = '' }: DashboardListProps) {
 
   const isCompletelyEmpty = dashboards.length === 0 && folders.length === 0
 
-  function dashboardMatchesSearch(dashboard: Dashboard): boolean {
-    if (!hasSearchQuery) return true
-    return [dashboard.title, dashboard.description ?? '']
-      .join(' ')
-      .toLowerCase()
-      .includes(normalizedSearchQuery)
-  }
-
   function getFolderName(dashboard: Dashboard): string | null {
     if (!dashboard.folder_id) return null
     return folderById.get(dashboard.folder_id)?.name ?? null
