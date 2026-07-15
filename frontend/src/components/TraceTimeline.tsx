@@ -424,6 +424,7 @@ export function TraceTimeline({ trace, selectedSpanId, onSelectSpan }: TraceTime
                   {row.span.operationName || '(unnamed span)'}
                 </text>
 
+                {/* biome-ignore lint/a11y/noStaticElementInteractions: SVG rect span selector */}
                 <rect
                   x={spanStartToX(row.span.startTimeUnixNano)}
                   y={rowY(rowIndex) + 6}

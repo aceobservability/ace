@@ -313,6 +313,7 @@ export function TraceServiceGraph({ graph, onSelectService, onSelectEdge }: Trac
 
           <g transform={canvasTransform}>
             {positionedEdges.map(edge => (
+              // biome-ignore lint/a11y/noStaticElementInteractions: SVG path click target
               <path
                 key={edge.key}
                 d={edgePath(edge)}
@@ -335,6 +336,7 @@ export function TraceServiceGraph({ graph, onSelectService, onSelectEdge }: Trac
             {positionedNodes.map(node => {
               const isSelected = selectedService === node.serviceName
               return (
+                // biome-ignore lint/a11y/noStaticElementInteractions: SVG group click target
                 <g
                   key={node.serviceName}
                   className="cursor-pointer"

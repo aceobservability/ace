@@ -402,12 +402,12 @@ export function TraceSpanDetailsPanel({
         </h4>
         {sortedLogs.length > 0 ? (
           <div className="flex flex-col gap-2">
-            {sortedLogs.map((log, index) => {
+            {sortedLogs.map(log => {
               const logFields = formatLogFields(log)
 
               return (
                 <article
-                  key={`${log.timestampUnixNano}-${index}`}
+                  key={`${log.timestampUnixNano}-${log.body ?? ''}-${JSON.stringify(log.fields ?? {})}`}
                   className="flex flex-col gap-2 rounded-sm p-2.5"
                 >
                   <div className="flex items-center justify-between gap-2 text-xs text-[var(--color-outline)]">

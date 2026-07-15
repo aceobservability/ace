@@ -369,16 +369,18 @@ export function CreateDashboardModal({
   }
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      data-testid="create-dashboard-modal"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-      onClick={event => {
-        if (event.target === event.currentTarget) onClose()
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center" data-testid="create-dashboard-modal">
+      <button
+        type="button"
+        aria-label="Close"
+        className="absolute inset-0 cursor-default border-none p-0"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+        onClick={onClose}
+      />
       <div
-        className="w-full max-w-lg rounded-xl shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        className="relative w-full max-w-lg rounded-xl shadow-2xl"
         style={{
           backgroundColor: 'color-mix(in srgb, var(--color-surface-container-highest) 85%, transparent)',
           backdropFilter: 'blur(24px)',
@@ -713,18 +715,18 @@ export function CreateDashboardModal({
                       {convertingGrafana ? 'Converting...' : 'Convert to Ace'}
                     </button>
                   </>
-                ) : (
-                  <>
-                    {!grafanaConnected ? (
+                ) : !grafanaConnected ? (
                       <div className="mb-4 space-y-4">
                         <div>
                           <label
+                            htmlFor="create-dashboard-grafana-url"
                             className="mb-1.5 block text-sm font-medium"
                             style={{ color: 'var(--color-on-surface)' }}
                           >
                             Grafana URL <span style={{ color: 'var(--color-error)' }}>*</span>
                           </label>
                           <input
+                            id="create-dashboard-grafana-url"
                             value={grafanaUrl}
                             onChange={event => setGrafanaUrl(event.target.value)}
                             type="url"
@@ -740,6 +742,7 @@ export function CreateDashboardModal({
                         </div>
                         <div>
                           <label
+                            htmlFor="create-dashboard-grafana-api-key"
                             className="mb-1.5 block text-sm font-medium"
                             style={{ color: 'var(--color-on-surface)' }}
                           >
@@ -752,6 +755,7 @@ export function CreateDashboardModal({
                             </span>
                           </label>
                           <input
+                            id="create-dashboard-grafana-api-key"
                             value={grafanaApiKey}
                             onChange={event => setGrafanaApiKey(event.target.value)}
                             type="password"
@@ -826,8 +830,6 @@ export function CreateDashboardModal({
                         )}
                       </div>
                     )}
-                  </>
-                )}
 
                 {conversionReport ? (
                   <div

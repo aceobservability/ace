@@ -104,7 +104,13 @@ export function DashboardList({ searchQuery = '' }: DashboardListProps) {
   }
 
   const filteredDashboards = useMemo(() => {
-    let result = dashboardsWithOptimistic.filter(dashboardMatchesSearch)
+    let result = dashboardsWithOptimistic.filter(dashboard => {
+      if (!hasSearchQuery) return true
+      return [dashboard.title, dashboard.description ?? '']
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearchQuery)
+    })
 
     if (selectedFolderId !== null) {
       if (selectedFolderId === '__unfiled__') {
@@ -118,13 +124,7 @@ export function DashboardList({ searchQuery = '' }: DashboardListProps) {
     }
 
     return result.sort((a, b) => a.title.localeCompare(b.title))
-  }, [
-    dashboardsWithOptimistic,
-    folders,
-    selectedFolderId,
-    normalizedSearchQuery,
-    hasSearchQuery,
-  ])
+  }, [dashboardsWithOptimistic, folders, selectedFolderId, normalizedSearchQuery, hasSearchQuery])
 
   useEffect(() => {
     const modeFromQuery = normalizeCreateMode(searchParams.get('newDashboardMode'))
@@ -432,6 +432,7 @@ export function DashboardList({ searchQuery = '' }: DashboardListProps) {
       ) : null}
 
       {folders.map(folder => (
+        // biome-ignore lint/a11y/noStaticElementInteractions: hidden drag-and-drop target
         <div
           key={`drop-${folder.id}`}
           data-testid={`folder-drop-${folder.id}`}
@@ -446,6 +447,7 @@ export function DashboardList({ searchQuery = '' }: DashboardListProps) {
 
       <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))' }}>
         {filteredDashboards.map(dashboard => (
+          // biome-ignore lint/a11y/useSemanticElements: card is draggable; native button breaks HTML5 drag
           <div
             key={dashboard.id}
             data-testid={`dashboard-card-${dashboard.id}`}

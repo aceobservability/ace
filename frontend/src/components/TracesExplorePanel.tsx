@@ -547,7 +547,7 @@ export function TracesExplorePanel({ onDatasourceChanged }: TracesExplorePanelPr
     if (!isClickHouseDatasource) {
       void tryLoadPendingTrace()
     }
-  }, [isClickHouseDatasource, loadServices, selectedDatasourceId, tryLoadPendingTrace])
+  }, [isClickHouseDatasource, loadServices, tryLoadPendingTrace])
 
   useEffect(() => {
     const ds = tracingDatasources.find(d => d.id === selectedDatasourceId)
@@ -577,7 +577,9 @@ export function TracesExplorePanel({ onDatasourceChanged }: TracesExplorePanelPr
     return unsubscribe
   }, [hasSearched, loadingSearch, loadingTrace, onRefresh, runSearch, selectedDatasourceId])
 
+  // Reset explore state when org changes
   useEffect(() => {
+    void currentOrgId
     setSelectedDatasourceId('')
     setDatasourceHealth({})
     setTraceSummaries([])
@@ -635,12 +637,16 @@ export function TracesExplorePanel({ onDatasourceChanged }: TracesExplorePanelPr
       <div className="flex flex-col gap-4 rounded bg-[var(--color-surface-container-low)] p-4">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 max-md:grid-cols-1">
           <div className="flex flex-col gap-2.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]">
+            <span
+              id="explore-traces-datasource-label"
+              className="text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]"
+            >
               Data Source
-            </label>
+            </span>
             <div ref={datasourceMenuRef} className="relative">
               <button
                 type="button"
+                aria-labelledby="explore-traces-datasource-label"
                 className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60"
                 style={{
                   backgroundColor: 'var(--color-surface-container-high)',
@@ -739,9 +745,9 @@ export function TracesExplorePanel({ onDatasourceChanged }: TracesExplorePanelPr
           </div>
 
           <div className="flex flex-col gap-2.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]">
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--color-outline)]">
               Search Range
-            </label>
+            </span>
             <TimeRangePicker stacked />
           </div>
         </div>
