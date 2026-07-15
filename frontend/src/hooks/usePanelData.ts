@@ -10,7 +10,11 @@ function isQuerySignal(value: unknown): value is QuerySignal {
   return value === 'logs' || value === 'metrics' || value === 'traces'
 }
 
-export function usePanelData(panel: Panel, interpolate: (query: string) => string) {
+export function usePanelData(
+  panel: Panel,
+  interpolate: (query: string) => string,
+  refreshKey = '',
+) {
   const { timeRange, onRefresh } = useTimeRange()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -125,9 +129,10 @@ export function usePanelData(panel: Panel, interpolate: (query: string) => strin
     }
   }, [datasourceId, end, hasQuery, inferredQuerySignal, promqlQuery, queryExpr, start])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey triggers refetch when template variables change
   useEffect(() => {
     void fetchData()
-  }, [fetchData])
+  }, [fetchData, refreshKey])
 
   useEffect(() => {
     const unsubscribe = onRefresh(() => {
