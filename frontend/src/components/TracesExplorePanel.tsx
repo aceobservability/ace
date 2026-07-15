@@ -164,13 +164,21 @@ export function TracesExplorePanel({ onDatasourceChanged }: TracesExplorePanelPr
     }
   }, [])
 
-  const runClickHouseTraceQuery = useCallback(async () => {
-    if (!query.trim()) {
+  const runClickHouseTraceQuery = useCallback(async (overrides?: {
+    datasourceId?: string
+    queryText?: string
+  }) => {
+    // Allow callers that just updated state (e.g. first ClickHouse datasource
+    // selection) to pass fresh values so we do not read a stale closure.
+    const effectiveQuery = (overrides?.queryText ?? query).trim()
+    const effectiveDatasourceId = overrides?.datasourceId ?? selectedDatasourceId
+
+    if (!effectiveQuery) {
       setError('Query is required')
       return
     }
 
-    if (!selectedDatasourceId) {
+    if (!effectiveDatasourceId) {
       setError('Select a tracing datasource')
       return
     }
@@ -188,8 +196,8 @@ export function TracesExplorePanel({ onDatasourceChanged }: TracesExplorePanelPr
       const start = Math.floor(timeRange.start / 1000)
       const end = Math.floor(timeRange.end / 1000)
 
-      const response = await queryDataSource(selectedDatasourceId, {
-        query,
+      const response = await queryDataSource(effectiveDatasourceId, {
+        query: effectiveQuery,
         signal: 'traces',
         start,
         end,
@@ -384,10 +392,14 @@ export function TracesExplorePanel({ onDatasourceChanged }: TracesExplorePanelPr
       const ds = tracingDatasources.find(d => d.id === datasourceId)
       if (ds?.type === 'clickhouse' && !query.trim()) {
         setQuery(CLICKHOUSE_DEFAULT_QUERY)
-        void runSearch()
+        // Pass fresh values — setState above is not visible to runSearch yet.
+        void runClickHouseTraceQuery({
+          datasourceId,
+          queryText: CLICKHOUSE_DEFAULT_QUERY,
+        })
       }
     },
-    [query, runSearch, tracingDatasources],
+    [query, runClickHouseTraceQuery, tracingDatasources],
   )
 
   const buildNavigationWindow = useCallback(

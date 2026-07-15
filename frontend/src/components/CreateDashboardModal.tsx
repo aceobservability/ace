@@ -262,13 +262,16 @@ export function CreateDashboardModal({
     }
   }
 
-  async function convertGrafana() {
+  async function convertGrafana(sourceOverride?: string) {
     if (!currentOrgId) {
       setError('No organization selected')
       return
     }
 
-    if (!grafanaSource.trim()) {
+    // Prefer an explicit override so callers that just setGrafanaSource can
+    // convert immediately without waiting for the async state update.
+    const source = sourceOverride ?? grafanaSource
+    if (!source.trim()) {
       setError('Paste or upload Grafana JSON before converting')
       return
     }
@@ -278,12 +281,12 @@ export function CreateDashboardModal({
     clearImportState()
 
     try {
-      const response = await convertGrafanaDashboard(grafanaSource, 'yaml')
+      const response = await convertGrafanaDashboard(source, 'yaml')
       setYamlContent(response.content)
       setGrafanaWarnings(response.warnings)
       setConversionReport(response.report ?? null)
       setImportPreviewFromDocument(response.document)
-      extractGrafanaDatasources(grafanaSource)
+      extractGrafanaDatasources(source)
       setConvertedVariables([])
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to convert Grafana dashboard')
@@ -299,7 +302,7 @@ export function CreateDashboardModal({
       const dashJson = await getGrafanaDashboard(uid, grafanaUrl, grafanaApiKey)
       setGrafanaSource(dashJson)
       setGrafanaFileName(`${uid}.json`)
-      await convertGrafana()
+      await convertGrafana(dashJson)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to fetch dashboard')
     } finally {

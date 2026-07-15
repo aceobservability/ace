@@ -115,13 +115,20 @@ export function TraceTimeline({ trace, selectedSpanId, onSelectSpan }: TraceTime
       }
     }
 
-    const spanStarts = trace.spans.map((span) => span.startTimeUnixNano)
-    const spanEnds = trace.spans.map(
-      (span) => span.startTimeUnixNano + Math.max(span.durationNano, 1),
-    )
+    // Loop instead of Math.min/max(...arr) to avoid call-stack argument limits
+    // on dense traces (spread can exceed engine arg caps ~65k–500k).
+    let minStart = Number.POSITIVE_INFINITY
+    let maxEnd = Number.NEGATIVE_INFINITY
+    for (const span of trace.spans) {
+      if (span.startTimeUnixNano < minStart) {
+        minStart = span.startTimeUnixNano
+      }
+      const spanEnd = span.startTimeUnixNano + Math.max(span.durationNano, 1)
+      if (spanEnd > maxEnd) {
+        maxEnd = spanEnd
+      }
+    }
 
-    const minStart = Math.min(...spanStarts)
-    const maxEnd = Math.max(...spanEnds)
     const traceStart =
       trace.startTimeUnixNano > 0 ? Math.min(trace.startTimeUnixNano, minStart) : minStart
     const traceEndFromDuration = traceStart + Math.max(trace.durationNano, 1)
