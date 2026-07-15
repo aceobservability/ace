@@ -32,6 +32,9 @@ function DashboardDetailContent({ dashboardId }: { dashboardId: string }) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    setPreset('1h')
+    setRefreshInterval('off')
+
     let cancelled = false
 
     async function loadData() {
@@ -65,12 +68,7 @@ function DashboardDetailContent({ dashboardId }: { dashboardId: string }) {
     return () => {
       cancelled = true
     }
-  }, [addRecent, dashboardId, fetchVariables])
-
-  useEffect(() => {
-    setPreset('1h')
-    setRefreshInterval('off')
-  }, [dashboardId, setPreset, setRefreshInterval])
+  }, [addRecent, dashboardId, fetchVariables, setPreset, setRefreshInterval])
 
   return (
     <div className="mx-auto max-w-[1600px] px-6 py-5">

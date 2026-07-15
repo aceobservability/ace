@@ -10,11 +10,7 @@ function isQuerySignal(value: unknown): value is QuerySignal {
   return value === 'logs' || value === 'metrics' || value === 'traces'
 }
 
-export function usePanelData(
-  panel: Panel,
-  interpolate: (query: string) => string,
-  refreshKey = '',
-) {
+export function usePanelData(panel: Panel, interpolate: (query: string) => string) {
   const { timeRange, onRefresh } = useTimeRange()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -127,7 +123,7 @@ export function usePanelData(
     } finally {
       setLoading(false)
     }
-  }, [datasourceId, end, hasQuery, inferredQuerySignal, promqlQuery, queryExpr, refreshKey, start])
+  }, [datasourceId, end, hasQuery, inferredQuerySignal, promqlQuery, queryExpr, start])
 
   useEffect(() => {
     void fetchData()
