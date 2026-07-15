@@ -52,7 +52,6 @@
     "@types/node": "26.1.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@types/react-grid-layout": "^2.1.0",
     "@vitejs/plugin-react-swc": "^4.2.3",
     "@vitest/coverage-v8": "^4.0.18",
     "happy-dom": "^20.8.4",
