@@ -28,8 +28,8 @@ export default defineConfig({
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
-      // Vue legacy specs — re-enabled as features port in tracer bullets (#295–#309)
-      'src/components/**',
+      // Vue legacy specs (.spec.ts) — React ports use .spec.tsx in the same folders
+      'src/components/**/*.spec.ts',
       'src/views/**',
       'src/composables/**',
       'src/App.spec.ts',

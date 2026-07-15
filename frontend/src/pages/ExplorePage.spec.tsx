@@ -214,16 +214,117 @@ describe('ExplorePage', () => {
     expect(screen.getByTestId('time-range-picker-btn')).toBeTruthy()
   })
 
-  it('shows placeholder for traces tab', async () => {
-    const user = userEvent.setup()
-    renderExplore()
+  it('renders traces explore tab at /app/explore/traces', async () => {
+    const mockTracesDatasource: DataSource = {
+      id: 'ds-traces-1',
+      organization_id: 'org-1',
+      name: 'Tempo Prod',
+      type: 'tempo',
+      url: 'http://tempo:3200',
+      is_default: true,
+      auth_type: 'none',
+      trace_id_field: 'trace_id',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    }
+
+    vi.spyOn(datasourcesApi, 'listDataSources').mockResolvedValue([mockTracesDatasource])
+    vi.spyOn(datasourcesApi, 'fetchDataSourceTraceServices').mockResolvedValue(['api', 'gateway'])
+
+    renderExplore('/app/explore/traces')
 
     await waitFor(() => {
-      expect(screen.getByTestId('explore-tab-traces')).toBeTruthy()
+      expect(screen.getByTestId('explore-traces-datasource-btn')).toBeTruthy()
     })
 
-    await user.click(screen.getByTestId('explore-tab-traces'))
-    expect(screen.getByTestId('explore-placeholder-traces')).toBeTruthy()
+    expect(screen.getByTestId('time-range-picker-btn')).toBeTruthy()
+    expect(screen.getByTestId('explore-traces-search-btn')).toBeTruthy()
+  })
+
+  it('executes a trace search and renders timeline with mocked API', async () => {
+    const mockTracesDatasource: DataSource = {
+      id: 'ds-traces-1',
+      organization_id: 'org-1',
+      name: 'Tempo Prod',
+      type: 'tempo',
+      url: 'http://tempo:3200',
+      is_default: true,
+      auth_type: 'none',
+      trace_id_field: 'trace_id',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    }
+
+    vi.spyOn(datasourcesApi, 'listDataSources').mockResolvedValue([mockTracesDatasource])
+    vi.spyOn(datasourcesApi, 'fetchDataSourceTraceServices').mockResolvedValue(['api'])
+    vi.spyOn(datasourcesApi, 'searchDataSourceTraces').mockResolvedValue([
+      {
+        traceId: 'trace-abc-123',
+        rootServiceName: 'api',
+        rootOperationName: 'GET /orders',
+        startTimeUnixNano: 1_700_000_000_000_000_000,
+        durationNano: 2_500_000,
+        spanCount: 3,
+        serviceCount: 2,
+        errorSpanCount: 0,
+      },
+    ])
+    vi.spyOn(datasourcesApi, 'fetchDataSourceTrace').mockResolvedValue({
+      traceId: 'trace-abc-123',
+      startTimeUnixNano: 1_700_000_000_000_000_000,
+      durationNano: 2_500_000,
+      services: ['api', 'gateway'],
+      spans: [
+        {
+          spanId: 'span-root',
+          operationName: 'GET /orders',
+          serviceName: 'api',
+          startTimeUnixNano: 1_700_000_000_000_000_000,
+          durationNano: 2_500_000,
+          status: 'ok',
+        },
+      ],
+    })
+    vi.spyOn(datasourcesApi, 'fetchDataSourceTraceServiceGraph').mockResolvedValue({
+      nodes: [
+        {
+          serviceName: 'api',
+          requestCount: 1,
+          errorCount: 0,
+          errorRate: 0,
+          averageDurationNano: 2_500_000,
+        },
+      ],
+      edges: [],
+      totalRequests: 1,
+      totalErrorCount: 0,
+    })
+
+    renderExplore('/app/explore/traces')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('explore-traces-datasource-btn').textContent).toContain('Tempo Prod')
+    })
+
+    await waitFor(() => {
+      expect(datasourcesApi.searchDataSourceTraces).toHaveBeenCalled()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('trace-search-results')).toBeTruthy()
+    })
+
+    expect(screen.getByText('trace-abc-123')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('trace-abc-123'))
+
+    await waitFor(() => {
+      expect(datasourcesApi.fetchDataSourceTrace).toHaveBeenCalledWith('ds-traces-1', 'trace-abc-123')
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('trace-timeline')).toBeTruthy()
+    })
   })
 
   it('renders logs explore tab at /app/explore/logs', async () => {

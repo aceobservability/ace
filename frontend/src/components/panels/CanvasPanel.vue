@@ -57,7 +57,7 @@ async function mountExcalidraw() {
     const ExcalidrawWrapper = () => {
       return React.createElement(Excalidraw, {
         initialData: {
-          elements: (props.data?.elements ?? []) as any,
+          elements: (props.data?.elements ?? []) as readonly unknown[],
           appState: safeAppState,
         },
         viewModeEnabled: props.readOnly || !editing.value,
