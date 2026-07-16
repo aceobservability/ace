@@ -16,6 +16,14 @@ const ROW_HEIGHT = 100
 export function DashboardGrid({ panels, onPanelsChange }: DashboardGridProps) {
   const saveLayoutTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  useEffect(() => {
+    return () => {
+      if (saveLayoutTimeoutRef.current) {
+        clearTimeout(saveLayoutTimeoutRef.current)
+      }
+    }
+  }, [])
+
   const layout = useMemo<Layout>(
     () =>
       panels.map(panel => ({

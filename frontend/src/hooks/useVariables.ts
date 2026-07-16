@@ -2,7 +2,9 @@ import { useCallback, useMemo, useState } from 'react'
 import { listVariables, type Variable } from '@/api/variables'
 
 export interface DashboardVariable extends Variable {
+  /** Runtime state: available option values (not returned by the variables API). */
   options: string[]
+  /** Runtime state: currently selected value(s) (not persisted). */
   current: string | string[]
 }
 
@@ -17,6 +19,10 @@ export function useVariables(dashboardId: string | undefined) {
     setError(null)
     try {
       const data = await listVariables(dashboardId)
+      // Options are runtime-only — the variables API does not return them
+      // (no options column on dashboard_variables). Query/custom option
+      // fetching is deferred beyond this viewing-core port; initialize empty
+      // so VariableBar can show the "no options loaded" warning until then.
       setVariables(
         data.map(variable => ({
           ...variable,

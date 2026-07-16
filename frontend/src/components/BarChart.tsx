@@ -5,7 +5,7 @@ import {
   TitleComponent,
   TooltipComponent,
 } from 'echarts/components'
-import { connect, disconnect, init, type ECharts, use } from 'echarts/core'
+import { connect, init, type ECharts, use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef } from 'react'
 import { useCrosshairSync } from '@/contexts/CrosshairSyncContext'
@@ -192,10 +192,10 @@ export function BarChart({ series, title = '', height = '100%' }: BarChartProps)
     resizeObserver.observe(containerRef.current)
 
     return () => {
+      // Do not call disconnect(groupId) here: that tears down the whole
+      // ECharts connect group. chart.dispose() drops this instance from the
+      // group; CrosshairSyncProvider owns group-level teardown.
       resizeObserver.disconnect()
-      if (groupId) {
-        disconnect(groupId)
-      }
       chart.dispose()
       chartRef.current = null
     }
