@@ -1,5 +1,6 @@
 import { AlertCircle, BarChart3 } from 'lucide-react'
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo, type ComponentType } from 'react'
+import '@/components/panels/registerChartPanels'
 import { BarChart } from '@/components/BarChart'
 import { GaugeChart, type Threshold } from '@/components/GaugeChart'
 import { LineChart } from '@/components/LineChart'
@@ -7,7 +8,31 @@ import { PieChart, type PieDataItem } from '@/components/PieChart'
 import { useCrosshairSync } from '@/contexts/CrosshairSyncContext'
 import { useDashboardVariables } from '@/contexts/VariablesContext'
 import { usePanelData } from '@/hooks/usePanelData'
-import type { Panel as PanelType } from '@/types/panel'
+import type { Panel as PanelType, RawQueryResult } from '@/types/panel'
+import { isRegisteredPanel, lookupPanel } from '@/utils/panelRegistry'
+
+const BUILTIN_PANEL_TYPES = new Set(['line_chart', 'bar_chart', 'gauge', 'pie'])
+
+const registryComponentCache = new Map<string, ComponentType<Record<string, unknown>>>()
+
+function getRegistryComponent(type: string): ComponentType<Record<string, unknown>> | null {
+  const registration = lookupPanel(type)
+  if (!registration) return null
+
+  if (!registryComponentCache.has(type)) {
+    registryComponentCache.set(
+      type,
+      lazy(
+        () =>
+          registration.component() as Promise<{
+            default: ComponentType<Record<string, unknown>>
+          }>,
+      ),
+    )
+  }
+
+  return registryComponentCache.get(type) ?? null
+}
 
 type PanelProps = {
   panel: PanelType
@@ -33,6 +58,38 @@ export function Panel({ panel }: PanelProps) {
     interpolate,
     variableSignature,
   )
+
+  const registryPanel = useMemo(() => {
+    if (BUILTIN_PANEL_TYPES.has(panel.type)) return null
+    if (!isRegisteredPanel(panel.type)) return null
+    return lookupPanel(panel.type)
+  }, [panel.type])
+
+  const RegistryComponent = useMemo(
+    () => (registryPanel ? getRegistryComponent(panel.type) : null),
+    [panel.type, registryPanel],
+  )
+
+  const panelHasQuery = useMemo(() => {
+    if (!registryPanel) return hasQuery
+    if (registryPanel.queryMode === 'none') return true
+    if (registryPanel.queryMode === 'traces') {
+      const queryExpr = (panel.query?.promql || panel.query?.expr || '') as string
+      return !!panel.query?.datasource_id && !!queryExpr.trim()
+    }
+    return hasQuery
+  }, [hasQuery, panel.query, registryPanel])
+
+  const registryProps = useMemo(() => {
+    if (!registryPanel) return null
+    const raw: RawQueryResult = {
+      series: chartSeries.map(series => ({
+        name: series.name,
+        data: series.data,
+      })),
+    }
+    return registryPanel.dataAdapter(raw, panel.query)
+  }, [chartSeries, panel.query, registryPanel])
 
   const gaugeValue = useMemo(() => {
     if (chartSeries.length === 0) return 0
@@ -74,6 +131,23 @@ export function Panel({ panel }: PanelProps) {
   const isBarChart = panel.type === 'bar_chart'
   const isGaugeChart = panel.type === 'gauge'
   const isPieChart = panel.type === 'pie'
+  const isRegistryPanel = registryPanel !== null
+  const isUnsupportedRegistryPanel = registryPanel?.supportStatus === 'unsupported'
+
+  const loadingSpinner = (
+    <div className="flex flex-1 flex-col items-center justify-center gap-3">
+      <div
+        className="h-8 w-8 animate-spin rounded-full border-[3px]"
+        style={{
+          borderColor: 'var(--color-outline-variant)',
+          borderTopColor: 'var(--color-primary)',
+        }}
+      />
+      <p className="m-0 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
+        Loading data...
+      </p>
+    </div>
+  )
 
   return (
     <div
@@ -91,7 +165,7 @@ export function Panel({ panel }: PanelProps) {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2">
-        {!hasQuery ? (
+        {!panelHasQuery ? (
           <div
             className="flex flex-1 flex-col items-center justify-center gap-3"
             style={{ color: 'var(--color-outline)' }}
@@ -100,18 +174,7 @@ export function Panel({ panel }: PanelProps) {
             <p className="m-0 text-sm">No query configured</p>
           </div>
         ) : loading ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3">
-            <div
-              className="h-8 w-8 animate-spin rounded-full border-[3px]"
-              style={{
-                borderColor: 'var(--color-outline-variant)',
-                borderTopColor: 'var(--color-primary)',
-              }}
-            />
-            <p className="m-0 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-              Loading data...
-            </p>
-          </div>
+          loadingSpinner
         ) : error ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3">
             <AlertCircle size={48} style={{ color: 'var(--color-error)' }} />
@@ -134,6 +197,35 @@ export function Panel({ panel }: PanelProps) {
         ) : isPieChart && pieData.length > 0 ? (
           <div className="min-h-0 flex-1">
             <PieChart data={pieData} {...pieConfig} />
+          </div>
+        ) : isUnsupportedRegistryPanel ? (
+          <div
+            data-testid="panel-unsupported-empty"
+            className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center"
+            style={{ color: 'var(--color-on-surface-variant)' }}
+          >
+            <AlertCircle size={40} style={{ color: 'var(--color-tertiary)' }} />
+            <h4 className="m-0 text-sm font-semibold" style={{ color: 'var(--color-on-surface)' }}>
+              {registryPanel?.emptyState?.title || 'Panel not supported yet'}
+            </h4>
+            <p className="m-0 max-w-sm text-xs leading-5">
+              {registryPanel?.emptyState?.description ||
+                'This panel type is registered but has no live data integration.'}
+            </p>
+            {registryPanel?.emptyState?.actionLabel ? (
+              <span
+                className="text-[11px] font-semibold uppercase tracking-wide"
+                style={{ color: 'var(--color-primary)' }}
+              >
+                {registryPanel.emptyState.actionLabel}
+              </span>
+            ) : null}
+          </div>
+        ) : isRegistryPanel && RegistryComponent && registryProps && chartSeries.length > 0 ? (
+          <div className="relative min-h-0 flex-1 overflow-hidden">
+            <Suspense fallback={loadingSpinner}>
+              <RegistryComponent {...registryProps} />
+            </Suspense>
           </div>
         ) : (
           <div
