@@ -1,6 +1,7 @@
 import { AlertCircle, BarChart3 } from 'lucide-react'
 import { lazy, Suspense, useMemo, type ComponentType } from 'react'
 import '@/components/panels/registerChartPanels'
+import '@/components/panels/registerWidgetPanels'
 import { BarChart } from '@/components/BarChart'
 import { GaugeChart, type Threshold } from '@/components/GaugeChart'
 import { LineChart } from '@/components/LineChart'
@@ -88,7 +89,15 @@ export function Panel({ panel }: PanelProps) {
         data: series.data,
       })),
     }
-    return registryPanel.dataAdapter(raw, panel.query)
+    const adapted = registryPanel.dataAdapter(raw, panel.query)
+    const emptyState = registryPanel.emptyState
+    if (!emptyState) return adapted
+    return {
+      ...adapted,
+      emptyTitle: emptyState.title,
+      emptyDescription: emptyState.description,
+      emptyActionLabel: emptyState.actionLabel,
+    }
   }, [chartSeries, panel.query, registryPanel])
 
   const gaugeValue = useMemo(() => {
@@ -221,7 +230,7 @@ export function Panel({ panel }: PanelProps) {
               </span>
             ) : null}
           </div>
-        ) : isRegistryPanel && RegistryComponent && registryProps && chartSeries.length > 0 ? (
+        ) : isRegistryPanel && RegistryComponent && registryProps ? (
           <div className="relative min-h-0 flex-1 overflow-hidden">
             <Suspense fallback={loadingSpinner}>
               <RegistryComponent {...registryProps} />

@@ -86,4 +86,22 @@ describe('Panel registry integration', () => {
     })
     expect(screen.queryByTestId('heatmap-panel')).toBeNull()
   })
+
+  it('renders a registered text widget panel without query series', async () => {
+    renderPanel({
+      id: 'panel-text',
+      dashboard_id: 'dash-1',
+      title: 'Notes',
+      type: 'text',
+      grid_pos: { x: 0, y: 0, w: 6, h: 4 },
+      query: { content: '## Widget notes' },
+      created_at: '2026-02-02T00:00:00Z',
+      updated_at: '2026-02-02T00:00:00Z',
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('text-panel')).toBeTruthy()
+    })
+    expect(screen.getByTestId('text-panel').querySelector('h2')?.textContent).toBe('Widget notes')
+  })
 })
