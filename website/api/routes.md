@@ -187,7 +187,6 @@ title: API Routes
 | POST | `/api/datasources/{id}/alertmanager/silences` | Yes | - | CreateSilence proxies POST /api/datasources/{id}/alertmanager/silences to AlertManager. |
 | DELETE | `/api/datasources/{id}/alertmanager/silences/{silenceId}` | Yes | - | ExpireSilence proxies DELETE /api/datasources/{id}/alertmanager/silences/{silenceId} to AlertManager. |
 | GET | `/api/datasources/{id}/alertmanager/receivers` | Yes | - | ListReceivers proxies GET /api/datasources/{id}/alertmanager/receivers to AlertManager. |
-| GET | `/api/datasources/{id}/alertmanager/status` | Yes | - | Status proxies GET /api/datasources/{id}/alertmanager/status to AlertManager. |
 | GET | `/api/datasources/{id}/alertmanager/health` | Yes | - | Health proxies GET /api/datasources/{id}/alertmanager/health to AlertManager. |
 
 ## GitHub Copilot auth routes
