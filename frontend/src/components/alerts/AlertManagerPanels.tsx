@@ -390,7 +390,7 @@ export function AMConfigPanel({ status, loading, error }: AMConfigPanelProps) {
             color: 'var(--color-on-surface)',
           }}
         >
-          {status.config?.original?.trim() || '# No configuration payload returned by Alertmanager'}
+          {status.config?.original?.trim() || '# Configuration YAML is only available to organization admins (secrets redacted for other roles).'}
         </pre>
       </div>
     </div>

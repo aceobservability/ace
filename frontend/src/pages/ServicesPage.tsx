@@ -104,7 +104,7 @@ export function ServicesPage() {
 
             const serviceItems = await Promise.all(
               uniqueNames.map(async name => {
-                let metrics = deriveServiceHealth([])
+                let metrics
                 try {
                   const summaries = await searchDataSourceTraces(source.id, {
                     service: name,
@@ -327,7 +327,7 @@ export function ServicesPage() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {services.map(service => {
-              const favoriteId = `svc::${service.name}`
+              const favoriteId = `svc::${service.sourceId}::${service.name}`
               const favorited = isFavorite(favoriteId)
               const { metrics } = service
               return (

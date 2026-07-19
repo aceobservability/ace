@@ -89,6 +89,7 @@ export function AlertsPage() {
   const [amFilterInhibited, setAmFilterInhibited] = useState(true)
 
   const [showSilenceModal, setShowSilenceModal] = useState(false)
+  const [silenceDatasourceId, setSilenceDatasourceId] = useState('')
   const [silenceForm, setSilenceForm] = useState<SilenceFormState>(() =>
     emptySilenceForm(user?.email || user?.name || ''),
   )
@@ -329,17 +330,25 @@ export function AlertsPage() {
   }, [autoRefresh, loadData])
 
   function openSilenceModal() {
+    // Capture the datasource at open time so a selector change while the modal
+    // is open cannot create the silence against a different Alertmanager.
+    setSilenceDatasourceId(selectedDatasourceId)
     setSilenceForm(emptySilenceForm(user?.email || user?.name || ''))
     setSilenceError(null)
     setShowSilenceModal(true)
   }
 
   async function handleCreateSilence() {
+    const datasourceId = silenceDatasourceId || selectedDatasourceId
+    if (!datasourceId) {
+      setSilenceError('No Alertmanager datasource selected')
+      return
+    }
     setSilenceError(null)
     setSilenceSaving(true)
     try {
       const validMatchers = silenceForm.matchers.filter(m => m.name.trim() !== '')
-      await createSilence(selectedDatasourceId, {
+      await createSilence(datasourceId, {
         matchers: validMatchers.map(m => ({
           name: m.name.trim(),
           value: m.value.trim(),
@@ -352,7 +361,10 @@ export function AlertsPage() {
         comment: silenceForm.comment.trim(),
       })
       setShowSilenceModal(false)
-      setAmSilences(await fetchSilences(selectedDatasourceId))
+      setSilenceDatasourceId('')
+      if (selectedDatasourceId === datasourceId) {
+        setAmSilences(await fetchSilences(datasourceId))
+      }
     } catch (e) {
       setSilenceError(e instanceof Error ? e.message : 'Failed to create silence')
     } finally {
