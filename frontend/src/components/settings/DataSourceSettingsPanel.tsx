@@ -20,15 +20,18 @@ import { dataSourceTypeLogos } from '@/utils/datasourceLogos'
 
 type DataSourceSettingsPanelProps = {
   orgId: string
+  isAdmin: boolean
 }
 
-export function DataSourceSettingsPanel({ orgId }: DataSourceSettingsPanelProps) {
+export function DataSourceSettingsPanel({ orgId, isAdmin }: DataSourceSettingsPanelProps) {
   const [datasources, setDatasources] = useState<DataSource[]>([])
   const [loading, setLoading] = useState(true)
   const [testStatus, setTestStatus] = useState<Record<string, 'testing' | 'ok' | 'error'>>({})
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const fetchDatasources = useCallback(async () => {
     setLoading(true)
+    setActionError(null)
     try {
       setDatasources(await listDataSources(orgId))
     } catch {
@@ -43,9 +46,18 @@ export function DataSourceSettingsPanel({ orgId }: DataSourceSettingsPanelProps)
   }, [fetchDatasources])
 
   async function handleDelete(id: string) {
+    if (!isAdmin) {
+      setActionError('Admin access required to delete data sources')
+      return
+    }
     if (!window.confirm('Delete this data source?')) return
-    await deleteDataSource(id)
-    await fetchDatasources()
+    setActionError(null)
+    try {
+      await deleteDataSource(id)
+      await fetchDatasources()
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Failed to delete data source')
+    }
   }
 
   async function handleTest(id: string) {
@@ -92,14 +104,14 @@ export function DataSourceSettingsPanel({ orgId }: DataSourceSettingsPanelProps)
         <p className="m-0 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
           Add a data source to start visualising your metrics, logs, and traces.
         </p>
-        <Link
-          to={`/app/datasources/new?orgId=${orgId}`}
-          data-testid="ds-panel-add-empty-btn"
-          className="inline-flex items-center gap-1.5 rounded-sm px-3.5 py-2 text-sm font-medium text-white no-underline transition"
-          style={{ backgroundColor: 'var(--color-primary)' }}
+        {/* Creation is owned by #309; avoid broken circular /new redirect. */}
+        <p
+          className="m-0 text-xs"
+          style={{ color: 'var(--color-outline)' }}
+          data-testid="ds-panel-create-deferred"
         >
-          Add data source
-        </Link>
+          Data source creation will be available in a follow-up release.
+        </p>
       </div>
     )
   }
@@ -113,15 +125,28 @@ export function DataSourceSettingsPanel({ orgId }: DataSourceSettingsPanelProps)
         >
           {datasources.length} data source{datasources.length !== 1 ? 's' : ''}
         </span>
-        <Link
-          to={`/app/datasources/new?orgId=${orgId}`}
-          data-testid="ds-panel-add-btn"
-          className="inline-flex items-center gap-1.5 rounded-sm px-3.5 py-2 text-sm font-medium text-white no-underline transition"
-          style={{ backgroundColor: 'var(--color-primary)' }}
+        {/* Creation is owned by #309; list + edit links ship here. */}
+        <span
+          className="text-xs"
+          style={{ color: 'var(--color-outline)' }}
+          data-testid="ds-panel-create-deferred"
         >
-          Add data source
-        </Link>
+          Creation coming soon
+        </span>
       </div>
+
+      {actionError ? (
+        <div
+          className="mb-3 rounded-sm px-3.5 py-2.5 text-sm"
+          style={{
+            backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
+            color: 'var(--color-error)',
+          }}
+          data-testid="ds-panel-error"
+        >
+          {actionError}
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-2">
         {datasources.map(ds => (
@@ -215,16 +240,18 @@ export function DataSourceSettingsPanel({ orgId }: DataSourceSettingsPanelProps)
               >
                 <Edit2 size={14} />
               </Link>
-              <button
-                type="button"
-                onClick={() => void handleDelete(ds.id)}
-                data-testid={`ds-panel-delete-${ds.id}`}
-                className="inline-flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-sm border border-transparent bg-transparent p-0 transition-all"
-                style={{ color: 'var(--color-on-surface-variant)' }}
-                title="Delete"
-              >
-                <Trash2 size={14} />
-              </button>
+              {isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => void handleDelete(ds.id)}
+                  data-testid={`ds-panel-delete-${ds.id}`}
+                  className="inline-flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-sm border border-transparent bg-transparent p-0 transition-all"
+                  style={{ color: 'var(--color-on-surface-variant)' }}
+                  title="Delete"
+                >
+                  <Trash2 size={14} />
+                </button>
+              ) : null}
             </div>
           </div>
         ))}

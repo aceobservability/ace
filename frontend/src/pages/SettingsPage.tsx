@@ -14,6 +14,7 @@ import {
 } from '@/components/settings/settingsSections'
 import { SsoSettingsSection } from '@/components/settings/SsoSettingsSection'
 import { useOrganization } from '@/hooks/useOrganization'
+import { useAuthStore } from '@/stores/authStore'
 import type { Member, Organization } from '@/types/organization'
 
 const SECTION_META: Array<{
@@ -33,6 +34,7 @@ export function SettingsPage() {
   const { section: sectionParam } = useParams<{ section: string }>()
   const navigate = useNavigate()
   const { currentOrg } = useOrganization()
+  const currentUserId = useAuthStore(state => state.user?.id ?? null)
 
   const orgId = currentOrg?.id ?? ''
   const [org, setOrg] = useState<Organization | null>(null)
@@ -161,13 +163,18 @@ export function SettingsPage() {
               <MembersSettingsSection
                 orgId={orgId}
                 isAdmin={Boolean(isAdmin)}
+                currentUserId={currentUserId}
                 members={members}
                 onMembersChange={setMembers}
               />
             ) : null}
 
             {activeSection === 'groups' ? (
-              <GroupsSettingsSection orgId={orgId} isAdmin={Boolean(isAdmin)} />
+              <GroupsSettingsSection
+                orgId={orgId}
+                isAdmin={Boolean(isAdmin)}
+                orgMembers={members}
+              />
             ) : null}
 
             {activeSection === 'datasources' ? (
@@ -192,7 +199,7 @@ export function SettingsPage() {
                     Configure connections to Prometheus, Loki, Tempo, VictoriaMetrics, and other
                     data sources.
                   </p>
-                  <DataSourceSettingsPanel orgId={orgId} />
+                  <DataSourceSettingsPanel orgId={orgId} isAdmin={Boolean(isAdmin)} />
                 </div>
               </section>
             ) : null}

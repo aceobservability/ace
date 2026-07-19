@@ -1,20 +1,28 @@
-import { Info, Shield } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { Info, Shield, Trash2, UserPlus } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  addGroupMember,
   createGroup,
   deleteGroup,
   listGroupMembers,
   listGroups,
+  removeGroupMember,
 } from '@/api/groups'
+import type { Member } from '@/types/organization'
 import type { UserGroup, UserGroupMembership } from '@/types/rbac'
 
 type GroupsSettingsSectionProps = {
   orgId: string
   isAdmin: boolean
+  orgMembers: Member[]
 }
 
-export function GroupsSettingsSection({ orgId, isAdmin }: GroupsSettingsSectionProps) {
+export function GroupsSettingsSection({
+  orgId,
+  isAdmin,
+  orgMembers,
+}: GroupsSettingsSectionProps) {
   const [groups, setGroups] = useState<UserGroup[]>([])
   const [groupsLoading, setGroupsLoading] = useState(false)
   const [groupsError, setGroupsError] = useState<string | null>(null)
@@ -35,6 +43,17 @@ export function GroupsSettingsSection({ orgId, isAdmin }: GroupsSettingsSectionP
   const [groupMemberActionLoading, setGroupMemberActionLoading] = useState<
     Record<string, boolean>
   >({})
+  const [addMemberUserIdByGroup, setAddMemberUserIdByGroup] = useState<Record<string, string>>({})
+
+  const orgMemberOptions = useMemo(
+    () =>
+      [...orgMembers].sort((a, b) =>
+        (a.name || a.email).localeCompare(b.name || b.email, undefined, {
+          sensitivity: 'base',
+        }),
+      ),
+    [orgMembers],
+  )
 
   const resetGroupMessages = useCallback(() => {
     setGroupMessage(null)
@@ -147,6 +166,53 @@ export function GroupsSettingsSection({ orgId, isAdmin }: GroupsSettingsSectionP
     }
   }
 
+  function availableMembersForGroup(groupId: string): Member[] {
+    const existing = new Set((groupMembersById[groupId] ?? []).map(m => m.user_id))
+    return orgMemberOptions.filter(m => !existing.has(m.user_id))
+  }
+
+  async function handleAddGroupMember(groupId: string) {
+    const userId = addMemberUserIdByGroup[groupId]
+    if (!userId) {
+      setGroupActionError('Select a member to add')
+      return
+    }
+    setGroupMemberActionLoading(prev => ({ ...prev, [groupId]: true }))
+    resetGroupMessages()
+    try {
+      const membership = await addGroupMember(orgId, groupId, { user_id: userId })
+      setGroupMembersById(prev => ({
+        ...prev,
+        [groupId]: [...(prev[groupId] ?? []), membership],
+      }))
+      setAddMemberUserIdByGroup(prev => ({ ...prev, [groupId]: '' }))
+      setGroupMessage('Member added to group')
+    } catch (e) {
+      setGroupActionError(e instanceof Error ? e.message : 'Failed to add group member')
+    } finally {
+      setGroupMemberActionLoading(prev => ({ ...prev, [groupId]: false }))
+    }
+  }
+
+  async function handleRemoveGroupMember(groupId: string, member: UserGroupMembership) {
+    if (!window.confirm(`Remove ${member.email} from this group?`)) return
+    const actionKey = `${groupId}:${member.user_id}`
+    setGroupMemberActionLoading(prev => ({ ...prev, [actionKey]: true }))
+    resetGroupMessages()
+    try {
+      await removeGroupMember(orgId, groupId, member.user_id)
+      setGroupMembersById(prev => ({
+        ...prev,
+        [groupId]: (prev[groupId] ?? []).filter(m => m.user_id !== member.user_id),
+      }))
+      setGroupMessage('Member removed from group')
+    } catch (e) {
+      setGroupActionError(e instanceof Error ? e.message : 'Failed to remove group member')
+    } finally {
+      setGroupMemberActionLoading(prev => ({ ...prev, [actionKey]: false }))
+    }
+  }
+
   return (
     <section className="flex max-w-2xl flex-col gap-4" data-testid="settings-groups">
       <div
@@ -207,6 +273,7 @@ export function GroupsSettingsSection({ orgId, isAdmin }: GroupsSettingsSectionP
               backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
               color: 'var(--color-primary)',
             }}
+            data-testid="group-action-success"
           >
             {groupMessage}
           </div>
@@ -218,6 +285,7 @@ export function GroupsSettingsSection({ orgId, isAdmin }: GroupsSettingsSectionP
               backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
               color: 'var(--color-error)',
             }}
+            data-testid="group-action-error"
           >
             {groupActionError}
           </div>
@@ -333,6 +401,8 @@ export function GroupsSettingsSection({ orgId, isAdmin }: GroupsSettingsSectionP
             {groups.map(group => {
               const expanded = expandedGroupIds.includes(group.id)
               const members = groupMembersById[group.id] ?? []
+              const available = availableMembersForGroup(group.id)
+              const selectedUserId = addMemberUserIdByGroup[group.id] ?? ''
               return (
                 <article
                   key={group.id}
@@ -391,7 +461,10 @@ export function GroupsSettingsSection({ orgId, isAdmin }: GroupsSettingsSectionP
                     </div>
                   </div>
                   {expanded ? (
-                    <div className="mt-3 border-t pt-3" style={{ borderColor: 'var(--color-outline)' }}>
+                    <div
+                      className="mt-3 border-t pt-3"
+                      style={{ borderColor: 'var(--color-outline)' }}
+                    >
                       {groupMembersLoading[group.id] ? (
                         <p className="text-xs" style={{ color: 'var(--color-outline)' }}>
                           Loading members...
@@ -403,22 +476,99 @@ export function GroupsSettingsSection({ orgId, isAdmin }: GroupsSettingsSectionP
                         </p>
                       ) : null}
                       {!groupMembersLoading[group.id] && members.length === 0 ? (
-                        <p className="text-xs" style={{ color: 'var(--color-outline)' }}>
+                        <p
+                          className="text-xs"
+                          style={{ color: 'var(--color-outline)' }}
+                          data-testid={`group-empty-${group.id}`}
+                        >
                           No members in this group.
                         </p>
                       ) : null}
                       {members.map(member => (
                         <div
                           key={member.id}
-                          className="flex items-center justify-between py-1.5 text-xs"
+                          className="flex items-center justify-between gap-2 py-1.5 text-xs"
                           style={{ color: 'var(--color-on-surface)' }}
+                          data-testid={`group-member-${group.id}-${member.user_id}`}
                         >
-                          <span>{member.name || member.email}</span>
-                          <span style={{ color: 'var(--color-on-surface-variant)' }}>
-                            {member.email}
-                          </span>
+                          <div className="min-w-0">
+                            <span className="block">{member.name || member.email}</span>
+                            <span style={{ color: 'var(--color-on-surface-variant)' }}>
+                              {member.email}
+                            </span>
+                          </div>
+                          {isAdmin ? (
+                            <button
+                              type="button"
+                              className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent transition disabled:cursor-not-allowed disabled:opacity-50"
+                              style={{ color: 'var(--color-on-surface-variant)' }}
+                              data-testid={`remove-group-member-${group.id}-${member.user_id}`}
+                              title="Remove from group"
+                              disabled={groupMemberActionLoading[`${group.id}:${member.user_id}`]}
+                              onClick={() => void handleRemoveGroupMember(group.id, member)}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          ) : null}
                         </div>
                       ))}
+
+                      {isAdmin ? (
+                        <div
+                          className="mt-3 flex flex-col gap-2 md:flex-row"
+                          data-testid={`add-group-member-form-${group.id}`}
+                        >
+                          <select
+                            value={selectedUserId}
+                            onChange={e =>
+                              setAddMemberUserIdByGroup(prev => ({
+                                ...prev,
+                                [group.id]: e.target.value,
+                              }))
+                            }
+                            data-testid={`add-group-member-select-${group.id}`}
+                            className="flex-1 cursor-pointer rounded-sm px-2 py-2 text-xs focus:outline-none"
+                            style={{
+                              backgroundColor: 'var(--color-surface-container-low)',
+                              color: 'var(--color-on-surface)',
+                              border: '1px solid var(--color-outline-variant)',
+                            }}
+                            disabled={
+                              groupMemberActionLoading[group.id] || available.length === 0
+                            }
+                          >
+                            <option value="">
+                              {available.length === 0
+                                ? 'All org members already added'
+                                : 'Select member to add'}
+                            </option>
+                            {available.map(member => (
+                              <option key={member.user_id} value={member.user_id}>
+                                {member.name || member.email} ({member.email})
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            className="inline-flex cursor-pointer items-center justify-center gap-1 rounded-sm px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+                            style={{
+                              background:
+                                'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
+                              color: '#fff',
+                              border: 'none',
+                            }}
+                            data-testid={`add-group-member-submit-${group.id}`}
+                            onClick={() => void handleAddGroupMember(group.id)}
+                            disabled={
+                              !selectedUserId ||
+                              groupMemberActionLoading[group.id] ||
+                              available.length === 0
+                            }
+                          >
+                            <UserPlus size={14} /> Add
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </article>

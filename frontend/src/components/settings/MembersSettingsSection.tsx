@@ -1,5 +1,5 @@
 import { Trash2, UserPlus, Users } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   createInvitation,
   removeMember,
@@ -10,15 +10,21 @@ import type { Member, MembershipRole } from '@/types/organization'
 type MembersSettingsSectionProps = {
   orgId: string
   isAdmin: boolean
+  currentUserId: string | null
   members: Member[]
   onMembersChange: (members: Member[]) => void
 }
 
 const ROLE_OPTIONS: MembershipRole[] = ['viewer', 'editor', 'admin', 'auditor']
 
+function countAdmins(members: Member[]): number {
+  return members.filter(m => m.role === 'admin').length
+}
+
 export function MembersSettingsSection({
   orgId,
   isAdmin,
+  currentUserId,
   members,
   onMembersChange,
 }: MembersSettingsSectionProps) {
@@ -28,6 +34,36 @@ export function MembersSettingsSection({
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
+
+  const adminCount = useMemo(() => countAdmins(members), [members])
+
+  function isSelf(member: Member): boolean {
+    return Boolean(currentUserId && member.user_id === currentUserId)
+  }
+
+  function isLastAdmin(member: Member): boolean {
+    return member.role === 'admin' && adminCount <= 1
+  }
+
+  function canChangeRole(member: Member, newRole: MembershipRole): string | null {
+    if (isSelf(member) && member.role === 'admin' && newRole !== 'admin') {
+      return 'You cannot demote yourself. Ask another admin to change your role.'
+    }
+    if (isLastAdmin(member) && newRole !== 'admin') {
+      return 'Cannot demote the last admin. Promote another member first.'
+    }
+    return null
+  }
+
+  function canRemove(member: Member): string | null {
+    if (isSelf(member)) {
+      return 'You cannot remove yourself from the organization.'
+    }
+    if (isLastAdmin(member)) {
+      return 'Cannot remove the last admin. Promote another member first.'
+    }
+    return null
+  }
 
   async function handleInvite() {
     if (!inviteEmail.trim()) {
@@ -42,7 +78,8 @@ export function MembersSettingsSection({
         email: inviteEmail.trim(),
         role: inviteRole,
       })
-      setInviteSuccess(`Invitation sent! Token: ${invitation.token}`)
+      // Never render raw invite tokens in the DOM — they are secrets.
+      setInviteSuccess(`Invitation sent to ${invitation.email}`)
       setInviteEmail('')
       setInviteRole('viewer')
     } catch (e) {
@@ -53,6 +90,11 @@ export function MembersSettingsSection({
   }
 
   async function handleRoleChange(member: Member, newRole: MembershipRole) {
+    const blocked = canChangeRole(member, newRole)
+    if (blocked) {
+      window.alert(blocked)
+      return
+    }
     try {
       await updateMemberRole(orgId, member.user_id, { role: newRole })
       onMembersChange(
@@ -64,6 +106,11 @@ export function MembersSettingsSection({
   }
 
   async function handleRemoveMember(member: Member) {
+    const blocked = canRemove(member)
+    if (blocked) {
+      window.alert(blocked)
+      return
+    }
     if (!window.confirm(`Remove ${member.email} from this organization?`)) return
     try {
       await removeMember(orgId, member.user_id)
@@ -165,6 +212,7 @@ export function MembersSettingsSection({
                   backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
                   color: 'var(--color-error)',
                 }}
+                data-testid="org-invite-error"
               >
                 {inviteError}
               </div>
@@ -176,6 +224,7 @@ export function MembersSettingsSection({
                   backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
                   color: 'var(--color-primary)',
                 }}
+                data-testid="org-invite-success"
               >
                 {inviteSuccess}
               </div>
@@ -184,81 +233,105 @@ export function MembersSettingsSection({
         ) : null}
 
         <div className="flex flex-col gap-2" data-testid="members-list">
-          {members.map(member => (
-            <div
-              key={member.id}
-              data-testid={`member-row-${member.id}`}
-              className="flex items-center gap-3 rounded-lg p-3"
-              style={{ backgroundColor: 'var(--color-surface-container-high)' }}
-            >
+          {members.map(member => {
+            const self = isSelf(member)
+            const lastAdmin = isLastAdmin(member)
+            const removeBlocked = canRemove(member)
+            const roleDisabled = self || lastAdmin
+
+            return (
               <div
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-sm font-semibold"
-                style={{
-                  background:
-                    'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
-                  color: '#fff',
-                }}
+                key={member.id}
+                data-testid={`member-row-${member.id}`}
+                className="flex items-center gap-3 rounded-lg p-3"
+                style={{ backgroundColor: 'var(--color-surface-container-high)' }}
               >
-                {(member.name || member.email).charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <span
-                  className="block text-sm font-medium"
-                  style={{ color: 'var(--color-on-surface)' }}
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-sm font-semibold"
+                  style={{
+                    background:
+                      'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
+                    color: '#fff',
+                  }}
                 >
-                  {member.name || member.email}
-                </span>
-                <span
-                  className="block overflow-hidden text-xs text-ellipsis whitespace-nowrap"
-                  style={{ color: 'var(--color-on-surface-variant)' }}
-                >
-                  {member.email}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {isAdmin ? (
-                  <select
-                    value={member.role}
-                    data-testid={`member-role-${member.id}`}
-                    onChange={e =>
-                      void handleRoleChange(member, e.target.value as MembershipRole)
-                    }
-                    className="w-auto cursor-pointer rounded-sm px-2 py-1.5 text-xs focus:outline-none"
-                    style={{
-                      backgroundColor: 'var(--color-surface-container-low)',
-                      color: 'var(--color-on-surface)',
-                      border: '1px solid var(--color-outline-variant)',
-                    }}
-                  >
-                    {ROLE_OPTIONS.map(role => (
-                      <option key={role} value={role}>
-                        {role.charAt(0).toUpperCase() + role.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
+                  {(member.name || member.email).charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
                   <span
-                    className="font-mono text-xs capitalize"
-                    style={{ color: 'var(--color-primary)' }}
+                    className="block text-sm font-medium"
+                    style={{ color: 'var(--color-on-surface)' }}
                   >
-                    {member.role}
+                    {member.name || member.email}
+                    {self ? (
+                      <span
+                        className="ml-2 text-xs font-normal"
+                        style={{ color: 'var(--color-on-surface-variant)' }}
+                      >
+                        (you)
+                      </span>
+                    ) : null}
                   </span>
-                )}
-                {isAdmin ? (
-                  <button
-                    type="button"
-                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent transition"
+                  <span
+                    className="block overflow-hidden text-xs text-ellipsis whitespace-nowrap"
                     style={{ color: 'var(--color-on-surface-variant)' }}
-                    data-testid={`member-remove-${member.id}`}
-                    onClick={() => void handleRemoveMember(member)}
-                    title="Remove member"
                   >
-                    <Trash2 size={16} />
-                  </button>
-                ) : null}
+                    {member.email}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {isAdmin ? (
+                    <select
+                      value={member.role}
+                      data-testid={`member-role-${member.id}`}
+                      onChange={e =>
+                        void handleRoleChange(member, e.target.value as MembershipRole)
+                      }
+                      disabled={roleDisabled}
+                      title={
+                        self
+                          ? 'You cannot change your own role'
+                          : lastAdmin
+                            ? 'Cannot demote the last admin'
+                            : undefined
+                      }
+                      className="w-auto cursor-pointer rounded-sm px-2 py-1.5 text-xs focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                      style={{
+                        backgroundColor: 'var(--color-surface-container-low)',
+                        color: 'var(--color-on-surface)',
+                        border: '1px solid var(--color-outline-variant)',
+                      }}
+                    >
+                      {ROLE_OPTIONS.map(role => (
+                        <option key={role} value={role}>
+                          {role.charAt(0).toUpperCase() + role.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span
+                      className="font-mono text-xs capitalize"
+                      style={{ color: 'var(--color-primary)' }}
+                    >
+                      {member.role}
+                    </span>
+                  )}
+                  {isAdmin ? (
+                    <button
+                      type="button"
+                      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent transition disabled:cursor-not-allowed disabled:opacity-40"
+                      style={{ color: 'var(--color-on-surface-variant)' }}
+                      data-testid={`member-remove-${member.id}`}
+                      onClick={() => void handleRemoveMember(member)}
+                      disabled={Boolean(removeBlocked)}
+                      title={removeBlocked ?? 'Remove member'}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
           {members.length === 0 ? (
             <p className="text-sm" style={{ color: 'var(--color-outline)' }}>
               No members yet.

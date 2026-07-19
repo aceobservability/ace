@@ -7,6 +7,7 @@ import {
   updateOrganization,
 } from '@/api/organizations'
 import { organizationsQueryKey } from '@/hooks/useOrganizations'
+import { useOrgStore } from '@/stores/orgStore'
 import type { Organization } from '@/types/organization'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -108,6 +109,11 @@ export function GeneralSettingsSection({
     setDeleteLoading(true)
     try {
       await deleteOrganization(orgId)
+      // Drop stale selection so shell/hooks do not keep serving the deleted org.
+      const orgStore = useOrgStore.getState()
+      if (orgStore.currentOrgId === orgId) {
+        orgStore.clear()
+      }
       await queryClient.invalidateQueries({ queryKey: organizationsQueryKey })
       navigate('/app/dashboards')
     } catch (e) {

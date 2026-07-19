@@ -1,15 +1,4 @@
-import {
-  AlertTriangle,
-  Check,
-  ChevronDown,
-  Edit2,
-  Info,
-  Loader2,
-  Lock,
-  Plus,
-  Shield,
-  X,
-} from 'lucide-react'
+import { ChevronDown, Edit2, Lock, Plus, Shield } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   getGoogleSSOConfig,
@@ -26,37 +15,19 @@ import {
   listRoleMappings,
   type SSOConfigRoleMapping,
 } from '@/api/ssoRoleMappings'
-
-type SsoProviderKey = 'google' | 'microsoft' | 'okta'
+import { GoogleSsoForm } from '@/components/settings/sso/GoogleSsoForm'
+import { MicrosoftSsoForm } from '@/components/settings/sso/MicrosoftSsoForm'
+import { OktaSsoForm } from '@/components/settings/sso/OktaSsoForm'
+import {
+  primaryButtonStyle,
+  secondaryButtonStyle,
+  type SsoProviderKey,
+  type SsoProviderSummary,
+} from '@/components/settings/sso/ssoShared'
 
 type SsoSettingsSectionProps = {
   orgId: string
   isAdmin: boolean
-}
-
-function roleBadgeStyle(role: string): React.CSSProperties {
-  if (role === 'admin') {
-    return {
-      backgroundColor: 'color-mix(in srgb, var(--color-error) 15%, transparent)',
-      color: 'var(--color-error)',
-    }
-  }
-  if (role === 'editor') {
-    return {
-      backgroundColor: 'color-mix(in srgb, var(--color-primary) 15%, transparent)',
-      color: 'var(--color-primary)',
-    }
-  }
-  if (role === 'auditor') {
-    return {
-      backgroundColor: 'color-mix(in srgb, var(--color-info) 15%, transparent)',
-      color: 'var(--color-info)',
-    }
-  }
-  return {
-    backgroundColor: 'color-mix(in srgb, var(--color-on-surface-variant) 15%, transparent)',
-    color: 'var(--color-on-surface-variant)',
-  }
 }
 
 export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) {
@@ -201,10 +172,10 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
     void loadSSOConfigs()
   }, [loadSSOConfigs])
 
-  const ssoProviders = useMemo(
+  const ssoProviders = useMemo<SsoProviderSummary[]>(
     () => [
       {
-        key: 'google' as const,
+        key: 'google',
         name: 'Google',
         issuer: 'accounts.google.com',
         configured: googleConfigured,
@@ -212,7 +183,7 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
         mappingCount: 0,
       },
       {
-        key: 'microsoft' as const,
+        key: 'microsoft',
         name: 'Microsoft',
         issuer: microsoftTenantId
           ? `login.microsoftonline.com/${microsoftTenantId}`
@@ -222,7 +193,7 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
         mappingCount: 0,
       },
       {
-        key: 'okta' as const,
+        key: 'okta',
         name: 'Okta',
         issuer: oktaDomain ? `${oktaDomain}.okta.com` : 'okta.com',
         configured: oktaConfigured,
@@ -245,8 +216,7 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
 
   const configuredSsoProviders = ssoProviders.filter(p => p.configured)
   const unconfiguredSsoProviders = ssoProviders.filter(p => !p.configured)
-  const activeSsoLabel =
-    ssoProviders.find(p => p.key === activeSsoProvider)?.name ?? ''
+  const activeSsoLabel = ssoProviders.find(p => p.key === activeSsoProvider)?.name ?? ''
 
   function openSsoProvider(provider: SsoProviderKey) {
     setSsoDialogOpen(true)
@@ -460,12 +430,7 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
               <button
                 type="button"
                 className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-3 py-1.5 text-sm font-semibold transition"
-                style={{
-                  background:
-                    'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
-                  color: '#fff',
-                  border: 'none',
-                }}
+                style={primaryButtonStyle}
                 data-testid="add-provider-btn"
                 onClick={() => setShowAddProviderDropdown(prev => !prev)}
               >
@@ -593,11 +558,7 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
                       <button
                         type="button"
                         className="cursor-pointer rounded-sm px-3 py-1.5 text-xs font-medium transition"
-                        style={{
-                          backgroundColor: 'var(--color-surface-container-low)',
-                          color: 'var(--color-on-surface)',
-                          border: '1px solid var(--color-outline-variant)',
-                        }}
+                        style={secondaryButtonStyle}
                         data-testid={`edit-sso-${provider.key}`}
                         aria-label={`Configure ${provider.name} SSO`}
                         onClick={() => openSsoProvider(provider.key)}
@@ -628,12 +589,7 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
                     <button
                       type="button"
                       className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-4 py-2.5 text-sm font-semibold transition"
-                      style={{
-                        background:
-                          'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
-                        color: '#fff',
-                        border: 'none',
-                      }}
+                      style={primaryButtonStyle}
                       data-testid="add-provider-empty-btn"
                       onClick={() => setShowAddProviderDropdown(prev => !prev)}
                     >
@@ -710,10 +666,7 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
           >
             <div className="mb-3 flex items-start justify-between gap-4">
               <div>
-                <h3
-                  className="mb-1 text-base"
-                  style={{ color: 'var(--color-on-surface)' }}
-                >
+                <h3 className="mb-1 text-base" style={{ color: 'var(--color-on-surface)' }}>
                   {activeSsoLabel} SSO Settings
                 </h3>
                 <p className="mb-3 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
@@ -741,691 +694,76 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
               data-testid="sso-config-panel"
             >
               {activeSsoProvider === 'google' ? (
-                <div data-testid="google-sso-card">
-                  <div className="mb-4">
-                    <label
-                      className="mb-1.5 block text-sm font-medium"
-                      style={{ color: 'var(--color-on-surface-variant)' }}
-                      htmlFor="google-client-id"
-                    >
-                      Client ID
-                    </label>
-                    <input
-                      id="google-client-id"
-                      value={googleClientId}
-                      onChange={e => setGoogleClientId(e.target.value)}
-                      type="text"
-                      data-testid="google-client-id"
-                      aria-label="Google Client ID"
-                      className="w-full rounded-sm px-3 py-2.5 font-mono text-sm focus:outline-none"
-                      style={{
-                        backgroundColor: 'var(--color-surface-container-low)',
-                        color: 'var(--color-on-surface)',
-                        border: '1px solid var(--color-outline-variant)',
-                      }}
-                      disabled={!isAdmin || googleSaving}
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label
-                      className="mb-1.5 block text-sm font-medium"
-                      style={{ color: 'var(--color-on-surface-variant)' }}
-                      htmlFor="google-client-secret"
-                    >
-                      Client Secret
-                    </label>
-                    <input
-                      id="google-client-secret"
-                      value={googleClientSecret}
-                      onChange={e => setGoogleClientSecret(e.target.value)}
-                      type="password"
-                      data-testid="google-client-secret"
-                      aria-label="Google Client Secret"
-                      placeholder="Enter to update"
-                      className="w-full rounded-sm px-3 py-2.5 font-mono text-sm focus:outline-none"
-                      style={{
-                        backgroundColor: 'var(--color-surface-container-low)',
-                        color: 'var(--color-on-surface)',
-                        border: '1px solid var(--color-outline-variant)',
-                      }}
-                      disabled={!isAdmin || googleSaving}
-                    />
-                  </div>
-                  <label
-                    className="m-0 inline-flex items-center gap-2 text-sm"
-                    style={{ color: 'var(--color-on-surface)' }}
-                  >
-                    <input
-                      checked={googleEnabled}
-                      onChange={e => setGoogleEnabled(e.target.checked)}
-                      type="checkbox"
-                      data-testid="google-enabled"
-                      className="m-0 w-auto"
-                      disabled={!isAdmin || googleSaving}
-                    />
-                    Enable Google SSO
-                  </label>
-                  {googleError ? (
-                    <div
-                      className="mt-3 rounded-sm px-3.5 py-2.5 text-sm"
-                      style={{
-                        backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
-                        color: 'var(--color-error)',
-                      }}
-                    >
-                      {googleError}
-                    </div>
-                  ) : null}
-                  {isAdmin ? (
-                    <div className="mt-3 flex justify-end gap-3">
-                      <button
-                        type="button"
-                        className="cursor-pointer rounded-sm px-4 py-2.5 text-sm font-medium transition"
-                        style={{
-                          backgroundColor: 'var(--color-surface-container-low)',
-                          color: 'var(--color-on-surface)',
-                          border: '1px solid var(--color-outline-variant)',
-                        }}
-                        onClick={closeSsoDialog}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        className="cursor-pointer rounded-sm px-4 py-2.5 text-sm font-semibold transition"
-                        style={{
-                          background:
-                            'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
-                          color: '#fff',
-                          border: 'none',
-                        }}
-                        data-testid="save-google-sso"
-                        disabled={googleSaving}
-                        onClick={() => void handleSaveGoogleSSO()}
-                      >
-                        {googleSaving ? 'Saving...' : 'Save Google SSO'}
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
+                <GoogleSsoForm
+                  isAdmin={isAdmin}
+                  clientId={googleClientId}
+                  clientSecret={googleClientSecret}
+                  enabled={googleEnabled}
+                  saving={googleSaving}
+                  error={googleError}
+                  onClientIdChange={setGoogleClientId}
+                  onClientSecretChange={setGoogleClientSecret}
+                  onEnabledChange={setGoogleEnabled}
+                  onCancel={closeSsoDialog}
+                  onSave={() => void handleSaveGoogleSSO()}
+                />
               ) : null}
 
               {activeSsoProvider === 'microsoft' ? (
-                <div data-testid="microsoft-sso-card">
-                  <div className="mb-4">
-                    <label
-                      className="mb-1.5 block text-sm font-medium"
-                      style={{ color: 'var(--color-on-surface-variant)' }}
-                      htmlFor="microsoft-tenant-id"
-                    >
-                      Tenant ID
-                    </label>
-                    <input
-                      id="microsoft-tenant-id"
-                      value={microsoftTenantId}
-                      onChange={e => setMicrosoftTenantId(e.target.value)}
-                      type="text"
-                      data-testid="microsoft-tenant-id"
-                      aria-label="Microsoft Tenant ID"
-                      className="w-full rounded-sm px-3 py-2.5 font-mono text-sm focus:outline-none"
-                      style={{
-                        backgroundColor: 'var(--color-surface-container-low)',
-                        color: 'var(--color-on-surface)',
-                        border: '1px solid var(--color-outline-variant)',
-                      }}
-                      disabled={!isAdmin || microsoftSaving}
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label
-                      className="mb-1.5 block text-sm font-medium"
-                      style={{ color: 'var(--color-on-surface-variant)' }}
-                      htmlFor="microsoft-client-id"
-                    >
-                      Client ID
-                    </label>
-                    <input
-                      id="microsoft-client-id"
-                      value={microsoftClientId}
-                      onChange={e => setMicrosoftClientId(e.target.value)}
-                      type="text"
-                      data-testid="microsoft-client-id"
-                      aria-label="Microsoft Client ID"
-                      className="w-full rounded-sm px-3 py-2.5 font-mono text-sm focus:outline-none"
-                      style={{
-                        backgroundColor: 'var(--color-surface-container-low)',
-                        color: 'var(--color-on-surface)',
-                        border: '1px solid var(--color-outline-variant)',
-                      }}
-                      disabled={!isAdmin || microsoftSaving}
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label
-                      className="mb-1.5 block text-sm font-medium"
-                      style={{ color: 'var(--color-on-surface-variant)' }}
-                      htmlFor="microsoft-client-secret"
-                    >
-                      Client Secret
-                    </label>
-                    <input
-                      id="microsoft-client-secret"
-                      value={microsoftClientSecret}
-                      onChange={e => setMicrosoftClientSecret(e.target.value)}
-                      type="password"
-                      data-testid="microsoft-client-secret"
-                      aria-label="Microsoft Client Secret"
-                      placeholder="Enter to update"
-                      className="w-full rounded-sm px-3 py-2.5 font-mono text-sm focus:outline-none"
-                      style={{
-                        backgroundColor: 'var(--color-surface-container-low)',
-                        color: 'var(--color-on-surface)',
-                        border: '1px solid var(--color-outline-variant)',
-                      }}
-                      disabled={!isAdmin || microsoftSaving}
-                    />
-                  </div>
-                  <label
-                    className="m-0 inline-flex items-center gap-2 text-sm"
-                    style={{ color: 'var(--color-on-surface)' }}
-                  >
-                    <input
-                      checked={microsoftEnabled}
-                      onChange={e => setMicrosoftEnabled(e.target.checked)}
-                      type="checkbox"
-                      data-testid="microsoft-enabled"
-                      className="m-0 w-auto"
-                      disabled={!isAdmin || microsoftSaving}
-                    />
-                    Enable Microsoft SSO
-                  </label>
-                  {microsoftError ? (
-                    <div
-                      className="mt-3 rounded-sm px-3.5 py-2.5 text-sm"
-                      style={{
-                        backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
-                        color: 'var(--color-error)',
-                      }}
-                    >
-                      {microsoftError}
-                    </div>
-                  ) : null}
-                  {isAdmin ? (
-                    <div className="mt-3 flex justify-end gap-3">
-                      <button
-                        type="button"
-                        className="cursor-pointer rounded-sm px-4 py-2.5 text-sm font-medium transition"
-                        style={{
-                          backgroundColor: 'var(--color-surface-container-low)',
-                          color: 'var(--color-on-surface)',
-                          border: '1px solid var(--color-outline-variant)',
-                        }}
-                        onClick={closeSsoDialog}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        className="cursor-pointer rounded-sm px-4 py-2.5 text-sm font-semibold transition"
-                        style={{
-                          background:
-                            'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
-                          color: '#fff',
-                          border: 'none',
-                        }}
-                        data-testid="save-microsoft-sso"
-                        disabled={microsoftSaving}
-                        onClick={() => void handleSaveMicrosoftSSO()}
-                      >
-                        {microsoftSaving ? 'Saving...' : 'Save Microsoft SSO'}
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
+                <MicrosoftSsoForm
+                  isAdmin={isAdmin}
+                  tenantId={microsoftTenantId}
+                  clientId={microsoftClientId}
+                  clientSecret={microsoftClientSecret}
+                  enabled={microsoftEnabled}
+                  saving={microsoftSaving}
+                  error={microsoftError}
+                  onTenantIdChange={setMicrosoftTenantId}
+                  onClientIdChange={setMicrosoftClientId}
+                  onClientSecretChange={setMicrosoftClientSecret}
+                  onEnabledChange={setMicrosoftEnabled}
+                  onCancel={closeSsoDialog}
+                  onSave={() => void handleSaveMicrosoftSSO()}
+                />
               ) : null}
 
               {activeSsoProvider === 'okta' ? (
-                <div data-testid="okta-sso-card">
-                  <div
-                    className="mb-4 flex gap-3 rounded-md p-3"
-                    style={{
-                      backgroundColor: 'var(--color-surface-container-low)',
-                      border: '1px solid var(--color-outline)',
-                    }}
-                    data-testid="okta-setup-callout"
-                  >
-                    <Info
-                      size={18}
-                      className="mt-0.5 shrink-0"
-                      style={{ color: 'var(--color-info)' }}
-                    />
-                    <p
-                      className="m-0 text-xs leading-relaxed"
-                      style={{ color: 'var(--color-on-surface-variant)' }}
-                    >
-                      To enable group-to-role mapping, configure a &quot;groups&quot; claim in your
-                      Okta authorization server. This allows Ace to automatically assign roles based
-                      on your Okta group memberships.
-                    </p>
-                  </div>
-
-                  <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                      <label
-                        className="mb-1.5 block text-sm font-medium"
-                        style={{ color: 'var(--color-on-surface-variant)' }}
-                        htmlFor="okta-domain"
-                      >
-                        Okta Domain
-                      </label>
-                      <input
-                        id="okta-domain"
-                        value={oktaDomain}
-                        onChange={e => setOktaDomain(e.target.value)}
-                        type="text"
-                        data-testid="okta-domain"
-                        aria-label="Okta Domain"
-                        placeholder="dev-12345"
-                        className="w-full rounded-sm px-3 py-2.5 font-mono text-sm focus:outline-none"
-                        style={{
-                          backgroundColor: 'var(--color-surface-container-low)',
-                          color: 'var(--color-on-surface)',
-                          border: '1px solid var(--color-outline-variant)',
-                        }}
-                        disabled={!isAdmin || oktaSaving}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className="mb-1.5 block text-sm font-medium"
-                        style={{ color: 'var(--color-on-surface-variant)' }}
-                        htmlFor="okta-client-id"
-                      >
-                        Client ID
-                      </label>
-                      <input
-                        id="okta-client-id"
-                        value={oktaClientId}
-                        onChange={e => setOktaClientId(e.target.value)}
-                        type="text"
-                        data-testid="okta-client-id"
-                        aria-label="Okta Client ID"
-                        className="w-full rounded-sm px-3 py-2.5 font-mono text-sm focus:outline-none"
-                        style={{
-                          backgroundColor: 'var(--color-surface-container-low)',
-                          color: 'var(--color-on-surface)',
-                          border: '1px solid var(--color-outline-variant)',
-                        }}
-                        disabled={!isAdmin || oktaSaving}
-                      />
-                    </div>
-                  </div>
-                  <div className="mb-4">
-                    <label
-                      className="mb-1.5 block text-sm font-medium"
-                      style={{ color: 'var(--color-on-surface-variant)' }}
-                      htmlFor="okta-client-secret"
-                    >
-                      Client Secret
-                    </label>
-                    <input
-                      id="okta-client-secret"
-                      value={oktaClientSecret}
-                      onChange={e => setOktaClientSecret(e.target.value)}
-                      type="password"
-                      data-testid="okta-client-secret"
-                      aria-label="Okta Client Secret"
-                      placeholder="Enter to update"
-                      className="w-full rounded-sm px-3 py-2.5 font-mono text-sm focus:outline-none"
-                      style={{
-                        backgroundColor: 'var(--color-surface-container-low)',
-                        color: 'var(--color-on-surface)',
-                        border: '1px solid var(--color-outline-variant)',
-                      }}
-                      disabled={!isAdmin || oktaSaving}
-                    />
-                  </div>
-                  <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                      <label
-                        className="mb-1.5 block text-sm font-medium"
-                        style={{ color: 'var(--color-on-surface-variant)' }}
-                        htmlFor="okta-groups-claim"
-                      >
-                        Groups Claim Name
-                      </label>
-                      <input
-                        id="okta-groups-claim"
-                        value={oktaGroupsClaimName}
-                        onChange={e => setOktaGroupsClaimName(e.target.value)}
-                        type="text"
-                        data-testid="okta-groups-claim"
-                        aria-label="Groups Claim Name"
-                        placeholder="groups"
-                        className="w-full rounded-sm px-3 py-2.5 font-mono text-sm focus:outline-none"
-                        style={{
-                          backgroundColor: 'var(--color-surface-container-low)',
-                          color: 'var(--color-on-surface)',
-                          border: '1px solid var(--color-outline-variant)',
-                        }}
-                        disabled={!isAdmin || oktaSaving}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className="mb-1.5 block text-sm font-medium"
-                        style={{ color: 'var(--color-on-surface-variant)' }}
-                        htmlFor="okta-default-role"
-                      >
-                        Default Role
-                      </label>
-                      <select
-                        id="okta-default-role"
-                        value={oktaDefaultRole}
-                        onChange={e => setOktaDefaultRole(e.target.value)}
-                        data-testid="okta-default-role"
-                        aria-label="Default Role"
-                        className="w-full cursor-pointer rounded-sm px-3 py-2.5 text-sm focus:outline-none"
-                        style={{
-                          backgroundColor: 'var(--color-surface-container-low)',
-                          color: 'var(--color-on-surface)',
-                          border: '1px solid var(--color-outline-variant)',
-                        }}
-                        disabled={!isAdmin || oktaSaving}
-                      >
-                        <option value="viewer">Viewer</option>
-                        <option value="editor">Editor</option>
-                        <option value="admin">Admin</option>
-                        <option value="auditor">Auditor</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <label
-                    className="m-0 inline-flex items-center gap-2 text-sm"
-                    style={{ color: 'var(--color-on-surface)' }}
-                  >
-                    <input
-                      checked={oktaEnabled}
-                      onChange={e => setOktaEnabled(e.target.checked)}
-                      type="checkbox"
-                      data-testid="okta-enabled"
-                      className="m-0 w-auto"
-                      disabled={!isAdmin || oktaSaving}
-                    />
-                    Enable Okta SSO
-                  </label>
-
-                  {oktaError ? (
-                    <div
-                      className="mt-3 rounded-sm px-3.5 py-2.5 text-sm"
-                      style={{
-                        backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
-                        color: 'var(--color-error)',
-                      }}
-                      data-testid="okta-error"
-                    >
-                      {oktaError}
-                    </div>
-                  ) : null}
-
-                  {isAdmin ? (
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-3 py-2 text-sm font-medium transition"
-                          style={{
-                            backgroundColor: 'var(--color-surface-container-low)',
-                            color: 'var(--color-on-surface)',
-                            border: '1px solid var(--color-outline-variant)',
-                          }}
-                          data-testid="okta-test-connection"
-                          disabled={oktaTestStatus === 'testing' || !oktaConfigured}
-                          onClick={() => void handleTestOktaConnection()}
-                        >
-                          {oktaTestStatus === 'testing' ? (
-                            <Loader2 size={14} className="animate-spin" />
-                          ) : null}
-                          Test Connection
-                        </button>
-                        {oktaTestStatus === 'success' ? (
-                          <span
-                            className="inline-flex items-center gap-1 text-xs"
-                            style={{ color: 'var(--color-secondary)' }}
-                            data-testid="okta-test-success"
-                          >
-                            <Check size={14} /> {oktaTestMessage}
-                          </span>
-                        ) : null}
-                        {oktaTestStatus === 'error' ? (
-                          <span
-                            className="inline-flex items-center gap-1 text-xs"
-                            style={{ color: 'var(--color-error)' }}
-                            data-testid="okta-test-error"
-                          >
-                            <AlertTriangle size={14} /> {oktaTestMessage}
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          className="cursor-pointer rounded-sm px-4 py-2.5 text-sm font-medium transition"
-                          style={{
-                            backgroundColor: 'var(--color-surface-container-low)',
-                            color: 'var(--color-on-surface)',
-                            border: '1px solid var(--color-outline-variant)',
-                          }}
-                          onClick={closeSsoDialog}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-4 py-2.5 text-sm font-semibold transition"
-                          style={{
-                            background:
-                              'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
-                            color: '#fff',
-                            border: 'none',
-                          }}
-                          data-testid="save-okta-sso"
-                          disabled={oktaSaving}
-                          onClick={() => void handleSaveOktaSSO()}
-                        >
-                          {oktaSaving ? <Loader2 size={14} className="animate-spin" /> : null}
-                          {oktaSaving ? 'Saving...' : 'Save Configuration'}
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {oktaConfigured ? (
-                    <div
-                      className="mt-6 border-t pt-4"
-                      style={{ borderColor: 'var(--color-outline)' }}
-                      data-testid="okta-role-mappings-section"
-                    >
-                      <div className="mb-3 flex items-center justify-between">
-                        <h4
-                          className="m-0 text-sm font-semibold"
-                          style={{ color: 'var(--color-on-surface)' }}
-                        >
-                          Group → Role Mapping
-                        </h4>
-                        {isAdmin && !showAddMappingForm ? (
-                          <button
-                            type="button"
-                            className="inline-flex cursor-pointer items-center gap-1 rounded-sm px-2.5 py-1.5 text-xs font-medium transition"
-                            style={{
-                              backgroundColor: 'var(--color-surface-container-low)',
-                              color: 'var(--color-on-surface)',
-                              border: '1px solid var(--color-outline-variant)',
-                            }}
-                            data-testid="add-mapping-btn"
-                            onClick={() => {
-                              setShowAddMappingForm(true)
-                              setAddMappingError(null)
-                            }}
-                          >
-                            <Plus size={14} /> Add Mapping
-                          </button>
-                        ) : null}
-                      </div>
-
-                      {showAddMappingForm ? (
-                        <div
-                          className="mb-3 flex flex-col gap-2 rounded-md p-3"
-                          style={{ backgroundColor: 'var(--color-surface-container-low)' }}
-                          data-testid="add-mapping-form"
-                        >
-                          <div className="flex flex-col gap-2 md:flex-row">
-                            <input
-                              value={newMappingGroup}
-                              onChange={e => setNewMappingGroup(e.target.value)}
-                              type="text"
-                              placeholder="SSO group name"
-                              aria-label="SSO Group Name"
-                              className="flex-1 rounded-sm px-3 py-2 font-mono text-sm focus:outline-none"
-                              style={{
-                                backgroundColor: 'var(--color-surface-container-high)',
-                                color: 'var(--color-on-surface)',
-                                border: '1px solid var(--color-outline-variant)',
-                              }}
-                              disabled={addMappingLoading}
-                              data-testid="new-mapping-group"
-                            />
-                            <select
-                              value={newMappingRole}
-                              onChange={e => setNewMappingRole(e.target.value)}
-                              aria-label="Ace Role"
-                              className="w-full cursor-pointer rounded-sm px-3 py-2 text-sm focus:outline-none md:w-[120px]"
-                              style={{
-                                backgroundColor: 'var(--color-surface-container-high)',
-                                color: 'var(--color-on-surface)',
-                                border: '1px solid var(--color-outline-variant)',
-                              }}
-                              disabled={addMappingLoading}
-                              data-testid="new-mapping-role"
-                            >
-                              <option value="viewer">Viewer</option>
-                              <option value="editor">Editor</option>
-                              <option value="admin">Admin</option>
-                              <option value="auditor">Auditor</option>
-                            </select>
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                className="cursor-pointer rounded-sm px-3 py-2 text-sm font-semibold transition"
-                                style={{
-                                  background:
-                                    'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
-                                  color: '#fff',
-                                  border: 'none',
-                                }}
-                                disabled={addMappingLoading}
-                                data-testid="add-mapping-submit"
-                                onClick={() => void handleAddRoleMapping()}
-                              >
-                                {addMappingLoading ? 'Adding...' : 'Add'}
-                              </button>
-                              <button
-                                type="button"
-                                className="cursor-pointer rounded-sm px-3 py-2 text-sm font-medium transition"
-                                style={{
-                                  backgroundColor: 'transparent',
-                                  color: 'var(--color-on-surface-variant)',
-                                  border: '1px solid var(--color-outline-variant)',
-                                }}
-                                disabled={addMappingLoading}
-                                onClick={() => {
-                                  setShowAddMappingForm(false)
-                                  setAddMappingError(null)
-                                }}
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                          {addMappingError ? (
-                            <div
-                              className="rounded-sm px-3 py-2 text-xs"
-                              style={{
-                                backgroundColor:
-                                  'color-mix(in srgb, var(--color-error) 10%, transparent)',
-                                color: 'var(--color-error)',
-                              }}
-                              data-testid="add-mapping-error"
-                            >
-                              {addMappingError}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-
-                      {oktaRoleMappingsLoading ? (
-                        <div className="p-3 text-sm" style={{ color: 'var(--color-outline)' }}>
-                          Loading mappings...
-                        </div>
-                      ) : null}
-                      {!oktaRoleMappingsLoading && oktaRoleMappings.length === 0 ? (
-                        <div
-                          className="p-3 text-sm"
-                          style={{ color: 'var(--color-outline)' }}
-                          data-testid="no-mappings-message"
-                        >
-                          No group mappings. Users will get the default role ({oktaDefaultRole}).
-                        </div>
-                      ) : null}
-                      {!oktaRoleMappingsLoading && oktaRoleMappings.length > 0 ? (
-                        <div className="flex flex-col gap-1.5">
-                          {oktaRoleMappings.map(mapping => (
-                            <div
-                              key={mapping.id}
-                              className="flex items-center justify-between gap-3 rounded-md px-3 py-2"
-                              style={{ backgroundColor: 'var(--color-surface-container-low)' }}
-                              data-testid={`mapping-row-${mapping.id}`}
-                            >
-                              <div className="flex min-w-0 items-center gap-2">
-                                <span
-                                  className="truncate font-mono text-sm"
-                                  style={{ color: 'var(--color-on-surface)' }}
-                                >
-                                  {mapping.sso_group_name}
-                                </span>
-                                <span
-                                  className="shrink-0 text-xs"
-                                  style={{ color: 'var(--color-outline)' }}
-                                >
-                                  →
-                                </span>
-                                <span
-                                  className="inline-flex shrink-0 rounded-sm px-2 py-0.5 text-xs font-medium capitalize"
-                                  style={roleBadgeStyle(mapping.ace_role)}
-                                >
-                                  {mapping.ace_role}
-                                </span>
-                              </div>
-                              {isAdmin ? (
-                                <button
-                                  type="button"
-                                  className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent transition"
-                                  style={{ color: 'var(--color-on-surface-variant)' }}
-                                  data-testid={`delete-mapping-${mapping.id}`}
-                                  aria-label={`Delete mapping for ${mapping.sso_group_name}`}
-                                  onClick={() => void handleDeleteRoleMapping(mapping.id)}
-                                >
-                                  <X size={14} />
-                                </button>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
+                <OktaSsoForm
+                  isAdmin={isAdmin}
+                  domain={oktaDomain}
+                  clientId={oktaClientId}
+                  clientSecret={oktaClientSecret}
+                  groupsClaimName={oktaGroupsClaimName}
+                  defaultRole={oktaDefaultRole}
+                  enabled={oktaEnabled}
+                  configured={oktaConfigured}
+                  saving={oktaSaving}
+                  error={oktaError}
+                  testStatus={oktaTestStatus}
+                  testMessage={oktaTestMessage}
+                  roleMappings={oktaRoleMappings}
+                  roleMappingsLoading={oktaRoleMappingsLoading}
+                  showAddMappingForm={showAddMappingForm}
+                  newMappingGroup={newMappingGroup}
+                  newMappingRole={newMappingRole}
+                  addMappingLoading={addMappingLoading}
+                  addMappingError={addMappingError}
+                  onDomainChange={setOktaDomain}
+                  onClientIdChange={setOktaClientId}
+                  onClientSecretChange={setOktaClientSecret}
+                  onGroupsClaimNameChange={setOktaGroupsClaimName}
+                  onDefaultRoleChange={setOktaDefaultRole}
+                  onEnabledChange={setOktaEnabled}
+                  onCancel={closeSsoDialog}
+                  onSave={() => void handleSaveOktaSSO()}
+                  onTestConnection={() => void handleTestOktaConnection()}
+                  onShowAddMappingForm={setShowAddMappingForm}
+                  onNewMappingGroupChange={setNewMappingGroup}
+                  onNewMappingRoleChange={setNewMappingRole}
+                  onAddMapping={() => void handleAddRoleMapping()}
+                  onDeleteMapping={mappingId => void handleDeleteRoleMapping(mappingId)}
+                  onClearAddMappingError={() => setAddMappingError(null)}
+                />
               ) : null}
             </div>
           </div>
