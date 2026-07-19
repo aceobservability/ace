@@ -98,12 +98,12 @@ type AMReceiver struct {
 
 // AMVersionInfo holds version information from the status endpoint.
 type AMVersionInfo struct {
-	Version            string `json:"version"`
-	Revision           string `json:"revision,omitempty"`
-	Branch             string `json:"branch,omitempty"`
-	BuildUser          string `json:"buildUser,omitempty"`
-	BuildDate          string `json:"buildDate,omitempty"`
-	GoVersion          string `json:"goVersion,omitempty"`
+	Version   string `json:"version"`
+	Revision  string `json:"revision,omitempty"`
+	Branch    string `json:"branch,omitempty"`
+	BuildUser string `json:"buildUser,omitempty"`
+	BuildDate string `json:"buildDate,omitempty"`
+	GoVersion string `json:"goVersion,omitempty"`
 }
 
 // AMClusterStatus holds cluster status info.
