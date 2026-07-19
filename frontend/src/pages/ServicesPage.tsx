@@ -104,7 +104,7 @@ export function ServicesPage() {
 
             const serviceItems = await Promise.all(
               uniqueNames.map(async name => {
-                let metrics
+                let metrics: ServiceHealthMetrics
                 try {
                   const summaries = await searchDataSourceTraces(source.id, {
                     service: name,
