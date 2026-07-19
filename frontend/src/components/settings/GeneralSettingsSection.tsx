@@ -1,5 +1,5 @@
 import { Edit2, Shield } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   deleteOrganization,
@@ -18,39 +18,11 @@ type GeneralSettingsSectionProps = {
   onOrgUpdated: (org: Organization) => void
 }
 
-const LOGO_PREVIEW_MIME: Record<string, string> = {
-  png: 'image/png',
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  gif: 'image/gif',
-  webp: 'image/webp',
-}
+const LOGO_FILE_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp'
+const LOGO_FILE_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp'])
 
-/**
- * Decode a validated image data URI into a blob: object URL.
- * Avoids feeding free-text / DOM-sourced strings into img src (CodeQL js/xss-through-dom).
- */
-function createLogoPreviewObjectUrl(value: string): string | null {
-  const match = value
-    .trim()
-    .match(/^data:image\/(png|jpe?g|gif|webp);base64,([A-Za-z0-9+/=\s]+)$/i)
-  if (!match) return null
-
-  const subtype = match[1].toLowerCase()
-  const mime = LOGO_PREVIEW_MIME[subtype]
-  if (!mime) return null
-
-  const payload = match[2].replace(/\s+/g, '')
-  try {
-    const binary = atob(payload)
-    const bytes = new Uint8Array(binary.length)
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i)
-    }
-    return URL.createObjectURL(new Blob([bytes], { type: mime }))
-  } catch {
-    return null
-  }
+function isAllowedLogoFile(file: File): boolean {
+  return LOGO_FILE_TYPES.has(file.type)
 }
 
 export function GeneralSettingsSection({
@@ -71,21 +43,32 @@ export function GeneralSettingsSection({
   const [brandingColor, setBrandingColor] = useState(org.branding?.primary_color ?? '')
   const [brandingTitle, setBrandingTitle] = useState(org.branding?.app_title ?? '')
   const [brandingLogo, setBrandingLogo] = useState(org.branding?.logo_data_uri ?? '')
+  // Preview comes only from File blob URLs — never from free-text DOM input (CodeQL js/xss-through-dom).
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
+  const logoPreviewUrlRef = useRef<string | null>(null)
   const [brandingLoading, setBrandingLoading] = useState(false)
   const [brandingError, setBrandingError] = useState<string | null>(null)
   const [brandingNotice, setBrandingNotice] = useState<string | null>(null)
 
-  useEffect(() => {
-    const next = createLogoPreviewObjectUrl(brandingLogo)
-    setLogoPreviewUrl(next)
-    return () => {
-      if (next) URL.revokeObjectURL(next)
-    }
-  }, [brandingLogo])
-
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+
+  const replaceLogoPreview = useCallback((nextUrl: string | null) => {
+    if (logoPreviewUrlRef.current) {
+      URL.revokeObjectURL(logoPreviewUrlRef.current)
+    }
+    logoPreviewUrlRef.current = nextUrl
+    setLogoPreviewUrl(nextUrl)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (logoPreviewUrlRef.current) {
+        URL.revokeObjectURL(logoPreviewUrlRef.current)
+        logoPreviewUrlRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     setEditName(org.name)
@@ -93,7 +76,36 @@ export function GeneralSettingsSection({
     setBrandingColor(org.branding?.primary_color ?? '')
     setBrandingTitle(org.branding?.app_title ?? '')
     setBrandingLogo(org.branding?.logo_data_uri ?? '')
-  }, [org])
+    // Drop local file preview when org branding reloads from the API.
+    replaceLogoPreview(null)
+  }, [org, replaceLogoPreview])
+
+  function handleLogoFileChange(fileList: FileList | null) {
+    const file = fileList?.[0]
+    if (!file) return
+    if (!isAllowedLogoFile(file)) {
+      setBrandingError('Logo must be a PNG, JPEG, GIF, or WebP image')
+      return
+    }
+    setBrandingError(null)
+    // Object URL from File is not DOM-text taint; safe for <img src>.
+    replaceLogoPreview(URL.createObjectURL(file))
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setBrandingLogo(reader.result)
+      }
+    }
+    reader.onerror = () => {
+      setBrandingError('Failed to read logo file')
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function clearLogo() {
+    setBrandingLogo('')
+    replaceLogoPreview(null)
+  }
 
   function startEdit() {
     setEditMode(true)
@@ -421,28 +433,51 @@ export function GeneralSettingsSection({
         </div>
 
         <div className="mb-4">
-          <label
+          <span
             className="mb-1.5 block text-sm font-medium"
             style={{ color: 'var(--color-on-surface-variant)' }}
-            htmlFor="branding-logo"
+            id="branding-logo-label"
           >
-            Logo Data URI
-          </label>
-          <input
-            id="branding-logo"
-            value={brandingLogo}
-            onChange={e => setBrandingLogo(e.target.value)}
-            type="text"
-            data-testid="branding-logo"
-            placeholder="data:image/png;base64,..."
-            className="w-full rounded-sm px-3 py-2.5 font-mono text-sm focus:outline-none"
-            style={{
-              backgroundColor: 'var(--color-surface-container-high)',
-              color: 'var(--color-on-surface)',
-              border: '1px solid var(--color-outline-variant)',
-            }}
-            disabled={!isAdmin || brandingLoading}
-          />
+            Logo
+          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              id="branding-logo"
+              type="file"
+              accept={LOGO_FILE_ACCEPT}
+              data-testid="branding-logo"
+              aria-labelledby="branding-logo-label"
+              className="max-w-full text-sm file:mr-3 file:cursor-pointer file:rounded-sm file:border-0 file:px-3 file:py-2 file:text-sm file:font-medium"
+              style={{
+                color: 'var(--color-on-surface-variant)',
+              }}
+              disabled={!isAdmin || brandingLoading}
+              onChange={e => {
+                handleLogoFileChange(e.target.files)
+                // Allow re-selecting the same file.
+                e.target.value = ''
+              }}
+            />
+            {brandingLogo || logoPreviewUrl ? (
+              <button
+                type="button"
+                className="cursor-pointer rounded-sm px-3 py-1.5 text-xs font-medium transition"
+                style={{
+                  backgroundColor: 'var(--color-surface-container-high)',
+                  color: 'var(--color-on-surface)',
+                  border: '1px solid var(--color-outline-variant)',
+                }}
+                data-testid="branding-logo-clear"
+                disabled={!isAdmin || brandingLoading}
+                onClick={clearLogo}
+              >
+                Remove logo
+              </button>
+            ) : null}
+          </div>
+          <p className="mt-1 text-xs" style={{ color: 'var(--color-on-surface-variant)' }}>
+            PNG, JPEG, GIF, or WebP. Preview uses a local file blob URL (not free-text input).
+          </p>
           {logoPreviewUrl ? (
             <img
               src={logoPreviewUrl}
@@ -454,11 +489,13 @@ export function GeneralSettingsSection({
             <p
               className="mt-2 text-xs"
               style={{ color: 'var(--color-on-surface-variant)' }}
-              data-testid="branding-logo-preview-invalid"
+              data-testid="branding-logo-saved-hint"
             >
-              Preview available for image data URIs only (png, jpeg, gif, webp).
+              A logo is saved for this organization. Upload a new file to replace it, or remove it.
             </p>
           ) : null}
+          {/* Hidden field keeps the API payload value without binding free-text DOM → img src. */}
+          <input type="hidden" data-testid="branding-logo-data" value={brandingLogo} readOnly />
         </div>
 
         {brandingError ? (
