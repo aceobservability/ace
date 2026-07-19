@@ -209,7 +209,7 @@ export function SettingsPage() {
                 <AIProviderSettings
                   orgId={orgId}
                   isAdmin={Boolean(isAdmin)}
-                  onProviderCount={setHasOrgProviders}
+                  onProviderCount={count => setHasOrgProviders(count > 0)}
                 />
                 {!hasOrgProviders ? <CopilotConnectionPanel orgId={orgId} /> : null}
               </section>
