@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useFavoritesStore } from '@/stores/favoritesStore'
 import { useOrgStore } from '@/stores/orgStore'
 import { createTestQueryClient } from '@/test/renderWithProviders'
-import type { AMSilence, DataSource, VMAlertAlert, VMAlertRuleGroup } from '@/types/datasource'
+import type { AMSilence, AMStatus, DataSource, VMAlertAlert, VMAlertRuleGroup } from '@/types/datasource'
 
 vi.mock('@/analytics', () => ({
   identifyUser: vi.fn(),
@@ -91,6 +91,15 @@ const mockGroups: VMAlertRuleGroup[] = [
   },
 ]
 
+const mockAmStatus: AMStatus = {
+  cluster: { status: 'ready' },
+  versionInfo: { version: '0.27.0' },
+  config: {
+    original: 'route:\n  receiver: default\nreceivers:\n  - name: default\n',
+  },
+  uptime: '2026-03-22T08:00:00Z',
+}
+
 function renderAlerts() {
   const queryClient = createTestQueryClient()
   const router = createMemoryRouter(
@@ -139,6 +148,7 @@ describe('AlertsPage', () => {
     vi.spyOn(alertmanagerApi, 'fetchAlertManagerAlerts').mockResolvedValue([])
     vi.spyOn(alertmanagerApi, 'fetchSilences').mockResolvedValue([])
     vi.spyOn(alertmanagerApi, 'fetchReceivers').mockResolvedValue([])
+    vi.spyOn(alertmanagerApi, 'fetchAlertManagerStatus').mockResolvedValue(mockAmStatus)
     vi.spyOn(alertmanagerApi, 'createSilence').mockResolvedValue('silence-1')
     vi.spyOn(alertmanagerApi, 'expireSilence').mockResolvedValue()
   })
@@ -202,7 +212,7 @@ describe('AlertsPage', () => {
     expect(screen.getByText(/1 alert firing/i)).toBeTruthy()
   })
 
-  it('shows rule groups and expands rule editor details', async () => {
+  it('shows rule groups and opens rule editor', async () => {
     const user = userEvent.setup()
     renderAlerts()
 
@@ -225,6 +235,12 @@ describe('AlertsPage', () => {
 
     expect(screen.getByText('cpu > 0.9')).toBeTruthy()
     expect(screen.getByText('alerting')).toBeTruthy()
+
+    await user.click(screen.getByTestId('open-rule-editor-HighCPU'))
+    expect(screen.getByTestId('rule-editor-modal')).toBeTruthy()
+    expect(screen.getByTestId('rule-editor-query').textContent).toContain('cpu > 0.9')
+    expect(screen.getByTestId('rule-editor-yaml').textContent).toContain('- alert: HighCPU')
+    expect(screen.getByTestId('rule-editor-readonly-notice')).toBeTruthy()
   })
 
   it('creates and expires Alertmanager silences with mocked API', async () => {
@@ -298,6 +314,57 @@ describe('AlertsPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('expired')).toBeTruthy()
+    })
+  })
+
+  it('shows Alertmanager configuration from status API', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(datasourcesApi, 'listDataSources').mockResolvedValue([alertmanagerDatasource])
+
+    renderAlerts()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('alerts-tab-am-config')).toBeTruthy()
+    })
+
+    await user.click(screen.getByTestId('alerts-tab-am-config'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('am-config-panel')).toBeTruthy()
+    })
+
+    expect(screen.getByTestId('am-config-yaml').textContent).toContain('receiver: default')
+    expect(screen.getByTestId('am-version').textContent).toContain('0.27.0')
+  })
+
+  it('resets stale datasource selection when org datasources change', async () => {
+    const org2Vmalert: DataSource = {
+      ...vmalertDatasource,
+      id: 'ds-org2',
+      organization_id: 'org-2',
+      name: 'VMAlert Org2',
+    }
+
+    const listSpy = vi
+      .spyOn(datasourcesApi, 'listDataSources')
+      .mockResolvedValueOnce([vmalertDatasource])
+      .mockResolvedValue([org2Vmalert])
+
+    renderAlerts()
+
+    await waitFor(() => {
+      expect((screen.getByTestId('alerts-datasource-select') as HTMLSelectElement).value).toBe(
+        'ds-1',
+      )
+    })
+
+    useOrgStore.setState({ currentOrgId: 'org-2' })
+
+    await waitFor(() => {
+      expect(listSpy).toHaveBeenCalled()
+      expect((screen.getByTestId('alerts-datasource-select') as HTMLSelectElement).value).toBe(
+        'ds-org2',
+      )
     })
   })
 

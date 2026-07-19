@@ -7,7 +7,7 @@ import { ServicesPage } from '@/pages/ServicesPage'
 import { useFavoritesStore } from '@/stores/favoritesStore'
 import { useOrgStore } from '@/stores/orgStore'
 import { createTestQueryClient } from '@/test/renderWithProviders'
-import type { DataSource } from '@/types/datasource'
+import type { DataSource, TraceSummary } from '@/types/datasource'
 
 vi.mock('@/analytics', () => ({
   identifyUser: vi.fn(),
@@ -27,6 +27,18 @@ function makeDatasource(overrides: Partial<DataSource> = {}): DataSource {
     trace_id_field: 'trace_id',
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',
+    ...overrides,
+  }
+}
+
+function makeTrace(overrides: Partial<TraceSummary> = {}): TraceSummary {
+  return {
+    traceId: 'trace-1',
+    startTimeUnixNano: 0,
+    durationNano: 25_000_000,
+    spanCount: 4,
+    serviceCount: 1,
+    errorSpanCount: 0,
     ...overrides,
   }
 }
@@ -59,13 +71,25 @@ describe('ServicesPage', () => {
     useFavoritesStore.setState({ favorites: [], recentDashboards: [] })
   })
 
-  it('renders services discovered from tracing datasources', async () => {
+  it('renders services with health, latency, and error rate views', async () => {
     const tempo = makeDatasource({ id: 'tempo-1', name: 'Tempo Prod', type: 'tempo' })
     vi.spyOn(datasourcesApi, 'listDataSources').mockResolvedValue([tempo])
     vi.spyOn(datasourcesApi, 'fetchDataSourceTraceServices').mockResolvedValue([
       'checkout-api',
       'payments-worker',
     ])
+    vi.spyOn(datasourcesApi, 'searchDataSourceTraces').mockImplementation(async (_id, req) => {
+      if (req.service === 'checkout-api') {
+        return [
+          makeTrace({ durationNano: 20_000_000, errorSpanCount: 0 }),
+          makeTrace({ durationNano: 40_000_000, errorSpanCount: 0 }),
+        ]
+      }
+      return [
+        makeTrace({ durationNano: 2_000_000_000, errorSpanCount: 1 }),
+        makeTrace({ durationNano: 3_000_000_000, errorSpanCount: 1 }),
+      ]
+    })
 
     renderServices()
 
@@ -75,15 +99,19 @@ describe('ServicesPage', () => {
 
     expect(screen.getByText('checkout-api')).toBeTruthy()
     expect(screen.getByText('payments-worker')).toBeTruthy()
-    expect(screen.getAllByText('Tempo Prod').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Inventory only').length).toBeGreaterThan(0)
-    expect(screen.getByText(/not show sample health data/i)).toBeTruthy()
+    expect(screen.getByTestId('services-health-summary')).toBeTruthy()
+    expect(screen.getAllByTestId('service-latency-p50').length).toBe(2)
+    expect(screen.getAllByTestId('service-error-rate').length).toBe(2)
+    expect(screen.getByText(/health, latency \(p50\/p95\), and error rate/i)).toBeTruthy()
   })
 
   it('does not render previous hardcoded demo services as live data', async () => {
     const tempo = makeDatasource({ id: 'tempo-1' })
     vi.spyOn(datasourcesApi, 'listDataSources').mockResolvedValue([tempo])
     vi.spyOn(datasourcesApi, 'fetchDataSourceTraceServices').mockResolvedValue(['checkout-api'])
+    vi.spyOn(datasourcesApi, 'searchDataSourceTraces').mockResolvedValue([
+      makeTrace({ durationNano: 15_000_000 }),
+    ])
 
     renderServices()
 

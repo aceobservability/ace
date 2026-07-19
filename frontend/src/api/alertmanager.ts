@@ -1,4 +1,10 @@
-import type { AMAlert, AMReceiver, AMSilence, AMSilenceCreate } from '@/types/datasource'
+import type {
+  AMAlert,
+  AMReceiver,
+  AMSilence,
+  AMSilenceCreate,
+  AMStatus,
+} from '@/types/datasource'
 import { API_BASE } from './base'
 
 function getAuthHeaders(): HeadersInit {
@@ -85,4 +91,16 @@ export async function fetchReceivers(datasourceId: string): Promise<AMReceiver[]
     throw new Error((err as { error?: string }).error || 'Failed to fetch receivers')
   }
   return response.json() as Promise<AMReceiver[]>
+}
+
+export async function fetchAlertManagerStatus(datasourceId: string): Promise<AMStatus> {
+  const response = await fetch(
+    `${API_BASE}/api/datasources/${datasourceId}/alertmanager/status`,
+    { headers: getAuthHeaders() },
+  )
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error((err as { error?: string }).error || 'Failed to fetch Alertmanager status')
+  }
+  return response.json() as Promise<AMStatus>
 }

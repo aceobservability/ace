@@ -2,99 +2,73 @@ import {
   AlertCircle,
   BellOff,
   BellRing,
-  ChevronDown,
-  ChevronRight,
   Clock,
   Loader2,
-  Plus,
-  Radio,
   RefreshCw,
-  Star,
-  Trash2,
-  X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import {
   createSilence,
   expireSilence,
   fetchAlertManagerAlerts,
+  fetchAlertManagerStatus,
   fetchReceivers,
   fetchSilences,
 } from '@/api/alertmanager'
 import { fetchVMAlertGroups, fetchVMAlerts } from '@/api/vmalert'
-import { AiAlertTriage } from '@/components/AiAlertTriage'
-import { StatusDot } from '@/components/StatusDot'
+import {
+  AMAlertsPanel,
+  AMConfigPanel,
+  AMReceiversPanel,
+  AMSilencesPanel,
+} from '@/components/alerts/AlertManagerPanels'
+import { RuleEditorPanel } from '@/components/alerts/RuleEditorPanel'
+import { SilenceModal, type SilenceFormState } from '@/components/alerts/SilenceModal'
+import { VMAlertAlertsPanel, VMAlertGroupsPanel } from '@/components/alerts/VMAlertPanels'
 import { useAlertingDatasources } from '@/hooks/useAlertingDatasources'
+import { toLocalDatetimeString } from '@/lib/alerts'
 import { useAuthStore } from '@/stores/authStore'
 import { useFavoritesStore } from '@/stores/favoritesStore'
 import { useOrgStore } from '@/stores/orgStore'
 import {
   dataSourceTypeLabels,
   type AMAlert,
-  type AMMatcher,
   type AMReceiver,
   type AMSilence,
+  type AMStatus,
   type DataSource,
   type VMAlertAlert,
+  type VMAlertRule,
   type VMAlertRuleGroup,
 } from '@/types/datasource'
 
-type ActiveTab = 'alerts' | 'groups' | 'am-alerts' | 'am-silences' | 'am-receivers'
+type ActiveTab =
+  | 'alerts'
+  | 'groups'
+  | 'am-alerts'
+  | 'am-silences'
+  | 'am-receivers'
+  | 'am-config'
 
-function stateToStatusDot(state: string): 'healthy' | 'warning' | 'critical' | 'info' {
-  switch (state) {
-    case 'firing':
-    case 'active':
-      return 'critical'
-    case 'pending':
-    case 'suppressed':
-      return 'warning'
-    default:
-      return 'healthy'
+function emptySilenceForm(createdBy: string): SilenceFormState {
+  const now = new Date()
+  const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000)
+  return {
+    matchers: [
+      { key: `matcher-${Date.now()}`, name: '', value: '', isRegex: false, isEqual: true },
+    ],
+    start: toLocalDatetimeString(now),
+    end: toLocalDatetimeString(twoHoursLater),
+    createdBy,
+    comment: '',
   }
-}
-
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
-}
-
-function formatInterval(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`
-  return `${Math.floor(seconds / 60)}m`
-}
-
-function truncateId(id: string): string {
-  return id.length > 8 ? `${id.substring(0, 8)}...` : id
-}
-
-function formatDateShort(dateStr: string): string {
-  if (!dateStr) return '--'
-  const d = new Date(dateStr)
-  return d.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-function toLocalDatetimeString(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
-function matcherOperator(m: AMMatcher): string {
-  if (m.isEqual) return m.isRegex ? '=~' : '='
-  return m.isRegex ? '!~' : '!='
 }
 
 export function AlertsPage() {
   const currentOrgId = useOrgStore(state => state.currentOrgId)
   const user = useAuthStore(state => state.user)
-  const { alertingDatasources, isLoading: datasourcesLoading } = useAlertingDatasources(currentOrgId)
+  const { alertingDatasources, isLoading: datasourcesLoading } =
+    useAlertingDatasources(currentOrgId)
 
   const toggleFavorite = useFavoritesStore(state => state.toggleFavorite)
   const isFavorite = useFavoritesStore(state => state.isFavorite)
@@ -107,21 +81,24 @@ export function AlertsPage() {
   const [amAlerts, setAmAlerts] = useState<AMAlert[]>([])
   const [amSilences, setAmSilences] = useState<AMSilence[]>([])
   const [amReceivers, setAmReceivers] = useState<AMReceiver[]>([])
+  const [amStatus, setAmStatus] = useState<AMStatus | null>(null)
+  const [amStatusError, setAmStatusError] = useState<string | null>(null)
 
   const [amFilterActive, setAmFilterActive] = useState(true)
   const [amFilterSilenced, setAmFilterSilenced] = useState(true)
   const [amFilterInhibited, setAmFilterInhibited] = useState(true)
 
   const [showSilenceModal, setShowSilenceModal] = useState(false)
-  const [silenceMatchers, setSilenceMatchers] = useState<Array<AMMatcher & { key: string }>>([
-    { key: 'matcher-0', name: '', value: '', isRegex: false, isEqual: true },
-  ])
-  const [silenceStart, setSilenceStart] = useState('')
-  const [silenceEnd, setSilenceEnd] = useState('')
-  const [silenceCreatedBy, setSilenceCreatedBy] = useState('')
-  const [silenceComment, setSilenceComment] = useState('')
+  const [silenceForm, setSilenceForm] = useState<SilenceFormState>(() =>
+    emptySilenceForm(user?.email || user?.name || ''),
+  )
   const [silenceSaving, setSilenceSaving] = useState(false)
   const [silenceError, setSilenceError] = useState<string | null>(null)
+
+  const [editingRule, setEditingRule] = useState<{
+    rule: VMAlertRule
+    groupName: string
+  } | null>(null)
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -130,6 +107,8 @@ export function AlertsPage() {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
   const [expandedAlertIdx, setExpandedAlertIdx] = useState<number | null>(null)
 
+  const loadGeneration = useRef(0)
+
   const selectedDatasource = useMemo<DataSource | undefined>(
     () => alertingDatasources.find(d => d.id === selectedDatasourceId),
     [alertingDatasources, selectedDatasourceId],
@@ -137,6 +116,7 @@ export function AlertsPage() {
 
   const isAlertManager = selectedDatasource?.type === 'alertmanager'
   const isVMAlert = selectedDatasource?.type === 'vmalert'
+  const selectedDatasourceType = selectedDatasource?.type
 
   const firingAlerts = useMemo(() => alerts.filter(a => a.state === 'firing'), [alerts])
   const pendingAlerts = useMemo(() => alerts.filter(a => a.state === 'pending'), [alerts])
@@ -165,17 +145,42 @@ export function AlertsPage() {
 
   const formattedLastRefreshed = lastRefreshed ? lastRefreshed.toLocaleTimeString() : ''
 
-  // Auto-select first alerting datasource
+  // Keep selection valid for the current org's datasource list (fixes org-switch stale selection).
   useEffect(() => {
-    if (alertingDatasources.length > 0 && !selectedDatasourceId) {
+    if (datasourcesLoading) return
+
+    if (alertingDatasources.length === 0) {
+      if (selectedDatasourceId) setSelectedDatasourceId('')
+      return
+    }
+
+    const stillValid = alertingDatasources.some(ds => ds.id === selectedDatasourceId)
+    if (!stillValid) {
       setSelectedDatasourceId(alertingDatasources[0]!.id)
     }
-  }, [alertingDatasources, selectedDatasourceId])
+  }, [alertingDatasources, selectedDatasourceId, datasourcesLoading])
 
-  const selectedDatasourceType = selectedDatasource?.type
+  // Clear page state when org changes so prior-org data never lingers.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally keyed only on org switch
+  useEffect(() => {
+    loadGeneration.current += 1
+    setAlerts([])
+    setGroups([])
+    setAmAlerts([])
+    setAmSilences([])
+    setAmReceivers([])
+    setAmStatus(null)
+    setAmStatusError(null)
+    setError(null)
+    setExpandedGroups({})
+    setExpandedAlertIdx(null)
+    setEditingRule(null)
+    setShowSilenceModal(false)
+    setLastRefreshed(null)
+  }, [currentOrgId])
 
-  // Reset tab when datasource selection/type changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: only reset when id/type change, not full object identity
+  // Reset tab/data when datasource selection/type changes.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only reset when id/type change
   useEffect(() => {
     if (!selectedDatasourceType) return
     setActiveTab(selectedDatasourceType === 'alertmanager' ? 'am-alerts' : 'alerts')
@@ -184,9 +189,12 @@ export function AlertsPage() {
     setAmAlerts([])
     setAmSilences([])
     setAmReceivers([])
+    setAmStatus(null)
+    setAmStatusError(null)
     setError(null)
     setExpandedGroups({})
     setExpandedAlertIdx(null)
+    setEditingRule(null)
   }, [selectedDatasourceId, selectedDatasourceType])
 
   const loadVMAlertData = useCallback(async (datasourceId: string) => {
@@ -194,13 +202,15 @@ export function AlertsPage() {
       fetchVMAlerts(datasourceId),
       fetchVMAlertGroups(datasourceId),
     ])
-    setAlerts(alertsRes.data?.alerts ?? [])
-    setGroups(groupsRes.data?.groups ?? [])
+    return {
+      alerts: alertsRes.data?.alerts ?? [],
+      groups: groupsRes.data?.groups ?? [],
+    }
   }, [])
 
   const loadAlertManagerData = useCallback(
     async (datasourceId: string) => {
-      const [alertsRes, silencesRes, receiversRes] = await Promise.all([
+      const [alertsRes, silencesRes, receiversRes, statusRes] = await Promise.allSettled([
         fetchAlertManagerAlerts(datasourceId, {
           active: amFilterActive,
           silenced: amFilterSilenced,
@@ -208,10 +218,25 @@ export function AlertsPage() {
         }),
         fetchSilences(datasourceId),
         fetchReceivers(datasourceId),
+        fetchAlertManagerStatus(datasourceId),
       ])
-      setAmAlerts(alertsRes ?? [])
-      setAmSilences(silencesRes ?? [])
-      setAmReceivers(receiversRes ?? [])
+
+      if (alertsRes.status === 'rejected') throw alertsRes.reason
+      if (silencesRes.status === 'rejected') throw silencesRes.reason
+      if (receiversRes.status === 'rejected') throw receiversRes.reason
+
+      return {
+        alerts: alertsRes.value ?? [],
+        silences: silencesRes.value ?? [],
+        receivers: receiversRes.value ?? [],
+        status: statusRes.status === 'fulfilled' ? statusRes.value : null,
+        statusError:
+          statusRes.status === 'rejected'
+            ? statusRes.reason instanceof Error
+              ? statusRes.reason.message
+              : 'Failed to fetch Alertmanager status'
+            : null,
+      }
     },
     [amFilterActive, amFilterSilenced, amFilterInhibited],
   )
@@ -219,24 +244,39 @@ export function AlertsPage() {
   const loadData = useCallback(async () => {
     if (!selectedDatasourceId || !selectedDatasource) return
 
+    const generation = ++loadGeneration.current
     setLoading(true)
     setError(null)
 
     try {
       if (selectedDatasource.type === 'alertmanager') {
-        await loadAlertManagerData(selectedDatasourceId)
+        const data = await loadAlertManagerData(selectedDatasourceId)
+        if (generation !== loadGeneration.current) return
+        setAmAlerts(data.alerts)
+        setAmSilences(data.silences)
+        setAmReceivers(data.receivers)
+        setAmStatus(data.status)
+        setAmStatusError(data.statusError)
       } else {
-        await loadVMAlertData(selectedDatasourceId)
+        const data = await loadVMAlertData(selectedDatasourceId)
+        if (generation !== loadGeneration.current) return
+        setAlerts(data.alerts)
+        setGroups(data.groups)
       }
-      setLastRefreshed(new Date())
+      if (generation === loadGeneration.current) {
+        setLastRefreshed(new Date())
+      }
     } catch (e) {
+      if (generation !== loadGeneration.current) return
       setError(e instanceof Error ? e.message : 'Failed to fetch data')
     } finally {
-      setLoading(false)
+      if (generation === loadGeneration.current) {
+        setLoading(false)
+      }
     }
   }, [selectedDatasourceId, selectedDatasource, loadAlertManagerData, loadVMAlertData])
 
-  // Load when datasource is selected / type changes
+  // Load when datasource is selected / type changes.
   // biome-ignore lint/correctness/useExhaustiveDependencies: loadData identity changes with filters; only reload on ds switch
   useEffect(() => {
     if (selectedDatasourceId && selectedDatasourceType) {
@@ -244,16 +284,19 @@ export function AlertsPage() {
     }
   }, [selectedDatasourceId, selectedDatasourceType])
 
-  // Re-fetch AM alerts when filter toggles change (skip initial mount)
-  const amFiltersReady = useRef(false)
+  // Re-fetch AM alerts only when filter toggles change — not on datasource switch
+  // (that path is owned by loadData). Uses a dedicated generation so filter reloads
+  // never discard a full load that also populates silences/receivers/status.
+  const amFilterGeneration = useRef(0)
+  const amFilterBaseline = useRef(`${amFilterActive}|${amFilterSilenced}|${amFilterInhibited}`)
   useEffect(() => {
-    if (!amFiltersReady.current) {
-      amFiltersReady.current = true
-      return
-    }
     if (!isAlertManager || !selectedDatasourceId) return
 
-    let cancelled = false
+    const filterKey = `${amFilterActive}|${amFilterSilenced}|${amFilterInhibited}`
+    if (filterKey === amFilterBaseline.current) return
+    amFilterBaseline.current = filterKey
+
+    const generation = ++amFilterGeneration.current
     async function reloadFilters() {
       setLoading(true)
       setError(null)
@@ -263,22 +306,17 @@ export function AlertsPage() {
           silenced: amFilterSilenced,
           inhibited: amFilterInhibited,
         })
-        if (!cancelled) {
-          setAmAlerts(result)
-          setLastRefreshed(new Date())
-        }
+        if (generation !== amFilterGeneration.current) return
+        setAmAlerts(result)
+        setLastRefreshed(new Date())
       } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to fetch alerts')
-        }
+        if (generation !== amFilterGeneration.current) return
+        setError(e instanceof Error ? e.message : 'Failed to fetch alerts')
       } finally {
-        if (!cancelled) setLoading(false)
+        if (generation === amFilterGeneration.current) setLoading(false)
       }
     }
     void reloadFilters()
-    return () => {
-      cancelled = true
-    }
   }, [amFilterActive, amFilterSilenced, amFilterInhibited, isAlertManager, selectedDatasourceId])
 
   // Auto-refresh interval
@@ -290,46 +328,17 @@ export function AlertsPage() {
     return () => clearInterval(id)
   }, [autoRefresh, loadData])
 
-  function toggleGroup(groupName: string) {
-    setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }))
-  }
-
   function openSilenceModal() {
-    const now = new Date()
-    const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000)
-    setSilenceMatchers([
-      { key: `matcher-${Date.now()}`, name: '', value: '', isRegex: false, isEqual: true },
-    ])
-    setSilenceStart(toLocalDatetimeString(now))
-    setSilenceEnd(toLocalDatetimeString(twoHoursLater))
-    setSilenceCreatedBy(user?.email || user?.name || '')
-    setSilenceComment('')
+    setSilenceForm(emptySilenceForm(user?.email || user?.name || ''))
     setSilenceError(null)
     setShowSilenceModal(true)
   }
 
   async function handleCreateSilence() {
     setSilenceError(null)
-
-    const validMatchers = silenceMatchers.filter(m => m.name.trim() !== '')
-    if (validMatchers.length === 0) {
-      setSilenceError('At least one matcher is required')
-      return
-    }
-    if (!silenceComment.trim()) {
-      setSilenceError('Comment is required')
-      return
-    }
-
-    const startDate = new Date(silenceStart)
-    const endDate = new Date(silenceEnd)
-    if (endDate <= startDate) {
-      setSilenceError('End time must be after start time')
-      return
-    }
-
     setSilenceSaving(true)
     try {
+      const validMatchers = silenceForm.matchers.filter(m => m.name.trim() !== '')
       await createSilence(selectedDatasourceId, {
         matchers: validMatchers.map(m => ({
           name: m.name.trim(),
@@ -337,10 +346,10 @@ export function AlertsPage() {
           isRegex: m.isRegex,
           isEqual: m.isEqual,
         })),
-        startsAt: startDate.toISOString(),
-        endsAt: endDate.toISOString(),
-        createdBy: silenceCreatedBy.trim() || 'unknown',
-        comment: silenceComment.trim(),
+        startsAt: new Date(silenceForm.start).toISOString(),
+        endsAt: new Date(silenceForm.end).toISOString(),
+        createdBy: silenceForm.createdBy.trim() || 'unknown',
+        comment: silenceForm.comment.trim(),
       })
       setShowSilenceModal(false)
       setAmSilences(await fetchSilences(selectedDatasourceId))
@@ -368,7 +377,8 @@ export function AlertsPage() {
     alerts.length === 0 &&
     groups.length === 0 &&
     amAlerts.length === 0 &&
-    amSilences.length === 0
+    amSilences.length === 0 &&
+    !amStatus
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-6" style={{ color: 'var(--color-on-surface)' }}>
@@ -385,7 +395,7 @@ export function AlertsPage() {
             Alerts
           </h1>
           <p className="mt-1 mb-0 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-            Monitor active alerts and alerting rule groups
+            Monitor active alerts, rule groups, silences, and Alertmanager configuration
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -513,1147 +523,172 @@ export function AlertsPage() {
         </div>
       ) : selectedDatasourceId && isVMAlert ? (
         <>
-          <div
-            className="mb-6 flex gap-1"
-            style={{ borderBottom: '1px solid var(--color-outline-variant)' }}
-          >
-            <button
-              type="button"
-              className="cursor-pointer bg-transparent px-4 py-2.5 text-sm font-medium transition"
-              style={{
-                color: activeTab === 'alerts' ? 'var(--color-primary)' : 'var(--color-outline)',
-                borderBottom:
-                  activeTab === 'alerts'
-                    ? '2px solid var(--color-primary)'
-                    : '2px solid transparent',
-              }}
-              data-testid="alerts-tab-alerts"
-              onClick={() => setActiveTab('alerts')}
-            >
-              Active Alerts
-              {firingAlerts.length > 0 ? (
-                <span
-                  className="ml-1.5 rounded-sm px-2 py-0.5 font-mono text-xs"
-                  style={{
-                    backgroundColor: 'color-mix(in srgb, var(--color-error) 15%, transparent)',
-                    color: 'var(--color-error)',
-                  }}
-                >
-                  {firingAlerts.length}
-                </span>
-              ) : null}
-            </button>
-            <button
-              type="button"
-              className="cursor-pointer bg-transparent px-4 py-2.5 text-sm font-medium transition"
-              style={{
-                color: activeTab === 'groups' ? 'var(--color-primary)' : 'var(--color-outline)',
-                borderBottom:
-                  activeTab === 'groups'
-                    ? '2px solid var(--color-primary)'
-                    : '2px solid transparent',
-              }}
-              data-testid="alerts-tab-groups"
-              onClick={() => setActiveTab('groups')}
-            >
-              Rule Groups
-              {groups.length > 0 ? (
-                <span
-                  className="ml-1.5 rounded-sm px-2 py-0.5 font-mono text-xs"
-                  style={{
-                    backgroundColor: 'var(--color-surface-container-high)',
-                    color: 'var(--color-outline)',
-                  }}
-                >
-                  {groups.length}
-                </span>
-              ) : null}
-            </button>
-          </div>
+          <TabBar
+            tabs={[
+              {
+                id: 'alerts',
+                label: 'Active Alerts',
+                count: firingAlerts.length,
+                emphasize: true,
+              },
+              {
+                id: 'groups',
+                label: 'Rule Groups',
+                count: groups.length,
+                emphasize: false,
+              },
+            ]}
+            activeTab={activeTab}
+            onChange={tab => setActiveTab(tab as ActiveTab)}
+          />
 
           {activeTab === 'alerts' ? (
-            <div>
-              {firingAlerts.length > 0 ? (
-                <AiAlertTriage
-                  alertCount={firingAlerts.length}
-                  alertNames={firingAlerts
-                    .map(a => a.name)
-                    .filter((v, i, arr) => arr.indexOf(v) === i)
-                    .slice(0, 5)}
-                  className="mb-4"
-                />
-              ) : null}
-
-              {sortedAlerts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
-                  <BellOff size={36} style={{ color: 'var(--color-outline)' }} aria-hidden />
-                  <h3
-                    className="m-0 text-lg font-semibold"
-                    style={{ color: 'var(--color-on-surface)' }}
-                  >
-                    No alerts firing
-                  </h3>
-                  <p className="m-0 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-                    All quiet -- no active or pending alerts.
-                  </p>
-                </div>
-              ) : (
-                <table className="w-full border-collapse" data-testid="alert-table">
-                  <thead data-testid="alert-table-header">
-                    <tr>
-                      {['Status', 'Alert', 'Labels', 'Active Since'].map((label, i) => (
-                        <th
-                          key={label}
-                          className={`px-4 py-3 text-xs font-semibold tracking-wider uppercase ${i === 3 ? 'text-right' : 'text-left'}`}
-                          style={{ color: 'var(--color-outline)' }}
-                        >
-                          {label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedAlerts.map((alert, idx) => {
-                      const favoriteId = `alert::${selectedDatasourceId}::${alert.name}`
-                      const favorited = isFavorite(favoriteId)
-                      const rowKey = `${alert.name}|${alert.state}|${alert.activeAt}|${JSON.stringify(alert.labels ?? {})}`
-                      return (
-                        <AlertRow
-                          key={rowKey}
-                          alert={alert}
-                          expanded={expandedAlertIdx === idx}
-                          favorited={favorited}
-                          onToggleExpand={() =>
-                            setExpandedAlertIdx(prev => (prev === idx ? null : idx))
-                          }
-                          onToggleFavorite={() =>
-                            toggleFavorite({
-                              id: favoriteId,
-                              title: alert.name,
-                              type: 'alert',
-                            })
-                          }
-                        />
-                      )
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </div>
+            <VMAlertAlertsPanel
+              sortedAlerts={sortedAlerts}
+              firingAlerts={firingAlerts}
+              expandedAlertIdx={expandedAlertIdx}
+              selectedDatasourceId={selectedDatasourceId}
+              isFavorite={isFavorite}
+              onToggleExpand={idx => setExpandedAlertIdx(prev => (prev === idx ? null : idx))}
+              onToggleFavorite={(id, title) =>
+                toggleFavorite({ id, title, type: 'alert' })
+              }
+            />
           ) : null}
 
           {activeTab === 'groups' ? (
-            <div>
-              {groups.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
-                  <BellOff size={36} style={{ color: 'var(--color-outline)' }} aria-hidden />
-                  <h3
-                    className="m-0 text-lg font-semibold"
-                    style={{ color: 'var(--color-on-surface)' }}
-                  >
-                    No rule groups
-                  </h3>
-                  <p className="m-0 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-                    No alerting or recording rule groups found.
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {groups.map(group => {
-                    const expanded = !!expandedGroups[group.name]
-                    return (
-                      <div
-                        key={group.name}
-                        className="overflow-hidden rounded-lg"
-                        style={{ backgroundColor: 'var(--color-surface-container-low)' }}
-                        data-testid="rule-group"
-                      >
-                        <button
-                          type="button"
-                          className="flex w-full cursor-pointer items-center justify-between border-none bg-transparent px-4 py-3 text-left transition hover:opacity-90"
-                          onClick={() => toggleGroup(group.name)}
-                        >
-                          <div className="flex items-center gap-2">
-                            {expanded ? (
-                              <ChevronDown size={16} style={{ color: 'var(--color-outline)' }} />
-                            ) : (
-                              <ChevronRight size={16} style={{ color: 'var(--color-outline)' }} />
-                            )}
-                            <span
-                              className="text-sm font-semibold"
-                              style={{ color: 'var(--color-on-surface)' }}
-                            >
-                              {group.name}
-                            </span>
-                          </div>
-                          <span
-                            className="font-mono text-xs"
-                            style={{ color: 'var(--color-outline)' }}
-                          >
-                            {group.rules.length} rule{group.rules.length !== 1 ? 's' : ''} · every{' '}
-                            {formatInterval(group.interval)}
-                          </span>
-                        </button>
-
-                        {expanded ? (
-                          <div
-                            className="px-4 py-3"
-                            style={{ borderTop: '1px solid var(--color-outline-variant)' }}
-                          >
-                            <div className="flex flex-col">
-                              {group.rules.map((rule, rIdx) => (
-                                <div
-                                  key={`${group.name}:${rule.name}:${rule.type}:${rule.query}:${rule.duration}`}
-                                  className="py-3"
-                                  style={
-                                    rIdx > 0
-                                      ? { borderTop: '1px solid var(--color-outline-variant)' }
-                                      : undefined
-                                  }
-                                  data-testid="rule-item"
-                                >
-                                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                                    <span
-                                      className="text-sm font-semibold"
-                                      style={{ color: 'var(--color-on-surface)' }}
-                                    >
-                                      {rule.name}
-                                    </span>
-                                    <span
-                                      className="rounded px-1.5 py-0.5 text-[0.65rem] font-semibold tracking-wide uppercase"
-                                      style={{
-                                        backgroundColor:
-                                          rule.type === 'alerting'
-                                            ? 'color-mix(in srgb, var(--color-error) 15%, transparent)'
-                                            : 'color-mix(in srgb, var(--color-primary) 15%, transparent)',
-                                        color:
-                                          rule.type === 'alerting'
-                                            ? 'var(--color-error)'
-                                            : 'var(--color-primary)',
-                                      }}
-                                    >
-                                      {rule.type}
-                                    </span>
-                                    {rule.state ? (
-                                      <span
-                                        className="rounded-sm px-2 py-0.5 text-xs font-semibold"
-                                        style={{
-                                          backgroundColor:
-                                            rule.state === 'firing'
-                                              ? 'color-mix(in srgb, var(--color-error) 15%, transparent)'
-                                              : rule.state === 'pending'
-                                                ? 'color-mix(in srgb, var(--color-tertiary) 15%, transparent)'
-                                                : 'var(--color-surface-container-high)',
-                                          color:
-                                            rule.state === 'firing'
-                                              ? 'var(--color-error)'
-                                              : rule.state === 'pending'
-                                                ? 'var(--color-tertiary)'
-                                                : 'var(--color-on-surface-variant)',
-                                        }}
-                                      >
-                                        {rule.state}
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                  <div
-                                    className="mb-2 overflow-x-auto rounded-sm px-3 py-2"
-                                    style={{
-                                      backgroundColor: 'var(--color-surface-container-high)',
-                                    }}
-                                  >
-                                    <code
-                                      className="font-mono text-xs break-all whitespace-pre-wrap"
-                                      style={{ color: 'var(--color-on-surface-variant)' }}
-                                    >
-                                      {rule.query}
-                                    </code>
-                                  </div>
-                                  <div className="flex flex-wrap items-center gap-1.5">
-                                    {rule.duration > 0 ? (
-                                      <span
-                                        className="mr-1 text-xs"
-                                        style={{ color: 'var(--color-outline)' }}
-                                      >
-                                        <strong>for:</strong> {formatDuration(rule.duration)}
-                                      </span>
-                                    ) : null}
-                                    {Object.entries(rule.labels ?? {}).map(([key, value]) => (
-                                      <span
-                                        key={key}
-                                        className="inline-flex rounded-sm px-2 py-0.5 font-mono text-xs"
-                                        style={{
-                                          backgroundColor: 'var(--color-surface-container-high)',
-                                          color: 'var(--color-on-surface-variant)',
-                                        }}
-                                      >
-                                        {key}={value}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  {rule.annotations && Object.keys(rule.annotations).length > 0 ? (
-                                    <div
-                                      className="mt-2 pt-2"
-                                      style={{
-                                        borderTop: '1px solid var(--color-outline-variant)',
-                                      }}
-                                    >
-                                      {Object.entries(rule.annotations).map(([key, value]) => (
-                                        <div
-                                          key={key}
-                                          className="text-xs leading-relaxed"
-                                          style={{ color: 'var(--color-outline)' }}
-                                        >
-                                          <strong
-                                            style={{ color: 'var(--color-on-surface-variant)' }}
-                                          >
-                                            {key}:
-                                          </strong>{' '}
-                                          {value}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : null}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
+            <VMAlertGroupsPanel
+              groups={groups}
+              expandedGroups={expandedGroups}
+              onToggleGroup={name =>
+                setExpandedGroups(prev => ({ ...prev, [name]: !prev[name] }))
+              }
+              onOpenRuleEditor={(rule, groupName) => setEditingRule({ rule, groupName })}
+            />
           ) : null}
         </>
       ) : selectedDatasourceId && isAlertManager ? (
         <>
-          <div
-            className="mb-6 flex gap-1"
-            style={{ borderBottom: '1px solid var(--color-outline-variant)' }}
-          >
-            {(
-              [
-                ['am-alerts', 'Active Alerts', amAlerts.length, true],
-                ['am-silences', 'Silences', activeSilences.length, false],
-                ['am-receivers', 'Receivers', amReceivers.length, false],
-              ] as const
-            ).map(([tab, label, count, isError]) => (
-              <button
-                key={tab}
-                type="button"
-                className="cursor-pointer bg-transparent px-4 py-2.5 text-sm font-medium transition"
-                style={{
-                  color: activeTab === tab ? 'var(--color-primary)' : 'var(--color-outline)',
-                  borderBottom:
-                    activeTab === tab ? '2px solid var(--color-primary)' : '2px solid transparent',
-                }}
-                data-testid={`alerts-tab-${tab}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {label}
-                {count > 0 ? (
-                  <span
-                    className="ml-1.5 rounded-sm px-2 py-0.5 font-mono text-xs"
-                    style={{
-                      backgroundColor: isError
-                        ? 'color-mix(in srgb, var(--color-error) 15%, transparent)'
-                        : 'var(--color-surface-container-high)',
-                      color: isError ? 'var(--color-error)' : 'var(--color-outline)',
-                    }}
-                  >
-                    {count}
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </div>
+          <TabBar
+            tabs={[
+              { id: 'am-alerts', label: 'Active Alerts', count: amAlerts.length, emphasize: true },
+              {
+                id: 'am-silences',
+                label: 'Silences',
+                count: activeSilences.length,
+                emphasize: false,
+              },
+              {
+                id: 'am-receivers',
+                label: 'Receivers',
+                count: amReceivers.length,
+                emphasize: false,
+              },
+              {
+                id: 'am-config',
+                label: 'Configuration',
+                count: amStatus?.config?.original ? 1 : 0,
+                emphasize: false,
+              },
+            ]}
+            activeTab={activeTab}
+            onChange={tab => setActiveTab(tab as ActiveTab)}
+          />
 
           {activeTab === 'am-alerts' ? (
-            <div>
-              <div className="mb-4 flex items-center gap-2">
-                <span className="text-xs font-medium" style={{ color: 'var(--color-outline)' }}>
-                  Show:
-                </span>
-                {(
-                  [
-                    ['Active', amFilterActive, setAmFilterActive, 'alerts-filter-active-btn'],
-                    [
-                      'Silenced',
-                      amFilterSilenced,
-                      setAmFilterSilenced,
-                      'alerts-filter-silenced-btn',
-                    ],
-                    [
-                      'Inhibited',
-                      amFilterInhibited,
-                      setAmFilterInhibited,
-                      'alerts-filter-inhibited-btn',
-                    ],
-                  ] as const
-                ).map(([label, on, setOn, testId]) => (
-                  <button
-                    key={label}
-                    type="button"
-                    className="cursor-pointer rounded-sm px-2.5 py-1 text-xs transition"
-                    style={{
-                      backgroundColor: on
-                        ? 'color-mix(in srgb, var(--color-primary) 15%, transparent)'
-                        : 'var(--color-surface-container-high)',
-                      color: on ? 'var(--color-primary)' : 'var(--color-outline)',
-                      border: on
-                        ? '1px solid var(--color-primary)'
-                        : '1px solid var(--color-outline-variant)',
-                    }}
-                    data-testid={testId}
-                    onClick={() => setOn(v => !v)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {sortedAMAlerts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
-                  <BellOff size={36} style={{ color: 'var(--color-outline)' }} aria-hidden />
-                  <h3
-                    className="m-0 text-lg font-semibold"
-                    style={{ color: 'var(--color-on-surface)' }}
-                  >
-                    No alerts
-                  </h3>
-                  <p className="m-0 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-                    No alerts matching current filters.
-                  </p>
-                </div>
-              ) : (
-                <table className="w-full border-collapse" data-testid="am-alert-table">
-                  <thead>
-                    <tr>
-                      {['Status', 'Alert', 'Severity', 'Started'].map((label, i) => (
-                        <th
-                          key={label}
-                          className={`px-4 py-3 text-xs font-semibold tracking-wider uppercase ${i === 3 ? 'text-right' : 'text-left'}`}
-                          style={{ color: 'var(--color-outline)' }}
-                        >
-                          {label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedAMAlerts.map(alert => {
-                      const favoriteId = alert.fingerprint
-                        ? `alert::${selectedDatasourceId}::${alert.fingerprint}`
-                        : null
-                      const favorited = favoriteId ? isFavorite(favoriteId) : false
-                      const rowKey =
-                        alert.fingerprint ||
-                        `${alert.labels?.alertname ?? 'alert'}|${alert.startsAt}|${alert.status?.state ?? ''}`
-                      return (
-                        <tr key={rowKey} className="transition-colors hover:opacity-90">
-                          <td className="px-4 py-3">
-                            <StatusDot
-                              status={stateToStatusDot(alert.status?.state || '')}
-                              size={8}
-                            />
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="text-sm font-semibold"
-                                style={{ color: 'var(--color-on-surface)' }}
-                              >
-                                {alert.labels?.alertname || '--'}
-                              </span>
-                              {favoriteId ? (
-                                <button
-                                  type="button"
-                                  className="shrink-0 cursor-pointer border-none bg-transparent p-0.5"
-                                  title={favorited ? 'Remove from favorites' : 'Add to favorites'}
-                                  onClick={() =>
-                                    toggleFavorite({
-                                      id: favoriteId,
-                                      title: alert.labels?.alertname || 'Alert',
-                                      type: 'alert',
-                                    })
-                                  }
-                                >
-                                  <Star
-                                    size={12}
-                                    fill={favorited ? 'currentColor' : 'none'}
-                                    style={{
-                                      color: favorited
-                                        ? 'var(--color-primary)'
-                                        : 'var(--color-outline)',
-                                    }}
-                                  />
-                                </button>
-                              ) : null}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className="font-mono text-xs"
-                              style={{ color: 'var(--color-on-surface-variant)' }}
-                            >
-                              {alert.labels?.severity || 'none'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <span
-                              className="font-mono text-xs"
-                              style={{ color: 'var(--color-outline)' }}
-                            >
-                              {formatDateShort(alert.startsAt)}
-                            </span>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </div>
+            <AMAlertsPanel
+              sortedAMAlerts={sortedAMAlerts}
+              selectedDatasourceId={selectedDatasourceId}
+              amFilterActive={amFilterActive}
+              amFilterSilenced={amFilterSilenced}
+              amFilterInhibited={amFilterInhibited}
+              isFavorite={isFavorite}
+              onToggleFavorite={(id, title) => toggleFavorite({ id, title, type: 'alert' })}
+              onFilterActive={setAmFilterActive}
+              onFilterSilenced={setAmFilterSilenced}
+              onFilterInhibited={setAmFilterInhibited}
+            />
           ) : null}
 
           {activeTab === 'am-silences' ? (
-            <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h3
-                  className="m-0 text-sm font-semibold"
-                  style={{ color: 'var(--color-on-surface)' }}
-                >
-                  Silences
-                </h3>
-                <button
-                  type="button"
-                  data-testid="alerts-new-silence-btn"
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-3 py-1.5 text-sm font-medium transition"
-                  style={{
-                    background:
-                      'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
-                    color: '#fff',
-                    border: 'none',
-                  }}
-                  onClick={openSilenceModal}
-                >
-                  <Plus size={14} aria-hidden />
-                  New Silence
-                </button>
-              </div>
-
-              {amSilences.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
-                  <BellOff size={36} style={{ color: 'var(--color-outline)' }} aria-hidden />
-                  <h3
-                    className="m-0 text-lg font-semibold"
-                    style={{ color: 'var(--color-on-surface)' }}
-                  >
-                    No silences
-                  </h3>
-                  <p className="m-0 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-                    No silence rules configured.
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {amSilences.map(silence => (
-                    <div
-                      key={silence.id}
-                      className="rounded-lg p-4"
-                      style={{ backgroundColor: 'var(--color-surface-container-low)' }}
-                      data-testid="silence-card"
-                    >
-                      <div className="mb-2 flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <span
-                            className="shrink-0 font-mono text-xs"
-                            style={{ color: 'var(--color-outline)' }}
-                            title={silence.id}
-                          >
-                            {truncateId(silence.id)}
-                          </span>
-                          <StatusDot
-                            status={
-                              silence.status.state === 'active'
-                                ? 'info'
-                                : silence.status.state === 'pending'
-                                  ? 'warning'
-                                  : 'healthy'
-                            }
-                            size={6}
-                          />
-                          <span
-                            className="text-xs font-semibold"
-                            style={{ color: 'var(--color-on-surface-variant)' }}
-                          >
-                            {silence.status.state}
-                          </span>
-                        </div>
-                        {silence.status.state === 'active' || silence.status.state === 'pending' ? (
-                          <button
-                            type="button"
-                            className="inline-flex shrink-0 cursor-pointer items-center gap-1 border-none bg-transparent text-sm transition"
-                            style={{ color: 'var(--color-error)' }}
-                            title="Expire silence"
-                            data-testid={`expire-silence-${silence.id}`}
-                            onClick={() => void handleExpireSilence(silence.id)}
-                          >
-                            <Trash2 size={12} aria-hidden />
-                            Expire
-                          </button>
-                        ) : null}
-                      </div>
-                      <div className="mb-2 flex flex-wrap gap-1.5">
-                        {silence.matchers.map(m => (
-                          <span
-                            key={`${m.name}${matcherOperator(m)}${m.value}`}
-                            className="inline-flex rounded-sm px-2 py-0.5 font-mono text-xs"
-                            style={{
-                              backgroundColor: 'var(--color-surface-container-high)',
-                              color: 'var(--color-on-surface-variant)',
-                            }}
-                          >
-                            {m.name}
-                            {matcherOperator(m)}&quot;{m.value}&quot;
-                          </span>
-                        ))}
-                      </div>
-                      <div
-                        className="flex items-center gap-3 text-xs"
-                        style={{ color: 'var(--color-outline)' }}
-                      >
-                        <span>{silence.createdBy}</span>
-                        <span className="max-w-[200px] truncate">{silence.comment}</span>
-                        <span className="ml-auto shrink-0 font-mono">
-                          ends {formatDateShort(silence.endsAt)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <AMSilencesPanel
+              amSilences={amSilences}
+              onNewSilence={openSilenceModal}
+              onExpireSilence={id => void handleExpireSilence(id)}
+            />
           ) : null}
 
-          {activeTab === 'am-receivers' ? (
-            <div>
-              {amReceivers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
-                  <Radio size={36} style={{ color: 'var(--color-outline)' }} aria-hidden />
-                  <h3
-                    className="m-0 text-lg font-semibold"
-                    style={{ color: 'var(--color-on-surface)' }}
-                  >
-                    No receivers
-                  </h3>
-                  <p className="m-0 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
-                    No receivers configured in AlertManager.
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {amReceivers.map(receiver => (
-                    <div
-                      key={receiver.name}
-                      className="flex items-center gap-3 rounded-lg p-4"
-                      style={{ backgroundColor: 'var(--color-surface-container-low)' }}
-                      data-testid="receiver-card"
-                    >
-                      <Radio
-                        size={16}
-                        style={{ color: 'var(--color-outline)' }}
-                        className="shrink-0"
-                        aria-hidden
-                      />
-                      <span
-                        className="text-sm font-semibold"
-                        style={{ color: 'var(--color-on-surface)' }}
-                      >
-                        {receiver.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          {activeTab === 'am-receivers' ? <AMReceiversPanel amReceivers={amReceivers} /> : null}
+
+          {activeTab === 'am-config' ? (
+            <AMConfigPanel status={amStatus} loading={loading} error={amStatusError} />
           ) : null}
         </>
       ) : null}
 
-      {showSilenceModal
-        ? createPortal(
-            // biome-ignore lint/a11y/noStaticElementInteractions: modal backdrop dismiss
-            <div
-              className="fixed inset-0 z-[1000] flex items-center justify-center"
-              style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-              onClick={e => {
-                if (e.target === e.currentTarget) setShowSilenceModal(false)
-              }}
-              onKeyDown={e => {
-                if (e.key === 'Escape') setShowSilenceModal(false)
-              }}
-            >
-              <div
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="silence-modal-title"
-                className="max-h-[90vh] w-full max-w-[560px] overflow-y-auto rounded-lg"
-                style={{
-                  backgroundColor: 'var(--color-surface-bright)',
-                  border: '1px solid var(--color-outline-variant)',
-                }}
-              >
-                <div
-                  className="flex items-center justify-between px-5 py-4"
-                  style={{ borderBottom: '1px solid var(--color-outline-variant)' }}
-                >
-                  <h2
-                    id="silence-modal-title"
-                    className="m-0 font-display text-base font-bold"
-                    style={{ color: 'var(--color-on-surface)' }}
-                  >
-                    Create Silence
-                  </h2>
-                  <button
-                    type="button"
-                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent transition"
-                    style={{ color: 'var(--color-outline)' }}
-                    onClick={() => setShowSilenceModal(false)}
-                    aria-label="Close"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
+      {showSilenceModal ? (
+        <SilenceModal
+          form={silenceForm}
+          saving={silenceSaving}
+          error={silenceError}
+          onChange={setSilenceForm}
+          onClose={() => setShowSilenceModal(false)}
+          onSubmit={() => void handleCreateSilence()}
+        />
+      ) : null}
 
-                <div className="flex flex-col gap-4 px-5 py-5">
-                  <div className="flex flex-col gap-1.5">
-                    <div
-                      className="text-sm font-medium"
-                      style={{ color: 'var(--color-on-surface-variant)' }}
-                    >
-                      Matchers <span style={{ color: 'var(--color-error)' }}>*</span>
-                    </div>
-                    <div className="mb-2 flex flex-col gap-2">
-                      {silenceMatchers.map((m, idx) => (
-                        <div key={m.key} className="flex items-center gap-2">
-                          <input
-                            value={m.name}
-                            onChange={e => {
-                              const next = [...silenceMatchers]
-                              next[idx] = { ...m, name: e.target.value }
-                              setSilenceMatchers(next)
-                            }}
-                            type="text"
-                            placeholder="Label name"
-                            data-testid={`silence-matcher-name-${idx}`}
-                            className="flex-1 rounded-sm px-2.5 py-1.5 font-mono text-sm focus:outline-none"
-                            style={{
-                              backgroundColor: 'var(--color-surface-container-high)',
-                              color: 'var(--color-on-surface)',
-                              border: '1px solid var(--color-outline-variant)',
-                            }}
-                          />
-                          <select
-                            value={m.isEqual ? 'eq' : 'neq'}
-                            onChange={e => {
-                              const next = [...silenceMatchers]
-                              next[idx] = { ...m, isEqual: e.target.value === 'eq' }
-                              setSilenceMatchers(next)
-                            }}
-                            className="w-13 rounded-sm px-1.5 py-1.5 text-center font-mono text-sm focus:outline-none"
-                            style={{
-                              backgroundColor: 'var(--color-surface-container-high)',
-                              color: 'var(--color-on-surface)',
-                              border: '1px solid var(--color-outline-variant)',
-                            }}
-                          >
-                            <option value="eq">{m.isRegex ? '=~' : '='}</option>
-                            <option value="neq">{m.isRegex ? '!~' : '!='}</option>
-                          </select>
-                          <input
-                            value={m.value}
-                            onChange={e => {
-                              const next = [...silenceMatchers]
-                              next[idx] = { ...m, value: e.target.value }
-                              setSilenceMatchers(next)
-                            }}
-                            type="text"
-                            placeholder="Value"
-                            data-testid={`silence-matcher-value-${idx}`}
-                            className="flex-1 rounded-sm px-2.5 py-1.5 font-mono text-sm focus:outline-none"
-                            style={{
-                              backgroundColor: 'var(--color-surface-container-high)',
-                              color: 'var(--color-on-surface)',
-                              border: '1px solid var(--color-outline-variant)',
-                            }}
-                          />
-                          <label
-                            className="flex cursor-pointer items-center gap-1 text-xs whitespace-nowrap"
-                            style={{ color: 'var(--color-outline)' }}
-                            title="Regex match"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={m.isRegex}
-                              onChange={e => {
-                                const next = [...silenceMatchers]
-                                next[idx] = { ...m, isRegex: e.target.checked }
-                                setSilenceMatchers(next)
-                              }}
-                              className="h-3.5 w-3.5"
-                            />
-                            Regex
-                          </label>
-                          <button
-                            type="button"
-                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent transition disabled:cursor-not-allowed disabled:opacity-40"
-                            style={{ color: 'var(--color-outline)' }}
-                            disabled={silenceMatchers.length <= 1}
-                            onClick={() => {
-                              if (silenceMatchers.length > 1) {
-                                setSilenceMatchers(silenceMatchers.filter(item => item.key !== m.key))
-                              }
-                            }}
-                            title="Remove matcher"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      className="inline-flex cursor-pointer items-center gap-1 self-start border-none bg-transparent text-sm transition"
-                      style={{ color: 'var(--color-primary)' }}
-                      onClick={() =>
-                        setSilenceMatchers([
-                          ...silenceMatchers,
-                          {
-                            key: `matcher-${Date.now()}-${silenceMatchers.length}`,
-                            name: '',
-                            value: '',
-                            isRegex: false,
-                            isEqual: true,
-                          },
-                        ])
-                      }
-                    >
-                      <Plus size={12} aria-hidden />
-                      Add Matcher
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="flex flex-col gap-1.5">
-                      <label
-                        htmlFor="silence-start"
-                        className="text-sm font-medium"
-                        style={{ color: 'var(--color-on-surface-variant)' }}
-                      >
-                        Start
-                      </label>
-                      <input
-                        id="silence-start"
-                        data-testid="silence-start-input"
-                        value={silenceStart}
-                        onChange={e => setSilenceStart(e.target.value)}
-                        type="datetime-local"
-                        className="rounded-sm px-3 py-2 text-sm focus:outline-none"
-                        style={{
-                          backgroundColor: 'var(--color-surface-container-high)',
-                          color: 'var(--color-on-surface)',
-                          border: '1px solid var(--color-outline-variant)',
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label
-                        htmlFor="silence-end"
-                        className="text-sm font-medium"
-                        style={{ color: 'var(--color-on-surface-variant)' }}
-                      >
-                        End
-                      </label>
-                      <input
-                        id="silence-end"
-                        data-testid="silence-end-input"
-                        value={silenceEnd}
-                        onChange={e => setSilenceEnd(e.target.value)}
-                        type="datetime-local"
-                        className="rounded-sm px-3 py-2 text-sm focus:outline-none"
-                        style={{
-                          backgroundColor: 'var(--color-surface-container-high)',
-                          color: 'var(--color-on-surface)',
-                          border: '1px solid var(--color-outline-variant)',
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      htmlFor="silence-created-by"
-                      className="text-sm font-medium"
-                      style={{ color: 'var(--color-on-surface-variant)' }}
-                    >
-                      Created By
-                    </label>
-                    <input
-                      id="silence-created-by"
-                      data-testid="silence-created-by-input"
-                      value={silenceCreatedBy}
-                      onChange={e => setSilenceCreatedBy(e.target.value)}
-                      type="text"
-                      placeholder="your-name@example.com"
-                      className="rounded-sm px-3 py-2 text-sm focus:outline-none"
-                      style={{
-                        backgroundColor: 'var(--color-surface-container-high)',
-                        color: 'var(--color-on-surface)',
-                        border: '1px solid var(--color-outline-variant)',
-                      }}
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      htmlFor="silence-comment"
-                      className="text-sm font-medium"
-                      style={{ color: 'var(--color-on-surface-variant)' }}
-                    >
-                      Comment <span style={{ color: 'var(--color-error)' }}>*</span>
-                    </label>
-                    <textarea
-                      id="silence-comment"
-                      data-testid="silence-comment-input"
-                      value={silenceComment}
-                      onChange={e => setSilenceComment(e.target.value)}
-                      rows={3}
-                      placeholder="Reason for silencing..."
-                      className="min-h-[68px] resize-y rounded-sm px-3 py-2 text-sm focus:outline-none"
-                      style={{
-                        backgroundColor: 'var(--color-surface-container-high)',
-                        color: 'var(--color-on-surface)',
-                        border: '1px solid var(--color-outline-variant)',
-                        fontFamily: 'inherit',
-                      }}
-                    />
-                  </div>
-
-                  {silenceError ? (
-                    <div
-                      className="flex items-center gap-2 rounded-sm px-4 py-3 text-sm"
-                      style={{
-                        backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, transparent)',
-                        color: 'var(--color-error)',
-                      }}
-                      data-testid="silence-error"
-                    >
-                      <AlertCircle size={14} aria-hidden />
-                      {silenceError}
-                    </div>
-                  ) : null}
-                </div>
-
-                <div
-                  className="flex justify-end gap-2.5 px-5 py-4"
-                  style={{ borderTop: '1px solid var(--color-outline-variant)' }}
-                >
-                  <button
-                    type="button"
-                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
-                    style={{
-                      backgroundColor: 'var(--color-surface-container-high)',
-                      color: 'var(--color-on-surface-variant)',
-                      border: '1px solid var(--color-outline-variant)',
-                    }}
-                    data-testid="silence-cancel-btn"
-                    onClick={() => setShowSilenceModal(false)}
-                    disabled={silenceSaving}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-sm px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
-                    style={{
-                      background:
-                        'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
-                      color: '#fff',
-                      border: 'none',
-                    }}
-                    data-testid="silence-create-btn"
-                    onClick={() => void handleCreateSilence()}
-                    disabled={silenceSaving}
-                  >
-                    {silenceSaving ? (
-                      <Loader2 size={14} className="animate-spin" aria-hidden />
-                    ) : null}
-                    {silenceSaving ? 'Creating...' : 'Create Silence'}
-                  </button>
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      {editingRule ? (
+        <RuleEditorPanel
+          rule={editingRule.rule}
+          groupName={editingRule.groupName}
+          onClose={() => setEditingRule(null)}
+        />
+      ) : null}
     </div>
   )
 }
 
-type AlertRowProps = {
-  alert: VMAlertAlert
-  expanded: boolean
-  favorited: boolean
-  onToggleExpand: () => void
-  onToggleFavorite: () => void
+type TabBarProps = {
+  tabs: Array<{ id: string; label: string; count: number; emphasize: boolean }>
+  activeTab: string
+  onChange: (id: string) => void
 }
 
-function AlertRow({
-  alert,
-  expanded,
-  favorited,
-  onToggleExpand,
-  onToggleFavorite,
-}: AlertRowProps) {
+function TabBar({ tabs, activeTab, onChange }: TabBarProps) {
   return (
-    <>
-      {/* biome-ignore lint/a11y/useSemanticElements: expandable table row pattern */}
-      <tr
-        data-testid="alert-row"
-        className="cursor-pointer transition-colors"
-        style={{
-          backgroundColor: expanded ? 'var(--color-surface-container-high)' : 'transparent',
-        }}
-        onClick={onToggleExpand}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            onToggleExpand()
-          }
-        }}
-        role="button"
-        tabIndex={0}
-      >
-        <td className="px-4 py-3">
-          <StatusDot status={stateToStatusDot(alert.state)} size={8} />
-        </td>
-        <td className="px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold" style={{ color: 'var(--color-on-surface)' }}>
-              {alert.name}
-            </span>
-            <button
-              type="button"
-              className="shrink-0 cursor-pointer border-none bg-transparent p-0.5"
-              title={favorited ? 'Remove from favorites' : 'Add to favorites'}
-              onClick={e => {
-                e.stopPropagation()
-                onToggleFavorite()
+    <div
+      className="mb-6 flex flex-wrap gap-1"
+      style={{ borderBottom: '1px solid var(--color-outline-variant)' }}
+    >
+      {tabs.map(tab => (
+        <button
+          key={tab.id}
+          type="button"
+          className="cursor-pointer bg-transparent px-4 py-2.5 text-sm font-medium transition"
+          style={{
+            color: activeTab === tab.id ? 'var(--color-primary)' : 'var(--color-outline)',
+            borderBottom:
+              activeTab === tab.id ? '2px solid var(--color-primary)' : '2px solid transparent',
+          }}
+          data-testid={`alerts-tab-${tab.id}`}
+          onClick={() => onChange(tab.id)}
+        >
+          {tab.label}
+          {tab.count > 0 ? (
+            <span
+              className="ml-1.5 rounded-sm px-2 py-0.5 font-mono text-xs"
+              style={{
+                backgroundColor: tab.emphasize
+                  ? 'color-mix(in srgb, var(--color-error) 15%, transparent)'
+                  : 'var(--color-surface-container-high)',
+                color: tab.emphasize ? 'var(--color-error)' : 'var(--color-outline)',
               }}
             >
-              <Star
-                size={12}
-                fill={favorited ? 'currentColor' : 'none'}
-                style={{
-                  color: favorited ? 'var(--color-primary)' : 'var(--color-outline)',
-                }}
-              />
-            </button>
-          </div>
-        </td>
-        <td className="px-4 py-3">
-          {alert.labels && Object.keys(alert.labels).length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {Object.entries(alert.labels).map(([key, value]) => (
-                <span
-                  key={key}
-                  className="inline-flex rounded-sm px-2 py-0.5 font-mono text-xs"
-                  style={{
-                    backgroundColor: 'var(--color-surface-container-high)',
-                    color: 'var(--color-on-surface-variant)',
-                  }}
-                >
-                  {key}={value}
-                </span>
-              ))}
-            </div>
+              {tab.count}
+            </span>
           ) : null}
-        </td>
-        <td className="px-4 py-3 text-right">
-          <span className="font-mono text-xs" style={{ color: 'var(--color-outline)' }}>
-            {alert.activeAt || '--'}
-          </span>
-        </td>
-      </tr>
-      {expanded ? (
-        <tr data-testid="alert-detail">
-          <td
-            colSpan={4}
-            className="px-4 py-4"
-            style={{ backgroundColor: 'var(--color-surface-container-low)' }}
-          >
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-3">
-                <span
-                  className="text-xs font-semibold tracking-wider uppercase"
-                  style={{ color: 'var(--color-outline)' }}
-                >
-                  State
-                </span>
-                <span
-                  className="rounded-sm px-2 py-0.5 font-mono text-xs font-semibold"
-                  style={{
-                    backgroundColor:
-                      alert.state === 'firing'
-                        ? 'color-mix(in srgb, var(--color-error) 15%, transparent)'
-                        : alert.state === 'pending'
-                          ? 'color-mix(in srgb, var(--color-tertiary) 15%, transparent)'
-                          : 'var(--color-surface-container-high)',
-                    color:
-                      alert.state === 'firing'
-                        ? 'var(--color-error)'
-                        : alert.state === 'pending'
-                          ? 'var(--color-tertiary)'
-                          : 'var(--color-on-surface-variant)',
-                  }}
-                >
-                  {alert.state}
-                </span>
-              </div>
-              {alert.labels && Object.keys(alert.labels).length > 0 ? (
-                <div>
-                  <span
-                    className="text-xs font-semibold tracking-wider uppercase"
-                    style={{ color: 'var(--color-outline)' }}
-                  >
-                    Labels
-                  </span>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    {Object.entries(alert.labels).map(([key, value]) => (
-                      <span
-                        key={key}
-                        className="inline-flex rounded-sm px-2 py-0.5 font-mono text-xs"
-                        style={{
-                          backgroundColor: 'var(--color-surface-container-high)',
-                          color: 'var(--color-on-surface-variant)',
-                        }}
-                      >
-                        {key}={value}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              <div className="font-mono text-xs" style={{ color: 'var(--color-outline)' }}>
-                Active since: {alert.activeAt || '--'}
-              </div>
-            </div>
-          </td>
-        </tr>
-      ) : null}
-    </>
+        </button>
+      ))}
+    </div>
   )
 }

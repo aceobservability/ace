@@ -304,3 +304,31 @@ func (h *AlertManagerHandler) Health(w http.ResponseWriter, r *http.Request) {
 		Status: "success",
 	})
 }
+
+// Status proxies GET /api/datasources/{id}/alertmanager/status to AlertManager.
+// Returns cluster, version, uptime, and the original configuration YAML when available.
+func (h *AlertManagerHandler) Status(w http.ResponseWriter, r *http.Request) {
+	ds, ok := h.resolveAlertManagerDatasource(w, r)
+	if !ok {
+		return
+	}
+
+	client, err := datasource.NewAlertManagerClient(*ds)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create alertmanager client: " + err.Error()})
+		return
+	}
+
+	result, err := client.GetStatus(r.Context())
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadGateway)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch alertmanager status: " + err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}

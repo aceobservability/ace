@@ -98,18 +98,30 @@ type AMReceiver struct {
 
 // AMVersionInfo holds version information from the status endpoint.
 type AMVersionInfo struct {
-	Version string `json:"version"`
+	Version            string `json:"version"`
+	Revision           string `json:"revision,omitempty"`
+	Branch             string `json:"branch,omitempty"`
+	BuildUser          string `json:"buildUser,omitempty"`
+	BuildDate          string `json:"buildDate,omitempty"`
+	GoVersion          string `json:"goVersion,omitempty"`
 }
 
 // AMClusterStatus holds cluster status info.
 type AMClusterStatus struct {
 	Status string `json:"status"`
+	Name   string `json:"name,omitempty"`
+}
+
+// AMConfig holds the AlertManager configuration payload from /api/v2/status.
+type AMConfig struct {
+	Original string `json:"original"`
 }
 
 // AMStatus represents the status response from AlertManager.
 type AMStatus struct {
 	Cluster     AMClusterStatus `json:"cluster"`
 	VersionInfo AMVersionInfo   `json:"versionInfo"`
+	Config      AMConfig        `json:"config"`
 	Uptime      time.Time       `json:"uptime"`
 }
 
