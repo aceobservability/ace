@@ -18,15 +18,16 @@ type GeneralSettingsSectionProps = {
   onOrgUpdated: (org: Organization) => void
 }
 
-/** Only allow image data: URIs for logo preview to avoid DOM XSS via arbitrary URLs. */
+/** Rebuild a validated image data: URI so free-text input is never reused as img src. */
 function safeLogoPreviewSrc(value: string): string | null {
-  const trimmed = value.trim()
-  if (!trimmed) return null
-  // data:image/<type>[;base64],...
-  if (/^data:image\/(?:png|jpe?g|gif|webp|svg\+xml);base64,[a-z0-9+/=\s]+$/i.test(trimmed)) {
-    return trimmed
-  }
-  return null
+  const match = value
+    .trim()
+    .match(/^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,([A-Za-z0-9+/=\s]+)$/i)
+  if (!match) return null
+  const mime = match[1].toLowerCase() === 'jpg' ? 'jpeg' : match[1].toLowerCase()
+  const payload = match[2].replace(/\s+/g, '')
+  // Construct a fresh string from validated captures (breaks DOM-text taint flow for CodeQL).
+  return `data:image/${mime};base64,${payload}`
 }
 
 export function GeneralSettingsSection({
