@@ -35,25 +35,48 @@ type GenerateDashboardArgs = {
   }>
 }
 
-function normalizeGeneratedSpec(raw: GenerateDashboardArgs, datasourceId: string): DashboardSpec {
+function defaultSignalForDatasourceType(
+  datasourceType: string,
+): 'metrics' | 'logs' | 'traces' | undefined {
+  if (['loki', 'victorialogs', 'elasticsearch', 'clickhouse'].includes(datasourceType)) {
+    return 'logs'
+  }
+  if (['tempo', 'victoriatraces'].includes(datasourceType)) {
+    return 'traces'
+  }
+  if (['victoriametrics', 'prometheus'].includes(datasourceType)) {
+    return 'metrics'
+  }
+  return undefined
+}
+
+function normalizeGeneratedSpec(
+  raw: GenerateDashboardArgs,
+  datasourceId: string,
+  datasourceType: string,
+): DashboardSpec {
+  const fallbackSignal = defaultSignalForDatasourceType(datasourceType)
   return {
     title: raw.title,
     description: raw.description,
-    panels: (raw.panels ?? []).map(panel => ({
-      title: panel.title,
-      type: panel.type,
-      position: panel.position ?? panel.grid_pos ?? { x: 0, y: 0, w: 6, h: 3 },
-      datasource_id: datasourceId,
-      query: {
-        expr: panel.query.expr,
-        ...(panel.query.signal ? { signal: panel.query.signal } : {}),
-        ...(panel.query.legend
-          ? { legend: panel.query.legend }
-          : panel.query.legend_format
-            ? { legend: panel.query.legend_format }
-            : {}),
-      },
-    })),
+    panels: (raw.panels ?? []).map((panel) => {
+      const signal = panel.query.signal ?? fallbackSignal
+      return {
+        title: panel.title,
+        type: panel.type,
+        position: panel.position ?? panel.grid_pos ?? { x: 0, y: 0, w: 6, h: 3 },
+        datasource_id: datasourceId,
+        query: {
+          expr: panel.query.expr,
+          ...(signal ? { signal } : {}),
+          ...(panel.query.legend
+            ? { legend: panel.query.legend }
+            : panel.query.legend_format
+              ? { legend: panel.query.legend_format }
+              : {}),
+        },
+      }
+    }),
   }
 }
 
@@ -135,7 +158,7 @@ export function useDashboardGeneration(
                 return { spec: null, content: lastContent }
               }
 
-              const spec = normalizeGeneratedSpec(rawSpec, datasourceId())
+              const spec = normalizeGeneratedSpec(rawSpec, datasourceId(), datasourceType())
               const validation = validateDashboardSpec(spec, [datasourceId()])
               if (!validation.valid) {
                 setError(`Generated dashboard has issues: ${validation.errors.join('; ')}`)
@@ -152,7 +175,7 @@ export function useDashboardGeneration(
             }
 
             const statusEntry: ToolStatus = { name: tc.function.name, status: 'running' }
-            setToolStatuses(current => [...current, statusEntry])
+            setToolStatuses((current) => [...current, statusEntry])
             callbacks?.onToolStatus?.(statusEntry)
 
             const result = await executeCopilotTool(tc as ToolCall, {
@@ -160,20 +183,31 @@ export function useDashboardGeneration(
               orgId: orgId(),
               signal,
             }).catch((err: unknown) => {
-              setToolStatuses(current => {
+              setToolStatuses((current) => {
                 const next = [...current]
-                const index = next.findLastIndex(entry => entry.name === tc.function.name)
+                let index = -1
+                for (let i = next.length - 1; i >= 0; i -= 1) {
+                  if (next[i]!.name === tc.function.name) {
+                    index = i
+                    break
+                  }
+                }
                 if (index >= 0) next[index] = { ...next[index]!, status: 'error' }
                 return next
               })
               return `Error: ${err instanceof Error ? err.message : 'Tool execution failed'}`
             })
 
-            setToolStatuses(current => {
+            setToolStatuses((current) => {
               const next = [...current]
-              const index = next.findLastIndex(
-                entry => entry.name === tc.function.name && entry.status === 'running',
-              )
+              let index = -1
+              for (let i = next.length - 1; i >= 0; i -= 1) {
+                const entry = next[i]!
+                if (entry.name === tc.function.name && entry.status === 'running') {
+                  index = i
+                  break
+                }
+              }
               if (index >= 0 && next[index]!.status === 'running') {
                 next[index] = { ...next[index]!, status: 'complete' }
               }

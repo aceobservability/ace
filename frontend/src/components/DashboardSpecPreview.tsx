@@ -8,10 +8,10 @@ import {
   Gauge,
   Hash,
   Loader2,
+  type LucideIcon,
   PieChart,
   Table,
   TrendingUp,
-  type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -73,19 +73,21 @@ export function DashboardSpecPreview({ spec, onSaved }: DashboardSpecPreviewProp
   const [dryRunResults, setDryRunResults] = useState<Record<number, DryRunStatus>>({})
 
   const panelCount = spec.panels?.length ?? 0
-  const knownDatasourceIds = useMemo(() => datasources.map(ds => ds.id), [datasources])
+  const knownDatasourceIds = useMemo(() => datasources.map((ds) => ds.id), [datasources])
   const isDemoSpec = useMemo(
     () =>
       Boolean(
-        spec.panels?.some(panel =>
-          DEMO_METRIC_NAMES.some(metric => panel.query.expr.includes(metric)),
+        spec.panels?.some((panel) =>
+          DEMO_METRIC_NAMES.some((metric) => panel.query.expr.includes(metric)),
         ),
       ),
     [spec.panels],
   )
   const maxGridRow = useMemo(() => {
     if (!spec.panels || spec.panels.length === 0) return 1
-    return Math.max(...spec.panels.map(panel => (panel.position?.y ?? 0) + (panel.position?.h ?? 1)))
+    return Math.max(
+      ...spec.panels.map((panel) => (panel.position?.y ?? 0) + (panel.position?.h ?? 1)),
+    )
   }, [spec.panels])
   const isSaved = savedDashboardId !== null
   const hasValidationErrors = validationErrors.length > 0
@@ -114,26 +116,24 @@ export function DashboardSpecPreview({ spec, onSaved }: DashboardSpecPreviewProp
         try {
           const result = await queryDataSource(panel.datasource_id, {
             query: panel.query.expr,
-            signal: 'metrics',
+            signal: panel.query.signal ?? 'metrics',
             start: now - 300,
             end: now,
             step: 15,
           })
 
           const hasData =
-            result.status === 'success' &&
-            result.data?.result &&
-            result.data.result.length > 0
+            result.status === 'success' && result.data?.result && result.data.result.length > 0
 
           if (!cancelled) {
-            setDryRunResults(current => ({
+            setDryRunResults((current) => ({
               ...current,
               [index]: hasData ? 'success' : 'empty',
             }))
           }
         } catch {
           if (!cancelled) {
-            setDryRunResults(current => ({
+            setDryRunResults((current) => ({
               ...current,
               [index]: 'error',
             }))
@@ -247,7 +247,7 @@ export function DashboardSpecPreview({ spec, onSaved }: DashboardSpecPreviewProp
       {hasValidationErrors && (
         <div className="px-3 pb-2">
           <ul className="m-0 list-inside list-disc rounded bg-[var(--color-error)]/10 px-3 py-2 text-xs text-[var(--color-error)]">
-            {validationErrors.map(err => (
+            {validationErrors.map((err) => (
               <li key={err}>{err}</li>
             ))}
           </ul>
@@ -300,7 +300,7 @@ export function DashboardSpecPreview({ spec, onSaved }: DashboardSpecPreviewProp
           className="ml-auto inline-flex cursor-pointer items-center gap-0.5 border-none bg-transparent text-xs text-[var(--color-outline)] hover:text-[var(--color-on-surface)]"
           aria-expanded={specExpanded}
           data-testid="spec-preview-toggle-spec"
-          onClick={() => setSpecExpanded(current => !current)}
+          onClick={() => setSpecExpanded((current) => !current)}
         >
           View spec
           {specExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}

@@ -126,7 +126,7 @@ const generateDashboardTool: ToolDefinition = {
   function: {
     name: 'generate_dashboard',
     description:
-      'Generate a complete dashboard from the discovered metrics. Call this after using get_metrics, get_labels, and get_label_values to understand the available data. The dashboard will be previewed for the user before saving.',
+      'Generate a complete dashboard from discovered data. Call this after exploring the selected datasource (metrics, labels, services, etc.). The dashboard will be previewed for the user before saving.',
     parameters: {
       type: 'object',
       properties: {
@@ -164,8 +164,17 @@ const generateDashboardTool: ToolDefinition = {
                 type: 'object',
                 description: 'Query configuration for this panel',
                 properties: {
-                  expr: { type: 'string', description: 'PromQL/MetricsQL query expression' },
+                  expr: {
+                    type: 'string',
+                    description:
+                      'Query expression (PromQL/MetricsQL, LogQL, TraceQL, etc. matching the datasource)',
+                  },
                   legend_format: { type: 'string', description: 'Optional legend format string' },
+                  signal: {
+                    type: 'string',
+                    enum: ['metrics', 'logs', 'traces'],
+                    description: 'Signal type for this panel query',
+                  },
                 },
                 required: ['expr'],
               },
@@ -207,16 +216,18 @@ const commonTools: ToolDefinition[] = [
 ]
 
 export function getToolsForDatasourceType(datasourceType: string): ToolDefinition[] {
+  // generate_dashboard must be available for every datasource type used by AI
+  // dashboard generation; without it the model cannot emit a previewable spec.
   if (METRICS_TYPES.includes(datasourceType)) {
     return [...commonTools, getMetricsTool, generateDashboardTool]
   }
 
   if (LOGS_TYPES.includes(datasourceType)) {
-    return [...commonTools]
+    return [...commonTools, generateDashboardTool]
   }
 
   if (TRACES_TYPES.includes(datasourceType)) {
-    return [...commonTools, getTraceServicesTool]
+    return [...commonTools, getTraceServicesTool, generateDashboardTool]
   }
 
   return [...commonTools, getMetricsTool, getTraceServicesTool, generateDashboardTool]
@@ -241,7 +252,7 @@ export async function executeCopilotTool(
     case 'list_datasources': {
       if (!options.orgId) return 'Error: no organization selected'
       const sources = await listDataSources(options.orgId)
-      return JSON.stringify(sources.map(ds => ({ id: ds.id, name: ds.name, type: ds.type })))
+      return JSON.stringify(sources.map((ds) => ({ id: ds.id, name: ds.name, type: ds.type })))
     }
 
     case 'get_metrics': {
@@ -305,9 +316,7 @@ export async function executeCopilotTool(
     }
 
     case 'write_query':
-      return args.query
-        ? `Query prepared: ${args.query}`
-        : 'Error: query parameter is required'
+      return args.query ? `Query prepared: ${args.query}` : 'Error: query parameter is required'
 
     case 'run_query':
       return 'Query execution is not available during dashboard generation'

@@ -11,10 +11,7 @@ import {
 import { DashboardPermissionsEditor } from '@/components/DashboardPermissionsEditor'
 import { useOrganization } from '@/hooks/useOrganization'
 import type { Dashboard } from '@/types/dashboard'
-import {
-  extractYamlTitleAndDescription,
-  validateDashboardYaml,
-} from '@/utils/dashboardYaml'
+import { extractYamlTitleAndDescription, validateDashboardYaml } from '@/utils/dashboardYaml'
 
 interface DashboardViewSettings {
   timeRangePreset: string
@@ -62,14 +59,32 @@ function dashboardLoadErrorMessage(cause: unknown): string {
   return 'Dashboard not found'
 }
 
+const FORBIDDEN_SETTINGS_KEYS = new Set(['__proto__', 'prototype', 'constructor'])
+
+function isDashboardSettingsKey(value: string): boolean {
+  return value.length > 0 && !FORBIDDEN_SETTINGS_KEYS.has(value)
+}
+
 function readStoredDashboardSettings(): Record<string, DashboardViewSettings> {
   const rawSettings = localStorage.getItem(DASHBOARD_VIEW_SETTINGS_KEY)
-  if (!rawSettings) return {}
+  if (!rawSettings) {
+    return Object.create(null) as Record<string, DashboardViewSettings>
+  }
 
   try {
-    return JSON.parse(rawSettings) as Record<string, DashboardViewSettings>
+    const parsed = JSON.parse(rawSettings) as unknown
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return Object.create(null) as Record<string, DashboardViewSettings>
+    }
+
+    const sanitized = Object.create(null) as Record<string, DashboardViewSettings>
+    for (const [key, value] of Object.entries(parsed)) {
+      if (!isDashboardSettingsKey(key) || !value || typeof value !== 'object') continue
+      sanitized[key] = value as DashboardViewSettings
+    }
+    return sanitized
   } catch {
-    return {}
+    return Object.create(null) as Record<string, DashboardViewSettings>
   }
 }
 
@@ -125,7 +140,7 @@ export function DashboardSettingsPage() {
 
   const settingsSections = useMemo(() => {
     if (canManagePermissions) return ALL_SECTIONS
-    return ALL_SECTIONS.filter(section => section.key !== 'permissions')
+    return ALL_SECTIONS.filter((section) => section.key !== 'permissions')
   }, [canManagePermissions])
 
   const isSectionAllowed = useCallback(
@@ -143,8 +158,8 @@ export function DashboardSettingsPage() {
     () =>
       variablesInput
         .split(',')
-        .map(variable => variable.trim())
-        .filter(variable => variable.length > 0),
+        .map((variable) => variable.trim())
+        .filter((variable) => variable.length > 0),
     [variablesInput],
   )
 
@@ -197,9 +212,16 @@ export function DashboardSettingsPage() {
   }, [])
 
   function persistDashboardViewSettings(settings: DashboardViewSettings) {
+    if (!isDashboardSettingsKey(dashboardId)) return
+
     const allSettings = readStoredDashboardSettings()
-    allSettings[dashboardId] = settings
-    localStorage.setItem(DASHBOARD_VIEW_SETTINGS_KEY, JSON.stringify(allSettings))
+    const nextSettings = Object.create(null) as Record<string, DashboardViewSettings>
+    for (const [key, value] of Object.entries(allSettings)) {
+      if (!isDashboardSettingsKey(key)) continue
+      nextSettings[key] = value
+    }
+    nextSettings[dashboardId] = settings
+    localStorage.setItem(DASHBOARD_VIEW_SETTINGS_KEY, JSON.stringify(nextSettings))
   }
 
   function resetFormState() {
@@ -296,9 +318,7 @@ export function DashboardSettingsPage() {
 
       setSuccessMessage('Dashboard settings saved')
     } catch (cause) {
-      setActionError(
-        cause instanceof Error ? cause.message : 'Failed to save dashboard settings',
-      )
+      setActionError(cause instanceof Error ? cause.message : 'Failed to save dashboard settings')
     } finally {
       setIsSaving(false)
     }
@@ -362,9 +382,7 @@ export function DashboardSettingsPage() {
       setGrafanaWarnings(response.warnings)
       setYamlValidationError(validateDashboardYaml(response.content))
     } catch (cause) {
-      setActionError(
-        cause instanceof Error ? cause.message : 'Failed to convert Grafana dashboard',
-      )
+      setActionError(cause instanceof Error ? cause.message : 'Failed to convert Grafana dashboard')
     } finally {
       setIsConvertingGrafana(false)
     }
@@ -412,9 +430,7 @@ export function DashboardSettingsPage() {
       <h1 className="font-display text-2xl font-bold text-[var(--color-on-surface)]">
         Dashboard Settings
       </h1>
-      {dashboard && (
-        <p className="mt-1 text-sm text-[var(--color-outline)]">{dashboard.title}</p>
-      )}
+      {dashboard && <p className="mt-1 text-sm text-[var(--color-outline)]">{dashboard.title}</p>}
 
       {loading ? (
         <div className="py-8 text-center text-[var(--color-outline)]">Loading...</div>
@@ -426,7 +442,7 @@ export function DashboardSettingsPage() {
             className="mt-6 mb-6 flex gap-1 border-b border-[color-mix(in_srgb,var(--color-outline-variant)_15%,transparent)]"
             data-testid="dashboard-settings-sidebar"
           >
-            {settingsSections.map(section => (
+            {settingsSections.map((section) => (
               <button
                 key={section.key}
                 type="button"
@@ -473,7 +489,7 @@ export function DashboardSettingsPage() {
                       autoComplete="off"
                       disabled={!canEdit || isSaving}
                       className="w-full rounded-sm border-none bg-[var(--color-surface-container-high)] px-3 py-2.5 text-sm text-[var(--color-on-surface)] transition placeholder:text-[var(--color-outline)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:cursor-not-allowed disabled:opacity-60"
-                      onChange={event => setTitle(event.target.value)}
+                      onChange={(event) => setTitle(event.target.value)}
                     />
                   </div>
 
@@ -492,7 +508,7 @@ export function DashboardSettingsPage() {
                       disabled={!canEdit || isSaving}
                       placeholder="Optional dashboard description"
                       className="min-h-[100px] w-full resize-y rounded-sm border-none bg-[var(--color-surface-container-high)] px-3 py-2.5 text-sm text-[var(--color-on-surface)] transition placeholder:text-[var(--color-outline)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:cursor-not-allowed disabled:opacity-60"
-                      onChange={event => setDescription(event.target.value)}
+                      onChange={(event) => setDescription(event.target.value)}
                     />
                   </div>
 
@@ -509,9 +525,9 @@ export function DashboardSettingsPage() {
                       value={timeRangePreset}
                       disabled={!canEdit || isSaving}
                       className="w-full rounded-sm border-none bg-[var(--color-surface-container-high)] px-3 py-2.5 text-sm text-[var(--color-on-surface)] transition focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:cursor-not-allowed disabled:opacity-60"
-                      onChange={event => setTimeRangePreset(event.target.value)}
+                      onChange={(event) => setTimeRangePreset(event.target.value)}
                     >
-                      {TIME_RANGE_OPTIONS.map(option => (
+                      {TIME_RANGE_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
@@ -532,9 +548,9 @@ export function DashboardSettingsPage() {
                       value={refreshInterval}
                       disabled={!canEdit || isSaving}
                       className="w-full rounded-sm border-none bg-[var(--color-surface-container-high)] px-3 py-2.5 text-sm text-[var(--color-on-surface)] transition focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:cursor-not-allowed disabled:opacity-60"
-                      onChange={event => setRefreshInterval(event.target.value)}
+                      onChange={(event) => setRefreshInterval(event.target.value)}
                     >
-                      {REFRESH_OPTIONS.map(option => (
+                      {REFRESH_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
@@ -556,7 +572,7 @@ export function DashboardSettingsPage() {
                       disabled={!canEdit || isSaving}
                       placeholder="env, cluster, instance"
                       className="w-full rounded-sm border-none bg-[var(--color-surface-container-high)] px-3 py-2.5 text-sm text-[var(--color-on-surface)] transition placeholder:text-[var(--color-outline)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:cursor-not-allowed disabled:opacity-60"
-                      onChange={event => setVariablesInput(event.target.value)}
+                      onChange={(event) => setVariablesInput(event.target.value)}
                     />
                   </div>
                 </div>
@@ -600,7 +616,7 @@ export function DashboardSettingsPage() {
                     className="rounded-sm bg-[var(--color-surface-container-high)] px-5 py-2.5 text-sm font-semibold text-[var(--color-on-surface)] transition hover:bg-[var(--color-surface-bright)] disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={isConvertingGrafana || isYamlSaving}
                     data-testid="grafana-replace-toggle"
-                    onClick={() => setShowGrafanaReplace(current => !current)}
+                    onClick={() => setShowGrafanaReplace((current) => !current)}
                   >
                     {showGrafanaReplace ? 'Hide Grafana replace' : 'Replace with Grafana'}
                   </button>
@@ -623,7 +639,7 @@ export function DashboardSettingsPage() {
                       data-testid="yaml-editor-input"
                       spellCheck={false}
                       readOnly={!canEdit || isYamlSaving}
-                      onChange={event => {
+                      onChange={(event) => {
                         const next = event.target.value
                         setYamlContent(next)
                         setYamlValidationError(validateDashboardYaml(next))
@@ -651,7 +667,7 @@ export function DashboardSettingsPage() {
                       className="min-h-[100px] w-full resize-y rounded-sm border-none bg-[var(--color-surface-bright)] px-3 py-2.5 text-sm text-[var(--color-on-surface)] transition placeholder:text-[var(--color-outline)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 disabled:cursor-not-allowed disabled:opacity-60"
                       data-testid="grafana-source"
                       disabled={isConvertingGrafana || isYamlSaving}
-                      onChange={event => setGrafanaSource(event.target.value)}
+                      onChange={(event) => setGrafanaSource(event.target.value)}
                     />
                     <button
                       type="button"
@@ -667,7 +683,7 @@ export function DashboardSettingsPage() {
                         className="m-0 pl-5 text-xs text-[var(--color-tertiary)]"
                         data-testid="grafana-warnings"
                       >
-                        {grafanaWarnings.map(warning => (
+                        {grafanaWarnings.map((warning) => (
                           <li key={warning}>{warning}</li>
                         ))}
                       </ul>

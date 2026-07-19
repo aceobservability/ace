@@ -1,12 +1,4 @@
-import {
-  AlertCircle,
-  ArrowRight,
-  Check,
-  Loader2,
-  RotateCcw,
-  Sparkles,
-  Wrench,
-} from 'lucide-react'
+import { AlertCircle, ArrowRight, Check, Loader2, RotateCcw, Sparkles, Wrench } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { listDataSources } from '@/api/datasources'
@@ -60,16 +52,22 @@ export function DashboardGenPage() {
   const [loadingDatasources, setLoadingDatasources] = useState(false)
 
   const selectedDatasource = useMemo(
-    () => datasources.find(ds => ds.id === selectedDatasourceId),
+    () => datasources.find((ds) => ds.id === selectedDatasourceId),
     [datasources, selectedDatasourceId],
   )
 
-  const { generate, toolStatuses, isGenerating, error: genError, progressText, cancel } =
-    useDashboardGeneration(
-      () => selectedDatasourceId,
-      () => currentOrg?.id ?? '',
-      () => selectedDatasource?.type ?? '',
-    )
+  const {
+    generate,
+    toolStatuses,
+    isGenerating,
+    error: genError,
+    progressText,
+    cancel,
+  } = useDashboardGeneration(
+    () => selectedDatasourceId,
+    () => currentOrg?.id ?? '',
+    () => selectedDatasource?.type ?? '',
+  )
 
   const canGenerate = Boolean(
     prompt.trim() && selectedDatasourceId && providers.length > 0 && !isGenerating,
@@ -78,6 +76,7 @@ export function DashboardGenPage() {
   useEffect(() => {
     const orgId = currentOrg?.id
     if (!orgId) return
+    const organizationId = orgId
 
     let cancelled = false
 
@@ -85,7 +84,7 @@ export function DashboardGenPage() {
       setLoadingDatasources(true)
       try {
         const [dsList] = await Promise.all([
-          listDataSources(orgId).catch(() => [] as DataSource[]),
+          listDataSources(organizationId).catch(() => [] as DataSource[]),
           fetchProviders(),
           fetchModels(selectedProviderId || undefined),
         ])
@@ -96,11 +95,11 @@ export function DashboardGenPage() {
         if (dsList.length === 1) {
           setSelectedDatasourceId(dsList[0]!.id)
         } else if (dsList.length > 1) {
-          const saved = localStorage.getItem(`ace:lastDatasource:${orgId}`)
-          if (saved && dsList.find(ds => ds.id === saved)) {
+          const saved = localStorage.getItem(`ace:lastDatasource:${organizationId}`)
+          if (saved && dsList.find((ds) => ds.id === saved)) {
             setSelectedDatasourceId(saved)
           } else {
-            const metricsDs = dsList.find(ds =>
+            const metricsDs = dsList.find((ds) =>
               ['victoriametrics', 'prometheus'].includes(ds.type),
             )
             setSelectedDatasourceId(metricsDs?.id ?? dsList[0]!.id)
@@ -184,10 +183,7 @@ export function DashboardGenPage() {
           >
             What do you want to monitor?
           </h1>
-          <p
-            className="mb-8 max-w-md text-sm"
-            style={{ color: 'var(--color-on-surface-variant)' }}
-          >
+          <p className="mb-8 max-w-md text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
             {selectedDatasource
               ? `Describe what you'd like to observe on ${selectedDatasource.name}`
               : "Describe what you'd like to observe and we'll generate a dashboard with relevant panels and queries."}
@@ -229,9 +225,9 @@ export function DashboardGenPage() {
                 color: 'var(--color-on-surface)',
                 border: '1px solid var(--color-outline-variant)',
               }}
-              onChange={event => setSelectedDatasourceId(event.target.value)}
+              onChange={(event) => setSelectedDatasourceId(event.target.value)}
             >
-              {datasources.map(ds => (
+              {datasources.map((ds) => (
                 <option key={ds.id} value={ds.id}>
                   {ds.name} ({ds.type})
                 </option>
@@ -272,8 +268,8 @@ export function DashboardGenPage() {
               color: 'var(--color-on-surface)',
               border: '1px solid var(--color-outline-variant)',
             }}
-            onChange={event => setPrompt(event.target.value)}
-            onKeyDown={event => {
+            onChange={(event) => setPrompt(event.target.value)}
+            onKeyDown={(event) => {
               if (event.key === 'Enter') {
                 void startGeneration()
               }
@@ -281,7 +277,7 @@ export function DashboardGenPage() {
           />
 
           <div className="mb-8 flex flex-wrap justify-center gap-2">
-            {SUGGESTIONS.map(suggestion => (
+            {SUGGESTIONS.map((suggestion) => (
               <button
                 key={suggestion}
                 type="button"
@@ -346,7 +342,7 @@ export function DashboardGenPage() {
               role="status"
               className="mb-4 flex w-full max-w-sm flex-col gap-2"
             >
-              {toolStatuses.map(ts => (
+              {toolStatuses.map((ts) => (
                 <div
                   key={`${ts.name}-${ts.status}`}
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
@@ -358,9 +354,17 @@ export function DashboardGenPage() {
                   {ts.status === 'running' ? (
                     <Loader2 size={12} className="shrink-0 animate-spin" />
                   ) : ts.status === 'complete' ? (
-                    <Check size={12} className="shrink-0" style={{ color: 'var(--color-secondary)' }} />
+                    <Check
+                      size={12}
+                      className="shrink-0"
+                      style={{ color: 'var(--color-secondary)' }}
+                    />
                   ) : (
-                    <Wrench size={12} className="shrink-0" style={{ color: 'var(--color-error)' }} />
+                    <Wrench
+                      size={12}
+                      className="shrink-0"
+                      style={{ color: 'var(--color-error)' }}
+                    />
                   )}
                   <span>{toolStatusLabel(ts.name)}</span>
                 </div>
@@ -375,7 +379,10 @@ export function DashboardGenPage() {
           )}
 
           {progressText && (
-            <p className="mt-4 max-w-sm text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
+            <p
+              className="mt-4 max-w-sm text-sm"
+              style={{ color: 'var(--color-on-surface-variant)' }}
+            >
               {progressText}
             </p>
           )}
