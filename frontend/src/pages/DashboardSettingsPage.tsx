@@ -65,26 +65,54 @@ function isDashboardSettingsKey(value: string): boolean {
   return value.length > 0 && !FORBIDDEN_SETTINGS_KEYS.has(value)
 }
 
-function readStoredDashboardSettings(): Record<string, DashboardViewSettings> {
+function isDashboardViewSettings(value: unknown): value is DashboardViewSettings {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  const candidate = value as Partial<DashboardViewSettings>
+  return (
+    typeof candidate.timeRangePreset === 'string' &&
+    typeof candidate.refreshInterval === 'string' &&
+    Array.isArray(candidate.variables)
+  )
+}
+
+function readStoredDashboardSettings(): Map<string, DashboardViewSettings> {
+  const settings = new Map<string, DashboardViewSettings>()
   const rawSettings = localStorage.getItem(DASHBOARD_VIEW_SETTINGS_KEY)
-  if (!rawSettings) {
-    return Object.create(null) as Record<string, DashboardViewSettings>
-  }
+  if (!rawSettings) return settings
 
   try {
     const parsed = JSON.parse(rawSettings) as unknown
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return Object.create(null) as Record<string, DashboardViewSettings>
+
+    // Preferred format: Map entries array — avoids dynamic object property writes.
+    if (Array.isArray(parsed)) {
+      for (const entry of parsed) {
+        if (!Array.isArray(entry) || entry.length < 2) continue
+        const [key, value] = entry
+        if (typeof key !== 'string' || !isDashboardSettingsKey(key)) continue
+        if (!isDashboardViewSettings(value)) continue
+        settings.set(key, {
+          timeRangePreset: value.timeRangePreset,
+          refreshInterval: value.refreshInterval,
+          variables: value.variables.filter((item): item is string => typeof item === 'string'),
+        })
+      }
+      return settings
     }
 
-    const sanitized = Object.create(null) as Record<string, DashboardViewSettings>
+    // Legacy object format from earlier builds.
+    if (!parsed || typeof parsed !== 'object') return settings
+
     for (const [key, value] of Object.entries(parsed)) {
-      if (!isDashboardSettingsKey(key) || !value || typeof value !== 'object') continue
-      sanitized[key] = value as DashboardViewSettings
+      if (!isDashboardSettingsKey(key) || !isDashboardViewSettings(value)) continue
+      settings.set(key, {
+        timeRangePreset: value.timeRangePreset,
+        refreshInterval: value.refreshInterval,
+        variables: value.variables.filter((item): item is string => typeof item === 'string'),
+      })
     }
-    return sanitized
+    return settings
   } catch {
-    return Object.create(null) as Record<string, DashboardViewSettings>
+    return settings
   }
 }
 
@@ -205,7 +233,7 @@ export function DashboardSettingsPage() {
 
   const applyStoredDashboardSettings = useCallback((id: string) => {
     const allSettings = readStoredDashboardSettings()
-    const storedSettings = allSettings[id]
+    const storedSettings = allSettings.get(id)
     setTimeRangePreset(storedSettings?.timeRangePreset || '1h')
     setRefreshInterval(storedSettings?.refreshInterval || 'off')
     setVariablesInput((storedSettings?.variables || []).join(', '))
@@ -215,13 +243,12 @@ export function DashboardSettingsPage() {
     if (!isDashboardSettingsKey(dashboardId)) return
 
     const allSettings = readStoredDashboardSettings()
-    const nextSettings = Object.create(null) as Record<string, DashboardViewSettings>
-    for (const [key, value] of Object.entries(allSettings)) {
-      if (!isDashboardSettingsKey(key)) continue
-      nextSettings[key] = value
-    }
-    nextSettings[dashboardId] = settings
-    localStorage.setItem(DASHBOARD_VIEW_SETTINGS_KEY, JSON.stringify(nextSettings))
+    allSettings.set(dashboardId, settings)
+    // Persist as entry tuples so we never write user-controlled object keys.
+    localStorage.setItem(
+      DASHBOARD_VIEW_SETTINGS_KEY,
+      JSON.stringify(Array.from(allSettings.entries())),
+    )
   }
 
   function resetFormState() {

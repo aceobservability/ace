@@ -177,8 +177,10 @@ describe('DashboardSettingsPage', () => {
       })
     })
 
-    const storedSettings = JSON.parse(localStorage.getItem('dashboard_view_settings') || '{}')
-    expect(storedSettings['dashboard-1']).toEqual({
+    const storedEntries = JSON.parse(
+      localStorage.getItem('dashboard_view_settings') || '[]',
+    ) as Array<[string, { timeRangePreset: string; refreshInterval: string; variables: string[] }]>
+    expect(Object.fromEntries(storedEntries)['dashboard-1']).toEqual({
       timeRangePreset: '1h',
       refreshInterval: '30s',
       variables: ['env', 'cluster'],
