@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { API_BASE } from '@/api/base'
 
 function getAuthHeaders(): HeadersInit {
@@ -28,9 +28,14 @@ export function useCopilotAuth() {
   const [deviceFlowActive, setDeviceFlowActive] = useState(false)
   const [userCode, setUserCode] = useState('')
   const [verificationUri, setVerificationUri] = useState('')
-  const [pollCancel, setPollCancel] = useState<(() => void) | null>(null)
+
+  // Generation token so only the latest poller may update local UI / shared state.
+  const pollGenerationRef = useRef(0)
+  const pollActiveRef = useRef(false)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
+    mountedRef.current = true
     const syncFromShared = () => {
       setIsConnected(sharedConnected)
       setGithubUsername(sharedUsername)
@@ -39,8 +44,17 @@ export function useCopilotAuth() {
     }
     listeners.add(syncFromShared)
     return () => {
+      mountedRef.current = false
       listeners.delete(syncFromShared)
+      // Stop any in-flight device poll when the consumer unmounts.
+      pollActiveRef.current = false
+      pollGenerationRef.current += 1
     }
+  }, [])
+
+  const stopPolling = useCallback(() => {
+    pollActiveRef.current = false
+    pollGenerationRef.current += 1
   }, [])
 
   const checkConnection = useCallback(async () => {
@@ -74,6 +88,9 @@ export function useCopilotAuth() {
   }, [])
 
   const connect = useCallback(async (_orgId: string) => {
+    // Cancel any previous poll before starting a new device flow.
+    stopPolling()
+
     try {
       const response = await fetch(`${API_BASE}/api/auth/github/device`, {
         method: 'POST',
@@ -89,6 +106,8 @@ export function useCopilotAuth() {
         device_code: string
       }
 
+      if (!mountedRef.current) return
+
       setUserCode(data.user_code)
       setVerificationUri(data.verification_uri)
       setDeviceFlowActive(true)
@@ -96,16 +115,19 @@ export function useCopilotAuth() {
       const interval = (data.interval || 5) * 1000
       const expiresAt = Date.now() + (data.expires_in || 900) * 1000
       const deviceCode = data.device_code
-      let active = true
+      const generation = pollGenerationRef.current + 1
+      pollGenerationRef.current = generation
+      pollActiveRef.current = true
 
-      setPollCancel(() => () => {
-        active = false
-      })
+      const isCurrent = () =>
+        pollActiveRef.current &&
+        pollGenerationRef.current === generation &&
+        mountedRef.current
 
       const poll = async () => {
-        while (Date.now() < expiresAt && active) {
+        while (Date.now() < expiresAt && isCurrent()) {
           await new Promise(resolve => setTimeout(resolve, interval))
-          if (!active) return
+          if (!isCurrent()) return
 
           try {
             const pollResp = await fetch(`${API_BASE}/api/auth/github/device/poll`, {
@@ -114,8 +136,11 @@ export function useCopilotAuth() {
               body: JSON.stringify({ device_code: deviceCode }),
             })
 
+            if (!isCurrent()) return
+
             if (!pollResp.ok) {
               setDeviceFlowActive(false)
+              pollActiveRef.current = false
               return
             }
 
@@ -125,21 +150,26 @@ export function useCopilotAuth() {
               has_copilot?: boolean
             }
             if (result.status === 'connected') {
+              if (!isCurrent()) return
               sharedConnected = true
               sharedUsername = result.username || ''
               sharedHasCopilot = Boolean(result.has_copilot)
               sharedError = ''
               notifyListeners()
               setDeviceFlowActive(false)
+              setUserCode('')
+              setVerificationUri('')
+              pollActiveRef.current = false
               return
             }
           } catch {
-            // Network error — keep polling.
+            // Network error — keep polling while this generation is current.
           }
         }
 
-        if (active) {
+        if (isCurrent()) {
           setDeviceFlowActive(false)
+          pollActiveRef.current = false
         }
       }
 
@@ -147,17 +177,17 @@ export function useCopilotAuth() {
     } catch {
       // Failed to start GitHub connection.
     }
-  }, [])
+  }, [stopPolling])
 
   const cancelDeviceFlow = useCallback(() => {
-    pollCancel?.()
-    setPollCancel(null)
+    stopPolling()
     setDeviceFlowActive(false)
     setUserCode('')
     setVerificationUri('')
-  }, [pollCancel])
+  }, [stopPolling])
 
   const disconnect = useCallback(async () => {
+    stopPolling()
     try {
       await fetch(`${API_BASE}/api/auth/github/connection`, {
         method: 'DELETE',
@@ -171,7 +201,7 @@ export function useCopilotAuth() {
     } catch {
       // ignore
     }
-  }, [])
+  }, [stopPolling])
 
   return {
     isConnected,

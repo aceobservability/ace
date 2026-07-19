@@ -116,11 +116,19 @@ export function OktaSsoForm({
             type="text"
             data-testid="okta-domain"
             aria-label="Okta Domain"
-            placeholder="dev-12345"
+            placeholder="dev-12345.okta.com"
             className="w-full rounded-sm px-3 py-2.5 font-mono text-sm focus:outline-none"
             style={fieldStyle}
             disabled={!isAdmin || saving}
           />
+          <p
+            className="mt-1 text-xs"
+            style={{ color: 'var(--color-on-surface-variant)' }}
+            data-testid="okta-domain-hint"
+          >
+            Full hostname required (e.g. dev-12345.okta.com). Prefix-only values are expanded
+            automatically on save.
+          </p>
         </div>
         <div>
           <label

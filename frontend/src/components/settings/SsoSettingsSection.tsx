@@ -19,6 +19,8 @@ import { GoogleSsoForm } from '@/components/settings/sso/GoogleSsoForm'
 import { MicrosoftSsoForm } from '@/components/settings/sso/MicrosoftSsoForm'
 import { OktaSsoForm } from '@/components/settings/sso/OktaSsoForm'
 import {
+  formatOktaIssuer,
+  normalizeOktaDomain,
   primaryButtonStyle,
   secondaryButtonStyle,
   type SsoProviderKey,
@@ -36,7 +38,8 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
 
   const [googleClientId, setGoogleClientId] = useState('')
   const [googleClientSecret, setGoogleClientSecret] = useState('')
-  const [googleEnabled, setGoogleEnabled] = useState(false)
+  // Default enabled=true so a first save matches backend omitempty default.
+  const [googleEnabled, setGoogleEnabled] = useState(true)
   const [googleConfigured, setGoogleConfigured] = useState(false)
   const [googleSaving, setGoogleSaving] = useState(false)
   const [googleError, setGoogleError] = useState<string | null>(null)
@@ -44,7 +47,8 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
   const [microsoftTenantId, setMicrosoftTenantId] = useState('')
   const [microsoftClientId, setMicrosoftClientId] = useState('')
   const [microsoftClientSecret, setMicrosoftClientSecret] = useState('')
-  const [microsoftEnabled, setMicrosoftEnabled] = useState(false)
+  // Default enabled=true so a first save matches backend omitempty default.
+  const [microsoftEnabled, setMicrosoftEnabled] = useState(true)
   const [microsoftConfigured, setMicrosoftConfigured] = useState(false)
   const [microsoftSaving, setMicrosoftSaving] = useState(false)
   const [microsoftError, setMicrosoftError] = useState<string | null>(null)
@@ -54,7 +58,8 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
   const [oktaClientSecret, setOktaClientSecret] = useState('')
   const [oktaGroupsClaimName, setOktaGroupsClaimName] = useState('groups')
   const [oktaDefaultRole, setOktaDefaultRole] = useState('viewer')
-  const [oktaEnabled, setOktaEnabled] = useState(false)
+  // Default enabled=true so a first save matches backend omitempty default.
+  const [oktaEnabled, setOktaEnabled] = useState(true)
   const [oktaConfigured, setOktaConfigured] = useState(false)
   const [oktaSaving, setOktaSaving] = useState(false)
   const [oktaError, setOktaError] = useState<string | null>(null)
@@ -105,7 +110,7 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
       const msg = e instanceof Error ? e.message : 'Failed to load Google SSO'
       if (msg === 'Google SSO not configured') {
         setGoogleClientId('')
-        setGoogleEnabled(false)
+        setGoogleEnabled(true)
         setGoogleConfigured(false)
         return
       }
@@ -127,7 +132,7 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
       if (msg === 'Microsoft SSO not configured') {
         setMicrosoftTenantId('')
         setMicrosoftClientId('')
-        setMicrosoftEnabled(false)
+        setMicrosoftEnabled(true)
         setMicrosoftConfigured(false)
         return
       }
@@ -153,7 +158,7 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
         setOktaClientId('')
         setOktaGroupsClaimName('groups')
         setOktaDefaultRole('viewer')
-        setOktaEnabled(false)
+        setOktaEnabled(true)
         setOktaConfigured(false)
       }
     } catch (e) {
@@ -195,7 +200,7 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
       {
         key: 'okta',
         name: 'Okta',
-        issuer: oktaDomain ? `${oktaDomain}.okta.com` : 'okta.com',
+        issuer: formatOktaIssuer(oktaDomain),
         configured: oktaConfigured,
         enabled: oktaEnabled,
         mappingCount: oktaRoleMappings.length,
@@ -315,15 +320,19 @@ export function SsoSettingsSection({ orgId, isAdmin }: SsoSettingsSectionProps) 
 
   async function handleSaveOktaSSO() {
     if (!isAdmin) return
-    const domain = oktaDomain.trim()
+    const domain = normalizeOktaDomain(oktaDomain)
     const cId = oktaClientId.trim()
     const cSecret = oktaClientSecret.trim()
     if (!domain) {
       setOktaError('Okta domain is required')
       return
     }
-    if (domain.includes(' ') || domain.includes('://')) {
-      setOktaError('Enter the Okta domain only (e.g. dev-12345), not a full URL')
+    if (domain.includes(' ')) {
+      setOktaError('Enter the Okta domain only (e.g. dev-12345 or dev-12345.okta.com)')
+      return
+    }
+    if (!domain.includes('.')) {
+      setOktaError('Enter a valid Okta hostname (e.g. dev-12345.okta.com)')
       return
     }
     if (!cId) {

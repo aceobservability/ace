@@ -8,7 +8,6 @@ import {
   Zap,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
   deleteDataSource,
   listDataSources,
@@ -231,15 +230,16 @@ export function DataSourceSettingsPanel({ orgId, isAdmin }: DataSourceSettingsPa
               >
                 <Zap size={14} />
               </button>
-              <Link
-                to={`/app/datasources/${ds.id}/edit`}
+              {/* Edit UI ships in #309; avoid linking to the placeholder route. */}
+              <span
                 data-testid={`ds-panel-edit-${ds.id}`}
-                className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-sm border border-transparent bg-transparent p-0 no-underline transition-all"
+                className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-sm border border-transparent bg-transparent p-0 opacity-40"
                 style={{ color: 'var(--color-on-surface-variant)' }}
-                title="Edit"
+                title="Edit coming soon"
+                aria-disabled="true"
               >
                 <Edit2 size={14} />
-              </Link>
+              </span>
               {isAdmin ? (
                 <button
                   type="button"

@@ -62,3 +62,29 @@ export function errorBannerStyle(): CSSProperties {
     color: 'var(--color-error)',
   }
 }
+
+/**
+ * Normalize Okta domain input to a full hostname.
+ * Accepts `dev-12345` or `dev-12345.okta.com` (strips protocol/path if pasted).
+ */
+export function normalizeOktaDomain(input: string): string {
+  let value = input.trim()
+  if (!value) return value
+
+  // Strip protocol and path/query if a URL was pasted.
+  value = value.replace(/^https?:\/\//i, '')
+  value = value.split('/')[0] ?? value
+  value = value.split('?')[0] ?? value
+
+  // Prefix-only form used in the UI hint.
+  if (value && !value.includes('.')) {
+    return `${value}.okta.com`
+  }
+  return value
+}
+
+/** Display Okta issuer host; keep full hostname if already present. */
+export function formatOktaIssuer(domain: string): string {
+  const normalized = normalizeOktaDomain(domain)
+  return normalized || 'okta.com'
+}

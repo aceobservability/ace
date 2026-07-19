@@ -18,6 +18,17 @@ type GeneralSettingsSectionProps = {
   onOrgUpdated: (org: Organization) => void
 }
 
+/** Only allow image data: URIs for logo preview to avoid DOM XSS via arbitrary URLs. */
+function safeLogoPreviewSrc(value: string): string | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  // data:image/<type>[;base64],...
+  if (/^data:image\/(?:png|jpe?g|gif|webp|svg\+xml);base64,[a-z0-9+/=\s]+$/i.test(trimmed)) {
+    return trimmed
+  }
+  return null
+}
+
 export function GeneralSettingsSection({
   org,
   orgId,
@@ -399,14 +410,31 @@ export function GeneralSettingsSection({
             }}
             disabled={!isAdmin || brandingLoading}
           />
-          {brandingLogo ? (
-            <img
-              src={brandingLogo}
-              alt="Organization logo preview"
-              className="mt-3 h-10 max-w-[160px] object-contain"
-              data-testid="branding-logo-preview"
-            />
-          ) : null}
+          {(() => {
+            const previewSrc = safeLogoPreviewSrc(brandingLogo)
+            if (previewSrc) {
+              return (
+                <img
+                  src={previewSrc}
+                  alt="Organization logo preview"
+                  className="mt-3 h-10 max-w-[160px] object-contain"
+                  data-testid="branding-logo-preview"
+                />
+              )
+            }
+            if (brandingLogo.trim()) {
+              return (
+                <p
+                  className="mt-2 text-xs"
+                  style={{ color: 'var(--color-on-surface-variant)' }}
+                  data-testid="branding-logo-preview-invalid"
+                >
+                  Preview available for image data URIs only (png, jpeg, gif, webp, svg+xml).
+                </p>
+              )
+            }
+            return null
+          })()}
         </div>
 
         {brandingError ? (

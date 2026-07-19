@@ -7,6 +7,10 @@ import * as groupsApi from '@/api/groups'
 import * as organizationsApi from '@/api/organizations'
 import * as ssoApi from '@/api/sso'
 import * as ssoRoleMappingsApi from '@/api/ssoRoleMappings'
+import {
+  formatOktaIssuer,
+  normalizeOktaDomain,
+} from '@/components/settings/sso/ssoShared'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { useAuthStore } from '@/stores/authStore'
 import { useOrgStore } from '@/stores/orgStore'
@@ -416,7 +420,7 @@ describe('SettingsPage', () => {
     it('loads Okta SSO with role mappings', async () => {
       const user = userEvent.setup()
       vi.spyOn(ssoApi, 'getOktaSSOConfig').mockResolvedValue({
-        tenant_id: 'dev-12345',
+        tenant_id: 'dev-12345.okta.com',
         client_id: 'okta-client',
         groups_claim_name: 'groups',
         default_role: 'viewer',
@@ -445,10 +449,22 @@ describe('SettingsPage', () => {
       await user.click(screen.getByTestId('edit-sso-okta'))
 
       expect(await screen.findByTestId('okta-sso-card')).toBeTruthy()
-      expect(screen.getByTestId('okta-domain')).toHaveProperty('value', 'dev-12345')
+      expect(screen.getByTestId('okta-domain')).toHaveProperty('value', 'dev-12345.okta.com')
       expect(screen.getByTestId('okta-role-mappings-section')).toBeTruthy()
       expect(screen.getByTestId('mapping-row-map-1')).toBeTruthy()
       expect(screen.getByText('Engineering')).toBeTruthy()
+    })
+  })
+
+  describe('Okta domain normalization', () => {
+    it('expands prefix-only domains and strips pasted URLs', () => {
+      expect(normalizeOktaDomain('dev-12345')).toBe('dev-12345.okta.com')
+      expect(normalizeOktaDomain('dev-12345.okta.com')).toBe('dev-12345.okta.com')
+      expect(normalizeOktaDomain('https://dev-12345.okta.com/oauth2')).toBe(
+        'dev-12345.okta.com',
+      )
+      expect(formatOktaIssuer('dev-1')).toBe('dev-1.okta.com')
+      expect(formatOktaIssuer('')).toBe('okta.com')
     })
   })
 
