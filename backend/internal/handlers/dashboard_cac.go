@@ -3,11 +3,13 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/aceobservability/ace/backend/internal/auth"
 	"github.com/aceobservability/ace/backend/internal/authz"
@@ -234,10 +236,7 @@ func (h *DashboardHandler) Import(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback(ctx)
 
-	descPtr := &doc.Description
-	if doc.Description == "" {
-		descPtr = nil
-	}
+	descPtr := descriptionPointer(doc.Description)
 
 	var imported models.Dashboard
 	err = tx.QueryRow(ctx,
@@ -254,47 +253,9 @@ func (h *DashboardHandler) Import(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resolver := NewDatasourceResolver(h.pool)
-
-	for _, panel := range doc.Panels {
-		gridPosRaw, err := json.Marshal(panel.Position)
-		if err != nil {
-			http.Error(w, `{"error":"failed to encode panel layout"}`, http.StatusBadRequest)
-			return
-		}
-
-		// Resolve datasource ref to UUID
-		var dsIDStr *string
-		var datasourceID any
-		if panel.Datasource != nil {
-			resolved, err := resolver.ResolveRef(ctx, orgID, *panel.Datasource)
-			if err != nil {
-				http.Error(w, `{"error":"datasource not found: `+panel.Datasource.Type+`"}`, http.StatusBadRequest)
-				return
-			}
-			datasourceID = *resolved
-			s := resolved.String()
-			dsIDStr = &s
-		}
-
-		// Re-assemble query blob from structured fields
-		queryBlob := converter.ResourcesToQueryBlob(panel.Query, panel.Display, dsIDStr)
-
-		_, err = tx.Exec(ctx,
-			`INSERT INTO panels (dashboard_id, title, type, grid_pos, query, datasource_id, created_by)
-			 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-			imported.ID,
-			panel.Title,
-			panel.Type,
-			gridPosRaw,
-			queryBlob,
-			datasourceID,
-			userID,
-		)
-		if err != nil {
-			http.Error(w, `{"error":"failed to create panel during import"}`, http.StatusInternalServerError)
-			return
-		}
+	if err := h.insertPanelsFromDocument(ctx, tx, orgID, imported.ID, userID, doc); err != nil {
+		writeJSONError(w, statusForPanelImportError(err), err.Error())
+		return
 	}
 
 	if err := tx.Commit(ctx); err != nil {
@@ -305,6 +266,195 @@ func (h *DashboardHandler) Import(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(imported)
+}
+
+// ReplaceImport replaces an existing dashboard body (metadata + panels) from a
+// JSON or YAML document. Requires edit permission on the dashboard.
+func (h *DashboardHandler) ReplaceImport(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
+		return
+	}
+
+	dashboardID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, `{"error":"invalid dashboard id"}`, http.StatusBadRequest)
+		return
+	}
+
+	format := converter.NormalizeFormat(r.URL.Query().Get("format"))
+	if format == "" {
+		http.Error(w, `{"error":"format must be json or yaml"}`, http.StatusBadRequest)
+		return
+	}
+
+	rawBody, err := readRawBody(r)
+	if err != nil {
+		http.Error(w, `{"error":"failed to read request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	doc, err := converter.DecodeDashboardDocument(rawBody, format)
+	if err != nil {
+		http.Error(w, `{"error":"invalid dashboard document"}`, http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	var orgID *uuid.UUID
+	err = h.pool.QueryRow(ctx, `SELECT organization_id FROM dashboards WHERE id = $1`, dashboardID).Scan(&orgID)
+	if err != nil {
+		http.Error(w, `{"error":"dashboard not found"}`, http.StatusNotFound)
+		return
+	}
+	if orgID == nil {
+		http.Error(w, `{"error":"dashboard organization not found"}`, http.StatusNotFound)
+		return
+	}
+
+	_, err = h.checkOrgMembership(ctx, userID, *orgID)
+	if err != nil {
+		http.Error(w, `{"error":"not a member of this organization"}`, http.StatusForbidden)
+		return
+	}
+
+	canEdit, err := h.authz.Can(ctx, userID, *orgID, authz.ResourceTypeDashboard, dashboardID, authz.ActionEdit)
+	if err != nil {
+		http.Error(w, `{"error":"failed to evaluate dashboard permissions"}`, http.StatusInternalServerError)
+		return
+	}
+	if !canEdit {
+		http.Error(w, `{"error":"forbidden"}`, http.StatusForbidden)
+		return
+	}
+
+	tx, err := h.pool.Begin(ctx)
+	if err != nil {
+		http.Error(w, `{"error":"failed to start replace import"}`, http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback(ctx)
+
+	descPtr := descriptionPointer(doc.Description)
+
+	var updated models.Dashboard
+	err = tx.QueryRow(ctx,
+		`UPDATE dashboards
+		 SET title = $1,
+		     description = $2,
+		     updated_at = NOW()
+		 WHERE id = $3
+		 RETURNING id, title, description, folder_id, sort_order, created_at, updated_at, organization_id, created_by`,
+		doc.Title,
+		descPtr,
+		dashboardID,
+	).Scan(&updated.ID, &updated.Title, &updated.Description, &updated.FolderID, &updated.SortOrder, &updated.CreatedAt, &updated.UpdatedAt, &updated.OrganizationID, &updated.CreatedBy)
+	if err != nil {
+		http.Error(w, `{"error":"dashboard not found"}`, http.StatusNotFound)
+		return
+	}
+
+	if _, err := tx.Exec(ctx, `DELETE FROM panels WHERE dashboard_id = $1`, dashboardID); err != nil {
+		http.Error(w, `{"error":"failed to replace dashboard panels"}`, http.StatusInternalServerError)
+		return
+	}
+
+	if err := h.insertPanelsFromDocument(ctx, tx, *orgID, dashboardID, userID, doc); err != nil {
+		writeJSONError(w, statusForPanelImportError(err), err.Error())
+		return
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		http.Error(w, `{"error":"failed to finalize replace import"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updated)
+}
+
+// insertPanelsFromDocument inserts all panels from a decoded dashboard document
+// inside an existing transaction so import/replace stay atomic.
+func (h *DashboardHandler) insertPanelsFromDocument(
+	ctx context.Context,
+	tx pgx.Tx,
+	orgID uuid.UUID,
+	dashboardID uuid.UUID,
+	userID uuid.UUID,
+	doc converter.DashboardDocument,
+) error {
+	resolver := NewDatasourceResolver(h.pool)
+
+	for _, panel := range doc.Panels {
+		gridPosRaw, err := json.Marshal(panel.Position)
+		if err != nil {
+			return errInvalidPanelLayout
+		}
+
+		var dsIDStr *string
+		var datasourceID any
+		if panel.Datasource != nil {
+			resolved, err := resolver.ResolveRef(ctx, orgID, *panel.Datasource)
+			if err != nil {
+				return &datasourceNotFoundError{dsType: panel.Datasource.Type}
+			}
+			datasourceID = *resolved
+			s := resolved.String()
+			dsIDStr = &s
+		}
+
+		queryBlob := converter.ResourcesToQueryBlob(panel.Query, panel.Display, dsIDStr)
+
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO panels (dashboard_id, title, type, grid_pos, query, datasource_id, created_by)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			dashboardID,
+			panel.Title,
+			panel.Type,
+			gridPosRaw,
+			queryBlob,
+			datasourceID,
+			userID,
+		); err != nil {
+			return errCreatePanel
+		}
+	}
+
+	return nil
+}
+
+var (
+	errInvalidPanelLayout = errors.New("failed to encode panel layout")
+	errCreatePanel        = errors.New("failed to create panel during import")
+)
+
+type datasourceNotFoundError struct {
+	dsType string
+}
+
+func (e *datasourceNotFoundError) Error() string {
+	return "datasource not found: " + e.dsType
+}
+
+func statusForPanelImportError(err error) int {
+	switch {
+	case errors.Is(err, errInvalidPanelLayout):
+		return http.StatusBadRequest
+	case errors.As(err, new(*datasourceNotFoundError)):
+		return http.StatusBadRequest
+	default:
+		return http.StatusInternalServerError
+	}
+}
+
+func descriptionPointer(description string) *string {
+	if description == "" {
+		return nil
+	}
+	return &description
 }
 
 func readRawBody(r *http.Request) ([]byte, error) {

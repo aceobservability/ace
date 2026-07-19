@@ -43,3 +43,38 @@ func TestDashboardHandler_Import_InvalidFormat(t *testing.T) {
 		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
 	}
 }
+
+func TestDashboardHandler_ReplaceImport_InvalidFormat(t *testing.T) {
+	handler := &DashboardHandler{pool: nil}
+	userID := uuid.New()
+
+	req := httptest.NewRequest(http.MethodPut, "/api/dashboards/123e4567-e89b-12d3-a456-426614174000/import?format=toml", bytes.NewBufferString(`{}`))
+	req.SetPathValue("id", "123e4567-e89b-12d3-a456-426614174000")
+	req = req.WithContext(context.WithValue(req.Context(), auth.UserIDKey, userID))
+	rr := httptest.NewRecorder()
+
+	handler.ReplaceImport(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
+	}
+}
+
+func TestDashboardHandler_ReplaceImport_InvalidDashboardID(t *testing.T) {
+	handler := &DashboardHandler{pool: nil}
+	userID := uuid.New()
+
+	req := httptest.NewRequest(http.MethodPut, "/api/dashboards/not-a-uuid/import?format=yaml", bytes.NewBufferString(`version: 2
+title: x
+panels: []
+`))
+	req.SetPathValue("id", "not-a-uuid")
+	req = req.WithContext(context.WithValue(req.Context(), auth.UserIDKey, userID))
+	rr := httptest.NewRecorder()
+
+	handler.ReplaceImport(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
+	}
+}

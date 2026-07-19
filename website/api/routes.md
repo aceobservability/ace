@@ -107,6 +107,7 @@ title: API Routes
 | PUT | `/api/dashboards/{id}` | Yes | - | Update modifies a dashboard's title, description, or folder assignment. |
 | DELETE | `/api/dashboards/{id}` | Yes | - | Delete removes a dashboard and its associated panels. |
 | GET | `/api/dashboards/{id}/export` | Yes | - | Export serializes a dashboard and its panels to a portable JSON or YAML document. |
+| PUT | `/api/dashboards/{id}/import` | Yes | - | ReplaceImport replaces an existing dashboard body (metadata + panels) from a |
 | POST | `/api/orgs/{orgId}/dashboards/import` | Yes | - | Import creates a dashboard and its panels from a JSON or YAML document. Requires admin or editor role. |
 
 ## Folder routes

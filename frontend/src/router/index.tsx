@@ -15,6 +15,12 @@ const DashboardsPage = lazy(() =>
 const DashboardDetailPage = lazy(() =>
   import('@/pages/DashboardDetailPage').then(m => ({ default: m.DashboardDetailPage })),
 )
+const DashboardSettingsPage = lazy(() =>
+  import('@/pages/DashboardSettingsPage').then(m => ({ default: m.DashboardSettingsPage })),
+)
+const DashboardGenPage = lazy(() =>
+  import('@/pages/DashboardGenPage').then(m => ({ default: m.DashboardGenPage })),
+)
 const LoginPage = lazy(() => import('@/pages/LoginPage').then(m => ({ default: m.LoginPage })))
 const AuthCallbackPage = lazy(() =>
   import('@/pages/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })),
@@ -71,7 +77,7 @@ const appRoutes: RouteObject[] = [
   {
     path: '/app/dashboards/new/ai',
     handle: withMeta('Generate Dashboard — Ace'),
-    element: placeholder('Generate Dashboard'),
+    element: <DashboardGenPage />,
   },
   {
     path: '/app/dashboards/:id',
@@ -85,7 +91,7 @@ const appRoutes: RouteObject[] = [
   {
     path: '/app/dashboards/:id/settings/:section',
     handle: withMeta('Dashboard Settings | Ace'),
-    element: placeholder('Dashboard Settings'),
+    element: <DashboardSettingsPage />,
   },
   {
     path: '/app/services',
