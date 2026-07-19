@@ -18,16 +18,39 @@ type GeneralSettingsSectionProps = {
   onOrgUpdated: (org: Organization) => void
 }
 
-/** Rebuild a validated image data: URI so free-text input is never reused as img src. */
-function safeLogoPreviewSrc(value: string): string | null {
+const LOGO_PREVIEW_MIME: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+}
+
+/**
+ * Decode a validated image data URI into a blob: object URL.
+ * Avoids feeding free-text / DOM-sourced strings into img src (CodeQL js/xss-through-dom).
+ */
+function createLogoPreviewObjectUrl(value: string): string | null {
   const match = value
     .trim()
-    .match(/^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,([A-Za-z0-9+/=\s]+)$/i)
+    .match(/^data:image\/(png|jpe?g|gif|webp);base64,([A-Za-z0-9+/=\s]+)$/i)
   if (!match) return null
-  const mime = match[1].toLowerCase() === 'jpg' ? 'jpeg' : match[1].toLowerCase()
+
+  const subtype = match[1].toLowerCase()
+  const mime = LOGO_PREVIEW_MIME[subtype]
+  if (!mime) return null
+
   const payload = match[2].replace(/\s+/g, '')
-  // Construct a fresh string from validated captures (breaks DOM-text taint flow for CodeQL).
-  return `data:image/${mime};base64,${payload}`
+  try {
+    const binary = atob(payload)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+    return URL.createObjectURL(new Blob([bytes], { type: mime }))
+  } catch {
+    return null
+  }
 }
 
 export function GeneralSettingsSection({
@@ -48,9 +71,18 @@ export function GeneralSettingsSection({
   const [brandingColor, setBrandingColor] = useState(org.branding?.primary_color ?? '')
   const [brandingTitle, setBrandingTitle] = useState(org.branding?.app_title ?? '')
   const [brandingLogo, setBrandingLogo] = useState(org.branding?.logo_data_uri ?? '')
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
   const [brandingLoading, setBrandingLoading] = useState(false)
   const [brandingError, setBrandingError] = useState<string | null>(null)
   const [brandingNotice, setBrandingNotice] = useState<string | null>(null)
+
+  useEffect(() => {
+    const next = createLogoPreviewObjectUrl(brandingLogo)
+    setLogoPreviewUrl(next)
+    return () => {
+      if (next) URL.revokeObjectURL(next)
+    }
+  }, [brandingLogo])
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -411,31 +443,22 @@ export function GeneralSettingsSection({
             }}
             disabled={!isAdmin || brandingLoading}
           />
-          {(() => {
-            const previewSrc = safeLogoPreviewSrc(brandingLogo)
-            if (previewSrc) {
-              return (
-                <img
-                  src={previewSrc}
-                  alt="Organization logo preview"
-                  className="mt-3 h-10 max-w-[160px] object-contain"
-                  data-testid="branding-logo-preview"
-                />
-              )
-            }
-            if (brandingLogo.trim()) {
-              return (
-                <p
-                  className="mt-2 text-xs"
-                  style={{ color: 'var(--color-on-surface-variant)' }}
-                  data-testid="branding-logo-preview-invalid"
-                >
-                  Preview available for image data URIs only (png, jpeg, gif, webp, svg+xml).
-                </p>
-              )
-            }
-            return null
-          })()}
+          {logoPreviewUrl ? (
+            <img
+              src={logoPreviewUrl}
+              alt="Organization logo preview"
+              className="mt-3 h-10 max-w-[160px] object-contain"
+              data-testid="branding-logo-preview"
+            />
+          ) : brandingLogo.trim() ? (
+            <p
+              className="mt-2 text-xs"
+              style={{ color: 'var(--color-on-surface-variant)' }}
+              data-testid="branding-logo-preview-invalid"
+            >
+              Preview available for image data URIs only (png, jpeg, gif, webp).
+            </p>
+          ) : null}
         </div>
 
         {brandingError ? (
