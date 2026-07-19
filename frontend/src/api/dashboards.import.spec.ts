@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { importDashboardYaml } from './dashboards'
+import { importDashboardYaml, replaceDashboardYaml } from './dashboards'
 
 describe('importDashboardYaml', () => {
   const mockFetch = vi.fn()
@@ -47,6 +47,57 @@ describe('importDashboardYaml', () => {
     mockFetch.mockResolvedValue({ ok: false, status: 400 })
 
     await expect(importDashboardYaml('org-1', 'not valid')).rejects.toThrow(
+      'Invalid YAML dashboard document',
+    )
+  })
+})
+
+describe('replaceDashboardYaml', () => {
+  const mockFetch = vi.fn()
+  const originalFetch = global.fetch
+
+  beforeEach(() => {
+    global.fetch = mockFetch
+    mockFetch.mockClear()
+    localStorage.clear()
+  })
+
+  afterEach(() => {
+    global.fetch = originalFetch
+  })
+
+  it('replaces an existing dashboard body from yaml', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          id: 'dashboard-1',
+          title: 'Replaced Dashboard',
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-02T00:00:00Z',
+        }),
+    })
+
+    const yamlPayload = 'version: 2\ntitle: Replaced Dashboard\npanels: []\n'
+    const result = await replaceDashboardYaml('dashboard-1', yamlPayload)
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/dashboards/dashboard-1/import?format=yaml',
+      expect.objectContaining({
+        method: 'PUT',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/x-yaml',
+        }),
+        body: yamlPayload,
+      }),
+    )
+    expect(result.title).toBe('Replaced Dashboard')
+  })
+
+  it('throws validation error for invalid yaml', async () => {
+    mockFetch.mockResolvedValue({ ok: false, status: 400 })
+
+    await expect(replaceDashboardYaml('dashboard-1', 'not valid')).rejects.toThrow(
       'Invalid YAML dashboard document',
     )
   })

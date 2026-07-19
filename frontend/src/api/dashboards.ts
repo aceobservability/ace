@@ -151,3 +151,40 @@ export async function importDashboardYaml(orgId: string, yamlContent: string): P
 
   return response.json()
 }
+
+/** Replace an existing dashboard body (title/description/panels) from a v2 YAML document. */
+export async function replaceDashboardYaml(
+  id: string,
+  yamlContent: string,
+): Promise<Dashboard> {
+  const response = await fetch(`${API_BASE}/api/dashboards/${id}/import?format=yaml`, {
+    method: 'PUT',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/x-yaml',
+    },
+    body: yamlContent,
+  })
+
+  if (!response.ok) {
+    trackEvent('dashboard_update_failed', {
+      dashboard_id: id,
+      status_code: response.status,
+      via: 'yaml_replace',
+    })
+    if (response.status === 403) {
+      throw new Error('Not authorized to update this dashboard')
+    }
+    if (response.status === 400) {
+      throw new Error('Invalid YAML dashboard document')
+    }
+    throw new Error('Failed to save dashboard YAML')
+  }
+
+  const dashboard = await response.json()
+  trackEvent('dashboard_updated', {
+    dashboard_id: id,
+    updated_fields: ['yaml'],
+  })
+  return dashboard
+}

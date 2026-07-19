@@ -14,61 +14,19 @@ import { bulkCreateVariables } from '@/api/variables'
 import { useDatasources } from '@/hooks/useDatasources'
 import { useOrganization } from '@/hooks/useOrganization'
 import type { ConversionReport } from '@/types/converter'
+import {
+  buildDashboardYamlPreview,
+  type DashboardYamlPreview,
+} from '@/utils/dashboardYaml'
 
 type CreationMode = 'create' | 'import' | 'grafana'
 type ModalStep = 'choice' | 'form'
 type GrafanaSubTab = 'upload' | 'connect'
 
-type ImportPreview = {
-  title: string
-  description: string
-  panelCount: number
-}
-
 type CreateDashboardModalProps = {
   initialMode?: CreationMode
   onClose: () => void
   onCreated: () => void
-}
-
-function normalizeYamlValue(value: string): string {
-  const trimmed = value.trim()
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1).trim()
-  }
-  return trimmed
-}
-
-function buildYamlPreview(rawYaml: string): ImportPreview {
-  const versionMatch = rawYaml.match(/(?:^|\n)version:\s*(.+)/)
-  if (!versionMatch) {
-    throw new Error('Missing version')
-  }
-
-  const titleMatch = rawYaml.match(/(?:^|\n)title:\s*(.+)/)
-  if (!titleMatch) {
-    throw new Error('Missing dashboard title')
-  }
-
-  const extractedTitle = normalizeYamlValue(titleMatch[1] ?? '')
-  if (!extractedTitle) {
-    throw new Error('Dashboard title is empty')
-  }
-
-  const descriptionMatch = rawYaml.match(/(?:^|\n)description:\s*(.+)/)
-  const panelsSectionMatch = rawYaml.match(
-    /(?:^|\n)panels:\s*\n([\s\S]*?)(?=\n[a-zA-Z_][\w-]*:\s*|\s*$)/,
-  )
-  const panelCount = (panelsSectionMatch?.[1]?.match(/(?:^|\n)\s{2}-\s+/g) ?? []).length
-
-  return {
-    title: extractedTitle,
-    description: normalizeYamlValue(descriptionMatch?.[1] ?? ''),
-    panelCount,
-  }
 }
 
 export function CreateDashboardModal({
@@ -113,7 +71,7 @@ export function CreateDashboardModal({
       include_all: boolean
     }>
   >([])
-  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null)
+  const [importPreview, setImportPreview] = useState<DashboardYamlPreview | null>(null)
 
   const submitLabel = useMemo(() => {
     if (loading) {
@@ -179,7 +137,7 @@ export function CreateDashboardModal({
         return
       }
 
-      setImportPreview(buildYamlPreview(content))
+      setImportPreview(buildDashboardYamlPreview(content))
       setYamlContent(content)
       setYamlFileName(file.name)
     } catch (e) {

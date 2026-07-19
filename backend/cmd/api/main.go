@@ -229,6 +229,7 @@ func main() {
 	mux.HandleFunc("PUT /api/dashboards/{id}", auth.RequireAuth(jwtManager, dashboardHandler.Update))
 	mux.HandleFunc("DELETE /api/dashboards/{id}", auth.RequireAuth(jwtManager, dashboardHandler.Delete))
 	mux.HandleFunc("GET /api/dashboards/{id}/export", auth.RequireAuth(jwtManager, dashboardHandler.Export))
+	mux.HandleFunc("PUT /api/dashboards/{id}/import", auth.RequireAuth(jwtManager, dashboardHandler.ReplaceImport))
 	mux.HandleFunc("POST /api/orgs/{orgId}/dashboards/import", auth.RequireAuth(jwtManager, dashboardHandler.Import))
 
 	// Folder routes

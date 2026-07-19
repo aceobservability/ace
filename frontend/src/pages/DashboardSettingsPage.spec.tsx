@@ -38,11 +38,10 @@ const mockDashboard = {
   updated_at: '2026-02-09T00:00:00Z',
 }
 
-const initialYaml = `schema_version: 1
-dashboard:
-  title: Production Overview
-  description: Main prod metrics
-  panels: []
+const initialYaml = `version: 2
+title: Production Overview
+description: Main prod metrics
+panels: []
 `
 
 function renderSettings(section = 'general') {
@@ -85,8 +84,9 @@ describe('DashboardSettingsPage', () => {
       format: 'yaml',
       content: initialYaml,
       document: {
-        schema_version: 1,
-        dashboard: { title: 'Production Overview', panels: [] },
+        version: 2,
+        title: 'Production Overview',
+        panels: [],
       },
       warnings: [],
     })
@@ -139,6 +139,17 @@ describe('DashboardSettingsPage', () => {
     expect(screen.queryByTestId('settings-section-permissions')).toBeNull()
   })
 
+  it('hides permissions section for editors (admin-only API)', async () => {
+    mockCurrentOrg.role = 'editor'
+    const router = renderSettings('permissions')
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/app/dashboards/dashboard-1/settings/general')
+    })
+
+    expect(screen.queryByTestId('settings-section-permissions')).toBeNull()
+  })
+
   it('saves general settings and persists dashboard view preferences', async () => {
     const user = userEvent.setup()
     renderSettings('general')
@@ -174,19 +185,24 @@ describe('DashboardSettingsPage', () => {
     })
   })
 
-  it('saves YAML editor content', async () => {
+  it('saves YAML editor content via full-body replace', async () => {
     const user = userEvent.setup()
+    vi.spyOn(dashboardApi, 'replaceDashboardYaml').mockResolvedValue({
+      ...mockDashboard,
+      title: 'YAML Updated',
+      description: 'From YAML',
+    })
+
     renderSettings('yaml')
 
     await waitFor(() => {
       expect(screen.getByTestId('yaml-editor-input')).toBeTruthy()
     })
 
-    const nextYaml = `schema_version: 1
-dashboard:
-  title: YAML Updated
-  description: From YAML
-  panels: []
+    const nextYaml = `version: 2
+title: YAML Updated
+description: From YAML
+panels: []
 `
     const yamlInput = screen.getByTestId('yaml-editor-input')
     fireEvent.change(yamlInput, { target: { value: nextYaml } })
@@ -194,13 +210,35 @@ dashboard:
     await user.click(screen.getByTestId('save-dashboard-yaml'))
 
     await waitFor(() => {
-      expect(dashboardApi.updateDashboard).toHaveBeenCalledWith('dashboard-1', {
-        title: 'YAML Updated',
-        description: 'From YAML',
-      })
+      expect(dashboardApi.replaceDashboardYaml).toHaveBeenCalledWith('dashboard-1', nextYaml)
     })
+    expect(dashboardApi.updateDashboard).not.toHaveBeenCalled()
 
     expect(await screen.findByText('Dashboard YAML saved')).toBeTruthy()
+  })
+
+  it('rejects nested v1 YAML schema on save', async () => {
+    const user = userEvent.setup()
+    const replaceSpy = vi.spyOn(dashboardApi, 'replaceDashboardYaml')
+    renderSettings('yaml')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('yaml-editor-input')).toBeTruthy()
+    })
+
+    const nestedV1 = `schema_version: 1
+dashboard:
+  title: Nested
+  panels: []
+`
+    fireEvent.change(screen.getByTestId('yaml-editor-input'), {
+      target: { value: nestedV1 },
+    })
+
+    await user.click(screen.getByTestId('save-dashboard-yaml'))
+
+    expect(await screen.findByTestId('yaml-validation-error')).toBeTruthy()
+    expect(replaceSpy).not.toHaveBeenCalled()
   })
 
   it('renders dashboard permissions editor inline on permissions section', async () => {

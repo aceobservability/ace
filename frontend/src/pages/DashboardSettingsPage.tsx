@@ -2,10 +2,19 @@ import { ArrowLeft, Download, Settings } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { convertGrafanaDashboard } from '@/api/converter'
-import { exportDashboardYaml, getDashboard, updateDashboard } from '@/api/dashboards'
+import {
+  exportDashboardYaml,
+  getDashboard,
+  replaceDashboardYaml,
+  updateDashboard,
+} from '@/api/dashboards'
 import { DashboardPermissionsEditor } from '@/components/DashboardPermissionsEditor'
 import { useOrganization } from '@/hooks/useOrganization'
 import type { Dashboard } from '@/types/dashboard'
+import {
+  extractYamlTitleAndDescription,
+  validateDashboardYaml,
+} from '@/utils/dashboardYaml'
 
 interface DashboardViewSettings {
   timeRangePreset: string
@@ -36,16 +45,6 @@ const REFRESH_OPTIONS = [
   { label: '5m', value: '5m' },
 ]
 
-const TIME_RANGE_LOOKUP: Record<string, string> = {
-  'now-5m|now': '5m',
-  'now-15m|now': '15m',
-  'now-30m|now': '30m',
-  'now-1h|now': '1h',
-  'now-6h|now': '6h',
-  'now-24h|now': '24h',
-  'now-7d|now': '7d',
-}
-
 const ALL_SECTIONS: Array<{ key: SettingsSection; label: string }> = [
   { key: 'general', label: 'General' },
   { key: 'yaml', label: 'YAML Editor' },
@@ -71,104 +70,6 @@ function readStoredDashboardSettings(): Record<string, DashboardViewSettings> {
     return JSON.parse(rawSettings) as Record<string, DashboardViewSettings>
   } catch {
     return {}
-  }
-}
-
-function normalizeYamlValue(value: string): string {
-  const trimmed = value.trim()
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1).trim()
-  }
-  return trimmed
-}
-
-function extractDashboardSection(rawYaml: string): string {
-  const dashboardSectionMatch = rawYaml.match(/(?:^|\n)dashboard:\s*\n([\s\S]*)/)
-  return dashboardSectionMatch?.[1] ?? ''
-}
-
-function validateYamlContent(rawYaml: string): string | null {
-  if (!rawYaml.trim()) {
-    return 'YAML content is required'
-  }
-
-  const schemaVersionMatch = rawYaml.match(/(?:^|\n)schema_version:\s*(\d+)/)
-  if (!schemaVersionMatch) {
-    return 'Missing schema_version'
-  }
-  if (schemaVersionMatch[1] !== '1') {
-    return `Unsupported schema_version ${schemaVersionMatch[1]}`
-  }
-
-  const dashboardSection = extractDashboardSection(rawYaml)
-  if (!dashboardSection) {
-    return 'Missing dashboard section'
-  }
-
-  const titleMatch = dashboardSection.match(/(?:^|\n)\s{2}title:\s*(.+)/)
-  if (!titleMatch || !normalizeYamlValue(titleMatch[1] ?? '')) {
-    return 'Missing dashboard title'
-  }
-
-  const panelsMatch = dashboardSection.match(/(?:^|\n)\s{2}panels:\s*(?:\n|\[])/)
-  if (!panelsMatch) {
-    return 'Missing dashboard panels section'
-  }
-
-  return null
-}
-
-function extractVariables(rawYaml: string): string[] {
-  const dashboardSection = extractDashboardSection(rawYaml)
-  if (!dashboardSection) return []
-
-  const variablesSectionMatch = dashboardSection.match(
-    /(?:^|\n)\s{2}variables:\s*\n([\s\S]*?)(?=\n\s{2}[a-zA-Z_][\w-]*:\s*|\s*$)/,
-  )
-
-  const section = variablesSectionMatch?.[1] ?? ''
-  return [...section.matchAll(/(?:^|\n)\s{4}-\s*name:\s*(.+)/g)]
-    .map(match => normalizeYamlValue(match[1] ?? ''))
-    .filter(name => name.length > 0)
-}
-
-function extractTimeRangePreset(rawYaml: string, fallback: string): string {
-  const dashboardSection = extractDashboardSection(rawYaml)
-  if (!dashboardSection) return fallback
-
-  const fromMatch = dashboardSection.match(/(?:^|\n)\s{4}from:\s*(.+)/)
-  const toMatch = dashboardSection.match(/(?:^|\n)\s{4}to:\s*(.+)/)
-
-  const fromValue = normalizeYamlValue(fromMatch?.[1] ?? '')
-  const toValue = normalizeYamlValue(toMatch?.[1] ?? '')
-  if (!fromValue || !toValue) return fallback
-
-  return TIME_RANGE_LOOKUP[`${fromValue}|${toValue}`] ?? fallback
-}
-
-function extractRefreshInterval(rawYaml: string, fallback: string): string {
-  const dashboardSection = extractDashboardSection(rawYaml)
-  if (!dashboardSection) return fallback
-
-  const refreshMatch = dashboardSection.match(/(?:^|\n)\s{2}refresh_interval:\s*(.+)/)
-  const value = normalizeYamlValue(refreshMatch?.[1] ?? '')
-  return REFRESH_OPTIONS.some(option => option.value === value) ? value : fallback
-}
-
-function extractTitleAndDescription(
-  rawYaml: string,
-  fallbackTitle: string,
-): { title: string; description: string } {
-  const dashboardSection = extractDashboardSection(rawYaml)
-  const titleMatch = dashboardSection.match(/(?:^|\n)\s{2}title:\s*(.+)/)
-  const descriptionMatch = dashboardSection.match(/(?:^|\n)\s{2}description:\s*(.+)/)
-
-  return {
-    title: normalizeYamlValue(titleMatch?.[1] ?? fallbackTitle),
-    description: normalizeYamlValue(descriptionMatch?.[1] ?? ''),
   }
 }
 
@@ -215,9 +116,8 @@ export function DashboardSettingsPage() {
   const [grafanaWarnings, setGrafanaWarnings] = useState<string[]>([])
   const [showGrafanaReplace, setShowGrafanaReplace] = useState(false)
 
-  const canManagePermissions = Boolean(
-    currentOrg && (currentOrg.role === 'admin' || currentOrg.role === 'editor'),
-  )
+  // Permissions API requires org admin (see backend permissions.go).
+  const canManagePermissions = Boolean(currentOrg && currentOrg.role === 'admin')
   const canEdit = Boolean(
     currentOrg && (currentOrg.role === 'admin' || currentOrg.role === 'editor'),
   )
@@ -407,11 +307,11 @@ export function DashboardSettingsPage() {
   async function saveYamlSettings() {
     if (!dashboard || !canEdit || isYamlSaving) return
 
-    const validationError = validateYamlContent(yamlContent)
+    const validationError = validateDashboardYaml(yamlContent)
     setYamlValidationError(validationError)
     if (validationError) return
 
-    const { title: nextTitle, description: nextDescription } = extractTitleAndDescription(
+    const { title: nextTitle, description: nextDescription } = extractYamlTitleAndDescription(
       yamlContent,
       dashboard.title,
     )
@@ -424,28 +324,20 @@ export function DashboardSettingsPage() {
     resetFormState()
 
     try {
-      await updateDashboard(dashboard.id, {
-        title: nextTitle,
-        description: nextDescription || undefined,
-      })
+      // Persist full dashboard body (title/description/panels) via replace-import.
+      const updated = await replaceDashboardYaml(dashboard.id, yamlContent)
 
-      const yamlSettings = {
-        timeRangePreset: extractTimeRangePreset(yamlContent, timeRangePreset),
-        refreshInterval: extractRefreshInterval(yamlContent, refreshInterval),
-        variables: extractVariables(yamlContent),
-      }
+      const savedTitle = updated.title || nextTitle
+      const savedDescription = updated.description ?? nextDescription
 
       setDashboard({
         ...dashboard,
-        title: nextTitle,
-        description: nextDescription || undefined,
+        ...updated,
+        title: savedTitle,
+        description: savedDescription || undefined,
       })
-      setTitle(nextTitle)
-      setDescription(nextDescription)
-      setTimeRangePreset(yamlSettings.timeRangePreset)
-      setRefreshInterval(yamlSettings.refreshInterval)
-      setVariablesInput(yamlSettings.variables.join(', '))
-      persistDashboardViewSettings(yamlSettings)
+      setTitle(savedTitle)
+      setDescription(savedDescription)
 
       setOriginalYamlContent(yamlContent)
       setYamlValidationError(null)
@@ -468,7 +360,7 @@ export function DashboardSettingsPage() {
       const response = await convertGrafanaDashboard(grafanaSource, 'yaml')
       setYamlContent(response.content)
       setGrafanaWarnings(response.warnings)
-      setYamlValidationError(validateYamlContent(response.content))
+      setYamlValidationError(validateDashboardYaml(response.content))
     } catch (cause) {
       setActionError(
         cause instanceof Error ? cause.message : 'Failed to convert Grafana dashboard',
@@ -734,7 +626,7 @@ export function DashboardSettingsPage() {
                       onChange={event => {
                         const next = event.target.value
                         setYamlContent(next)
-                        setYamlValidationError(validateYamlContent(next))
+                        setYamlValidationError(validateDashboardYaml(next))
                       }}
                     />
                   </div>
