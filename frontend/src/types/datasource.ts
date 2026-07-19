@@ -297,3 +297,28 @@ export interface AMSilenceCreate {
 export interface AMReceiver {
   name: string
 }
+
+export interface AMVersionInfo {
+  version: string
+  revision?: string
+  branch?: string
+  buildUser?: string
+  buildDate?: string
+  goVersion?: string
+}
+
+export interface AMClusterStatus {
+  status: string
+  name?: string
+}
+
+export interface AMConfig {
+  original: string
+}
+
+export interface AMStatus {
+  cluster: AMClusterStatus
+  versionInfo: AMVersionInfo
+  config: AMConfig
+  uptime: string
+}

@@ -295,6 +295,7 @@ func main() {
 	mux.HandleFunc("POST /api/datasources/{id}/alertmanager/silences", auth.RequireAuth(jwtManager, alertManagerHandler.CreateSilence))
 	mux.HandleFunc("DELETE /api/datasources/{id}/alertmanager/silences/{silenceId}", auth.RequireAuth(jwtManager, alertManagerHandler.ExpireSilence))
 	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/receivers", auth.RequireAuth(jwtManager, alertManagerHandler.ListReceivers))
+	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/status", auth.RequireAuth(jwtManager, alertManagerHandler.Status))
 	mux.HandleFunc("GET /api/datasources/{id}/alertmanager/health", auth.RequireAuth(jwtManager, alertManagerHandler.Health))
 
 	// GitHub Copilot auth routes
