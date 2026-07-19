@@ -10,23 +10,48 @@ function readOpen(): boolean {
   }
 }
 
+export type AiSidebarContext = {
+  message: string
+  panelTitle?: string
+}
+
 type AiSidebarState = {
   isOpen: boolean
+  pendingContext: AiSidebarContext | null
+  open: (context?: AiSidebarContext) => void
   toggle: () => void
   close: () => void
+  consumePendingContext: () => AiSidebarContext | null
 }
 
 export const useAiSidebarStore = create<AiSidebarState>((set, get) => ({
   isOpen: readOpen(),
+  pendingContext: null,
+
+  open(context) {
+    localStorage.setItem(OPEN_KEY, 'true')
+    set({
+      isOpen: true,
+      ...(context ? { pendingContext: context } : {}),
+    })
+  },
 
   toggle() {
-    const next = !get().isOpen
-    localStorage.setItem(OPEN_KEY, String(next))
-    set({ isOpen: next })
+    if (get().isOpen) {
+      get().close()
+      return
+    }
+    get().open()
   },
 
   close() {
     localStorage.setItem(OPEN_KEY, 'false')
     set({ isOpen: false })
+  },
+
+  consumePendingContext() {
+    const ctx = get().pendingContext
+    set({ pendingContext: null })
+    return ctx
   },
 }))
