@@ -29,6 +29,9 @@ const ServicesPage = lazy(() =>
   import('@/pages/ServicesPage').then(m => ({ default: m.ServicesPage })),
 )
 const AlertsPage = lazy(() => import('@/pages/AlertsPage').then(m => ({ default: m.AlertsPage })))
+const SettingsPage = lazy(() =>
+  import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })),
+)
 
 const DashboardAliasRedirect = createParamRedirect('/app/dashboards/:id')
 const DashboardSettingsAliasRedirect = createParamRedirect('/app/dashboards/:id/settings')
@@ -131,7 +134,7 @@ const appRoutes: RouteObject[] = [
   {
     path: '/app/settings/:section',
     handle: withMeta('Settings — Ace'),
-    element: placeholder('Settings'),
+    element: <SettingsPage />,
   },
   {
     path: '/app/datasources',
