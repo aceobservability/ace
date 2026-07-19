@@ -25,6 +25,46 @@ vi.mock('react-grid-layout/legacy', () => ({
     <div data-testid="dashboard-grid-mock">{children}</div>
   ),
 }))
+
+vi.mock('@/components/QueryBuilder', () => ({
+  QueryBuilder: ({
+    value,
+    onChange,
+  }: {
+    value: string
+    onChange: (value: string) => void
+  }) => (
+    <textarea
+      data-testid="promql-query-input"
+      value={value}
+      onChange={event => onChange(event.target.value)}
+    />
+  ),
+}))
+
+vi.mock('@/components/MonacoQueryEditor', () => ({
+  MonacoQueryEditor: () => <div data-testid="mock-monaco" />,
+}))
+
+vi.mock('@/hooks/useDatasources', () => ({
+  useDatasources: () => ({
+    data: [
+      {
+        id: 'ds-1',
+        organization_id: 'org-1',
+        name: 'Prometheus',
+        type: 'prometheus',
+        url: 'http://localhost:9090',
+        is_default: true,
+        auth_type: 'none',
+        trace_id_field: 'trace_id',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    ],
+  }),
+}))
+
 import * as dashboardApi from '@/api/dashboards'
 import * as datasourceApi from '@/api/datasources'
 import * as panelApi from '@/api/panels'
@@ -197,5 +237,68 @@ describe('DashboardDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Dashboards list')).toBeTruthy()
     })
+  })
+
+  it('opens create panel modal from Add Panel button', async () => {
+    const user = userEvent.setup()
+    renderDashboardDetail()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('dashboard-add-panel-btn')).toBeTruthy()
+    })
+
+    await user.click(screen.getByTestId('dashboard-add-panel-btn'))
+    expect(screen.getByTestId('panel-edit-modal')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Add Panel' })).toBeTruthy()
+  })
+
+  it('opens edit panel modal from panel edit button', async () => {
+    const user = userEvent.setup()
+    renderDashboardDetail()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('dashboard-panel-panel-1')).toBeTruthy()
+    })
+
+    const editButtons = screen.getAllByTestId('panel-edit-btn')
+    await user.click(editButtons[0]!)
+    expect(screen.getByTestId('panel-edit-modal')).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Edit Panel' })).toBeTruthy()
+    expect((screen.getByTestId('panel-title-input') as HTMLInputElement).value).toBe('CPU Usage')
+  })
+
+  it('adds created panel to grid without reloading', async () => {
+    const user = userEvent.setup()
+    const createdPanel = {
+      id: 'panel-new',
+      dashboard_id: 'test-dashboard-id',
+      title: 'New Panel',
+      type: 'line_chart',
+      grid_pos: { x: 0, y: 0, w: 6, h: 4 },
+      created_at: '2026-02-02T00:00:00Z',
+      updated_at: '2026-02-02T00:00:00Z',
+    }
+    vi.spyOn(panelApi, 'createPanel').mockResolvedValue(createdPanel)
+
+    renderDashboardDetail()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('dashboard-add-panel-btn')).toBeTruthy()
+    })
+
+    await user.click(screen.getByTestId('dashboard-add-panel-btn'))
+    await user.type(screen.getByTestId('panel-title-input'), 'New Panel')
+    await user.click(screen.getByTestId('panel-edit-save-btn'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('dashboard-panel-panel-new')).toBeTruthy()
+    })
+    expect(screen.queryByTestId('panel-edit-modal')).toBeNull()
+    expect(panelApi.createPanel).toHaveBeenCalledWith(
+      'test-dashboard-id',
+      expect.objectContaining({ title: 'New Panel', type: 'line_chart' }),
+    )
+    // Panel is inserted from the create response; no extra listPanels reload required.
+    expect(screen.getByText('New Panel')).toBeTruthy()
   })
 })

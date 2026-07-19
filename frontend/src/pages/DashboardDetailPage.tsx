@@ -1,9 +1,10 @@
-import { AlertCircle, ArrowLeft, LayoutGrid, Settings } from 'lucide-react'
+import { AlertCircle, ArrowLeft, LayoutGrid, Plus, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getDashboard } from '@/api/dashboards'
-import { listPanels } from '@/api/panels'
+import { deletePanel, listPanels } from '@/api/panels'
 import { DashboardGrid } from '@/components/DashboardGrid'
+import { PanelEditModal } from '@/components/PanelEditModal'
 import { TimeRangePicker } from '@/components/TimeRangePicker'
 import { VariableBar } from '@/components/VariableBar'
 import { CrosshairSyncProvider } from '@/contexts/CrosshairSyncContext'
@@ -30,6 +31,10 @@ function DashboardDetailContent({ dashboardId }: { dashboardId: string }) {
   const [panels, setPanels] = useState<Panel[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showPanelModal, setShowPanelModal] = useState(false)
+  const [editingPanel, setEditingPanel] = useState<Panel | null>(null)
+  const [deletingPanel, setDeletingPanel] = useState<Panel | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     setPreset('1h')
@@ -69,6 +74,54 @@ function DashboardDetailContent({ dashboardId }: { dashboardId: string }) {
       cancelled = true
     }
   }, [addRecent, dashboardId, fetchVariables, setPreset, setRefreshInterval])
+
+  function openAddPanel() {
+    setEditingPanel(null)
+    setShowPanelModal(true)
+  }
+
+  function openEditPanel(panel: Panel) {
+    setEditingPanel(panel)
+    setShowPanelModal(true)
+  }
+
+  function closePanelModal() {
+    setShowPanelModal(false)
+    setEditingPanel(null)
+  }
+
+  function handlePanelSaved(saved: Panel) {
+    setPanels(current => {
+      const existingIndex = current.findIndex(panel => panel.id === saved.id)
+      if (existingIndex === -1) {
+        return [...current, saved]
+      }
+      return current.map(panel => (panel.id === saved.id ? saved : panel))
+    })
+    closePanelModal()
+  }
+
+  function confirmDeletePanel(panel: Panel) {
+    setDeletingPanel(panel)
+  }
+
+  function cancelDelete() {
+    setDeletingPanel(null)
+  }
+
+  async function handleDeletePanel() {
+    if (!deletingPanel) return
+    setDeleting(true)
+    try {
+      await deletePanel(deletingPanel.id)
+      setPanels(current => current.filter(panel => panel.id !== deletingPanel.id))
+      setDeletingPanel(null)
+    } catch {
+      // Keep dialog open on failure; user can cancel
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <div className="mx-auto max-w-[1600px] px-6 py-5">
@@ -114,25 +167,46 @@ function DashboardDetailContent({ dashboardId }: { dashboardId: string }) {
             className="hidden h-6 w-px sm:block"
             style={{ backgroundColor: 'var(--color-outline-variant)' }}
           />
-          {dashboard && (
-            <Link
-              to={`/app/dashboards/${dashboardId}/settings/general`}
-              className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition hover:opacity-80"
-              style={{
-                backgroundColor: 'var(--color-surface-container-high)',
-                color: 'var(--color-on-surface-variant)',
-              }}
-              data-testid="dashboard-settings-button"
-            >
-              <Settings size={16} />
-              <span>Settings</span>
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            {dashboard && (
+              <Link
+                to={`/app/dashboards/${dashboardId}/settings/general`}
+                className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition hover:opacity-80"
+                style={{
+                  backgroundColor: 'var(--color-surface-container-high)',
+                  color: 'var(--color-on-surface-variant)',
+                }}
+                data-testid="dashboard-settings-button"
+              >
+                <Settings size={16} />
+                <span>Settings</span>
+              </Link>
+            )}
+            {dashboard && !loading && !error ? (
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{
+                  background:
+                    'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
+                }}
+                data-testid="dashboard-add-panel-btn"
+                onClick={openAddPanel}
+                disabled={loading}
+              >
+                <Plus size={18} />
+                <span>Add Panel</span>
+              </button>
+            ) : null}
+          </div>
         </div>
       </header>
 
       {hasVariables && !loading && !error && (
-        <VariableBar variables={variables} onValueChange={({ name, value }) => setVariableValue(name, value)} />
+        <VariableBar
+          variables={variables}
+          onValueChange={({ name, value }) => setVariableValue(name, value)}
+        />
       )}
 
       {loading ? (
@@ -198,10 +272,96 @@ function DashboardDetailContent({ dashboardId }: { dashboardId: string }) {
             No panels yet
           </h2>
           <p className="mb-6">Add your first panel to start visualizing data</p>
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90"
+            style={{
+              background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
+            }}
+            data-testid="dashboard-empty-add-panel-btn"
+            onClick={openAddPanel}
+          >
+            <Plus size={18} />
+            <span>Add Panel</span>
+          </button>
         </div>
       ) : (
-        <DashboardGrid panels={panels} onPanelsChange={setPanels} />
+        <DashboardGrid
+          panels={panels}
+          onPanelsChange={setPanels}
+          onEditPanel={openEditPanel}
+          onDeletePanel={confirmDeletePanel}
+        />
       )}
+
+      {showPanelModal ? (
+        <PanelEditModal
+          dashboardId={dashboardId}
+          panel={editingPanel ?? undefined}
+          onClose={closePanelModal}
+          onSaved={handlePanelSaved}
+        />
+      ) : null}
+
+      {deletingPanel ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          data-testid="delete-panel-modal"
+        >
+          <button
+            type="button"
+            aria-label="Close delete dialog"
+            className="absolute inset-0 cursor-default border-none p-0"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
+            onClick={cancelDelete}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="relative w-full max-w-[400px] rounded-lg p-8 text-center shadow-lg"
+            style={{
+              backgroundColor: 'var(--color-surface-bright)',
+              backdropFilter: 'blur(20px)',
+            }}
+          >
+            <h3
+              className="mb-2 font-display text-lg font-semibold"
+              style={{ color: 'var(--color-on-surface)' }}
+            >
+              Delete panel?
+            </h3>
+            <p className="mb-6 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
+              This will permanently remove &ldquo;{deletingPanel.title}&rdquo; from the dashboard.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                type="button"
+                className="cursor-pointer rounded-lg px-5 py-2.5 text-sm font-semibold transition hover:opacity-80 disabled:opacity-50"
+                style={{
+                  backgroundColor: 'var(--color-surface-container-high)',
+                  color: 'var(--color-on-surface)',
+                  border: '1px solid var(--color-outline-variant)',
+                }}
+                data-testid="delete-panel-cancel-btn"
+                onClick={cancelDelete}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="cursor-pointer rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: 'var(--color-error)' }}
+                data-testid="delete-panel-confirm-btn"
+                onClick={() => void handleDeletePanel()}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

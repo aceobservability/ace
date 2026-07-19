@@ -1,4 +1,4 @@
-import { AlertCircle, BarChart3 } from 'lucide-react'
+import { AlertCircle, BarChart3, Pencil, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { BarChart } from '@/components/BarChart'
 import { GaugeChart, type Threshold } from '@/components/GaugeChart'
@@ -11,9 +11,11 @@ import type { Panel as PanelType } from '@/types/panel'
 
 type PanelProps = {
   panel: PanelType
+  onEdit?: (panel: PanelType) => void
+  onDelete?: (panel: PanelType) => void
 }
 
-export function Panel({ panel }: PanelProps) {
+export function Panel({ panel, onEdit, onDelete }: PanelProps) {
   const { interpolate, variables } = useDashboardVariables()
   const { groupId } = useCrosshairSync()
   const variableSignature = useMemo(
@@ -88,6 +90,34 @@ export function Panel({ panel }: PanelProps) {
         <h3 className="truncate text-sm font-semibold" style={{ color: 'var(--color-on-surface)' }}>
           {panel.title}
         </h3>
+        {(onEdit || onDelete) && (
+          <div className="panel-actions flex gap-1">
+            {onEdit ? (
+              <button
+                type="button"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent transition hover:opacity-80"
+                style={{ color: 'var(--color-outline)' }}
+                data-testid="panel-edit-btn"
+                title="Edit panel"
+                onClick={() => onEdit(panel)}
+              >
+                <Pencil size={16} />
+              </button>
+            ) : null}
+            {onDelete ? (
+              <button
+                type="button"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent transition hover:opacity-80"
+                style={{ color: 'var(--color-outline)' }}
+                data-testid="panel-delete-btn"
+                title="Delete panel"
+                onClick={() => onDelete(panel)}
+              >
+                <Trash2 size={16} />
+              </button>
+            ) : null}
+          </div>
+        )}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2">
@@ -98,6 +128,20 @@ export function Panel({ panel }: PanelProps) {
           >
             <BarChart3 size={48} />
             <p className="m-0 text-sm">No query configured</p>
+            {onEdit ? (
+              <button
+                type="button"
+                className="cursor-pointer rounded-lg border-0 px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+                style={{
+                  background:
+                    'linear-gradient(135deg, var(--color-primary), var(--color-primary-dim))',
+                }}
+                data-testid="panel-configure-btn"
+                onClick={() => onEdit(panel)}
+              >
+                Configure Panel
+              </button>
+            ) : null}
           </div>
         ) : loading ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3">
