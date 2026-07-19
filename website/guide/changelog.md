@@ -4,6 +4,25 @@ title: "Changelog"
 
 # Changelog
 
+## [0.19.0](https://github.com/aceobservability/ace/compare/v0.18.0...v0.19.0) (2026-07-19)
+
+
+### Features
+
+* **frontend:** app shell and navigation ([#296](https://github.com/aceobservability/ace/issues/296)) ([#317](https://github.com/aceobservability/ace/issues/317)) ([c89925a](https://github.com/aceobservability/ace/commit/c89925a35dd7c8fce40655f2203aa23ed4bf9ab9))
+* **frontend:** dashboard settings and AI generation ([#306](https://github.com/aceobservability/ace/issues/306)) ([#326](https://github.com/aceobservability/ace/issues/326)) ([4a33cb3](https://github.com/aceobservability/ace/commit/4a33cb337802d989316f2abd8fac79f1b4d93758))
+* **frontend:** dashboard viewing core ([#302](https://github.com/aceobservability/ace/issues/302)) ([#325](https://github.com/aceobservability/ace/issues/325)) ([4798aa7](https://github.com/aceobservability/ace/commit/4798aa7eca0a0126c52e6bee54779b5ef5562e97))
+* **frontend:** home, metrics explore, and logs explore ([#297](https://github.com/aceobservability/ace/issues/297)–[#299](https://github.com/aceobservability/ace/issues/299)) ([#323](https://github.com/aceobservability/ace/issues/323)) ([b36b4b0](https://github.com/aceobservability/ace/commit/b36b4b01c40dfdb93bcbd7db3d5a5df3eb4ec408))
+* **frontend:** organization settings page ([#308](https://github.com/aceobservability/ace/issues/308)) ([#328](https://github.com/aceobservability/ace/issues/328)) ([362d66f](https://github.com/aceobservability/ace/commit/362d66f6026962243cd9b20823c9902a37437c47))
+* **frontend:** React auth and session ([#295](https://github.com/aceobservability/ace/issues/295)) ([#314](https://github.com/aceobservability/ace/issues/314)) ([617fb70](https://github.com/aceobservability/ace/commit/617fb700c675a5250e9f7cce25b2fb75079a568d))
+* **frontend:** services overview and alerts management ([#307](https://github.com/aceobservability/ace/issues/307)) ([#327](https://github.com/aceobservability/ace/issues/327)) ([5c45c3a](https://github.com/aceobservability/ace/commit/5c45c3ad0aa5e5d80b0d83474308124a5186b1de))
+* **frontend:** traces explore and dashboard library ([#300](https://github.com/aceobservability/ace/issues/300), [#301](https://github.com/aceobservability/ace/issues/301)) ([#324](https://github.com/aceobservability/ace/issues/324)) ([3dd0032](https://github.com/aceobservability/ace/commit/3dd00325a100d28bb9d37e2a55c8bcc73ae56fb6))
+
+
+### CI
+
+* fix Docs CI follow-up for release PR doc regeneration ([#320](https://github.com/aceobservability/ace/issues/320)) ([eb18b45](https://github.com/aceobservability/ace/commit/eb18b4519d4e65dde9bbe5c9028b306c6b0bc79b))
+
 ## [0.18.0](https://github.com/aceobservability/ace/compare/v0.17.0...v0.18.0) (2026-07-13)
 
 
