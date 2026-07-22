@@ -7,6 +7,16 @@ import { ClickHouseSQLEditor } from '@/components/ClickHouseSQLEditor'
 import { CloudWatchQueryEditor } from '@/components/CloudWatchQueryEditor'
 import { ElasticsearchQueryEditor } from '@/components/ElasticsearchQueryEditor'
 import { LogQLQueryBuilder } from '@/components/LogQLQueryBuilder'
+import {
+  DEFAULT_GRID_POS,
+  getDefaultQuerySignal,
+  getQueryMode,
+  isQuerySignal,
+  isSignalDatasourceType,
+  type QuerySignal,
+  validatePanelSave,
+  buildPanelTypeGroups,
+} from '@/components/panelEdit/panelEditHelpers'
 import { ensurePanelTypesRegistered } from '@/components/panels/registerPanelTypes'
 import { QueryBuilder } from '@/components/QueryBuilder'
 import { useDatasources } from '@/hooks/useDatasources'
@@ -14,12 +24,7 @@ import { useOrganization } from '@/hooks/useOrganization'
 import type { DataSource } from '@/types/datasource'
 import { isLogsType, isTracingType } from '@/types/datasource'
 import type { Panel } from '@/types/panel'
-import {
-  getAllPanels,
-  lookupPanel,
-  type PanelQueryMode,
-  type PanelRegistration,
-} from '@/utils/panelRegistry'
+import { lookupPanel } from '@/utils/panelRegistry'
 
 ensurePanelTypesRegistered()
 
@@ -40,28 +45,12 @@ function toThreshold(value: number, color: string, id?: string): Threshold {
   return { id: id ?? nextThresholdId(), value, color }
 }
 
-type QuerySignal = 'logs' | 'metrics' | 'traces'
-
 type PanelEditModalProps = {
   dashboardId: string
   panel?: Panel
   onClose: () => void
   onSaved: (panel: Panel) => void
 }
-
-const BUILTIN_TYPES = new Set([
-  'line_chart',
-  'bar_chart',
-  'pie',
-  'gauge',
-  'stat',
-  'table',
-  'logs',
-  'trace_list',
-  'trace_heatmap',
-])
-
-const DEFAULT_GRID_POS = { x: 0, y: 0, w: 6, h: 4 }
 
 const inputClass =
   'w-full rounded-lg px-3 py-2.5 text-sm transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50'
@@ -72,22 +61,6 @@ const fieldStyle = {
   color: 'var(--color-on-surface)',
   border: '1px solid var(--color-outline-variant)',
 } as const
-
-function getDefaultQuerySignal(panelType: string): QuerySignal {
-  if (panelType === 'logs') return 'logs'
-  if (panelType === 'trace_list' || panelType === 'trace_heatmap') return 'traces'
-  return 'metrics'
-}
-
-function isQuerySignal(value: unknown): value is QuerySignal {
-  return value === 'logs' || value === 'metrics' || value === 'traces'
-}
-
-function panelOptionLabel(reg: PanelRegistration): string {
-  if (reg.supportStatus === 'unsupported') return `${reg.label} (not supported)`
-  if (reg.supportStatus === 'setup_required') return `${reg.label} (setup required)`
-  return reg.label
-}
 
 function readQueryString(query: Record<string, unknown> | undefined, key: string): string {
   const value = query?.[key]
@@ -115,17 +88,6 @@ function readThresholds(query: Record<string, unknown> | undefined): Threshold[]
 
 function thresholdsForQuery(thresholds: Threshold[]): Array<{ value: number; color: string }> {
   return thresholds.map(({ value, color }) => ({ value, color }))
-}
-
-function getQueryMode(panelType: string): PanelQueryMode {
-  if (panelType === 'logs') return 'logs'
-  if (panelType === 'trace_list' || panelType === 'trace_heatmap') return 'traces'
-  if (BUILTIN_TYPES.has(panelType)) return 'metrics'
-  return lookupPanel(panelType)?.queryMode ?? 'metrics'
-}
-
-function isSignalDatasourceType(type: string | undefined): boolean {
-  return type === 'clickhouse' || type === 'cloudwatch' || type === 'elasticsearch'
 }
 
 export function PanelEditModal({ dashboardId, panel, onClose, onSaved }: PanelEditModalProps) {
@@ -182,10 +144,7 @@ export function PanelEditModal({ dashboardId, panel, onClose, onSaved }: PanelEd
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const registeredPanels = useMemo(
-    () => getAllPanels().filter(entry => !BUILTIN_TYPES.has(entry.type)),
-    [],
-  )
+  const panelTypeGroups = useMemo(() => buildPanelTypeGroups(), [])
 
   const currentQueryMode = getQueryMode(panelType)
   const needsDatasource = currentQueryMode !== 'none'
@@ -319,23 +278,23 @@ export function PanelEditModal({ dashboardId, panel, onClose, onSaved }: PanelEd
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
 
-    if (!title.trim()) {
-      setError('Title is required')
-      return
-    }
+    const size = isEditing && panel?.grid_pos
+      ? { w: panel.grid_pos.w, h: panel.grid_pos.h }
+      : { w: DEFAULT_GRID_POS.w, h: DEFAULT_GRID_POS.h }
 
-    if (isTracePanelType && !selectedDatasourceId) {
-      setError('Tracing datasource is required for trace panels')
+    const validationError = validatePanelSave({
+      title,
+      panelType,
+      size,
+      queryMode: currentQueryMode,
+      selectedDatasourceId,
+      queryText,
+      gaugeMin: isGaugeType ? gaugeMin : undefined,
+      gaugeMax: isGaugeType ? gaugeMax : undefined,
+    })
+    if (validationError) {
+      setError(validationError)
       return
-    }
-
-    // Validate grid size defaults used on create (matches Vue fixed grid_pos)
-    if (!isEditing) {
-      const { w, h } = DEFAULT_GRID_POS
-      if (w < 2 || h < 2) {
-        setError('Panel size is invalid')
-        return
-      }
     }
 
     const query: Record<string, unknown> = {}
@@ -529,19 +488,18 @@ export function PanelEditModal({ dashboardId, panel, onClose, onSaved }: PanelEd
                 className={selectClass}
                 style={fieldStyle}
               >
-                <option value="line_chart">Line Chart</option>
-                <option value="bar_chart">Bar Chart</option>
-                <option value="pie">Pie Chart</option>
-                <option value="gauge">Gauge</option>
-                <option value="stat">Stat</option>
-                <option value="table">Table</option>
-                <option value="logs">Logs</option>
-                <option value="trace_list">Trace List</option>
-                <option value="trace_heatmap">Trace Heatmap</option>
-                {registeredPanels.map(reg => (
-                  <option key={reg.type} value={reg.type}>
-                    {panelOptionLabel(reg)}
-                  </option>
+                {panelTypeGroups.map(group => (
+                  <optgroup key={group.id} label={group.label}>
+                    {group.options.map(option => (
+                      <option
+                        key={option.value}
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
+                        {option.label}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>

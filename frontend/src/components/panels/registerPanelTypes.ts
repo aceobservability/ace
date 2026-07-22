@@ -33,12 +33,8 @@ function ensureRegistered(
   registerPanel(registration)
 }
 
-let registered = false
-
+/** Idempotent: safe after clearRegistry() and across repeated mounts. */
 export function ensurePanelTypesRegistered(): void {
-  if (registered) return
-  registered = true
-
   ensureRegistered({
     type: 'text',
     component: stubComponent,
