@@ -79,7 +79,7 @@ export function AppLayout() {
     const unregisterNew = registerShortcut(
       'Cmd+Shift+N',
       () => {
-        void navigate('/app/dashboards?new=1')
+        void navigate('/app/dashboards/new/ai')
       },
       'New dashboard',
       'Actions',

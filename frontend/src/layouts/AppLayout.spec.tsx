@@ -23,6 +23,10 @@ vi.mock('@/analytics', () => ({
   setAnalyticsConsent: vi.fn(),
   setSessionRecordingEnabled: vi.fn(),
   initializeAnalytics: vi.fn(),
+  subscribeAnalytics: (listener: () => void) => {
+    void listener
+    return () => {}
+  },
 }))
 
 function renderAppLayout(initialPath = '/app') {

@@ -6,7 +6,7 @@ import { useDashboardGeneration } from '@/hooks/useDashboardGeneration'
 import { useOrganization } from '@/hooks/useOrganization'
 import { getToolsForDatasourceType } from '@/lib/copilotTools'
 import type { DashboardSpec } from '@/utils/dashboardSpec'
-import { initMarkdown, renderMarkdown } from '@/utils/markdown'
+import { escapeHtml, initMarkdown, renderMarkdown } from '@/utils/markdown'
 
 type CmdKChatViewProps = {
   initialQuery: string
@@ -242,8 +242,10 @@ export function CmdKChatView({
                   backgroundColor: 'var(--color-surface-container-low)',
                   color: 'var(--color-on-surface)',
                 }}
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: markdown is sanitized via DOMPurify
-                dangerouslySetInnerHTML={{ __html: renderedHtml[index] || msg.content }}
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized markdown, or escaped plain text while pending
+                dangerouslySetInnerHTML={{
+                  __html: renderedHtml[index] ?? escapeHtml(msg.content),
+                }}
               />
             </div>
           ),

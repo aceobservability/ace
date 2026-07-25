@@ -8,7 +8,7 @@ import { useOrganization } from '@/hooks/useOrganization'
 import { getToolsForDatasourceType } from '@/lib/copilotTools'
 import { useAiSidebarStore } from '@/stores/aiSidebarStore'
 import type { DashboardSpec } from '@/utils/dashboardSpec'
-import { initMarkdown, renderMarkdown } from '@/utils/markdown'
+import { escapeHtml, initMarkdown, renderMarkdown } from '@/utils/markdown'
 
 function toolStatusIcon(status: 'running' | 'complete' | 'error'): string {
   switch (status) {
@@ -359,8 +359,10 @@ export function AiSidebar() {
                     color: 'var(--color-on-surface-variant)',
                     border: '1px solid var(--color-stroke-subtle)',
                   }}
-                  // biome-ignore lint/security/noDangerouslySetInnerHtml: markdown is sanitized via DOMPurify
-                  dangerouslySetInnerHTML={{ __html: renderedHtml[index] || msg.content }}
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized markdown, or escaped plain text while pending
+                  dangerouslySetInnerHTML={{
+                    __html: renderedHtml[index] ?? escapeHtml(msg.content),
+                  }}
                 />
               </div>
             ),

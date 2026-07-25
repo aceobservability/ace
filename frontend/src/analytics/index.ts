@@ -42,6 +42,21 @@ let analyticsSessionRecordingEnabled = false
 let posthogClient: PostHogLike | null = null
 let routerHookRegistered = false
 
+const analyticsListeners = new Set<() => void>()
+
+function emitAnalyticsChange() {
+  for (const listener of analyticsListeners) {
+    listener()
+  }
+}
+
+export function subscribeAnalytics(listener: () => void): () => void {
+  analyticsListeners.add(listener)
+  return () => {
+    analyticsListeners.delete(listener)
+  }
+}
+
 function readDoNotTrackEnabled(): boolean {
   if (typeof navigator === 'undefined') {
     return false
@@ -135,6 +150,7 @@ export async function initializeAnalytics(router?: AnalyticsRouter) {
 
   if (analyticsDntEnabled) {
     analyticsConsent = 'denied'
+    emitAnalyticsChange()
     return
   }
 
@@ -164,6 +180,7 @@ export async function initializeAnalytics(router?: AnalyticsRouter) {
 
   applyConsent()
   applySessionRecording()
+  emitAnalyticsChange()
 
   if (router) {
     registerPageViewTracking(router)
@@ -204,6 +221,7 @@ export function setAnalyticsConsent(consent: AnalyticsConsent) {
   }
   applyConsent()
   applySessionRecording()
+  emitAnalyticsChange()
 }
 
 export function setSessionRecordingEnabled(enabled: boolean) {
@@ -212,6 +230,7 @@ export function setSessionRecordingEnabled(enabled: boolean) {
     localStorage.setItem(SESSION_RECORDING_STORAGE_KEY, String(enabled))
   }
   applySessionRecording()
+  emitAnalyticsChange()
 }
 
 export function getAnalyticsReady() {
