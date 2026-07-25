@@ -139,7 +139,55 @@ export function Panel({ panel, onEdit, onDelete, onOpenTrace }: PanelProps) {
     onOpenTrace?.({ datasourceId, traceId })
   }
 
+  function renderRegistryEmptyState() {
+    return (
+      <div
+        data-testid="panel-unsupported-empty"
+        className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center"
+        style={{ color: 'var(--color-on-surface-variant)' }}
+      >
+        <AlertCircle size={40} style={{ color: 'var(--color-tertiary)' }} />
+        <h4 className="m-0 text-sm font-semibold" style={{ color: 'var(--color-on-surface)' }}>
+          {registryEmptyState?.title ||
+            (isRegistryPanel
+              ? `${registry?.label || panel.type} not available in React yet`
+              : 'Panel not supported yet')}
+        </h4>
+        <p className="m-0 max-w-sm text-xs leading-5">
+          {registryEmptyState?.description ||
+            'This panel type is registered but has no live React renderer yet. Use a Core panel type for live dashboard content.'}
+        </p>
+        {registryEmptyState?.actionLabel ? (
+          <span
+            className="text-[11px] font-semibold uppercase tracking-wide"
+            style={{ color: 'var(--color-primary)' }}
+          >
+            {registryEmptyState.actionLabel}
+          </span>
+        ) : null}
+      </div>
+    )
+  }
+
   function renderBody() {
+    // Text is the only registry type with a live React body; handle it before support gates.
+    if (isTextPanel) {
+      return (
+        <div
+          className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-3 text-sm leading-6"
+          style={{ color: 'var(--color-on-surface)' }}
+          data-testid="text-panel"
+        >
+          {textContent || 'Edit this panel to add content.'}
+        </div>
+      )
+    }
+
+    // Non-live registry types: skip loading/query chrome so the empty state is immediate.
+    if (isUnsupportedRegistryPanel || isSetupRequiredRegistryPanel || isRegistryPanel) {
+      return renderRegistryEmptyState()
+    }
+
     if (!hasQuery) {
       return (
         <div
@@ -272,64 +320,6 @@ export function Panel({ panel, onEdit, onDelete, onOpenTrace }: PanelProps) {
       return (
         <div className="min-h-0 flex-1">
           <TraceHeatmapPanel traces={traceSummaries} onOpenTrace={handleOpenTrace} />
-        </div>
-      )
-    }
-
-    if (isTextPanel) {
-      return (
-        <div
-          className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap p-3 text-sm leading-6"
-          style={{ color: 'var(--color-on-surface)' }}
-          data-testid="text-panel"
-        >
-          {textContent || 'Edit this panel to add content.'}
-        </div>
-      )
-    }
-
-    if (isUnsupportedRegistryPanel || isSetupRequiredRegistryPanel) {
-      return (
-        <div
-          data-testid="panel-unsupported-empty"
-          className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center"
-          style={{ color: 'var(--color-on-surface-variant)' }}
-        >
-          <AlertCircle size={40} style={{ color: 'var(--color-tertiary)' }} />
-          <h4 className="m-0 text-sm font-semibold" style={{ color: 'var(--color-on-surface)' }}>
-            {registryEmptyState?.title || 'Panel not supported yet'}
-          </h4>
-          <p className="m-0 max-w-sm text-xs leading-5">
-            {registryEmptyState?.description ||
-              'This panel type is registered but has no live data integration.'}
-          </p>
-          {registryEmptyState?.actionLabel ? (
-            <span
-              className="text-[11px] font-semibold uppercase tracking-wide"
-              style={{ color: 'var(--color-primary)' }}
-            >
-              {registryEmptyState.actionLabel}
-            </span>
-          ) : null}
-        </div>
-      )
-    }
-
-    if (isRegistryPanel) {
-      return (
-        <div
-          data-testid="panel-registry-placeholder"
-          className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center"
-          style={{ color: 'var(--color-on-surface-variant)' }}
-        >
-          <AlertCircle size={40} style={{ color: 'var(--color-tertiary)' }} />
-          <h4 className="m-0 text-sm font-semibold" style={{ color: 'var(--color-on-surface)' }}>
-            {registry?.label || panel.type} renderer pending
-          </h4>
-          <p className="m-0 max-w-sm text-xs leading-5">
-            This panel type can be configured and saved. Live React rendering ships with the
-            dedicated panel renderer work.
-          </p>
         </div>
       )
     }

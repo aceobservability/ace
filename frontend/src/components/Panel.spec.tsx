@@ -209,6 +209,46 @@ describe('Panel', () => {
     expect(screen.getByText('Flame graph requires profiling data')).toBeTruthy()
   })
 
+  it('renders unsupported empty state for registry chart types without a React renderer', async () => {
+    mockUsePanelData.mockReturnValue({
+      loading: false,
+      error: null,
+      chartSeries: [],
+      logs: [],
+      traceSummaries: [],
+      traceSpans: [],
+      hasQuery: true,
+      registry: {
+        type: 'heatmap',
+        supportStatus: 'unsupported',
+        emptyState: {
+          title: 'Heatmap not available in React yet',
+          description: 'Use a Core panel type for live dashboard content.',
+          actionLabel: 'Use a Core panel type',
+        },
+        label: 'Heatmap',
+      },
+      refetch: vi.fn(),
+    })
+
+    render(
+      <Panel
+        panel={{
+          ...basePanel,
+          type: 'heatmap',
+          query: { expr: 'up', datasource_id: 'ds-1' },
+        }}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('panel-unsupported-empty')).toBeTruthy()
+    })
+    expect(screen.getByText('Heatmap not available in React yet')).toBeTruthy()
+    expect(screen.queryByTestId('panel-registry-placeholder')).toBeNull()
+    expect(screen.queryByText(/renderer pending/i)).toBeNull()
+  })
+
   it('renders text panel content from query', () => {
     mockUsePanelData.mockReturnValue({
       loading: false,
