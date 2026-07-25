@@ -14,6 +14,9 @@ import { useFavoritesStore } from '@/stores/favoritesStore'
 import type { Dashboard } from '@/types/dashboard'
 import type { Panel } from '@/types/panel'
 
+/** Shared with TracesExplorePanel — opens a specific trace after navigate. */
+const TRACE_NAVIGATION_CONTEXT_KEY = 'dashboard_trace_navigation'
+
 function dashboardLoadErrorMessage(cause: unknown): string {
   if (cause instanceof Error && cause.message === 'Not a member of this organization') {
     return 'You do not have permission to view this dashboard'
@@ -103,6 +106,22 @@ function DashboardDetailContent({ dashboardId }: { dashboardId: string }) {
 
   function confirmDeletePanel(panel: Panel) {
     setDeletingPanel(panel)
+  }
+
+  function openTraceTimeline(payload: { datasourceId: string; traceId: string }) {
+    try {
+      localStorage.setItem(
+        TRACE_NAVIGATION_CONTEXT_KEY,
+        JSON.stringify({
+          datasourceId: payload.datasourceId,
+          traceId: payload.traceId,
+          createdAt: Date.now(),
+        }),
+      )
+    } catch {
+      // Ignore localStorage write issues; navigation still works.
+    }
+    navigate('/app/explore/traces')
   }
 
   function cancelDelete() {
@@ -291,6 +310,7 @@ function DashboardDetailContent({ dashboardId }: { dashboardId: string }) {
           onPanelsChange={setPanels}
           onEditPanel={openEditPanel}
           onDeletePanel={confirmDeletePanel}
+          onOpenTrace={openTraceTimeline}
         />
       )}
 
