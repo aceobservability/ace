@@ -328,6 +328,82 @@ describe('ExplorePage', () => {
     })
   })
 
+  it('switches to dashboard navigation datasource before loading pending trace', async () => {
+    const defaultTraces: DataSource = {
+      id: 'ds-traces-default',
+      organization_id: 'org-1',
+      name: 'Tempo Default',
+      type: 'tempo',
+      url: 'http://tempo-default:3200',
+      is_default: true,
+      auth_type: 'none',
+      trace_id_field: 'trace_id',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    }
+    const panelTraces: DataSource = {
+      id: 'ds-traces-panel',
+      organization_id: 'org-1',
+      name: 'Tempo Panel',
+      type: 'tempo',
+      url: 'http://tempo-panel:3200',
+      is_default: false,
+      auth_type: 'none',
+      trace_id_field: 'trace_id',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    }
+
+    localStorage.setItem(
+      'dashboard_trace_navigation',
+      JSON.stringify({
+        datasourceId: panelTraces.id,
+        traceId: 'trace-from-dashboard',
+        createdAt: Date.now(),
+      }),
+    )
+
+    vi.spyOn(datasourcesApi, 'listDataSources').mockResolvedValue([defaultTraces, panelTraces])
+    vi.spyOn(datasourcesApi, 'fetchDataSourceTraceServices').mockResolvedValue(['api'])
+    vi.spyOn(datasourcesApi, 'searchDataSourceTraces').mockResolvedValue([])
+    const fetchTrace = vi.spyOn(datasourcesApi, 'fetchDataSourceTrace').mockResolvedValue({
+      traceId: 'trace-from-dashboard',
+      startTimeUnixNano: 1_700_000_000_000_000_000,
+      durationNano: 1_000_000,
+      services: ['api'],
+      spans: [
+        {
+          spanId: 'span-1',
+          operationName: 'GET /orders',
+          serviceName: 'api',
+          startTimeUnixNano: 1_700_000_000_000_000_000,
+          durationNano: 1_000_000,
+          status: 'ok',
+        },
+      ],
+    })
+    vi.spyOn(datasourcesApi, 'fetchDataSourceTraceServiceGraph').mockResolvedValue({
+      nodes: [],
+      edges: [],
+      totalRequests: 0,
+      totalErrorCount: 0,
+    })
+
+    renderExplore('/app/explore/traces')
+
+    await waitFor(() => {
+      expect(screen.getByTestId('explore-traces-datasource-btn').textContent).toContain(
+        'Tempo Panel',
+      )
+    })
+
+    await waitFor(() => {
+      expect(fetchTrace).toHaveBeenCalledWith('ds-traces-panel', 'trace-from-dashboard')
+    })
+
+    expect(localStorage.getItem('dashboard_trace_navigation')).toBeNull()
+  })
+
   it('renders logs explore tab at /app/explore/logs', async () => {
     vi.spyOn(datasourcesApi, 'listDataSources').mockResolvedValue([mockLogsDatasource])
     renderExplore('/app/explore/logs')

@@ -8,12 +8,21 @@ import type { Panel as PanelType } from '@/types/panel'
 type DashboardGridProps = {
   panels: PanelType[]
   onPanelsChange: (panels: PanelType[]) => void
+  onEditPanel?: (panel: PanelType) => void
+  onDeletePanel?: (panel: PanelType) => void
+  onOpenTrace?: (payload: { datasourceId: string; traceId: string }) => void
 }
 
 const COL_NUM = 12
 const ROW_HEIGHT = 100
 
-export function DashboardGrid({ panels, onPanelsChange }: DashboardGridProps) {
+export function DashboardGrid({
+  panels,
+  onPanelsChange,
+  onEditPanel,
+  onDeletePanel,
+  onOpenTrace,
+}: DashboardGridProps) {
   const saveLayoutTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -116,7 +125,12 @@ export function DashboardGrid({ panels, onPanelsChange }: DashboardGridProps) {
       >
         {panels.map(panel => (
           <div key={panel.id} data-testid={`dashboard-grid-item-${panel.id}`}>
-            <Panel panel={panel} />
+            <Panel
+              panel={panel}
+              onEdit={onEditPanel}
+              onDelete={onDeletePanel}
+              onOpenTrace={onOpenTrace}
+            />
           </div>
         ))}
       </GridLayout>
