@@ -33,15 +33,7 @@
   ],
   "ignore": [
     "src/env.d.ts",
-    "src/**/*.vue",
-    "src/components/**/*.vue",
     "src/components/**/*.spec.ts",
-    "src/components/panels/**",
-    "src/views/**/*.spec.ts",
-    "src/views/**",
-    "src/composables/**",
-    "src/plugins/**",
-    "src/router/vue-router.legacy.ts",
     "src/utils/panelRegistry.spec.ts",
     "src/monaco/**",
     "src/utils/datasourceLogos.ts"

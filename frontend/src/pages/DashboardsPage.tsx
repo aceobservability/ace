@@ -2,12 +2,19 @@ import { Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { DashboardList } from '@/components/DashboardList'
+import { useRegisterCommandContext } from '@/hooks/useRegisterCommandContext'
 import { useFavoritesStore } from '@/stores/favoritesStore'
 
 export function DashboardsPage() {
   const navigate = useNavigate()
   const favorites = useFavoritesStore(state => state.favorites)
   const [searchQuery, setSearchQuery] = useState('')
+
+  useRegisterCommandContext({
+    viewName: 'Dashboards',
+    viewRoute: '/app/dashboards',
+    description: 'Browse, search, and organize dashboards.',
+  })
 
   const dashboardCountLabel = useMemo(() => {
     const count = favorites.length

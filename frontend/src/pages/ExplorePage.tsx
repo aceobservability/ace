@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { LogsExplorePanel } from '@/components/LogsExplorePanel'
 import { MetricsExplorePanel } from '@/components/MetricsExplorePanel'
 import { TracesExplorePanel } from '@/components/TracesExplorePanel'
+import { useRegisterCommandContext } from '@/hooks/useRegisterCommandContext'
 
 type ExploreType = 'metrics' | 'logs' | 'traces'
 
@@ -21,6 +22,12 @@ export function ExplorePage() {
   const navigate = useNavigate()
   const { type } = useParams<{ type: string }>()
   const activeType = useMemo(() => normalizeExploreType(type), [type])
+
+  useRegisterCommandContext({
+    viewName: `Explore · ${activeType[0]!.toUpperCase()}${activeType.slice(1)}`,
+    viewRoute: `/app/explore/${activeType}`,
+    description: `Explore ${activeType} from connected datasources.`,
+  })
 
   function navigateToTab(nextType: ExploreType) {
     if (nextType === activeType) return

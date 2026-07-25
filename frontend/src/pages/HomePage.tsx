@@ -7,6 +7,7 @@ import { OnboardingBanner } from '@/components/OnboardingBanner'
 import { isSetupWizardDismissed, SetupWizard } from '@/components/SetupWizard'
 import { StatusDot } from '@/components/StatusDot'
 import { useDatasources } from '@/hooks/useDatasources'
+import { useRegisterCommandContext } from '@/hooks/useRegisterCommandContext'
 import { useFavoritesStore } from '@/stores/favoritesStore'
 import { useOrgStore } from '@/stores/orgStore'
 import {
@@ -63,6 +64,12 @@ export function HomePage() {
   const { data: datasources = [] } = useDatasources(currentOrgId)
   const favorites = useFavoritesStore(state => state.favorites)
   const recentDashboards = useFavoritesStore(state => state.recentDashboards)
+
+  useRegisterCommandContext({
+    viewName: 'Home',
+    viewRoute: '/app',
+    description: 'Command center — overview of services, dashboards, and AI insights.',
+  })
 
   const [wizardDismissedByUser, setWizardDismissedByUser] = useState(false)
 

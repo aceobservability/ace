@@ -9,6 +9,7 @@ import { TimeRangePicker } from '@/components/TimeRangePicker'
 import { VariableBar } from '@/components/VariableBar'
 import { CrosshairSyncProvider } from '@/contexts/CrosshairSyncContext'
 import { VariablesProvider, useDashboardVariables } from '@/contexts/VariablesContext'
+import { useRegisterCommandContext } from '@/hooks/useRegisterCommandContext'
 import { useTimeRange } from '@/hooks/useTimeRange'
 import { useFavoritesStore } from '@/stores/favoritesStore'
 import type { Dashboard } from '@/types/dashboard'
@@ -31,6 +32,13 @@ function DashboardDetailContent({ dashboardId }: { dashboardId: string }) {
   const { variables, hasVariables, fetchVariables, setVariableValue } = useDashboardVariables()
 
   const [dashboard, setDashboard] = useState<Dashboard | null>(null)
+
+  useRegisterCommandContext({
+    viewName: dashboard?.title ?? 'Dashboard',
+    viewRoute: `/app/dashboards/${dashboardId}`,
+    description: dashboard?.description || 'Dashboard detail view.',
+    dashboardId,
+  })
   const [panels, setPanels] = useState<Panel[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

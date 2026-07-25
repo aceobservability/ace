@@ -2,7 +2,7 @@
  * Registers panel type metadata used by the panel editor type picker.
  *
  * React `Panel` only fully renders Core builtins + the `text` widget today.
- * Other registry entries keep Vue-era metadata for edit/import parity, but are
+ * Other registry entries keep metadata for edit/import parity, but are
  * marked `unsupported` / `setup_required` so the picker and grid never imply a
  * live React renderer exists when the component loader is still a stub.
  */
@@ -35,7 +35,7 @@ function pendingReactRendererEmptyState(label: string) {
   return {
     title: `${label} renderer not available yet`,
     description:
-      'This panel type can be saved for edit/import parity with Vue dashboards, but the React dashboard grid does not render it yet. Use a Core panel type for live content.',
+      'This panel type can be saved for edit/import parity, but the dashboard grid does not render it yet. Use a Core panel type for live content.',
     actionLabel: 'Use a Core panel',
   }
 }

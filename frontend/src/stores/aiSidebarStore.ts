@@ -18,15 +18,18 @@ export type AiSidebarContext = {
 type AiSidebarState = {
   isOpen: boolean
   pendingContext: AiSidebarContext | null
+  highlightedPanelId: string | null
   open: (context?: AiSidebarContext) => void
   toggle: () => void
   close: () => void
+  highlightPanel: (panelId: string | null) => void
   consumePendingContext: () => AiSidebarContext | null
 }
 
 export const useAiSidebarStore = create<AiSidebarState>((set, get) => ({
   isOpen: readOpen(),
   pendingContext: null,
+  highlightedPanelId: null,
 
   open(context) {
     localStorage.setItem(OPEN_KEY, 'true')
@@ -46,7 +49,11 @@ export const useAiSidebarStore = create<AiSidebarState>((set, get) => ({
 
   close() {
     localStorage.setItem(OPEN_KEY, 'false')
-    set({ isOpen: false })
+    set({ isOpen: false, highlightedPanelId: null })
+  },
+
+  highlightPanel(panelId) {
+    set({ highlightedPanelId: panelId })
   },
 
   consumePendingContext() {

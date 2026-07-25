@@ -1,6 +1,6 @@
 import type { RawQueryResult } from '../types/panel'
 
-/** Lazy panel component loader — React `lazy()` or Vue `defineAsyncComponent` factory. */
+/** Lazy panel component loader — React `lazy()` factory. */
 export type PanelComponentLoader = () => Promise<unknown>
 
 export type { RawQueryResult }

@@ -13,6 +13,13 @@ vi.mock('@/analytics', () => ({
   identifyUser: vi.fn(),
   resetUserAnalytics: vi.fn(),
   trackEvent: vi.fn(),
+  getAnalyticsReady: vi.fn(() => false),
+  getAnalyticsConsent: vi.fn(() => 'granted'),
+  getAnalyticsDntEnabled: vi.fn(() => false),
+  getAnalyticsSessionRecordingEnabled: vi.fn(() => false),
+  setAnalyticsConsent: vi.fn(),
+  setSessionRecordingEnabled: vi.fn(),
+  initializeAnalytics: vi.fn(),
 }))
 
 describe('React foundation', () => {
