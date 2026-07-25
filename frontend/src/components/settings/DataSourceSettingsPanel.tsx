@@ -8,6 +8,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import {
   deleteDataSource,
   listDataSources,
@@ -103,14 +104,15 @@ export function DataSourceSettingsPanel({ orgId, isAdmin }: DataSourceSettingsPa
         <p className="m-0 text-sm" style={{ color: 'var(--color-on-surface-variant)' }}>
           Add a data source to start visualising your metrics, logs, and traces.
         </p>
-        {/* Creation is owned by #309; avoid broken circular /new redirect. */}
-        <p
-          className="m-0 text-xs"
-          style={{ color: 'var(--color-outline)' }}
-          data-testid="ds-panel-create-deferred"
-        >
-          Data source creation will be available in a follow-up release.
-        </p>
+        {isAdmin ? (
+          <Link
+            to={`/app/datasources/new?orgId=${orgId}`}
+            data-testid="ds-panel-add-empty-btn"
+            className="inline-flex items-center gap-1.5 rounded-sm border-none bg-[var(--color-primary)] px-3.5 py-2 text-sm font-medium text-white no-underline transition hover:opacity-90"
+          >
+            Add data source
+          </Link>
+        ) : null}
       </div>
     )
   }
@@ -124,14 +126,15 @@ export function DataSourceSettingsPanel({ orgId, isAdmin }: DataSourceSettingsPa
         >
           {datasources.length} data source{datasources.length !== 1 ? 's' : ''}
         </span>
-        {/* Creation is owned by #309; list + edit links ship here. */}
-        <span
-          className="text-xs"
-          style={{ color: 'var(--color-outline)' }}
-          data-testid="ds-panel-create-deferred"
-        >
-          Creation coming soon
-        </span>
+        {isAdmin ? (
+          <Link
+            to={`/app/datasources/new?orgId=${orgId}`}
+            data-testid="ds-panel-add-btn"
+            className="inline-flex items-center gap-1.5 rounded-sm border-none bg-[var(--color-primary)] px-3.5 py-2 text-sm font-medium text-white no-underline transition hover:opacity-90"
+          >
+            Add data source
+          </Link>
+        ) : null}
       </div>
 
       {actionError ? (
@@ -230,16 +233,15 @@ export function DataSourceSettingsPanel({ orgId, isAdmin }: DataSourceSettingsPa
               >
                 <Zap size={14} />
               </button>
-              {/* Edit UI ships in #309; avoid linking to the placeholder route. */}
-              <span
+              <Link
+                to={`/app/datasources/${ds.id}/edit`}
                 data-testid={`ds-panel-edit-${ds.id}`}
-                className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-sm border border-transparent bg-transparent p-0 opacity-40"
+                className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-sm border border-transparent bg-transparent p-0 no-underline transition-all"
                 style={{ color: 'var(--color-on-surface-variant)' }}
-                title="Edit coming soon"
-                aria-disabled="true"
+                title="Edit"
               >
                 <Edit2 size={14} />
-              </span>
+              </Link>
               {isAdmin ? (
                 <button
                   type="button"

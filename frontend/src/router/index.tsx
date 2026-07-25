@@ -4,9 +4,6 @@ import { AuthGuard } from '@/layouts/AuthGuard'
 import { AppLayout } from '@/layouts/AppLayout'
 import { createParamRedirect } from '@/lib/redirects'
 
-const PlaceholderPage = lazy(() =>
-  import('@/pages/PlaceholderPage').then(m => ({ default: m.PlaceholderPage })),
-)
 const HomePage = lazy(() => import('@/pages/HomePage').then(m => ({ default: m.HomePage })))
 const ExplorePage = lazy(() => import('@/pages/ExplorePage').then(m => ({ default: m.ExplorePage })))
 const DashboardsPage = lazy(() =>
@@ -32,6 +29,12 @@ const AlertsPage = lazy(() => import('@/pages/AlertsPage').then(m => ({ default:
 const SettingsPage = lazy(() =>
   import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })),
 )
+const DataSourceCreatePage = lazy(() =>
+  import('@/pages/DataSourceCreatePage').then(m => ({ default: m.DataSourceCreatePage })),
+)
+const AuditLogPage = lazy(() =>
+  import('@/pages/AuditLogPage').then(m => ({ default: m.AuditLogPage })),
+)
 
 const DashboardAliasRedirect = createParamRedirect('/app/dashboards/:id')
 const DashboardSettingsAliasRedirect = createParamRedirect('/app/dashboards/:id/settings')
@@ -51,10 +54,6 @@ export type RouteMeta = {
 
 function withMeta(title: string, description = defaultDescription, extra: Partial<RouteMeta> = {}): RouteMeta {
   return { title, description, ...extra }
-}
-
-function placeholder(title: string, description?: string) {
-  return <PlaceholderPage title={title} description={description} />
 }
 
 function SettingsOrgSectionRedirect() {
@@ -142,17 +141,18 @@ const appRoutes: RouteObject[] = [
   },
   {
     path: '/app/datasources/new',
-    element: <Navigate to="/app/settings/datasources" replace />,
+    handle: withMeta('Add Data Source | Ace'),
+    element: <DataSourceCreatePage />,
   },
   {
     path: '/app/datasources/:id/edit',
     handle: withMeta('Edit Data Source | Ace'),
-    element: placeholder('Edit Data Source'),
+    element: <DataSourceCreatePage />,
   },
   {
     path: '/app/audit-log',
     handle: withMeta('Audit Log — Ace'),
-    element: placeholder('Audit Log'),
+    element: <AuditLogPage />,
   },
 ]
 
