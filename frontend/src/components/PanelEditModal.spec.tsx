@@ -218,7 +218,7 @@ describe('PanelEditModal', () => {
     renderModal({ dashboardId })
     const typeSelect = screen.getByTestId('panel-type-select') as HTMLSelectElement
     const optionTexts = Array.from(typeSelect.options).map(option => option.text)
-    expect(optionTexts).toContain('Heatmap')
+    expect(optionTexts).toContain('Heatmap (not supported)')
     expect(optionTexts).toContain('Text')
     expect(optionTexts.some(text => text.includes('not supported'))).toBe(true)
     expect(optionTexts.some(text => text.includes('setup required'))).toBe(true)

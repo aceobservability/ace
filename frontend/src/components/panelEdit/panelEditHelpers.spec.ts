@@ -34,7 +34,8 @@ describe('panelEditHelpers', () => {
     expect(coreValues).toContain('logs')
 
     const chartLabels = groups.find(group => group.id === 'charts')?.options.map(o => o.label) ?? []
-    expect(chartLabels).toContain('Heatmap')
+    // Stub React registry charts are labeled unsupported until live renderers ship.
+    expect(chartLabels).toContain('Heatmap (not supported)')
     expect(chartLabels.some(text => text.includes('not supported'))).toBe(true)
   })
 

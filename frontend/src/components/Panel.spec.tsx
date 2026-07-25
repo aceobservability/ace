@@ -238,4 +238,51 @@ describe('Panel', () => {
 
     expect(screen.getByTestId('text-panel').textContent).toContain('Hello from text panel')
   })
+
+  it('renders unsupported empty state for registry charts without React bodies', async () => {
+    registerPanel({
+      type: 'heatmap',
+      component: async () => ({ default: () => null }),
+      dataAdapter: () => ({}),
+      defaultQuery: {},
+      category: 'charts',
+      label: 'Heatmap',
+      icon: async () => ({}),
+      supportStatus: 'unsupported',
+      emptyState: {
+        title: 'Heatmap renderer not available yet',
+        description: 'Use a Core panel type for live content.',
+        actionLabel: 'Use a Core panel',
+      },
+    })
+
+    mockUsePanelData.mockReturnValue({
+      loading: false,
+      error: null,
+      chartSeries: [],
+      logs: [],
+      traceSummaries: [],
+      traceSpans: [],
+      hasQuery: true,
+      registry: {
+        type: 'heatmap',
+        supportStatus: 'unsupported',
+        emptyState: {
+          title: 'Heatmap renderer not available yet',
+          description: 'Use a Core panel type for live content.',
+          actionLabel: 'Use a Core panel',
+        },
+        label: 'Heatmap',
+      },
+      refetch: vi.fn(),
+    })
+
+    render(<Panel panel={{ ...basePanel, type: 'heatmap', query: { expr: 'up' } }} />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('panel-unsupported-empty')).toBeTruthy()
+    })
+    expect(screen.queryByTestId('panel-registry-placeholder')).toBeNull()
+    expect(screen.getByText('Heatmap renderer not available yet')).toBeTruthy()
+  })
 })

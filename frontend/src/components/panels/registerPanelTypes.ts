@@ -1,6 +1,10 @@
 /**
  * Registers panel type metadata used by the panel editor type picker.
- * Component loaders are stubs — live rendering of registry panels is a separate concern.
+ *
+ * React `Panel` only fully renders Core builtins + the `text` widget today.
+ * Other registry entries keep Vue-era metadata for edit/import parity, but are
+ * marked `unsupported` / `setup_required` so the picker and grid never imply a
+ * live React renderer exists when the component loader is still a stub.
  */
 import {
   BarChart3,
@@ -26,6 +30,16 @@ import { isRegisteredPanel, registerPanel } from '@/utils/panelRegistry'
 const stubComponent = () => Promise.resolve({ default: () => null })
 const iconLoader = (icon: unknown) => () => Promise.resolve(icon)
 
+/** Shared empty state for registry types that still need a React panel port. */
+function pendingReactRendererEmptyState(label: string) {
+  return {
+    title: `${label} renderer not available yet`,
+    description:
+      'This panel type can be saved for edit/import parity with Vue dashboards, but the React dashboard grid does not render it yet. Use a Core panel type for live content.',
+    actionLabel: 'Use a Core panel',
+  }
+}
+
 function ensureRegistered(
   registration: Parameters<typeof registerPanel>[0],
 ): void {
@@ -35,6 +49,7 @@ function ensureRegistered(
 
 /** Idempotent: safe after clearRegistry() and across repeated mounts. */
 export function ensurePanelTypesRegistered(): void {
+  // Text is the one registry widget with a first-class React body in Panel.tsx.
   ensureRegistered({
     type: 'text',
     component: stubComponent,
@@ -56,6 +71,8 @@ export function ensurePanelTypesRegistered(): void {
     category: 'charts',
     label: 'Heatmap',
     icon: iconLoader(Grid3x3),
+    supportStatus: 'unsupported',
+    emptyState: pendingReactRendererEmptyState('Heatmap'),
   })
 
   ensureRegistered({
@@ -66,6 +83,8 @@ export function ensurePanelTypesRegistered(): void {
     category: 'stats',
     label: 'Bar Gauge',
     icon: iconLoader(GaugeCircle),
+    supportStatus: 'unsupported',
+    emptyState: pendingReactRendererEmptyState('Bar Gauge'),
   })
 
   ensureRegistered({
@@ -76,6 +95,8 @@ export function ensurePanelTypesRegistered(): void {
     category: 'charts',
     label: 'Scatter',
     icon: iconLoader(ScatterIcon),
+    supportStatus: 'unsupported',
+    emptyState: pendingReactRendererEmptyState('Scatter'),
   })
 
   ensureRegistered({
@@ -104,6 +125,8 @@ export function ensurePanelTypesRegistered(): void {
     category: 'observability',
     label: 'State Timeline',
     icon: iconLoader(GanttChart),
+    supportStatus: 'unsupported',
+    emptyState: pendingReactRendererEmptyState('State Timeline'),
   })
 
   ensureRegistered({
@@ -114,6 +137,8 @@ export function ensurePanelTypesRegistered(): void {
     category: 'charts',
     label: 'Histogram',
     icon: iconLoader(BarChart3),
+    supportStatus: 'unsupported',
+    emptyState: pendingReactRendererEmptyState('Histogram'),
   })
 
   ensureRegistered({
@@ -124,6 +149,8 @@ export function ensurePanelTypesRegistered(): void {
     category: 'observability',
     label: 'Status History',
     icon: iconLoader(LayoutGrid),
+    supportStatus: 'unsupported',
+    emptyState: pendingReactRendererEmptyState('Status History'),
   })
 
   ensureRegistered({
@@ -173,6 +200,8 @@ export function ensurePanelTypesRegistered(): void {
     category: 'charts',
     label: 'Candlestick',
     icon: iconLoader(CandlestickIcon),
+    supportStatus: 'unsupported',
+    emptyState: pendingReactRendererEmptyState('Candlestick'),
   })
 
   ensureRegistered({
@@ -266,5 +295,7 @@ export function ensurePanelTypesRegistered(): void {
     label: 'Canvas',
     icon: iconLoader(PenTool),
     queryMode: 'none',
+    supportStatus: 'unsupported',
+    emptyState: pendingReactRendererEmptyState('Canvas'),
   })
 }
