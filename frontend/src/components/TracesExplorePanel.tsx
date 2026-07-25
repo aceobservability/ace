@@ -516,17 +516,19 @@ export function TracesExplorePanel({ onDatasourceChanged }: TracesExplorePanelPr
       return
     }
 
-    const hasSelected = tracingDatasources.some(ds => ds.id === selectedDatasourceId)
-    if (!hasSelected) {
-      const pendingDatasource = pendingTraceDatasourceIdRef.current
-        ? tracingDatasources.find(ds => ds.id === pendingTraceDatasourceIdRef.current)
-        : null
-
-      if (pendingDatasource) {
+    // Dashboard (and deep-link) navigation always wins over a previously selected
+    // explore datasource so tryLoadPendingTrace is not stuck on a mismatch.
+    const pendingDatasourceId = pendingTraceDatasourceIdRef.current
+    if (pendingDatasourceId) {
+      const pendingDatasource = tracingDatasources.find(ds => ds.id === pendingDatasourceId)
+      if (pendingDatasource && pendingDatasource.id !== selectedDatasourceId) {
         setSelectedDatasourceId(pendingDatasource.id)
         return
       }
+    }
 
+    const hasSelected = tracingDatasources.some(ds => ds.id === selectedDatasourceId)
+    if (!hasSelected) {
       const defaultDatasource = tracingDatasources.find(ds => ds.is_default)
       const selected = defaultDatasource || tracingDatasources[0]
       if (!selected) return
