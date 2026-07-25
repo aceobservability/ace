@@ -1,6 +1,6 @@
 import { Pin, PinOff, Settings, Sparkles } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router'
 import { SidebarUserMenu } from '@/components/SidebarUserMenu'
 import { SidebarDashboardFlyout } from '@/components/sidebar/SidebarDashboardFlyout'
 import { SidebarNavButton } from '@/components/sidebar/SidebarNavButton'

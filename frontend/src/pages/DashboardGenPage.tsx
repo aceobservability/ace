@@ -1,6 +1,6 @@
 import { AlertCircle, ArrowRight, Check, Loader2, RotateCcw, Sparkles, Wrench } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 import { listDataSources } from '@/api/datasources'
 import { DashboardSpecPreview } from '@/components/DashboardSpecPreview'
 import { ShimmerLoader } from '@/components/ShimmerLoader'

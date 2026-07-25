@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { registerKeydownHandler } from '@/lib/globalKeyboard'
 import { SHORTCUT_NAV } from '@/lib/navigation'
 import { useSidebarStore } from '@/stores/sidebarStore'

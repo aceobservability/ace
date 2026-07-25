@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 import { LogsExplorePanel } from '@/components/LogsExplorePanel'
 import { MetricsExplorePanel } from '@/components/MetricsExplorePanel'
 import { TracesExplorePanel } from '@/components/TracesExplorePanel'

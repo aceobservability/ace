@@ -1,6 +1,6 @@
 import { AlertCircle, Lock, LogIn, Mail, User, UserPlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router'
 import { API_BASE } from '@/api/base'
 import type { SSOProvider } from '@/api/auth'
 import { fetchSSOProviders } from '@/api/auth'

@@ -1,6 +1,6 @@
 import { AlertCircle, ArrowLeft, LayoutGrid, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router'
 import { getDashboard } from '@/api/dashboards'
 import { listPanels } from '@/api/panels'
 import { DashboardGrid } from '@/components/DashboardGrid'

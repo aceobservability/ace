@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import { createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { createMemoryRouter } from 'react-router'
+import { RouterProvider } from 'react-router/dom'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { AuthGuard } from '@/layouts/AuthGuard'
 import { createParamRedirect, resolveParamPath } from '@/lib/redirects'

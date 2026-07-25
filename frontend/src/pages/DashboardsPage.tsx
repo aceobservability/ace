@@ -1,6 +1,6 @@
 import { Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { DashboardList } from '@/components/DashboardList'
 import { useFavoritesStore } from '@/stores/favoritesStore'
 

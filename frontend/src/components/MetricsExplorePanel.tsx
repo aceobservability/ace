@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router'
 import { queryDataSource } from '@/api/datasources'
 import { ExportToDashboardModal } from '@/components/ExportToDashboardModal'
 import { LineChart, type ChartSeries } from '@/components/LineChart'
