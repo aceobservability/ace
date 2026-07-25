@@ -1,6 +1,6 @@
 import { Bot, Database, Edit2, Lock, Shield, Users } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router'
 import { getOrganization, listMembers } from '@/api/organizations'
 import { AIProviderSettings } from '@/components/settings/AIProviderSettings'
 import { CopilotConnectionPanel } from '@/components/settings/CopilotConnectionPanel'

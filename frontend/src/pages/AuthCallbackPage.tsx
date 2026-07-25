@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router'
 import { storeSessionFromTokens } from '@/api/auth'
 import { clearTokens } from '@/lib/tokenStorage'
 import { consumeSsoRedirect } from '@/lib/ssoRedirect'

@@ -1,6 +1,6 @@
 import { ArrowLeft, Download, Settings } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 import { convertGrafanaDashboard } from '@/api/converter'
 import {
   exportDashboardYaml,

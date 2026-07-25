@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { createBrowserRouter, Navigate, useParams, type RouteObject } from 'react-router-dom'
+import { createBrowserRouter, Navigate, useParams, type RouteObject } from 'react-router'
 import { AuthGuard } from '@/layouts/AuthGuard'
 import { AppLayout } from '@/layouts/AppLayout'
 import { createParamRedirect } from '@/lib/redirects'

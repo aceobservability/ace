@@ -1,5 +1,5 @@
 import { Database, Sparkles, X } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 
 const DISMISS_KEY = 'ace-setup-wizard-dismissed'
 

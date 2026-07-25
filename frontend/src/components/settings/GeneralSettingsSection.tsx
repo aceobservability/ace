@@ -1,6 +1,6 @@
 import { Edit2, Shield } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import {
   deleteOrganization,
   updateOrgBranding,
