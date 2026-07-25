@@ -28,9 +28,7 @@
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [
     "src/**/*.spec.ts",
-    "src/**/*.spec.tsx",
     "src/**/*.test.ts",
-    "src/**/*.test.tsx",
     "src/**/*.vue",
     "src/components/**/*.vue",
     "src/components/panels/**",

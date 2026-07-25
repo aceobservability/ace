@@ -78,8 +78,14 @@ describe('AuditLogPage', () => {
       limit: 50,
     })
     mockExportAuditLog.mockResolvedValue(new Blob(['csv,data'], { type: 'text/csv' }))
-    global.URL.createObjectURL = vi.fn(() => 'blob:mock-url')
-    global.URL.revokeObjectURL = vi.fn()
+    Object.defineProperty(globalThis.URL, 'createObjectURL', {
+      value: vi.fn(() => 'blob:mock-url'),
+      configurable: true,
+    })
+    Object.defineProperty(globalThis.URL, 'revokeObjectURL', {
+      value: vi.fn(),
+      configurable: true,
+    })
   })
 
   afterEach(() => {
