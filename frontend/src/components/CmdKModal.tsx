@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { CmdKChatView } from '@/components/CmdKChatView'
 import { CmdKSearchResults } from '@/components/CmdKSearchResults'
 import { useAIProvider } from '@/hooks/useAIProvider'
-import { useCommandContext } from '@/hooks/useCommandContext'
+import { useCommandContextStore } from '@/stores/commandContextStore'
 
 type CmdKModalProps = {
   isOpen: boolean
@@ -11,8 +11,8 @@ type CmdKModalProps = {
 }
 
 export function CmdKModal({ isOpen, onClose }: CmdKModalProps) {
-  const { currentContext } = useCommandContext()
-  const { providers, fetchProviders, clearChatMessages } = useAIProvider()
+  const currentContext = useCommandContextStore(state => state.currentContext)
+  const { providers, fetchProviders } = useAIProvider()
   const navigate = useNavigate()
 
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -20,6 +20,7 @@ export function CmdKModal({ isOpen, onClose }: CmdKModalProps) {
   const [mode, setMode] = useState<'search' | 'chat'>('search')
   const [chatQuery, setChatQuery] = useState('')
   const [showNotConnected, setShowNotConnected] = useState(false)
+  const [chatSessionKey, setChatSessionKey] = useState(0)
 
   useEffect(() => {
     if (!isOpen) {
@@ -59,7 +60,7 @@ export function CmdKModal({ isOpen, onClose }: CmdKModalProps) {
       return
     }
     setChatQuery(q)
-    clearChatMessages()
+    setChatSessionKey(key => key + 1)
     setMode('chat')
     setShowNotConnected(false)
   }
@@ -165,6 +166,7 @@ export function CmdKModal({ isOpen, onClose }: CmdKModalProps) {
 
         {mode === 'chat' ? (
           <CmdKChatView
+            key={chatSessionKey}
             initialQuery={chatQuery}
             datasourceType={currentContext?.datasourceType ?? ''}
             datasourceName={currentContext?.datasourceName ?? ''}

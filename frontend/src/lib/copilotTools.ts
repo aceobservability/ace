@@ -5,7 +5,7 @@ import {
   fetchDataSourceTraceServices,
   listDataSources,
 } from '@/api/datasources'
-import type { ToolCall, ToolDefinition } from '@/hooks/useAIProvider'
+import type { ToolCall, ToolDefinition } from '@/api/aiChat'
 
 const datasourceIdParam = {
   datasource_id: {

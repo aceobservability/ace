@@ -25,8 +25,13 @@ export type AnalyticsRoute = {
   name?: string | symbol | null
 }
 
+/** React Router data-router surface used for pageview tracking. */
 export type AnalyticsRouter = {
-  afterEach: (callback: (to: AnalyticsRoute) => void) => void
+  subscribe: (fn: (state: {
+    navigation: { state: string }
+    location: { pathname: string; search: string; hash: string }
+    matches: Array<{ route: { id?: string } }>
+  }) => void) => () => void
 }
 
 const POSTHOG_HOST_DEFAULT = 'https://eu.posthog.com'
@@ -124,10 +129,18 @@ function registerPageViewTracking(router: AnalyticsRouter) {
     return
   }
 
-  router.afterEach(to => {
+  let lastPath: string | null = null
+  router.subscribe(state => {
+    if (state.navigation.state !== 'idle') return
+
+    const fullPath = `${state.location.pathname}${state.location.search}${state.location.hash}`
+    if (fullPath === lastPath) return
+    lastPath = fullPath
+
+    const leaf = state.matches.at(-1)
     trackEvent('$pageview', {
-      path: to.fullPath,
-      route_name: typeof to.name === 'string' ? to.name : undefined,
+      path: fullPath,
+      route_name: typeof leaf?.route.id === 'string' ? leaf.route.id : undefined,
       current_url: typeof window !== 'undefined' ? window.location.href : undefined,
     })
   })

@@ -4,23 +4,15 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CmdKModal } from '@/components/CmdKModal'
+import { useCommandContextStore } from '@/stores/commandContextStore'
 
 const mockFetchProviders = vi.hoisted(() => vi.fn())
-const mockClearChatMessages = vi.hoisted(() => vi.fn())
 const mockProviders = vi.hoisted(() => [] as Array<{ id: string; display_name: string }>)
 
 vi.mock('@/hooks/useAIProvider', () => ({
   useAIProvider: () => ({
     providers: mockProviders,
     fetchProviders: mockFetchProviders,
-    clearChatMessages: mockClearChatMessages,
-    chatMessages: [],
-  }),
-}))
-
-vi.mock('@/hooks/useCommandContext', () => ({
-  useCommandContext: () => ({
-    currentContext: { viewName: 'Home', viewRoute: '/app', description: 'home' },
   }),
 }))
 
@@ -63,6 +55,9 @@ describe('CmdKModal', () => {
     vi.clearAllMocks()
     mockProviders.length = 0
     mockFetchProviders.mockResolvedValue(undefined)
+    useCommandContextStore.setState({
+      currentContext: { viewName: 'Home', viewRoute: '/app', description: 'home' },
+    })
   })
 
   it('does not show modal content when closed', () => {
@@ -101,7 +96,6 @@ describe('CmdKModal', () => {
     mockProviders.push({ id: 'p1', display_name: 'OpenAI' })
     renderModal(true)
     await user.click(screen.getByTestId('enter-chat'))
-    expect(mockClearChatMessages).toHaveBeenCalled()
     expect(screen.getByTestId('chat-view')).toBeTruthy()
   })
 })

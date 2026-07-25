@@ -17,7 +17,6 @@ import { useSearchParams } from 'react-router'
 import {
   fetchDataSourceLabels,
   queryDataSource,
-  streamDataSourceLogs,
 } from '@/api/datasources'
 import { ExportToDashboardModal } from '@/components/ExportToDashboardModal'
 import { LogQLQueryBuilder } from '@/components/LogQLQueryBuilder'
@@ -25,6 +24,7 @@ import { LogViewer } from '@/components/LogViewer'
 import { MonacoQueryEditor } from '@/components/MonacoQueryEditor'
 import { TimeRangePicker } from '@/components/TimeRangePicker'
 import { useLogsDatasources } from '@/hooks/useLogsDatasources'
+import { useLiveLogStream } from '@/hooks/useLiveLogStream'
 import { useTimeRange } from '@/hooks/useTimeRange'
 import { useFavoritesStore } from '@/stores/favoritesStore'
 import { useOrgStore } from '@/stores/orgStore'
@@ -34,177 +34,29 @@ import {
   type DataSourceType,
   type LogEntry,
 } from '@/types/datasource'
-import { dataSourceTypeLogos } from '@/utils/datasourceLogos'
 
-type DatasourceHealthStatus = 'unknown' | 'checking' | 'healthy' | 'unhealthy'
-type LiveState = 'idle' | 'connecting' | 'connected' | 'reconnecting'
-
-type TraceLogsNavigationContext = {
-  traceId?: string
-  serviceName?: string
-  startMs?: number
-  endMs?: number
-  createdAt?: number
-}
+import {
+  type DatasourceHealthStatus,
+  type ExploreDatasourceChanged,
+  getTypeLogo,
+  healthLabel,
+  pushQueryHistory,
+  readQueryHistory,
+  TRACE_NAVIGATION_MAX_AGE_MS,
+} from '@/components/explore/exploreShared'
+import {
+  type TraceLogsNavigationContext,
+  buildTraceLogsQuery,
+  getDefaultLogsQuery,
+  getLogsSmokeQuery,
+  LOGS_HISTORY_KEY,
+  needsLogsSignal,
+  sortLogsNewestFirst,
+  TRACE_LOGS_NAVIGATION_CONTEXT_KEY,
+} from '@/components/explore/logsExploreHelpers'
 
 type LogsExplorePanelProps = {
-  onDatasourceChanged?: (payload: { id: string; name: string; type: string }) => void
-}
-
-const HISTORY_KEY = 'explore_logs_query_history'
-const MAX_HISTORY = 10
-const TRACE_LOGS_NAVIGATION_CONTEXT_KEY = 'trace_logs_navigation'
-const TRACE_NAVIGATION_MAX_AGE_MS = 5 * 60 * 1000
-const MAX_STREAM_LOGS = 2000
-const LIVE_RESUME_OVERLAP_SECONDS = 5
-const LIVE_RECONNECT_BASE_DELAY_MS = 1000
-const LIVE_RECONNECT_MAX_DELAY_MS = 15000
-const NEW_LOG_HIGHLIGHT_MS = 2500
-
-function escapeForDoubleQuotedValue(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-}
-
-function escapeForSingleQuotedValue(value: string): string {
-  return value.replace(/'/g, "''")
-}
-
-function getTypeLogo(type_: DataSourceType): string | undefined {
-  return dataSourceTypeLogos[type_]
-}
-
-function getDefaultLogsQuery(type_: DataSourceType): string {
-  switch (type_) {
-    case 'loki':
-      return '{job=~".+"}'
-    case 'victorialogs':
-      return '*'
-    case 'clickhouse':
-      return "SELECT\n  Timestamp AS timestamp,\n  Body AS message,\n  SeverityText AS level\nFROM ace_logs\nWHERE Timestamp >= toDateTime({start})\n  AND Timestamp <= toDateTime({end})\nORDER BY Timestamp DESC\nLIMIT 100"
-    case 'cloudwatch':
-      return 'fields @timestamp, @message\n| sort @timestamp desc\n| limit 100'
-    case 'elasticsearch':
-      return '*'
-    default:
-      return ''
-  }
-}
-
-function getSmokeQuery(type_: DataSourceType): string {
-  if (type_ === 'clickhouse') {
-    return "SELECT now() AS timestamp, 'healthcheck' AS message LIMIT 1"
-  }
-  if (type_ === 'cloudwatch') {
-    return 'fields @timestamp, @message | sort @timestamp desc | limit 1'
-  }
-  if (type_ === 'elasticsearch') {
-    return '*'
-  }
-  if (type_ === 'loki') {
-    return '{job=~".+"}'
-  }
-  return '*'
-}
-
-function buildTraceLogsQuery(type_: DataSourceType, traceId: string, serviceName: string): string {
-  const escapedTraceId = escapeForDoubleQuotedValue(traceId)
-  const escapedServiceName = escapeForDoubleQuotedValue(serviceName)
-  const escapedTraceIdSql = escapeForSingleQuotedValue(traceId)
-  const escapedServiceNameSql = escapeForSingleQuotedValue(serviceName)
-
-  if (type_ === 'loki') {
-    const selector = escapedServiceName ? `{service_name="${escapedServiceName}"}` : '{job=~".+"}'
-    return `${selector} |= "${escapedTraceId}"`
-  }
-
-  if (type_ === 'clickhouse') {
-    const serviceCondition = escapedServiceNameSql
-      ? `AND service_name = '${escapedServiceNameSql}'`
-      : ''
-    return `SELECT timestamp, message, level\nFROM logs\nWHERE message ILIKE '%${escapedTraceIdSql}%' ${serviceCondition}\nORDER BY timestamp DESC\nLIMIT 500`
-  }
-
-  if (type_ === 'cloudwatch') {
-    const serviceFilter = escapedServiceName
-      ? ` | filter service_name = "${escapedServiceName}"`
-      : ''
-    return `fields @timestamp, @message, @logStream\n| filter @message like /${escapedTraceId}/${serviceFilter}\n| sort @timestamp desc\n| limit 500`
-  }
-
-  if (type_ === 'elasticsearch') {
-    if (escapedServiceName) {
-      return `trace.id:"${escapedTraceId}" AND service.name:"${escapedServiceName}"`
-    }
-    return `trace.id:"${escapedTraceId}"`
-  }
-
-  if (escapedServiceName) {
-    return `"${escapedServiceName}" "${escapedTraceId}"`
-  }
-
-  return `"${escapedTraceId}"`
-}
-
-function sortLogsNewestFirst(entries: LogEntry[]): LogEntry[] {
-  return entries
-    .map((log, index) => {
-      const parsedTimestamp = Date.parse(log.timestamp)
-      return {
-        log,
-        index,
-        timestampMs: Number.isNaN(parsedTimestamp) ? null : parsedTimestamp,
-      }
-    })
-    .sort((a, b) => {
-      if (a.timestampMs === null && b.timestampMs === null) {
-        return a.index - b.index
-      }
-      if (a.timestampMs === null) {
-        return 1
-      }
-      if (b.timestampMs === null) {
-        return -1
-      }
-      if (a.timestampMs === b.timestampMs) {
-        return a.index - b.index
-      }
-      return b.timestampMs - a.timestampMs
-    })
-    .map(entry => entry.log)
-}
-
-function getLogKey(log: LogEntry): string {
-  const labels = Object.entries(log.labels || {})
-    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-    .map(([key, value]) => `${key}=${value}`)
-    .join(',')
-  return `${log.timestamp}|${labels}|${log.line}`
-}
-
-function toUnixSeconds(timestamp: string): number | null {
-  const parsed = Date.parse(timestamp)
-  if (Number.isNaN(parsed)) {
-    return null
-  }
-  return Math.floor(parsed / 1000)
-}
-
-function getLatestTimestampSeconds(entries: LogEntry[]): number | null {
-  let latest: number | null = null
-  for (const entry of entries) {
-    const ts = toUnixSeconds(entry.timestamp)
-    if (ts === null) {
-      continue
-    }
-    if (latest === null || ts > latest) {
-      latest = ts
-    }
-  }
-  return latest
-}
-
-function needsLogsSignal(type_: DataSourceType): boolean {
-  return type_ === 'clickhouse' || type_ === 'cloudwatch' || type_ === 'elasticsearch'
+  onDatasourceChanged?: (payload: ExploreDatasourceChanged) => void
 }
 
 export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps) {
@@ -222,10 +74,6 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
   const [error, setError] = useState<string | null>(null)
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [hasSuccessfulQuery, setHasSuccessfulQuery] = useState(false)
-  const [isLive, setIsLive] = useState(false)
-  const [liveState, setLiveState] = useState<LiveState>('idle')
-  const [liveError, setLiveError] = useState<string | null>(null)
-  const [liveReconnectAttempt, setLiveReconnectAttempt] = useState(0)
   const [queryHistory, setQueryHistory] = useState<string[]>([])
   const [showHistory, setShowHistory] = useState(false)
   const [showDatasourceMenu, setShowDatasourceMenu] = useState(false)
@@ -234,22 +82,36 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
   )
   const [datasourceHealthErrors, setDatasourceHealthErrors] = useState<Record<string, string>>({})
   const [indexedLabels, setIndexedLabels] = useState<string[]>([])
-  const [highlightedLogKeys, setHighlightedLogKeys] = useState<Set<string>>(new Set())
 
   const datasourceMenuRef = useRef<HTMLDivElement | null>(null)
-  const seenLogKeysRef = useRef<Set<string>>(new Set())
-  const lastLiveTimestampSecRef = useRef<number | null>(null)
-  const liveAbortControllerRef = useRef<AbortController | null>(null)
-  const liveReconnectTimerRef = useRef<number | null>(null)
-  const isLiveRef = useRef(false)
-  const openLiveStreamRef = useRef<() => Promise<void>>(async () => {})
-  const highlightTimeoutIdsRef = useRef<Map<string, number>>(new Map())
   const labelsCacheRef = useRef<Map<string, string[]>>(new Map())
   const pendingNavigationRef = useRef({
     traceId: '',
     serviceName: '',
     startMs: null as number | null,
     endMs: null as number | null,
+  })
+
+  const {
+    isLive,
+    liveState,
+    liveError,
+    liveStatusLabel,
+    isLiveBusy,
+    highlightedLogKeyList,
+    clearLogHighlights,
+    resetLogCache,
+    stopLive,
+    prepareForQuery,
+    resumeAfterQuery,
+    openLiveStream,
+    toggleLive,
+    setLiveError,
+  } = useLiveLogStream({
+    selectedDatasourceId,
+    query,
+    setLogs,
+    setError,
   })
 
   const activeDatasource = useMemo(
@@ -260,7 +122,6 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
   const hasLogsDatasources = logsDatasources.length > 0
   const hasResults = hasSuccessfulQuery && logs.length > 0
   const newestFirstLogs = useMemo(() => sortLogsNewestFirst(logs), [logs])
-  const highlightedLogKeyList = useMemo(() => Array.from(highlightedLogKeys), [highlightedLogKeys])
 
   const isClickHouseDatasource = activeDatasource?.type === 'clickhouse'
   const isCloudWatchDatasource = activeDatasource?.type === 'cloudwatch'
@@ -277,240 +138,11 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
     ? datasourceHealth[activeDatasource.id] || 'unknown'
     : 'unknown'
 
-  const activeDatasourceHealthLabel =
-    activeDatasourceHealth === 'healthy'
-      ? 'Healthy'
-      : activeDatasourceHealth === 'unhealthy'
-        ? 'Unhealthy'
-        : activeDatasourceHealth === 'checking'
-          ? 'Checking...'
-          : 'Unknown'
-
-  const liveStatusLabel =
-    liveState === 'connected'
-      ? 'Live'
-      : liveState === 'connecting'
-        ? 'Connecting...'
-        : liveState === 'reconnecting'
-          ? 'Reconnecting...'
-          : ''
-
-  const isLiveBusy = liveState === 'connecting' || liveState === 'reconnecting'
+  const activeDatasourceHealthLabel = healthLabel(activeDatasourceHealth)
 
   const addToHistory = useCallback((q: string) => {
-    if (!q.trim()) return
-    setQueryHistory(prev => {
-      const filtered = prev.filter(item => item !== q)
-      const next = [q, ...filtered].slice(0, MAX_HISTORY)
-      sessionStorage.setItem(HISTORY_KEY, JSON.stringify(next))
-      return next
-    })
+    setQueryHistory(prev => pushQueryHistory(LOGS_HISTORY_KEY, prev, q))
   }, [])
-
-  const clearLogHighlights = useCallback(() => {
-    for (const timeoutId of highlightTimeoutIdsRef.current.values()) {
-      window.clearTimeout(timeoutId)
-    }
-    highlightTimeoutIdsRef.current = new Map()
-    setHighlightedLogKeys(new Set())
-  }, [])
-
-  const markLogAsNew = useCallback((logKey: string) => {
-    setHighlightedLogKeys(prev => new Set(prev).add(logKey))
-
-    const existingTimeout = highlightTimeoutIdsRef.current.get(logKey)
-    if (existingTimeout !== undefined) {
-      window.clearTimeout(existingTimeout)
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setHighlightedLogKeys(prev => {
-        const next = new Set(prev)
-        next.delete(logKey)
-        return next
-      })
-      highlightTimeoutIdsRef.current.delete(logKey)
-    }, NEW_LOG_HIGHLIGHT_MS)
-
-    highlightTimeoutIdsRef.current.set(logKey, timeoutId)
-  }, [])
-
-  const resetLogCache = useCallback((entries: LogEntry[]) => {
-    seenLogKeysRef.current = new Set(entries.map(getLogKey))
-    lastLiveTimestampSecRef.current = getLatestTimestampSeconds(entries)
-  }, [])
-
-  const appendStreamLog = useCallback(
-    (entry: LogEntry) => {
-      const key = getLogKey(entry)
-      if (seenLogKeysRef.current.has(key)) {
-        return
-      }
-
-      seenLogKeysRef.current.add(key)
-      markLogAsNew(key)
-
-      const timestampSec = toUnixSeconds(entry.timestamp)
-      if (
-        timestampSec !== null &&
-        (lastLiveTimestampSecRef.current === null ||
-          timestampSec > lastLiveTimestampSecRef.current)
-      ) {
-        lastLiveTimestampSecRef.current = timestampSec
-      }
-
-      setLogs(prev => {
-        const next = [...prev, entry]
-        if (next.length <= MAX_STREAM_LOGS) {
-          return next
-        }
-
-        const trimmed = sortLogsNewestFirst(next).slice(0, MAX_STREAM_LOGS)
-        seenLogKeysRef.current = new Set(trimmed.map(getLogKey))
-
-        const remainingKeys = new Set(trimmed.map(getLogKey))
-        setHighlightedLogKeys(current =>
-          new Set(Array.from(current).filter(logKey => remainingKeys.has(logKey))),
-        )
-
-        for (const [logKey, timeoutId] of highlightTimeoutIdsRef.current.entries()) {
-          if (!remainingKeys.has(logKey)) {
-            window.clearTimeout(timeoutId)
-            highlightTimeoutIdsRef.current.delete(logKey)
-          }
-        }
-
-        return trimmed
-      })
-    },
-    [markLogAsNew],
-  )
-
-  const clearLiveReconnectTimer = useCallback(() => {
-    if (liveReconnectTimerRef.current !== null) {
-      window.clearTimeout(liveReconnectTimerRef.current)
-      liveReconnectTimerRef.current = null
-    }
-  }, [])
-
-  const cancelLiveStream = useCallback(() => {
-    if (liveAbortControllerRef.current) {
-      liveAbortControllerRef.current.abort()
-      liveAbortControllerRef.current = null
-    }
-  }, [])
-
-  const stopLive = useCallback(
-    (resetError = true) => {
-      isLiveRef.current = false
-      setIsLive(false)
-      setLiveState('idle')
-      if (resetError) {
-        setLiveError(null)
-      }
-      setLiveReconnectAttempt(0)
-      clearLiveReconnectTimer()
-      cancelLiveStream()
-    },
-    [cancelLiveStream, clearLiveReconnectTimer],
-  )
-
-  const getLiveStreamStart = useCallback(() => {
-    if (lastLiveTimestampSecRef.current === null) {
-      return Math.floor(Date.now() / 1000) - LIVE_RESUME_OVERLAP_SECONDS
-    }
-    return Math.max(0, lastLiveTimestampSecRef.current - LIVE_RESUME_OVERLAP_SECONDS)
-  }, [])
-
-  const openLiveStream = useCallback(async () => {
-    if (!isLive || !selectedDatasourceId || !query.trim()) {
-      return
-    }
-
-    clearLiveReconnectTimer()
-    cancelLiveStream()
-
-    liveAbortControllerRef.current = new AbortController()
-    if (liveState !== 'reconnecting') {
-      setLiveState('connecting')
-    }
-
-    try {
-      await streamDataSourceLogs(
-        selectedDatasourceId,
-        {
-          query,
-          start: getLiveStreamStart(),
-          limit: 200,
-        },
-        {
-          onLog: appendStreamLog,
-          onStatus: (status, message) => {
-            if (!isLiveRef.current) return
-
-            if (status === 'connected') {
-              setLiveState('connected')
-              setLiveError(null)
-              setLiveReconnectAttempt(0)
-              return
-            }
-
-            if (status === 'connecting') {
-              setLiveState('connecting')
-            }
-
-            if (message) {
-              setLiveError(message)
-            }
-          },
-          onError: message => {
-            if (!isLiveRef.current) return
-            setLiveError(message)
-          },
-        },
-        liveAbortControllerRef.current.signal,
-      )
-
-      if (!isLiveRef.current) return
-
-      setLiveError('Live stream disconnected')
-      setLiveState('reconnecting')
-      const delayMs = Math.min(
-        LIVE_RECONNECT_MAX_DELAY_MS,
-        LIVE_RECONNECT_BASE_DELAY_MS * 2 ** liveReconnectAttempt,
-      )
-      setLiveReconnectAttempt(prev => prev + 1)
-      liveReconnectTimerRef.current = window.setTimeout(() => {
-        void openLiveStreamRef.current()
-      }, delayMs)
-    } catch (e) {
-      if (!isLiveRef.current) return
-      if (e instanceof Error && e.name === 'AbortError') return
-
-      setLiveError(e instanceof Error ? e.message : 'Live stream failed')
-      setLiveState('reconnecting')
-      const delayMs = Math.min(
-        LIVE_RECONNECT_MAX_DELAY_MS,
-        LIVE_RECONNECT_BASE_DELAY_MS * 2 ** liveReconnectAttempt,
-      )
-      setLiveReconnectAttempt(prev => prev + 1)
-      liveReconnectTimerRef.current = window.setTimeout(() => {
-        void openLiveStreamRef.current()
-      }, delayMs)
-    }
-  }, [
-    appendStreamLog,
-    cancelLiveStream,
-    clearLiveReconnectTimer,
-    getLiveStreamStart,
-    isLive,
-    liveReconnectAttempt,
-    liveState,
-    query,
-    selectedDatasourceId,
-  ])
-
-  openLiveStreamRef.current = openLiveStream
 
   const runQuery = useCallback(async () => {
     const wasLive = isLive
@@ -530,11 +162,8 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
 
     setLoading(true)
     setError(null)
-    setLiveError(null)
-    clearLogHighlights()
+    prepareForQuery()
     setLogs([])
-    seenLogKeysRef.current = new Set()
-    lastLiveTimestampSecRef.current = null
     setHasSuccessfulQuery(false)
 
     try {
@@ -568,12 +197,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
       addToHistory(query)
 
       if (wasLive) {
-        isLiveRef.current = true
-        setIsLive(true)
-        setLiveState('connecting')
-        setLiveError(null)
-        setLiveReconnectAttempt(0)
-        void openLiveStream()
+        resumeAfterQuery()
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to execute query')
@@ -583,60 +207,17 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
   }, [
     activeDatasource?.type,
     addToHistory,
-    clearLogHighlights,
     isLive,
-    openLiveStream,
+    prepareForQuery,
     query,
     resetLogCache,
+    resumeAfterQuery,
     selectedDatasourceId,
     stopLive,
     timeRange.end,
     timeRange.start,
   ])
 
-  const startLive = useCallback(async () => {
-    if (isLive || isLiveBusy) {
-      return
-    }
-
-    if (!selectedDatasourceId) {
-      setError('Select a logs datasource')
-      return
-    }
-
-    if (!query.trim()) {
-      setError('Query is required')
-      return
-    }
-
-    if (!hasSuccessfulQuery) {
-      await runQuery()
-      return
-    }
-
-    isLiveRef.current = true
-    setIsLive(true)
-    setLiveState('connecting')
-    setLiveError(null)
-    setLiveReconnectAttempt(0)
-    void openLiveStream()
-  }, [
-    hasSuccessfulQuery,
-    isLive,
-    isLiveBusy,
-    openLiveStream,
-    query,
-    runQuery,
-    selectedDatasourceId,
-  ])
-
-  const toggleLive = useCallback(() => {
-    if (isLive) {
-      stopLive()
-      return
-    }
-    void startLive()
-  }, [isLive, startLive, stopLive])
 
   const checkDatasourceHealth = useCallback(async (datasourceId: string, type_: DataSourceType) => {
     setDatasourceHealth(prev => ({ ...prev, [datasourceId]: 'checking' }))
@@ -651,7 +232,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
 
     try {
       const healthResult = await queryDataSource(datasourceId, {
-        query: getSmokeQuery(type_),
+        query: getLogsSmokeQuery(type_),
         signal: needsLogsSignal(type_) ? 'logs' : undefined,
         start,
         end,
@@ -746,14 +327,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
       // Ignore malformed navigation context.
     }
 
-    const stored = sessionStorage.getItem(HISTORY_KEY)
-    if (stored) {
-      try {
-        setQueryHistory(JSON.parse(stored))
-      } catch {
-        setQueryHistory([])
-      }
-    }
+    setQueryHistory(readQueryHistory(LOGS_HISTORY_KEY))
   }, [searchParams])
 
   const previousOrgIdRef = useRef<string | null>(null)
@@ -903,7 +477,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
 
   function clearHistory() {
     setQueryHistory([])
-    sessionStorage.removeItem(HISTORY_KEY)
+    sessionStorage.removeItem(LOGS_HISTORY_KEY)
   }
 
   function toggleDatasourceMenu() {
@@ -1173,7 +747,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
               !supportsLiveStreaming ||
               (!isLive && (!query.trim() || !selectedDatasourceId || !hasLogsDatasources))
             }
-            onClick={toggleLive}
+            onClick={() => toggleLive({ hasSuccessfulQuery, onNeedQuery: runQuery })}
             title={
               supportsLiveStreaming
                 ? ''
