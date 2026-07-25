@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Navigate, Outlet, useLocation, useMatches } from 'react-router-dom'
+import { Navigate, Outlet, useLocation, useMatches } from 'react-router'
 import { safeRedirectPath } from '@/lib/safeRedirect'
 import type { RouteMeta } from '@/router'
 import { useAuthStore } from '@/stores/authStore'

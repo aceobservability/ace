@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
-import { Outlet, useMatches } from 'react-router-dom'
+import { Outlet, useMatches } from 'react-router'
 import { AppSidebar } from '@/components/AppSidebar'
 import { ShortcutsOverlay } from '@/components/ShortcutsOverlay'
 import { ToastNotification } from '@/components/ToastNotification'

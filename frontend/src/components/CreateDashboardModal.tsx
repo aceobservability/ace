@@ -1,7 +1,7 @@
 import { Globe, Loader2, Upload, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
 import { convertGrafanaDashboard } from '@/api/converter'
 import { createDashboard, importDashboardYaml } from '@/api/dashboards'
 import {
