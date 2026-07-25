@@ -44,7 +44,7 @@ export type ChatRequestMessage =
   | { role: 'assistant'; content: string | null; tool_calls: ToolCall[] }
   | { role: 'tool'; tool_call_id: string; content: string }
 
-type AIMessage = {
+export type AIMessage = {
   role: 'user' | 'assistant'
   content: string
   dashboardSpec?: DashboardSpec
@@ -289,6 +289,27 @@ export function useAIProvider() {
     [currentOrgId],
   )
 
+  const setSelectedModel = useCallback((modelId: string) => {
+    setState({ selectedModel: modelId })
+  }, [])
+
+  const setSelectedProviderId = useCallback((providerId: string) => {
+    setState({ selectedProviderId: providerId })
+  }, [])
+
+  const setChatMessages = useCallback((messages: AIMessage[]) => {
+    setState({ chatMessages: messages })
+  }, [])
+
+  const appendChatMessage = useCallback((message: AIMessage) => {
+    // Read latest module state so rapid sequential appends don't clobber each other.
+    setState({ chatMessages: [...getSnapshot().chatMessages, message] })
+  }, [])
+
+  const clearChatMessages = useCallback(() => {
+    setState({ chatMessages: [] })
+  }, [])
+
   return {
     providers: snapshot.providers,
     selectedProviderId: snapshot.selectedProviderId,
@@ -300,5 +321,10 @@ export function useAIProvider() {
     fetchProviders: fetchProvidersBound,
     fetchModels: fetchModelsBound,
     sendChatRequest: sendChatRequestBound,
+    setSelectedModel,
+    setSelectedProviderId,
+    setChatMessages,
+    appendChatMessage,
+    clearChatMessages,
   }
 }

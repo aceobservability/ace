@@ -1,11 +1,16 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
-import { Outlet, useMatches } from 'react-router'
+import { Outlet, useMatches, useNavigate } from 'react-router'
+import { AiFab } from '@/components/AiFab'
+import { AiSidebar } from '@/components/AiSidebar'
 import { AppSidebar } from '@/components/AppSidebar'
+import { CmdKModal } from '@/components/CmdKModal'
+import { CookieConsentBanner } from '@/components/CookieConsentBanner'
 import { ShortcutsOverlay } from '@/components/ShortcutsOverlay'
 import { ToastNotification } from '@/components/ToastNotification'
 import { useDatasources } from '@/hooks/useDatasources'
 import { useOrgBranding } from '@/hooks/useOrgBranding'
 import { useRouteSeo } from '@/hooks/useRouteSeo'
+import { useKeyboardShortcutsStore } from '@/lib/keyboardShortcuts'
 import type { RouteMeta } from '@/router'
 import { useAiSidebarStore } from '@/stores/aiSidebarStore'
 import { useOrgStore } from '@/stores/orgStore'
@@ -38,15 +43,18 @@ function NarrowViewportOverlay() {
 
 export function AppLayout() {
   const matches = useMatches()
+  const navigate = useNavigate()
   const meta = matches.at(-1)?.handle as RouteMeta | undefined
   const expandedSection = useSidebarStore(state => state.expandedSection)
   const isPinned = useSidebarStore(state => state.isPinned)
   const aiSidebarOpen = useAiSidebarStore(state => state.isOpen)
   const currentOrgId = useOrgStore(state => state.currentOrgId)
+  const registerShortcut = useKeyboardShortcutsStore(state => state.register)
 
   const [viewportTooNarrow, setViewportTooNarrow] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < 1280,
   )
+  const [cmdKOpen, setCmdKOpen] = useState(false)
 
   useOrgBranding()
   useRouteSeo(meta)
@@ -60,6 +68,27 @@ export function AppLayout() {
     window.addEventListener('resize', checkViewport)
     return () => window.removeEventListener('resize', checkViewport)
   }, [])
+
+  useEffect(() => {
+    const unregisterCmdK = registerShortcut(
+      'Cmd+K',
+      () => setCmdKOpen(true),
+      'Open command palette',
+      'General',
+    )
+    const unregisterNew = registerShortcut(
+      'Cmd+Shift+N',
+      () => {
+        void navigate('/app/dashboards/new/ai')
+      },
+      'New dashboard',
+      'Actions',
+    )
+    return () => {
+      unregisterCmdK()
+      unregisterNew()
+    }
+  }, [navigate, registerShortcut])
 
   const mainMargin = useMemo(() => {
     const isExpanded =
@@ -90,8 +119,12 @@ export function AppLayout() {
         </Suspense>
       </main>
 
+      <AiSidebar />
+      <AiFab />
+      <CmdKModal isOpen={cmdKOpen} onClose={() => setCmdKOpen(false)} />
       <ShortcutsOverlay />
       <ToastNotification />
+      <CookieConsentBanner />
 
       {viewportTooNarrow && <NarrowViewportOverlay />}
     </div>

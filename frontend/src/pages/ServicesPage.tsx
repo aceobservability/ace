@@ -6,6 +6,7 @@ import {
 } from '@/api/datasources'
 import { EmptyState } from '@/components/EmptyState'
 import { StatusDot } from '@/components/StatusDot'
+import { useRegisterCommandContext } from '@/hooks/useRegisterCommandContext'
 import { useTracingDatasources } from '@/hooks/useTracingDatasources'
 import {
   deriveServiceHealth,
@@ -42,6 +43,11 @@ const HEALTH_WINDOW_MS = 60 * 60 * 1000
 const TRACE_SAMPLE_LIMIT = 50
 
 export function ServicesPage() {
+  useRegisterCommandContext({
+    viewName: 'Services',
+    viewRoute: '/app/services',
+    description: 'Services discovered from connected tracing datasources.',
+  })
   const currentOrgId = useOrgStore(state => state.currentOrgId)
   const {
     data: datasources = [],

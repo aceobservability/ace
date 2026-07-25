@@ -26,6 +26,7 @@ import { RuleEditorPanel } from '@/components/alerts/RuleEditorPanel'
 import { SilenceModal, type SilenceFormState } from '@/components/alerts/SilenceModal'
 import { VMAlertAlertsPanel, VMAlertGroupsPanel } from '@/components/alerts/VMAlertPanels'
 import { useAlertingDatasources } from '@/hooks/useAlertingDatasources'
+import { useRegisterCommandContext } from '@/hooks/useRegisterCommandContext'
 import { toLocalDatetimeString } from '@/lib/alerts'
 import { useAuthStore } from '@/stores/authStore'
 import { useFavoritesStore } from '@/stores/favoritesStore'
@@ -69,6 +70,12 @@ export function AlertsPage() {
   const user = useAuthStore(state => state.user)
   const { alertingDatasources, isLoading: datasourcesLoading } =
     useAlertingDatasources(currentOrgId)
+
+  useRegisterCommandContext({
+    viewName: 'Alerts',
+    viewRoute: '/app/alerts',
+    description: 'Alert rules, silences, and Alertmanager status.',
+  })
 
   const toggleFavorite = useFavoritesStore(state => state.toggleFavorite)
   const isFavorite = useFavoritesStore(state => state.isFavorite)

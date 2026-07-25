@@ -59,7 +59,6 @@
       "linter": { "enabled": false }
     },
     {
-      "includes": ["**/*.vue"],
       "linter": {
         "rules": {
           "correctness": {
