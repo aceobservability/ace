@@ -1,4 +1,3 @@
-import type { DataSourceType } from '@/types/datasource'
 import { getTypeLogo } from '@/components/explore/exploreShared'
 
 export { getTypeLogo }

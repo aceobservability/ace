@@ -104,9 +104,7 @@ export function LogsExplorePanel({ onDatasourceChanged }: LogsExplorePanelProps)
     stopLive,
     prepareForQuery,
     resumeAfterQuery,
-    openLiveStream,
     toggleLive,
-    setLiveError,
   } = useLiveLogStream({
     selectedDatasourceId,
     query,

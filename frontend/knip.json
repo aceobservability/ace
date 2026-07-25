@@ -13,7 +13,6 @@
     "src/analytics/index.ts",
     "src/lib/utils.ts",
     "src/lib/theme.ts",
-    "src/lib/analyticsRouter.ts",
     "src/stores/authStore.ts"
   ],
   "ignoreDependencies": [

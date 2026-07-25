@@ -1,4 +1,4 @@
-import type { DataSourceType, TraceDatasource } from '@/types/datasource'
+import type { DataSourceType } from '@/types/datasource'
 
 export type AuthType = 'none' | 'basic' | 'bearer' | 'api_key'
 
