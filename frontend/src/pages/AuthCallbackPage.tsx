@@ -47,14 +47,14 @@ export function AuthCallbackPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface px-4 text-sm text-error">
+      <div className="flex min-h-screen w-full items-center justify-center bg-surface px-4 text-sm text-error">
         {error}
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface text-sm text-on-surface-variant">
+    <div className="flex min-h-screen w-full items-center justify-center bg-surface text-sm text-on-surface-variant">
       Completing sign-in…
     </div>
   )

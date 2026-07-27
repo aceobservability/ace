@@ -86,7 +86,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="login-page relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+    <div className="login-page relative flex min-h-screen w-full items-center justify-center overflow-hidden px-4">
       <div className="absolute inset-0 bg-[var(--color-surface)]" />
       <div
         className="absolute inset-0"

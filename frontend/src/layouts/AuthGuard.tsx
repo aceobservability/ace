@@ -16,7 +16,7 @@ export function AuthGuard() {
 
   if (!initialized || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface text-sm text-on-surface-variant">
+      <div className="flex min-h-screen w-full items-center justify-center bg-surface text-sm text-on-surface-variant">
         Loading…
       </div>
     )
