@@ -107,7 +107,13 @@ func (c *Client) LabelNames(ctx context.Context) ([]string, error) {
 		return nil, fmt.Errorf("failed to get label names: %w", err)
 	}
 
-	return names, nil
+	// Convert model.LabelNames to []string (client_golang >= 1.24)
+	result := make([]string, len(names))
+	for i, n := range names {
+		result[i] = string(n)
+	}
+
+	return result, nil
 }
 
 // LabelValues returns all values for a given label name from Prometheus
