@@ -15,8 +15,9 @@ export default defineConfig({
     // Listen on all interfaces so Tailscale (and other LAN) can reach the dev server.
     host: true,
     port: 5173,
-    // Vite 6+ blocks unknown Host headers; machine hostname shows up via Tailscale.
-    allowedHosts: ['vmi3118690', '.ts.net'],
+    // Dev-only: Vite 6+ rejects unknown Host headers (machine name, MagicDNS, etc.).
+    // Production is nginx/static — this only affects `vite` / `vite preview`.
+    allowedHosts: true,
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
