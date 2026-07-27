@@ -10,7 +10,6 @@ const mockGenerate = vi.hoisted(() => vi.fn())
 
 vi.mock('@/hooks/useAIProvider', () => ({
   useAIProvider: () => ({
-    chatMessages: [],
     models: [],
     selectedModel: '',
     selectedProviderId: '',
@@ -18,7 +17,6 @@ vi.mock('@/hooks/useAIProvider', () => ({
     fetchProviders: mockFetchProviders,
     providers: [],
     setSelectedModel: vi.fn(),
-    appendChatMessage: vi.fn(),
   }),
 }))
 
@@ -39,15 +37,10 @@ vi.mock('@/hooks/useOrganization', () => ({
   }),
 }))
 
-vi.mock('@/hooks/useCommandContext', () => ({
-  useCommandContext: () => ({
-    currentContext: null,
-  }),
-}))
-
 vi.mock('@/utils/markdown', () => ({
   initMarkdown: vi.fn().mockResolvedValue(undefined),
   renderMarkdown: vi.fn().mockResolvedValue('<p>hi</p>'),
+  escapeHtml: (s: string) => s,
 }))
 
 describe('AiSidebar', () => {

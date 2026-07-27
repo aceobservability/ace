@@ -1,6 +1,11 @@
 import { useCallback, useRef, useState } from 'react'
-import type { ChatRequestMessage, ToolCall, ToolDefinition } from '@/hooks/useAIProvider'
-import { useAIProvider } from '@/hooks/useAIProvider'
+import {
+  sendAiChat,
+  type ChatRequestMessage,
+  type ToolCall,
+  type ToolDefinition,
+} from '@/api/aiChat'
+import { useAIProviderStore } from '@/stores/aiProviderStore'
 import { executeCopilotTool } from '@/lib/copilotTools'
 import type { DashboardSpec } from '@/utils/dashboardSpec'
 import { validateDashboardSpec } from '@/utils/dashboardSpec'
@@ -59,7 +64,7 @@ function normalizeGeneratedSpec(
   return {
     title: raw.title,
     description: raw.description,
-    panels: (raw.panels ?? []).map((panel) => {
+    panels: (raw.panels ?? []).map(panel => {
       const signal = panel.query.signal ?? fallbackSignal
       return {
         title: panel.title,
@@ -80,12 +85,28 @@ function normalizeGeneratedSpec(
   }
 }
 
+function markToolStatus(
+  current: ToolStatus[],
+  name: string,
+  status: ToolStatus['status'],
+  onlyRunning = false,
+): ToolStatus[] {
+  const next = [...current]
+  for (let i = next.length - 1; i >= 0; i -= 1) {
+    const entry = next[i]!
+    if (entry.name !== name) continue
+    if (onlyRunning && entry.status !== 'running') continue
+    next[i] = { ...entry, status }
+    break
+  }
+  return next
+}
+
 export function useDashboardGeneration(
   datasourceId: () => string,
   orgId: () => string,
   datasourceType: () => string,
 ) {
-  const { sendChatRequest } = useAIProvider()
   const [toolStatuses, setToolStatuses] = useState<ToolStatus[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -112,6 +133,12 @@ export function useDashboardGeneration(
     ): Promise<{ spec: DashboardSpec | null; content: string | null }> => {
       if (generatingRef.current) return { spec: null, content: null }
 
+      const organizationId = orgId()
+      if (!organizationId) {
+        setError('No organization selected')
+        return { spec: null, content: null }
+      }
+
       generatingRef.current = true
       setIsGenerating(true)
       setError(null)
@@ -125,17 +152,22 @@ export function useDashboardGeneration(
       let lastContent: string | null = null
       let resultSpec: DashboardSpec | null = null
 
+      const { selectedProviderId, selectedModel } = useAIProviderStore.getState()
+
       try {
         for (let i = 0; i < MAX_TOOL_ITERATIONS; i += 1) {
           if (signal.aborted) break
 
-          const { content, toolCalls } = await sendChatRequest(
-            datasourceType(),
+          const { content, toolCalls } = await sendAiChat({
+            orgId: organizationId,
+            providerId: selectedProviderId || undefined,
+            model: selectedModel || undefined,
+            datasourceType: datasourceType(),
             datasourceName,
-            requestMessages,
+            messages: requestMessages,
             tools,
             signal,
-          )
+          })
 
           if (content) {
             lastContent = content
@@ -175,44 +207,21 @@ export function useDashboardGeneration(
             }
 
             const statusEntry: ToolStatus = { name: tc.function.name, status: 'running' }
-            setToolStatuses((current) => [...current, statusEntry])
+            setToolStatuses(current => [...current, statusEntry])
             callbacks?.onToolStatus?.(statusEntry)
 
             const result = await executeCopilotTool(tc as ToolCall, {
               datasourceId: datasourceId(),
-              orgId: orgId(),
+              orgId: organizationId,
               signal,
             }).catch((err: unknown) => {
-              setToolStatuses((current) => {
-                const next = [...current]
-                let index = -1
-                for (let i = next.length - 1; i >= 0; i -= 1) {
-                  if (next[i]!.name === tc.function.name) {
-                    index = i
-                    break
-                  }
-                }
-                if (index >= 0) next[index] = { ...next[index]!, status: 'error' }
-                return next
-              })
+              setToolStatuses(current => markToolStatus(current, tc.function.name, 'error'))
               return `Error: ${err instanceof Error ? err.message : 'Tool execution failed'}`
             })
 
-            setToolStatuses((current) => {
-              const next = [...current]
-              let index = -1
-              for (let i = next.length - 1; i >= 0; i -= 1) {
-                const entry = next[i]!
-                if (entry.name === tc.function.name && entry.status === 'running') {
-                  index = i
-                  break
-                }
-              }
-              if (index >= 0 && next[index]!.status === 'running') {
-                next[index] = { ...next[index]!, status: 'complete' }
-              }
-              return next
-            })
+            setToolStatuses(current =>
+              markToolStatus(current, tc.function.name, 'complete', true),
+            )
 
             requestMessages.push(
               { role: 'assistant', content: null, tool_calls: [tc] },
@@ -246,7 +255,7 @@ export function useDashboardGeneration(
 
       return { spec: resultSpec, content: lastContent }
     },
-    [datasourceId, datasourceType, orgId, sendChatRequest],
+    [datasourceId, datasourceType, orgId],
   )
 
   return { toolStatuses, isGenerating, error, progressText, generate, cancel }
