@@ -5,10 +5,10 @@ go 1.25.12
 require (
 	github.com/alicebob/miniredis/v2 v2.38.0
 	github.com/aws/aws-sdk-go-v2 v1.43.4
-	github.com/aws/aws-sdk-go-v2/config v1.32.31
+	github.com/aws/aws-sdk-go-v2/config v1.32.35
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.34
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.65.0
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.80.0
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.66.3
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.82.0
 	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
@@ -17,7 +17,7 @@ require (
 	github.com/posthog/posthog-go v1.23.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/prometheus/common v0.70.1
-	github.com/redis/go-redis/v9 v9.21.0
+	github.com/redis/go-redis/v9 v9.22.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.70.0
 	go.opentelemetry.io/otel v1.45.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.44.0
@@ -32,7 +32,7 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.14 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.16 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.35 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.35 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.35 // indirect
