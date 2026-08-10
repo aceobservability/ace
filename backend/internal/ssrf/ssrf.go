@@ -162,7 +162,7 @@ func IsLocalURL(raw string) bool {
 // that may legitimately live on private networks.
 func SafeClient(timeout time.Duration) *http.Client {
 	return &http.Client{
-		Timeout:   timeout,
+		Timeout: timeout,
 		Transport: dialBlockingTransport(func(ip net.IP) error {
 			if isBlockedIP(ip) {
 				return fmt.Errorf("connections to private/internal addresses are not allowed")
@@ -177,7 +177,7 @@ func SafeClient(timeout time.Duration) *http.Client {
 // endpoint is blocked at dial time (DNS rebinding) and on redirects.
 func DatasourceClient(timeout time.Duration) *http.Client {
 	return &http.Client{
-		Timeout:   timeout,
+		Timeout: timeout,
 		Transport: dialBlockingTransport(func(ip net.IP) error {
 			if isCloudMetadataIP(ip) {
 				return fmt.Errorf("connections to cloud metadata endpoint are not allowed")
