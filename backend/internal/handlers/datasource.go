@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +17,7 @@ import (
 	"github.com/aceobservability/ace/backend/internal/auth"
 	"github.com/aceobservability/ace/backend/internal/datasource"
 	"github.com/aceobservability/ace/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // validateDatasourceURL validates a datasource URL to prevent SSRF attacks.
@@ -26,35 +25,8 @@ import (
 // networks (e.g. Prometheus on an internal IP). We only block the cloud
 // metadata endpoint (169.254.169.254) which is the primary SSRF target.
 func validateDatasourceURL(raw string) error {
-	u, err := url.Parse(raw)
-	if err != nil {
-		return fmt.Errorf("invalid url: %w", err)
-	}
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return fmt.Errorf("url must use http or https scheme")
-	}
-	if u.Host == "" {
-		return fmt.Errorf("url must have a host")
-	}
-	if strings.Contains(raw, "@") {
-		return fmt.Errorf("url must not contain userinfo")
-	}
-
-	hostname := u.Hostname()
-	if ip := net.ParseIP(hostname); ip != nil {
-		if ip.Equal(net.ParseIP("169.254.169.254")) {
-			return fmt.Errorf("url must not target cloud metadata endpoint")
-		}
-	}
-	// Also resolve hostname to catch DNS-based SSRF
-	if ips, err := net.LookupHost(hostname); err == nil {
-		for _, ipStr := range ips {
-			if ip := net.ParseIP(ipStr); ip != nil && ip.Equal(net.ParseIP("169.254.169.254")) {
-				return fmt.Errorf("url must not resolve to cloud metadata endpoint")
-			}
-		}
-	}
-	return nil
+	_, err := ssrf.ValidateDatasourceURL(raw)
+	return err
 }
 
 type DataSourceHandler struct {

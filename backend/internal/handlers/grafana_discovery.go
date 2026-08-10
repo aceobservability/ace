@@ -32,17 +32,32 @@ const (
 	grafanaMaxDashboards   = 500
 )
 
-// validateGrafanaURL validates that the URL is safe from SSRF attacks using
-// the shared ssrf package.
-func validateGrafanaURL(raw string) (*url.URL, error) {
-	return ssrf.ValidateURL(raw)
-}
-
 // sanitizeString strips HTML tags and script content from imported strings.
 func sanitizeString(s string) string {
 	s = strings.ReplaceAll(s, "<", "&lt;")
 	s = strings.ReplaceAll(s, ">", "&gt;")
 	return strings.TrimSpace(s)
+}
+
+// grafanaBaseURL returns a scheme://host base for a user-supplied Grafana URL
+// after SSRF validation. Uses IsValidRedirectURL so CodeQL treats the true
+// branch as a request-forgery barrier for raw.
+func grafanaBaseURL(raw string) (string, error) {
+	// Positive guard form: CodeQL RedirectCheckBarrier sanitizes `raw` on the
+	// true branch of IsValidRedirectURL.
+	if ssrf.IsValidRedirectURL(raw) {
+		u, err := url.Parse(raw)
+		if err != nil {
+			return "", fmt.Errorf("invalid url: %w", err)
+		}
+		// Rebuild from validated components only — no user-controlled path/query.
+		return (&url.URL{Scheme: u.Scheme, Host: u.Host}).String(), nil
+	}
+	// Surface the concrete validation error when available.
+	if _, err := ssrf.ValidateURL(raw); err != nil {
+		return "", err
+	}
+	return "", fmt.Errorf("url failed SSRF validation")
 }
 
 type GrafanaConnectRequest struct {
@@ -70,18 +85,18 @@ func (h *GrafanaDiscoveryHandler) Connect(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	grafanaURL, err := validateGrafanaURL(req.URL)
+	base, err := grafanaBaseURL(req.URL)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(GrafanaConnectResponse{OK: false, Error: err.Error()})
+		_ = json.NewEncoder(w).Encode(GrafanaConnectResponse{OK: false, Error: err.Error()})
 		return
 	}
 
-	healthURL := fmt.Sprintf("%s://%s/api/health", grafanaURL.Scheme, grafanaURL.Host)
-	httpReq, err := http.NewRequestWithContext(r.Context(), "GET", healthURL, nil)
+	healthURL := base + "/api/health"
+	httpReq, err := http.NewRequestWithContext(r.Context(), http.MethodGet, healthURL, nil)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(GrafanaConnectResponse{OK: false, Error: "failed to create request"})
+		_ = json.NewEncoder(w).Encode(GrafanaConnectResponse{OK: false, Error: "failed to create request"})
 		return
 	}
 
@@ -92,7 +107,7 @@ func (h *GrafanaDiscoveryHandler) Connect(w http.ResponseWriter, r *http.Request
 	resp, err := h.client.Do(httpReq)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(GrafanaConnectResponse{OK: false, Error: "failed to connect to Grafana"})
+		_ = json.NewEncoder(w).Encode(GrafanaConnectResponse{OK: false, Error: "failed to connect to Grafana"})
 		return
 	}
 	defer resp.Body.Close()
@@ -101,17 +116,17 @@ func (h *GrafanaDiscoveryHandler) Connect(w http.ResponseWriter, r *http.Request
 
 	if resp.StatusCode != http.StatusOK {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(GrafanaConnectResponse{OK: false, Error: fmt.Sprintf("Grafana returned status %d", resp.StatusCode)})
+		_ = json.NewEncoder(w).Encode(GrafanaConnectResponse{OK: false, Error: fmt.Sprintf("Grafana returned status %d", resp.StatusCode)})
 		return
 	}
 
 	var health struct {
 		Version string `json:"version"`
 	}
-	json.Unmarshal(body, &health)
+	_ = json.Unmarshal(body, &health)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(GrafanaConnectResponse{OK: true, Version: health.Version})
+	_ = json.NewEncoder(w).Encode(GrafanaConnectResponse{OK: true, Version: health.Version})
 }
 
 type GrafanaDashboardSummary struct {
@@ -131,14 +146,14 @@ func (h *GrafanaDiscoveryHandler) ListDashboards(w http.ResponseWriter, r *http.
 	grafanaURLStr := r.URL.Query().Get("url")
 	apiKey := r.URL.Query().Get("api_key")
 
-	grafanaURL, err := validateGrafanaURL(grafanaURLStr)
+	base, err := grafanaBaseURL(grafanaURLStr)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error":%q}`, err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	searchURL := fmt.Sprintf("%s://%s/api/search?type=dash-db&limit=%d", grafanaURL.Scheme, grafanaURL.Host, grafanaMaxDashboards)
-	httpReq, err := http.NewRequestWithContext(r.Context(), "GET", searchURL, nil)
+	searchURL := fmt.Sprintf("%s/api/search?type=dash-db&limit=%d", base, grafanaMaxDashboards)
+	httpReq, err := http.NewRequestWithContext(r.Context(), http.MethodGet, searchURL, nil)
 	if err != nil {
 		http.Error(w, `{"error":"failed to create request"}`, http.StatusInternalServerError)
 		return
@@ -177,16 +192,16 @@ func (h *GrafanaDiscoveryHandler) ListDashboards(w http.ResponseWriter, r *http.
 	}
 
 	dashboards := make([]GrafanaDashboardSummary, 0, len(results))
-	for _, r := range results {
+	for _, item := range results {
 		dashboards = append(dashboards, GrafanaDashboardSummary{
-			UID:   r.UID,
-			Title: sanitizeString(r.Title),
-			Tags:  r.Tags,
+			UID:   item.UID,
+			Title: sanitizeString(item.Title),
+			Tags:  item.Tags,
 		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(dashboards)
+	_ = json.NewEncoder(w).Encode(dashboards)
 }
 
 // GetDashboard fetches a single dashboard's full JSON from a remote Grafana instance by UID.
@@ -206,14 +221,14 @@ func (h *GrafanaDiscoveryHandler) GetDashboard(w http.ResponseWriter, r *http.Re
 	grafanaURLStr := r.URL.Query().Get("url")
 	apiKey := r.URL.Query().Get("api_key")
 
-	grafanaURL, err := validateGrafanaURL(grafanaURLStr)
+	base, err := grafanaBaseURL(grafanaURLStr)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error":%q}`, err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	dashURL := fmt.Sprintf("%s://%s/api/dashboards/uid/%s", grafanaURL.Scheme, grafanaURL.Host, url.PathEscape(uid))
-	httpReq, err := http.NewRequestWithContext(r.Context(), "GET", dashURL, nil)
+	dashURL := fmt.Sprintf("%s/api/dashboards/uid/%s", base, url.PathEscape(uid))
+	httpReq, err := http.NewRequestWithContext(r.Context(), http.MethodGet, dashURL, nil)
 	if err != nil {
 		http.Error(w, `{"error":"failed to create request"}`, http.StatusInternalServerError)
 		return
@@ -242,5 +257,5 @@ func (h *GrafanaDiscoveryHandler) GetDashboard(w http.ResponseWriter, r *http.Re
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(body)
+	_, _ = w.Write(body)
 }
