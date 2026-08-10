@@ -151,8 +151,9 @@ func runHTTPConnectionCheck(ctx context.Context, ds models.DataSource, endpoints
 
 	baseURL := ds.URL
 
-	// Plain client: query clients already dial private networks the same way.
-	httpClient := &http.Client{Timeout: 10 * time.Second}
+	// DatasourceClient allows private/internal targets but blocks cloud
+	// metadata at dial time and on redirects (DNS rebinding / open redirect).
+	httpClient := ssrf.DatasourceClient(10 * time.Second)
 
 	var lastErr error
 	for _, endpoint := range endpoints {

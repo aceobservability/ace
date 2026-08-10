@@ -161,8 +161,47 @@ func IsLocalURL(raw string) bool {
 // Use for untrusted user-supplied hosts only — not for configured datasources
 // that may legitimately live on private networks.
 func SafeClient(timeout time.Duration) *http.Client {
+	return &http.Client{
+		Timeout:   timeout,
+		Transport: dialBlockingTransport(func(ip net.IP) error {
+			if isBlockedIP(ip) {
+				return fmt.Errorf("connections to private/internal addresses are not allowed")
+			}
+			return nil
+		}),
+	}
+}
+
+// DatasourceClient returns an *http.Client for configured observability
+// datasources. Private/internal targets are allowed; the cloud metadata
+// endpoint is blocked at dial time (DNS rebinding) and on redirects.
+func DatasourceClient(timeout time.Duration) *http.Client {
+	return &http.Client{
+		Timeout:   timeout,
+		Transport: dialBlockingTransport(func(ip net.IP) error {
+			if isCloudMetadataIP(ip) {
+				return fmt.Errorf("connections to cloud metadata endpoint are not allowed")
+			}
+			return nil
+		}),
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("stopped after 10 redirects")
+			}
+			if _, err := ValidateDatasourceURL(req.URL.String()); err != nil {
+				return fmt.Errorf("redirect target rejected: %w", err)
+			}
+			return nil
+		},
+	}
+}
+
+// dialBlockingTransport builds a transport that resolves each dial target and
+// rejects IPs for which reject returns a non-nil error, then dials the first
+// remaining address.
+func dialBlockingTransport(reject func(net.IP) error) *http.Transport {
 	dialer := &net.Dialer{Timeout: 5 * time.Second}
-	transport := &http.Transport{
+	return &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			host, port, err := net.SplitHostPort(addr)
 			if err != nil {
@@ -176,16 +215,11 @@ func SafeClient(timeout time.Duration) *http.Client {
 				return nil, fmt.Errorf("dns resolution returned no addresses")
 			}
 			for _, ip := range ips {
-				if isBlockedIP(ip.IP) {
-					return nil, fmt.Errorf("connections to private/internal addresses are not allowed")
+				if err := reject(ip.IP); err != nil {
+					return nil, err
 				}
 			}
-			// Connect to the first allowed IP.
 			return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].IP.String(), port))
 		},
-	}
-	return &http.Client{
-		Timeout:   timeout,
-		Transport: transport,
 	}
 }

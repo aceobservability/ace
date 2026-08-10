@@ -98,3 +98,42 @@ func TestSafeClient_blocksPrivateDial(t *testing.T) {
 		t.Fatalf("SafeClient should refuse private target %s", srv.URL)
 	}
 }
+
+func TestDatasourceClient_allowsPrivateBlocksMetadata(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
+
+	client := DatasourceClient(2 * time.Second)
+	resp, err := client.Get(srv.URL)
+	if err != nil {
+		t.Fatalf("DatasourceClient should allow private target %s: %v", srv.URL, err)
+	}
+	resp.Body.Close()
+
+	// Literal metadata IP must fail at dial time.
+	resp, err = client.Get("http://169.254.169.254/")
+	if err == nil {
+		resp.Body.Close()
+		t.Fatal("DatasourceClient should refuse cloud metadata dial")
+	}
+}
+
+func TestDatasourceClient_blocksMetadataRedirect(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "http://169.254.169.254/latest/meta-data", http.StatusFound)
+	}))
+	t.Cleanup(srv.Close)
+
+	client := DatasourceClient(2 * time.Second)
+	resp, err := client.Get(srv.URL)
+	if err == nil {
+		resp.Body.Close()
+		t.Fatal("DatasourceClient should refuse redirect to cloud metadata")
+	}
+}
