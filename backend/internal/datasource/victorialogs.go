@@ -18,14 +18,16 @@ import (
 
 // VictoriaLogsClient queries Victoria Logs using LogsQL
 type VictoriaLogsClient struct {
-	baseURL string
-	client  *http.Client
+	baseURL      string
+	client       *http.Client
+	streamClient *http.Client
 }
 
 func NewVictoriaLogsClient(baseURL string) (*VictoriaLogsClient, error) {
 	return &VictoriaLogsClient{
-		baseURL: baseURL,
-		client:  ssrf.DatasourceClient(30 * time.Second),
+		baseURL:      baseURL,
+		client:       ssrf.DatasourceClient(30 * time.Second),
+		streamClient: ssrf.DatasourceClient(0), // Timeout 0: long-lived tails
 	}, nil
 }
 
@@ -237,8 +239,7 @@ func (c *VictoriaLogsClient) Stream(ctx context.Context, query string, start tim
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	streamClient := ssrf.DatasourceClient(0)
-	resp, err := streamClient.Do(req)
+	resp, err := c.streamClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to stream Victoria Logs tail: %w", err)
 	}

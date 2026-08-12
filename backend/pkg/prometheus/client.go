@@ -9,8 +9,6 @@ import (
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
-
-	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // Client wraps the Prometheus API client
@@ -37,22 +35,18 @@ type MetricResult struct {
 	Values [][]interface{}   `json:"values"`
 }
 
-// NewClient creates a new Prometheus client with the given URL.
-// Outbound requests use ssrf.DatasourceClient (private nets allowed; cloud
-// metadata blocked at dial and redirect). An optional HTTP client overrides
-// that default (tests).
-func NewClient(prometheusURL string, httpClient ...*http.Client) (*Client, error) {
-	cfg := api.Config{
+// NewClient creates a new Prometheus client with the given URL and HTTP client.
+// httpClient is required so callers cannot silently inherit client_golang's
+// default transport (which has no SSRF dial/redirect policy).
+func NewClient(prometheusURL string, httpClient *http.Client) (*Client, error) {
+	if httpClient == nil {
+		return nil, fmt.Errorf("http client is required")
+	}
+
+	client, err := api.NewClient(api.Config{
 		Address: prometheusURL,
-	}
-
-	if len(httpClient) > 0 && httpClient[0] != nil {
-		cfg.Client = httpClient[0]
-	} else {
-		cfg.Client = ssrf.DatasourceClient(30 * time.Second)
-	}
-
-	client, err := api.NewClient(cfg)
+		Client:  httpClient,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Prometheus client: %w", err)
 	}

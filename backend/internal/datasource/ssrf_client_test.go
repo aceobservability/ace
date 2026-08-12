@@ -14,7 +14,7 @@ import (
 
 const cloudMetadataURL = "http://169.254.169.254/"
 
-func TestDatasourceClientsUseDatasourceClient(t *testing.T) {
+func TestDatasourceClientsWireDialAndRedirectPolicy(t *testing.T) {
 	t.Parallel()
 
 	clients := constructedDatasourceHTTPClients(t)
@@ -26,8 +26,24 @@ func TestDatasourceClientsUseDatasourceClient(t *testing.T) {
 			if client.CheckRedirect == nil {
 				t.Fatal("expected DatasourceClient redirect policy (CheckRedirect)")
 			}
+			if client.Transport == nil {
+				t.Fatal("expected DatasourceClient dial policy (Transport)")
+			}
 		})
 	}
+
+	t.Run("victorialogs_stream_timeout", func(t *testing.T) {
+		c, err := NewVictoriaLogsClient("http://127.0.0.1:9428")
+		if err != nil {
+			t.Fatalf("NewVictoriaLogsClient: %v", err)
+		}
+		if c.streamClient == nil {
+			t.Fatal("streamClient is nil")
+		}
+		if c.streamClient.Timeout != 0 {
+			t.Fatalf("streamClient.Timeout = %s, want 0 for long-lived tails", c.streamClient.Timeout)
+		}
+	})
 }
 
 func TestDatasourceClientsAllowPrivateNetworks(t *testing.T) {
@@ -169,15 +185,16 @@ func constructedDatasourceHTTPClients(t *testing.T) map[string]*http.Client {
 	}
 
 	return map[string]*http.Client{
-		"victoriametrics": vm.client,
-		"loki":            loki.client,
-		"victorialogs":    vlogs.client,
-		"tempo":           tempo.httpClient,
-		"victoriatraces":  vtraces.httpClient,
-		"clickhouse":      ch.httpClient,
-		"elasticsearch":   es.httpClient,
-		"alertmanager":    am.client,
-		"vmalert":         vmalert.client,
+		"victoriametrics":     vm.client,
+		"loki":                loki.client,
+		"victorialogs":        vlogs.client,
+		"victorialogs_stream": vlogs.streamClient,
+		"tempo":               tempo.httpClient,
+		"victoriatraces":      vtraces.httpClient,
+		"clickhouse":          ch.httpClient,
+		"elasticsearch":       es.httpClient,
+		"alertmanager":        am.client,
+		"vmalert":             vmalert.client,
 	}
 }
 

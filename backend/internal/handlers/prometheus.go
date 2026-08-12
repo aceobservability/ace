@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 	"github.com/aceobservability/ace/backend/pkg/prometheus"
 )
 
@@ -61,6 +62,10 @@ func NewPrometheusHandler(prometheusURL string) *PrometheusHandler {
 		prometheusURL: prometheusURL,
 		cache:         NewMetadataCache(5 * time.Minute),
 	}
+}
+
+func (h *PrometheusHandler) newClient() (*prometheus.Client, error) {
+	return prometheus.NewClient(h.prometheusURL, ssrf.DatasourceClient(30*time.Second))
 }
 
 type QueryRequest struct {
@@ -146,7 +151,7 @@ func (h *PrometheusHandler) Query(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create Prometheus client
-	client, err := prometheus.NewClient(h.prometheusURL)
+	client, err := h.newClient()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(ErrorResponse{
@@ -198,7 +203,7 @@ func (h *PrometheusHandler) Labels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client, err := prometheus.NewClient(h.prometheusURL)
+	client, err := h.newClient()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(ErrorResponse{
@@ -242,7 +247,7 @@ func (h *PrometheusHandler) Metrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client, err := prometheus.NewClient(h.prometheusURL)
+	client, err := h.newClient()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(ErrorResponse{
@@ -299,7 +304,7 @@ func (h *PrometheusHandler) LabelValues(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	client, err := prometheus.NewClient(h.prometheusURL)
+	client, err := h.newClient()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(ErrorResponse{
