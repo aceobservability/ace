@@ -178,9 +178,9 @@ func SafeClient(timeout time.Duration) *http.Client {
 	return &http.Client{
 		Timeout: timeout,
 		Transport: &urlPolicyTransport{
-			base:   base,
-			reject: reject,
-			// proxy nil => direct dials only; no hostname→IP pin.
+			base:           base,
+			reject:         reject,
+			pinDestination: false, // no proxy hop; keep hostname for multi-IP dial fallback
 			validate: func(raw string) error {
 				_, err := ValidateURL(raw)
 				return err
@@ -201,19 +201,20 @@ func rejectCloudMetadata(ip net.IP) error {
 // endpoint is blocked on the request URL (including when an HTTP proxy is
 // used), at dial time for direct connections, and on redirects.
 //
-// When HTTP(S)_PROXY applies to a request, destination hostnames are resolved
-// and pinned to a validated IP before the proxy hop so the proxy cannot
-// re-resolve the name to a different address (e.g. cloud metadata). Direct
-// (no-proxy) dials leave the hostname intact so dialBlockingTransport keeps
-// multi-A/AAAA fallback.
+// When an HTTP(S)_PROXY hop will actually be used, destination hostnames are
+// resolved and pinned to a validated IP before the proxy sees the request so
+// the proxy cannot re-resolve the name to a different address (e.g. cloud
+// metadata). Direct (no-proxy) dials leave the hostname intact so
+// dialBlockingTransport keeps multi-A/AAAA fallback. Pinning is gated on the
+// base *http.Transport's Proxy func (single source of truth with useProxy).
 func DatasourceClient(timeout time.Duration) *http.Client {
 	base := dialBlockingTransport(rejectCloudMetadata, true /* useProxy */)
 	return &http.Client{
 		Timeout: timeout,
 		Transport: &urlPolicyTransport{
-			base:   base,
-			reject: rejectCloudMetadata,
-			proxy:  http.ProxyFromEnvironment,
+			base:           base,
+			reject:         rejectCloudMetadata,
+			pinDestination: true,
 			validate: func(raw string) error {
 				_, err := ValidateDatasourceURL(raw)
 				return err
@@ -243,15 +244,17 @@ func DatasourceDialContext(ctx context.Context, network, addr string) (net.Conn,
 // transport runs. This matters when ProxyFromEnvironment is set: DialContext
 // only sees the proxy hop, so destination policy must run on RoundTrip.
 //
-// When proxy is non-nil and returns a proxy URL for the request, the hostname
-// is resolved and rewritten to a policy-checked IP (Host/SNI preserved) so the
-// proxy cannot re-resolve the name independently. For direct (no-proxy) dials
-// the base transport's DialContext loop already handles multi-A/AAAA fallback.
+// pinDestination is a capability flag (DatasourceClient true, SafeClient
+// false). Rewriting URL.Host to a single policy-checked IP only happens when
+// base is an *http.Transport whose Proxy returns a non-nil URL for this
+// request. That closes proxy-side DNS rebinding without collapsing direct
+// hostname dials to one address (which would disable multi-A/AAAA fallback
+// in dialBlockingTransport). Host/SNI are preserved on the pinned request.
 type urlPolicyTransport struct {
-	base     http.RoundTripper
-	validate func(raw string) error
-	reject   func(net.IP) error
-	proxy    func(*http.Request) (*url.URL, error) // nil = direct, no pinning
+	base           http.RoundTripper
+	validate       func(raw string) error
+	reject         func(net.IP) error
+	pinDestination bool
 
 	// Cached *http.Transport clones keyed by TLS ServerName. Pinning rewrites
 	// URL.Host to an IP, so HTTPS needs ServerName=original DNS name; cloning
@@ -267,17 +270,30 @@ func (t *urlPolicyTransport) RoundTrip(req *http.Request) (*http.Response, error
 	if err := t.validate(req.URL.String()); err != nil {
 		return nil, err
 	}
-	if t.proxy != nil {
-		if proxyURL, err := t.proxy(req); err == nil && proxyURL != nil {
-			cloned := req.Clone(req.Context())
-			tlsServerName, pinErr := pinRequestURLToValidatedIP(cloned, t.reject)
-			if pinErr != nil {
-				return nil, pinErr
-			}
-			return t.roundTripWithTLSServerName(cloned, tlsServerName)
+	if t.shouldPinDestination(req) {
+		cloned := req.Clone(req.Context())
+		tlsServerName, pinErr := pinRequestURLToValidatedIP(cloned, t.reject)
+		if pinErr != nil {
+			return nil, pinErr
 		}
+		return t.roundTripWithTLSServerName(cloned, tlsServerName)
 	}
 	return t.base.RoundTrip(req)
+}
+
+// shouldPinDestination is true only when pinning is enabled and this request
+// will actually use an HTTP proxy hop. No proxy (or a non-transport base)
+// leaves the hostname in place for fail-closed reject + multi-IP dial.
+func (t *urlPolicyTransport) shouldPinDestination(req *http.Request) bool {
+	if !t.pinDestination {
+		return false
+	}
+	base, ok := t.base.(*http.Transport)
+	if !ok || base == nil || base.Proxy == nil {
+		return false
+	}
+	proxyURL, err := base.Proxy(req)
+	return err == nil && proxyURL != nil
 }
 
 // roundTripWithTLSServerName sends req through the base transport. When the URL
@@ -340,9 +356,11 @@ func (t *urlPolicyTransport) CloseIdleConnections() {
 }
 
 // pinRequestURLToValidatedIP resolves the request hostname, rejects any IP that
-// fails policy, and rewrites URL.Host to the first allowed address while keeping
-// req.Host as the original authority. It returns the original DNS name when the
-// host was not already a literal IP, so HTTPS callers can set TLS ServerName.
+// fails policy (fail closed), and rewrites URL.Host to the first allowed
+// address while keeping req.Host as the original authority. It returns the
+// original DNS name when the host was not already a literal IP, so HTTPS
+// callers can set TLS ServerName. Used only on the proxy hop; direct dials
+// must not pin so multi-A/AAAA fallback remains.
 func pinRequestURLToValidatedIP(req *http.Request, reject func(net.IP) error) (tlsServerName string, err error) {
 	if reject == nil {
 		return "", fmt.Errorf("missing IP reject policy")
