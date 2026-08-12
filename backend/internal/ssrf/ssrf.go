@@ -197,11 +197,19 @@ func DatasourceClient(timeout time.Duration) *http.Client {
 }
 
 // dialBlockingTransport builds a transport that resolves each dial target and
-// rejects IPs for which reject returns a non-nil error, then dials the first
-// remaining address.
+// rejects IPs for which reject returns a non-nil error, then dials allowed
+// addresses in order (fallback if the first is unreachable).
+//
+// ProxyFromEnvironment is honored so HTTP_PROXY/HTTPS_PROXY still work for
+// datasource egress. When a proxy is used, DialContext connects to the proxy
+// hop; destination policy still applies via CheckRedirect / URL validators.
 func dialBlockingTransport(reject func(net.IP) error) *http.Transport {
-	dialer := &net.Dialer{Timeout: 5 * time.Second}
+	dialer := &net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
 	return &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			host, port, err := net.SplitHostPort(addr)
 			if err != nil {
@@ -214,12 +222,33 @@ func dialBlockingTransport(reject func(net.IP) error) *http.Transport {
 			if len(ips) == 0 {
 				return nil, fmt.Errorf("dns resolution returned no addresses")
 			}
+
+			// Fail closed if any resolved address is rejected (partial metadata
+			// rebinding). Among allowed addresses, try each until one connects.
+			var candidates []net.IPAddr
 			for _, ip := range ips {
 				if err := reject(ip.IP); err != nil {
 					return nil, err
 				}
+				candidates = append(candidates, ip)
 			}
-			return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].IP.String(), port))
+
+			var firstDialErr error
+			for _, ip := range candidates {
+				conn, dialErr := dialer.DialContext(ctx, network, net.JoinHostPort(ip.IP.String(), port))
+				if dialErr == nil {
+					return conn, nil
+				}
+				if firstDialErr == nil {
+					firstDialErr = dialErr
+				}
+			}
+			return nil, firstDialErr
 		},
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
 	}
 }

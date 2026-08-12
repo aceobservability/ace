@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	promclient "github.com/aceobservability/ace/backend/pkg/prometheus"
 	"github.com/aceobservability/ace/backend/internal/ssrf"
+	promclient "github.com/aceobservability/ace/backend/pkg/prometheus"
 )
 
 type PrometheusClient struct {

@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/aceobservability/ace/backend/internal/ssrf"
+	"github.com/gorilla/websocket"
 )
 
 // LokiClient queries Loki using LogQL
