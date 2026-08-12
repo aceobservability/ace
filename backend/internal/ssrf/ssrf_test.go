@@ -1,8 +1,10 @@
 package ssrf
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 )
@@ -119,6 +121,35 @@ func TestDatasourceClient_allowsPrivateBlocksMetadata(t *testing.T) {
 	if err == nil {
 		resp.Body.Close()
 		t.Fatal("DatasourceClient should refuse cloud metadata dial")
+	}
+}
+
+func TestDatasourceDialContext_allowsPrivateBlocksMetadata(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(srv.Close)
+
+	u, err := url.Parse(srv.URL)
+	if err != nil {
+		t.Fatalf("parse test server url: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	conn, err := DatasourceDialContext(ctx, "tcp", u.Host)
+	if err != nil {
+		t.Fatalf("DatasourceDialContext should allow private target %s: %v", u.Host, err)
+	}
+	_ = conn.Close()
+
+	conn, err = DatasourceDialContext(ctx, "tcp", "169.254.169.254:80")
+	if err == nil {
+		_ = conn.Close()
+		t.Fatal("DatasourceDialContext should refuse cloud metadata dial")
 	}
 }
 

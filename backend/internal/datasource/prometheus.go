@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/aceobservability/ace/backend/internal/ssrf"
 	promclient "github.com/aceobservability/ace/backend/pkg/prometheus"
 )
 
@@ -13,8 +12,7 @@ type PrometheusClient struct {
 }
 
 func NewPrometheusClient(url string) (*PrometheusClient, error) {
-	httpClient := ssrf.DatasourceClient(30 * time.Second)
-	client, err := promclient.NewClient(url, httpClient)
+	client, err := promclient.NewClient(url)
 	if err != nil {
 		return nil, err
 	}

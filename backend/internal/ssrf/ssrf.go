@@ -172,18 +172,20 @@ func SafeClient(timeout time.Duration) *http.Client {
 	}
 }
 
+func rejectCloudMetadata(ip net.IP) error {
+	if isCloudMetadataIP(ip) {
+		return fmt.Errorf("connections to cloud metadata endpoint are not allowed")
+	}
+	return nil
+}
+
 // DatasourceClient returns an *http.Client for configured observability
 // datasources. Private/internal targets are allowed; the cloud metadata
 // endpoint is blocked at dial time (DNS rebinding) and on redirects.
 func DatasourceClient(timeout time.Duration) *http.Client {
 	return &http.Client{
-		Timeout: timeout,
-		Transport: dialBlockingTransport(func(ip net.IP) error {
-			if isCloudMetadataIP(ip) {
-				return fmt.Errorf("connections to cloud metadata endpoint are not allowed")
-			}
-			return nil
-		}),
+		Timeout:   timeout,
+		Transport: dialBlockingTransport(rejectCloudMetadata),
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= 10 {
 				return fmt.Errorf("stopped after 10 redirects")
@@ -194,6 +196,13 @@ func DatasourceClient(timeout time.Duration) *http.Client {
 			return nil
 		},
 	}
+}
+
+// DatasourceDialContext applies the same dial-time metadata block as
+// DatasourceClient. Use for non-HTTP transports (e.g. websocket) that cannot
+// take an *http.Client.
+func DatasourceDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	return dialBlockingTransport(rejectCloudMetadata).DialContext(ctx, network, addr)
 }
 
 // dialBlockingTransport builds a transport that resolves each dial target and
