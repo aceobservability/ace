@@ -2,6 +2,7 @@ package ssrf
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -220,7 +221,7 @@ func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
 		},
 	}
 
-	// Literal IP: still normalized with explicit port; Host preserved for SNI/vhost.
+	// Literal IP: still normalized with explicit port; Host preserved for vhost.
 	resp, err := client.Get("http://127.0.0.1:9/health")
 	if err != nil {
 		t.Fatalf("expected private literal to pass policy: %v", err)
@@ -245,6 +246,41 @@ func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
 	}
 	if saw != nil {
 		t.Fatal("base transport must not run after metadata reject")
+	}
+}
+
+func TestPinRequestURLToValidatedIP_returnsDNSNameForTLS(t *testing.T) {
+	t.Parallel()
+
+	req, err := http.NewRequest(http.MethodGet, "https://example.com/metrics", nil)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	name, err := pinRequestURLToValidatedIP(req, rejectCloudMetadata)
+	if err != nil {
+		t.Fatalf("pin: %v", err)
+	}
+	if name != "example.com" {
+		t.Fatalf("tls server name = %q, want example.com", name)
+	}
+	if ip := net.ParseIP(req.URL.Hostname()); ip == nil {
+		t.Fatalf("URL host should be pinned IP, got %q", req.URL.Host)
+	}
+	if req.Host != "example.com" {
+		t.Fatalf("Host header = %q, want example.com", req.Host)
+	}
+
+	// Literal HTTPS IP: no DNS name to restore for SNI.
+	req, err = http.NewRequest(http.MethodGet, "https://8.8.8.8/", nil)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	name, err = pinRequestURLToValidatedIP(req, rejectCloudMetadata)
+	if err != nil {
+		t.Fatalf("pin literal: %v", err)
+	}
+	if name != "" {
+		t.Fatalf("literal IP should not return tls server name, got %q", name)
 	}
 }
 

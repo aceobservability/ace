@@ -4,6 +4,7 @@ package ssrf
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -234,8 +235,10 @@ func DatasourceDialContext(ctx context.Context, network, addr string) (net.Conn,
 // transport runs. This matters when ProxyFromEnvironment is set: DialContext
 // only sees the proxy hop, so destination policy must run on RoundTrip.
 //
-// When pinDestination is set, hostnames are rewritten to a policy-checked IP
-// (Host/SNI preserved) so a proxy cannot re-resolve the name independently.
+// When pinDestination is set, hostnames are rewritten to a policy-checked IP so a
+// proxy cannot re-resolve the name independently. Request.Host keeps the original
+// authority (HTTP Host). For HTTPS, TLS ServerName is set to the original DNS name
+// so SNI and certificate verification still match the datasource hostname.
 type urlPolicyTransport struct {
 	base           http.RoundTripper
 	validate       func(raw string) error
@@ -250,26 +253,56 @@ func (t *urlPolicyTransport) RoundTrip(req *http.Request) (*http.Response, error
 	if err := t.validate(req.URL.String()); err != nil {
 		return nil, err
 	}
-	if t.pinDestination {
-		cloned := req.Clone(req.Context())
-		if err := pinRequestURLToValidatedIP(cloned, t.reject); err != nil {
-			return nil, err
-		}
-		req = cloned
+	if !t.pinDestination {
+		return t.base.RoundTrip(req)
 	}
-	return t.base.RoundTrip(req)
+	cloned := req.Clone(req.Context())
+	tlsServerName, err := pinRequestURLToValidatedIP(cloned, t.reject)
+	if err != nil {
+		return nil, err
+	}
+	return t.roundTripWithTLSServerName(cloned, tlsServerName)
+}
+
+// roundTripWithTLSServerName sends req through the base transport. When the URL
+// was pinned to an IP, tlsServerName is the original DNS name and must be applied
+// as tls.Config.ServerName so verification/SNI are not performed against the IP.
+func (t *urlPolicyTransport) roundTripWithTLSServerName(req *http.Request, tlsServerName string) (*http.Response, error) {
+	if tlsServerName == "" || req.URL.Scheme != "https" {
+		return t.base.RoundTrip(req)
+	}
+	base, ok := t.base.(*http.Transport)
+	if !ok {
+		// Non-transport bases (tests) cannot set ServerName; callers that need
+		// real HTTPS must use *http.Transport.
+		return t.base.RoundTrip(req)
+	}
+	tr := base.Clone()
+	var cfg *tls.Config
+	if tr.TLSClientConfig == nil {
+		cfg = &tls.Config{}
+	} else {
+		cfg = tr.TLSClientConfig.Clone()
+	}
+	// Only fill ServerName when unset so an explicit transport config still wins.
+	if cfg.ServerName == "" {
+		cfg.ServerName = tlsServerName
+	}
+	tr.TLSClientConfig = cfg
+	return tr.RoundTrip(req)
 }
 
 // pinRequestURLToValidatedIP resolves the request hostname, rejects any IP that
 // fails policy, and rewrites URL.Host to the first allowed address while keeping
-// req.Host as the original hostname for virtual hosts and TLS SNI.
-func pinRequestURLToValidatedIP(req *http.Request, reject func(net.IP) error) error {
+// req.Host as the original authority. It returns the original DNS name when the
+// host was not already a literal IP, so HTTPS callers can set TLS ServerName.
+func pinRequestURLToValidatedIP(req *http.Request, reject func(net.IP) error) (tlsServerName string, err error) {
 	if reject == nil {
-		return fmt.Errorf("missing IP reject policy")
+		return "", fmt.Errorf("missing IP reject policy")
 	}
 	hostname := req.URL.Hostname()
 	if hostname == "" {
-		return fmt.Errorf("url must include a hostname")
+		return "", fmt.Errorf("url must include a hostname")
 	}
 
 	port := req.URL.Port()
@@ -280,11 +313,11 @@ func pinRequestURLToValidatedIP(req *http.Request, reject func(net.IP) error) er
 		case "http":
 			port = "80"
 		default:
-			return fmt.Errorf("url must use http or https scheme")
+			return "", fmt.Errorf("url must use http or https scheme")
 		}
 	}
 
-	// Preserve original authority for Host / SNI before rewriting the URL.
+	// Preserve original authority for the HTTP Host header before rewriting URL.Host.
 	origAuthority := req.URL.Host
 	if req.Host == "" {
 		req.Host = origAuthority
@@ -292,32 +325,33 @@ func pinRequestURLToValidatedIP(req *http.Request, reject func(net.IP) error) er
 
 	if ip := net.ParseIP(hostname); ip != nil {
 		if err := reject(ip); err != nil {
-			return err
+			return "", err
 		}
 		// Normalize URL.Host to include explicit port for the transport/proxy hop.
 		req.URL.Host = net.JoinHostPort(ip.String(), port)
-		return nil
+		// Literal IP destinations have no DNS name for SNI.
+		return "", nil
 	}
 
 	ips, err := net.DefaultResolver.LookupIPAddr(req.Context(), hostname)
 	if err != nil {
-		return fmt.Errorf("dns resolution failed: %w", err)
+		return "", fmt.Errorf("dns resolution failed: %w", err)
 	}
 	if len(ips) == 0 {
-		return fmt.Errorf("dns resolution returned no addresses")
+		return "", fmt.Errorf("dns resolution returned no addresses")
 	}
 
 	var chosen net.IP
 	for _, ip := range ips {
 		if err := reject(ip.IP); err != nil {
-			return err
+			return "", err
 		}
 		if chosen == nil {
 			chosen = ip.IP
 		}
 	}
 	req.URL.Host = net.JoinHostPort(chosen.String(), port)
-	return nil
+	return hostname, nil
 }
 
 // dialBlockingTransport builds a transport that resolves each dial target and
