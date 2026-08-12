@@ -201,19 +201,24 @@ func TestDatasourceClient_rejectsMetadataDestinationURL(t *testing.T) {
 	}
 }
 
-func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
+func TestURLPolicyTransport_pinsHostnameOnlyWhenProxied(t *testing.T) {
 	t.Parallel()
 
+	proxyURL, err := url.Parse("http://127.0.0.1:18080")
+	if err != nil {
+		t.Fatalf("parse proxy: %v", err)
+	}
+
 	var saw *http.Request
-	client := &http.Client{
+	withProxy := &http.Client{
 		Timeout: 2 * time.Second,
 		Transport: &urlPolicyTransport{
 			base: roundTripFunc(func(req *http.Request) (*http.Response, error) {
-				saw = req
+				saw = req.Clone(req.Context())
 				return &http.Response{StatusCode: http.StatusOK, Body: http.NoBody, Request: req}, nil
 			}),
-			reject:         rejectCloudMetadata,
-			pinDestination: true,
+			reject: rejectCloudMetadata,
+			proxy:  func(*http.Request) (*url.URL, error) { return proxyURL, nil },
 			validate: func(raw string) error {
 				_, err := ValidateDatasourceURL(raw)
 				return err
@@ -221,8 +226,28 @@ func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
 		},
 	}
 
-	// Literal IP: still normalized with explicit port; Host preserved for vhost.
-	resp, err := client.Get("http://127.0.0.1:9/health")
+	// Proxied hostname: URL.Host rewritten to validated IP; Host keeps DNS authority.
+	resp, err := withProxy.Get("http://example.com/metrics")
+	if err != nil {
+		t.Fatalf("expected proxied hostname pin to succeed: %v", err)
+	}
+	resp.Body.Close()
+	if saw == nil {
+		t.Fatal("base transport was not called")
+	}
+	if ip := net.ParseIP(saw.URL.Hostname()); ip == nil {
+		t.Fatalf("proxied URL host should be pinned IP, got %q", saw.URL.Host)
+	}
+	if saw.URL.Port() != "80" {
+		t.Fatalf("pinned URL port = %q, want 80", saw.URL.Port())
+	}
+	if saw.Host != "example.com" {
+		t.Fatalf("Host header should keep original authority, got %q", saw.Host)
+	}
+
+	// Proxied literal IP: still normalized with explicit port; Host preserved.
+	saw = nil
+	resp, err = withProxy.Get("http://127.0.0.1:9/health")
 	if err != nil {
 		t.Fatalf("expected private literal to pass policy: %v", err)
 	}
@@ -237,15 +262,45 @@ func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
 		t.Fatalf("Host header should keep original authority, got %q", saw.Host)
 	}
 
-	// Metadata literal must fail before base transport.
+	// Metadata literal must fail before base transport (even with proxy).
 	saw = nil
-	resp, err = client.Get("http://169.254.169.254/")
+	resp, err = withProxy.Get("http://169.254.169.254/")
 	if err == nil {
 		resp.Body.Close()
 		t.Fatal("expected metadata pin to fail")
 	}
 	if saw != nil {
 		t.Fatal("base transport must not run after metadata reject")
+	}
+
+	// Direct (no proxy): leave hostname unpinned so multi-IP dial fallback works.
+	saw = nil
+	direct := &http.Client{
+		Timeout: 2 * time.Second,
+		Transport: &urlPolicyTransport{
+			base: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				saw = req.Clone(req.Context())
+				return &http.Response{StatusCode: http.StatusOK, Body: http.NoBody, Request: req}, nil
+			}),
+			reject: rejectCloudMetadata,
+			// proxy nil / returns nil => no pin
+			proxy: func(*http.Request) (*url.URL, error) { return nil, nil },
+			validate: func(raw string) error {
+				_, err := ValidateDatasourceURL(raw)
+				return err
+			},
+		},
+	}
+	resp, err = direct.Get("http://example.com/metrics")
+	if err != nil {
+		t.Fatalf("expected direct hostname request to succeed: %v", err)
+	}
+	resp.Body.Close()
+	if saw == nil {
+		t.Fatal("base transport was not called")
+	}
+	if saw.URL.Hostname() != "example.com" {
+		t.Fatalf("direct dial must not pin hostname, got %q", saw.URL.Host)
 	}
 }
 
