@@ -182,6 +182,7 @@ func TestDatasourceClient_rejectsMetadataDestinationURL(t *testing.T) {
 				baseCalls++
 				return &http.Response{StatusCode: http.StatusOK, Body: http.NoBody, Request: req}, nil
 			}),
+			reject: rejectCloudMetadata,
 			validate: func(raw string) error {
 				_, err := ValidateDatasourceURL(raw)
 				return err
@@ -196,6 +197,54 @@ func TestDatasourceClient_rejectsMetadataDestinationURL(t *testing.T) {
 	}
 	if baseCalls != 0 {
 		t.Fatalf("base transport should not run for rejected destination, calls=%d", baseCalls)
+	}
+}
+
+func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
+	t.Parallel()
+
+	var saw *http.Request
+	client := &http.Client{
+		Timeout: 2 * time.Second,
+		Transport: &urlPolicyTransport{
+			base: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				saw = req
+				return &http.Response{StatusCode: http.StatusOK, Body: http.NoBody, Request: req}, nil
+			}),
+			reject:         rejectCloudMetadata,
+			pinDestination: true,
+			validate: func(raw string) error {
+				_, err := ValidateDatasourceURL(raw)
+				return err
+			},
+		},
+	}
+
+	// Literal IP: still normalized with explicit port; Host preserved for SNI/vhost.
+	resp, err := client.Get("http://127.0.0.1:9/health")
+	if err != nil {
+		t.Fatalf("expected private literal to pass policy: %v", err)
+	}
+	resp.Body.Close()
+	if saw == nil {
+		t.Fatal("base transport was not called")
+	}
+	if saw.URL.Hostname() != "127.0.0.1" || saw.URL.Port() != "9" {
+		t.Fatalf("URL not pinned to validated IP: host=%q", saw.URL.Host)
+	}
+	if saw.Host != "127.0.0.1:9" {
+		t.Fatalf("Host header should keep original authority, got %q", saw.Host)
+	}
+
+	// Metadata literal must fail before base transport.
+	saw = nil
+	resp, err = client.Get("http://169.254.169.254/")
+	if err == nil {
+		resp.Body.Close()
+		t.Fatal("expected metadata pin to fail")
+	}
+	if saw != nil {
+		t.Fatal("base transport must not run after metadata reject")
 	}
 }
 

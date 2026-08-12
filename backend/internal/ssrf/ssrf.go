@@ -161,16 +161,19 @@ func IsLocalURL(raw string) bool {
 // Use for untrusted user-supplied hosts only — not for configured datasources
 // that may legitimately live on private networks.
 func SafeClient(timeout time.Duration) *http.Client {
-	base := dialBlockingTransport(func(ip net.IP) error {
+	reject := func(ip net.IP) error {
 		if isBlockedIP(ip) {
 			return fmt.Errorf("connections to private/internal addresses are not allowed")
 		}
 		return nil
-	}, false /* useProxy */)
+	}
+	base := dialBlockingTransport(reject, false /* useProxy */)
 	return &http.Client{
 		Timeout: timeout,
 		Transport: &urlPolicyTransport{
-			base: base,
+			base:           base,
+			reject:         reject,
+			pinDestination: true,
 			validate: func(raw string) error {
 				_, err := ValidateURL(raw)
 				return err
@@ -190,12 +193,18 @@ func rejectCloudMetadata(ip net.IP) error {
 // datasources. Private/internal targets are allowed; the cloud metadata
 // endpoint is blocked on the request URL (including when an HTTP proxy is
 // used), at dial time for direct connections, and on redirects.
+//
+// Destination hostnames are resolved and pinned to a validated IP before the
+// request is handed to the base transport so an HTTP(S)_PROXY cannot re-resolve
+// the name to a different address (e.g. cloud metadata).
 func DatasourceClient(timeout time.Duration) *http.Client {
 	base := dialBlockingTransport(rejectCloudMetadata, true /* useProxy */)
 	return &http.Client{
 		Timeout: timeout,
 		Transport: &urlPolicyTransport{
-			base: base,
+			base:           base,
+			reject:         rejectCloudMetadata,
+			pinDestination: true,
 			validate: func(raw string) error {
 				_, err := ValidateDatasourceURL(raw)
 				return err
@@ -224,9 +233,14 @@ func DatasourceDialContext(ctx context.Context, network, addr string) (net.Conn,
 // urlPolicyTransport validates the destination request URL before the base
 // transport runs. This matters when ProxyFromEnvironment is set: DialContext
 // only sees the proxy hop, so destination policy must run on RoundTrip.
+//
+// When pinDestination is set, hostnames are rewritten to a policy-checked IP
+// (Host/SNI preserved) so a proxy cannot re-resolve the name independently.
 type urlPolicyTransport struct {
-	base     http.RoundTripper
-	validate func(raw string) error
+	base           http.RoundTripper
+	validate       func(raw string) error
+	reject         func(net.IP) error
+	pinDestination bool
 }
 
 func (t *urlPolicyTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -236,7 +250,74 @@ func (t *urlPolicyTransport) RoundTrip(req *http.Request) (*http.Response, error
 	if err := t.validate(req.URL.String()); err != nil {
 		return nil, err
 	}
+	if t.pinDestination {
+		cloned := req.Clone(req.Context())
+		if err := pinRequestURLToValidatedIP(cloned, t.reject); err != nil {
+			return nil, err
+		}
+		req = cloned
+	}
 	return t.base.RoundTrip(req)
+}
+
+// pinRequestURLToValidatedIP resolves the request hostname, rejects any IP that
+// fails policy, and rewrites URL.Host to the first allowed address while keeping
+// req.Host as the original hostname for virtual hosts and TLS SNI.
+func pinRequestURLToValidatedIP(req *http.Request, reject func(net.IP) error) error {
+	if reject == nil {
+		return fmt.Errorf("missing IP reject policy")
+	}
+	hostname := req.URL.Hostname()
+	if hostname == "" {
+		return fmt.Errorf("url must include a hostname")
+	}
+
+	port := req.URL.Port()
+	if port == "" {
+		switch req.URL.Scheme {
+		case "https":
+			port = "443"
+		case "http":
+			port = "80"
+		default:
+			return fmt.Errorf("url must use http or https scheme")
+		}
+	}
+
+	// Preserve original authority for Host / SNI before rewriting the URL.
+	origAuthority := req.URL.Host
+	if req.Host == "" {
+		req.Host = origAuthority
+	}
+
+	if ip := net.ParseIP(hostname); ip != nil {
+		if err := reject(ip); err != nil {
+			return err
+		}
+		// Normalize URL.Host to include explicit port for the transport/proxy hop.
+		req.URL.Host = net.JoinHostPort(ip.String(), port)
+		return nil
+	}
+
+	ips, err := net.DefaultResolver.LookupIPAddr(req.Context(), hostname)
+	if err != nil {
+		return fmt.Errorf("dns resolution failed: %w", err)
+	}
+	if len(ips) == 0 {
+		return fmt.Errorf("dns resolution returned no addresses")
+	}
+
+	var chosen net.IP
+	for _, ip := range ips {
+		if err := reject(ip.IP); err != nil {
+			return err
+		}
+		if chosen == nil {
+			chosen = ip.IP
+		}
+	}
+	req.URL.Host = net.JoinHostPort(chosen.String(), port)
+	return nil
 }
 
 // dialBlockingTransport builds a transport that resolves each dial target and
