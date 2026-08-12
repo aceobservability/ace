@@ -304,6 +304,28 @@ func TestURLPolicyTransport_pinsHostnameOnlyWhenProxied(t *testing.T) {
 	}
 }
 
+func TestURLPolicyTransport_reusesTLSTransportPerServerName(t *testing.T) {
+	t.Parallel()
+
+	base := &http.Transport{}
+	upt := &urlPolicyTransport{base: base}
+	tr1 := upt.transportForServerName(base, "metrics.example.com")
+	tr2 := upt.transportForServerName(base, "metrics.example.com")
+	tr3 := upt.transportForServerName(base, "logs.example.com")
+	if tr1 != tr2 {
+		t.Fatal("expected cached transport reuse for same ServerName")
+	}
+	if tr1 == tr3 {
+		t.Fatal("expected distinct transports for different ServerNames")
+	}
+	if tr1.TLSClientConfig == nil || tr1.TLSClientConfig.ServerName != "metrics.example.com" {
+		t.Fatalf("ServerName = %v", tr1.TLSClientConfig)
+	}
+	if tr3.TLSClientConfig == nil || tr3.TLSClientConfig.ServerName != "logs.example.com" {
+		t.Fatalf("ServerName = %v", tr3.TLSClientConfig)
+	}
+}
+
 func TestPinRequestURLToValidatedIP_returnsDNSNameForTLS(t *testing.T) {
 	t.Parallel()
 

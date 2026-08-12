@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -251,6 +252,12 @@ type urlPolicyTransport struct {
 	validate func(raw string) error
 	reject   func(net.IP) error
 	proxy    func(*http.Request) (*url.URL, error) // nil = direct, no pinning
+
+	// Cached *http.Transport clones keyed by TLS ServerName. Pinning rewrites
+	// URL.Host to an IP, so HTTPS needs ServerName=original DNS name; cloning
+	// once per name keeps idle pools instead of per-request transports.
+	mu        sync.Mutex
+	tlsByName map[string]*http.Transport
 }
 
 func (t *urlPolicyTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -286,6 +293,20 @@ func (t *urlPolicyTransport) roundTripWithTLSServerName(req *http.Request, tlsSe
 		// real HTTPS must use *http.Transport.
 		return t.base.RoundTrip(req)
 	}
+	return t.transportForServerName(base, tlsServerName).RoundTrip(req)
+}
+
+// transportForServerName returns a cached transport clone with ServerName set
+// so repeated HTTPS queries to the same datasource reuse one idle pool.
+func (t *urlPolicyTransport) transportForServerName(base *http.Transport, serverName string) *http.Transport {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.tlsByName == nil {
+		t.tlsByName = make(map[string]*http.Transport)
+	}
+	if tr, ok := t.tlsByName[serverName]; ok {
+		return tr
+	}
 	tr := base.Clone()
 	var cfg *tls.Config
 	if tr.TLSClientConfig == nil {
@@ -295,10 +316,27 @@ func (t *urlPolicyTransport) roundTripWithTLSServerName(req *http.Request, tlsSe
 	}
 	// Only fill ServerName when unset so an explicit transport config still wins.
 	if cfg.ServerName == "" {
-		cfg.ServerName = tlsServerName
+		cfg.ServerName = serverName
 	}
 	tr.TLSClientConfig = cfg
-	return tr.RoundTrip(req)
+	t.tlsByName[serverName] = tr
+	return tr
+}
+
+// CloseIdleConnections forwards idle-pool cleanup to the base transport and any
+// cached ServerName clones (http.Client calls this when present).
+func (t *urlPolicyTransport) CloseIdleConnections() {
+	type closeIdler interface {
+		CloseIdleConnections()
+	}
+	if c, ok := t.base.(closeIdler); ok {
+		c.CloseIdleConnections()
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	for _, tr := range t.tlsByName {
+		tr.CloseIdleConnections()
+	}
 }
 
 // pinRequestURLToValidatedIP resolves the request hostname, rejects any IP that
