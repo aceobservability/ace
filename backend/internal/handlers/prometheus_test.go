@@ -111,3 +111,18 @@ func TestNewPrometheusHandler(t *testing.T) {
 		t.Errorf("expected prometheusURL 'http://localhost:9090', got '%s'", handler.prometheusURL)
 	}
 }
+
+func TestPrometheusHandler_newClient_reusesSingleton(t *testing.T) {
+	handler := NewPrometheusHandler("http://localhost:9090")
+	c1, err := handler.newClient()
+	if err != nil {
+		t.Fatalf("first newClient: %v", err)
+	}
+	c2, err := handler.newClient()
+	if err != nil {
+		t.Fatalf("second newClient: %v", err)
+	}
+	if c1 != c2 {
+		t.Fatal("expected handler to reuse one prometheus client across requests")
+	}
+}

@@ -250,17 +250,21 @@ func DatasourceDialContext(ctx context.Context, network, addr string) (net.Conn,
 // request. That closes proxy-side DNS rebinding without collapsing direct
 // hostname dials to one address (which would disable multi-A/AAAA fallback
 // in dialBlockingTransport). Host/SNI are preserved on the pinned request.
+//
+// After pinning, the chosen proxy URL is forced on the outbound transport so
+// ProxyFromEnvironment cannot re-evaluate NO_PROXY against the pinned IP and
+// skip the hop that the original hostname selected.
 type urlPolicyTransport struct {
 	base           http.RoundTripper
 	validate       func(raw string) error
 	reject         func(net.IP) error
 	pinDestination bool
 
-	// Cached *http.Transport clones keyed by TLS ServerName. Pinning rewrites
-	// URL.Host to an IP, so HTTPS needs ServerName=original DNS name; cloning
-	// once per name keeps idle pools instead of per-request transports.
-	mu        sync.Mutex
-	tlsByName map[string]*http.Transport
+	// Cached transport clones for pinned (proxied) requests. Keyed by
+	// proxyURL + TLS ServerName so idle pools are reused without re-running
+	// ProxyFromEnvironment against the rewritten IP.
+	mu          sync.Mutex
+	pinnedByKey map[string]*http.Transport
 }
 
 func (t *urlPolicyTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -270,77 +274,94 @@ func (t *urlPolicyTransport) RoundTrip(req *http.Request) (*http.Response, error
 	if err := t.validate(req.URL.String()); err != nil {
 		return nil, err
 	}
-	if t.shouldPinDestination(req) {
-		cloned := req.Clone(req.Context())
-		tlsServerName, pinErr := pinRequestURLToValidatedIP(cloned, t.reject)
-		if pinErr != nil {
-			return nil, pinErr
-		}
-		return t.roundTripWithTLSServerName(cloned, tlsServerName)
+	proxyURL, ok := t.proxyForPin(req)
+	if !ok {
+		return t.base.RoundTrip(req)
 	}
-	return t.base.RoundTrip(req)
+	cloned := req.Clone(req.Context())
+	tlsServerName, pinErr := pinRequestURLToValidatedIP(cloned, t.reject)
+	if pinErr != nil {
+		return nil, pinErr
+	}
+	return t.roundTripPinned(cloned, tlsServerName, proxyURL)
 }
 
-// shouldPinDestination is true only when pinning is enabled and this request
-// will actually use an HTTP proxy hop. No proxy (or a non-transport base)
-// leaves the hostname in place for fail-closed reject + multi-IP dial.
-func (t *urlPolicyTransport) shouldPinDestination(req *http.Request) bool {
+// proxyForPin returns the proxy URL when pinning should run for this request.
+// Decision uses the original hostname (before pin) so NO_PROXY matches the
+// datasource name the operator configured, not the resolved IP.
+func (t *urlPolicyTransport) proxyForPin(req *http.Request) (*url.URL, bool) {
 	if !t.pinDestination {
-		return false
+		return nil, false
 	}
 	base, ok := t.base.(*http.Transport)
 	if !ok || base == nil || base.Proxy == nil {
-		return false
+		return nil, false
 	}
 	proxyURL, err := base.Proxy(req)
-	return err == nil && proxyURL != nil
+	if err != nil || proxyURL == nil {
+		return nil, false
+	}
+	return proxyURL, true
 }
 
-// roundTripWithTLSServerName sends req through the base transport. When the URL
-// was pinned to an IP, tlsServerName is the original DNS name and must be applied
-// as tls.Config.ServerName so verification/SNI are not performed against the IP.
-func (t *urlPolicyTransport) roundTripWithTLSServerName(req *http.Request, tlsServerName string) (*http.Response, error) {
-	if tlsServerName == "" || req.URL.Scheme != "https" {
-		return t.base.RoundTrip(req)
-	}
+// roundTripPinned sends a destination-pinned request while keeping the proxy
+// hop that was selected for the original hostname. tlsServerName is the DNS
+// name for HTTPS SNI/cert verify when the host was not already a literal IP.
+func (t *urlPolicyTransport) roundTripPinned(req *http.Request, tlsServerName string, proxyURL *url.URL) (*http.Response, error) {
 	base, ok := t.base.(*http.Transport)
 	if !ok {
-		// Non-transport bases (tests) cannot set ServerName; callers that need
-		// real HTTPS must use *http.Transport.
+		// Non-transport bases (tests) cannot force Proxy/ServerName.
 		return t.base.RoundTrip(req)
 	}
-	return t.transportForServerName(base, tlsServerName).RoundTrip(req)
+	if req.URL.Scheme != "https" {
+		tlsServerName = ""
+	}
+	return t.transportForPinnedProxy(base, tlsServerName, proxyURL).RoundTrip(req)
 }
 
-// transportForServerName returns a cached transport clone with ServerName set
-// so repeated HTTPS queries to the same datasource reuse one idle pool.
-func (t *urlPolicyTransport) transportForServerName(base *http.Transport, serverName string) *http.Transport {
+// transportForPinnedProxy returns a cached clone that always uses proxyURL and
+// optionally sets TLS ServerName. Caching keeps idle pools under load.
+func (t *urlPolicyTransport) transportForPinnedProxy(base *http.Transport, serverName string, proxyURL *url.URL) *http.Transport {
+	key := pinnedTransportKey(proxyURL, serverName)
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if t.tlsByName == nil {
-		t.tlsByName = make(map[string]*http.Transport)
+	if t.pinnedByKey == nil {
+		t.pinnedByKey = make(map[string]*http.Transport)
 	}
-	if tr, ok := t.tlsByName[serverName]; ok {
+	if tr, ok := t.pinnedByKey[key]; ok {
 		return tr
 	}
 	tr := base.Clone()
-	var cfg *tls.Config
-	if tr.TLSClientConfig == nil {
-		cfg = &tls.Config{}
-	} else {
-		cfg = tr.TLSClientConfig.Clone()
+	fixedProxy := proxyURL
+	tr.Proxy = func(*http.Request) (*url.URL, error) {
+		return fixedProxy, nil
 	}
-	// Only fill ServerName when unset so an explicit transport config still wins.
-	if cfg.ServerName == "" {
-		cfg.ServerName = serverName
+	if serverName != "" {
+		var cfg *tls.Config
+		if tr.TLSClientConfig == nil {
+			cfg = &tls.Config{}
+		} else {
+			cfg = tr.TLSClientConfig.Clone()
+		}
+		// Only fill ServerName when unset so an explicit transport config still wins.
+		if cfg.ServerName == "" {
+			cfg.ServerName = serverName
+		}
+		tr.TLSClientConfig = cfg
 	}
-	tr.TLSClientConfig = cfg
-	t.tlsByName[serverName] = tr
+	t.pinnedByKey[key] = tr
 	return tr
 }
 
+func pinnedTransportKey(proxyURL *url.URL, serverName string) string {
+	if proxyURL == nil {
+		return "\x00" + serverName
+	}
+	return proxyURL.String() + "\x00" + serverName
+}
+
 // CloseIdleConnections forwards idle-pool cleanup to the base transport and any
-// cached ServerName clones (http.Client calls this when present).
+// cached pinned-proxy clones (http.Client calls this when present).
 func (t *urlPolicyTransport) CloseIdleConnections() {
 	type closeIdler interface {
 		CloseIdleConnections()
@@ -350,7 +371,7 @@ func (t *urlPolicyTransport) CloseIdleConnections() {
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	for _, tr := range t.tlsByName {
+	for _, tr := range t.pinnedByKey {
 		tr.CloseIdleConnections()
 	}
 }

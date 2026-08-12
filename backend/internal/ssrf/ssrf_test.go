@@ -233,16 +233,17 @@ func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
 
 	allowAll := func(string) error { return nil }
 
-	t.Run("proxy hop pins hostname and preserves Host", func(t *testing.T) {
+	t.Run("proxy hop pins hostname and dials forced proxy", func(t *testing.T) {
 		t.Parallel()
-		var lastProxyReq *http.Request
-		dialed := 0
+		var proxyDecisionHost string
+		var dialAddr string
+		proxyURL := &url.URL{Scheme: "http", Host: "proxy.test:8080"}
 		rt := &urlPolicyTransport{
 			base: proxyTransport(func(req *http.Request) (*url.URL, error) {
-				lastProxyReq = req
-				return &url.URL{Scheme: "http", Host: "127.0.0.1:1"}, nil
-			}, func(context.Context, string, string) (net.Conn, error) {
-				dialed++
+				proxyDecisionHost = req.URL.Hostname()
+				return proxyURL, nil
+			}, func(_ context.Context, _, addr string) (net.Conn, error) {
+				dialAddr = addr
 				return nil, fmt.Errorf("test: skip proxy dial")
 			}),
 			reject:         rejectCloudMetadata,
@@ -261,26 +262,37 @@ func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected skip-dial error after pin")
 		}
-		if lastProxyReq == nil {
-			t.Fatal("proxy was not consulted with the pinned request")
+		// Proxy selection must use the original hostname (not a pinned IP).
+		if proxyDecisionHost != "localhost" {
+			t.Fatalf("proxy decision host = %q, want localhost", proxyDecisionHost)
 		}
-		assertPinnedIPPort(t, lastProxyReq.URL.Host, "9090")
-		if lastProxyReq.Host != "localhost:9090" {
-			t.Fatalf("req.Host should keep original authority, got %q", lastProxyReq.Host)
+		if dialAddr != "proxy.test:8080" {
+			t.Fatalf("expected dial to forced proxy, got %q", dialAddr)
 		}
-		if dialed == 0 {
-			t.Fatal("expected base transport to dial the proxy after a successful pin")
+		// Pinned request stored on the cached transport key path: Host preserved via pin helper.
+		pinned := req.Clone(req.Context())
+		name, err := pinRequestURLToValidatedIP(pinned, rejectCloudMetadata)
+		if err != nil {
+			t.Fatalf("pin helper: %v", err)
+		}
+		if name != "localhost" {
+			t.Fatalf("tls name = %q", name)
+		}
+		assertPinnedIPPort(t, pinned.URL.Host, "9090")
+		if pinned.Host != "localhost:9090" {
+			t.Fatalf("Host = %q", pinned.Host)
 		}
 	})
 
 	t.Run("proxy hop HTTPS keeps TLS ServerName as DNS", func(t *testing.T) {
 		t.Parallel()
-		var lastProxyReq *http.Request
+		var dialAddr string
+		proxyURL := &url.URL{Scheme: "http", Host: "127.0.0.1:1"}
 		rt := &urlPolicyTransport{
 			base: proxyTransport(func(req *http.Request) (*url.URL, error) {
-				lastProxyReq = req
-				return &url.URL{Scheme: "http", Host: "127.0.0.1:1"}, nil
-			}, func(context.Context, string, string) (net.Conn, error) {
+				return proxyURL, nil
+			}, func(_ context.Context, _, addr string) (net.Conn, error) {
+				dialAddr = addr
 				return nil, fmt.Errorf("test: skip proxy dial")
 			}),
 			reject:         rejectCloudMetadata,
@@ -299,14 +311,11 @@ func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected skip-dial error after pin")
 		}
-		if lastProxyReq == nil {
-			t.Fatal("proxy was not consulted with the pinned request")
+		if dialAddr != "127.0.0.1:1" {
+			t.Fatalf("expected dial to proxy, got %q", dialAddr)
 		}
-		assertPinnedIPPort(t, lastProxyReq.URL.Host, "9443")
-		if lastProxyReq.Host != "localhost:9443" {
-			t.Fatalf("req.Host should keep original authority, got %q", lastProxyReq.Host)
-		}
-		tr := rt.tlsByName["localhost"]
+		key := pinnedTransportKey(proxyURL, "localhost")
+		tr := rt.pinnedByKey[key]
 		if tr == nil || tr.TLSClientConfig == nil || tr.TLSClientConfig.ServerName != "localhost" {
 			t.Fatalf("TLS ServerName should keep DNS hostname localhost, got %+v", tr)
 		}
@@ -314,12 +323,13 @@ func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
 
 	t.Run("proxy hop pins literal IP", func(t *testing.T) {
 		t.Parallel()
-		var lastProxyReq *http.Request
+		var dialAddr string
+		proxyURL := &url.URL{Scheme: "http", Host: "127.0.0.1:1"}
 		rt := &urlPolicyTransport{
 			base: proxyTransport(func(req *http.Request) (*url.URL, error) {
-				lastProxyReq = req
-				return &url.URL{Scheme: "http", Host: "127.0.0.1:1"}, nil
-			}, func(context.Context, string, string) (net.Conn, error) {
+				return proxyURL, nil
+			}, func(_ context.Context, _, addr string) (net.Conn, error) {
+				dialAddr = addr
 				return nil, fmt.Errorf("test: skip proxy dial")
 			}),
 			reject:         rejectCloudMetadata,
@@ -338,14 +348,18 @@ func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected skip-dial error after pin")
 		}
-		if lastProxyReq == nil {
-			t.Fatal("proxy was not consulted")
+		if dialAddr != "127.0.0.1:1" {
+			t.Fatalf("expected dial to proxy, got %q", dialAddr)
 		}
-		if lastProxyReq.URL.Host != net.JoinHostPort("127.0.0.1", "9") {
-			t.Fatalf("URL.Host = %q, want pinned IP:port", lastProxyReq.URL.Host)
+		pinned := req.Clone(req.Context())
+		if _, err := pinRequestURLToValidatedIP(pinned, rejectCloudMetadata); err != nil {
+			t.Fatalf("pin: %v", err)
 		}
-		if lastProxyReq.Host != "127.0.0.1:9" {
-			t.Fatalf("req.Host should keep original authority, got %q", lastProxyReq.Host)
+		if pinned.URL.Host != net.JoinHostPort("127.0.0.1", "9") {
+			t.Fatalf("URL.Host = %q, want pinned IP:port", pinned.URL.Host)
+		}
+		if pinned.Host != "127.0.0.1:9" {
+			t.Fatalf("req.Host should keep original authority, got %q", pinned.Host)
 		}
 	})
 
@@ -508,18 +522,58 @@ func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
 			t.Fatalf("pinDestination false must not rewrite hostname, host=%q", lastProxyReq.URL.Host)
 		}
 	})
+
+	t.Run("pinned hop keeps proxy even if NO_PROXY would match IP", func(t *testing.T) {
+		t.Parallel()
+		// First Proxy call (hostname) selects a proxy; after pin, base.Proxy would
+		// return nil for the IP (NO_PROXY-style). Fixed proxy on the clone must win.
+		var dialAddr string
+		proxyURL := &url.URL{Scheme: "http", Host: "proxy.internal:8080"}
+		rt := &urlPolicyTransport{
+			base: proxyTransport(func(req *http.Request) (*url.URL, error) {
+				host := req.URL.Hostname()
+				if net.ParseIP(host) != nil {
+					// Simulate NO_PROXY matching the pinned IP.
+					return nil, nil
+				}
+				return proxyURL, nil
+			}, func(_ context.Context, _, addr string) (net.Conn, error) {
+				dialAddr = addr
+				return nil, fmt.Errorf("test: skip dial")
+			}),
+			reject:         rejectCloudMetadata,
+			pinDestination: true,
+			validate:       allowAll,
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "http://localhost:9090/health", nil)
+		if err != nil {
+			t.Fatalf("NewRequest: %v", err)
+		}
+		resp, err := rt.RoundTrip(req)
+		if resp != nil {
+			resp.Body.Close()
+		}
+		if err == nil {
+			t.Fatal("expected skip-dial error")
+		}
+		if dialAddr != "proxy.internal:8080" {
+			t.Fatalf("expected dial to forced proxy, got %q", dialAddr)
+		}
+	})
 }
 
-func TestURLPolicyTransport_reusesTLSTransportPerServerName(t *testing.T) {
+func TestURLPolicyTransport_reusesPinnedProxyTransports(t *testing.T) {
 	t.Parallel()
 
 	base := &http.Transport{}
 	upt := &urlPolicyTransport{base: base}
-	tr1 := upt.transportForServerName(base, "metrics.example.com")
-	tr2 := upt.transportForServerName(base, "metrics.example.com")
-	tr3 := upt.transportForServerName(base, "logs.example.com")
+	proxy := &url.URL{Scheme: "http", Host: "proxy:8080"}
+	tr1 := upt.transportForPinnedProxy(base, "metrics.example.com", proxy)
+	tr2 := upt.transportForPinnedProxy(base, "metrics.example.com", proxy)
+	tr3 := upt.transportForPinnedProxy(base, "logs.example.com", proxy)
 	if tr1 != tr2 {
-		t.Fatal("expected cached transport reuse for same ServerName")
+		t.Fatal("expected cached transport reuse for same proxy+ServerName")
 	}
 	if tr1 == tr3 {
 		t.Fatal("expected distinct transports for different ServerNames")
@@ -529,6 +583,11 @@ func TestURLPolicyTransport_reusesTLSTransportPerServerName(t *testing.T) {
 	}
 	if tr3.TLSClientConfig == nil || tr3.TLSClientConfig.ServerName != "logs.example.com" {
 		t.Fatalf("ServerName = %v", tr3.TLSClientConfig)
+	}
+	// Forced proxy must ignore later NO_PROXY-style nil returns from the original func.
+	got, err := tr1.Proxy(&http.Request{URL: &url.URL{Scheme: "http", Host: "10.0.0.5"}})
+	if err != nil || got == nil || got.String() != proxy.String() {
+		t.Fatalf("pinned transport Proxy = %v err=%v, want fixed %s", got, err, proxy)
 	}
 }
 

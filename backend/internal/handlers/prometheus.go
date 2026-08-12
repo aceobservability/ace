@@ -55,6 +55,12 @@ func (c *MetadataCache) Set(key string, data interface{}) {
 type PrometheusHandler struct {
 	prometheusURL string
 	cache         *MetadataCache
+
+	// Lazy singleton client so each request reuses one DatasourceClient
+	// transport/connection pool instead of allocating per call.
+	clientOnce sync.Once
+	client     *prometheus.Client
+	clientErr  error
 }
 
 func NewPrometheusHandler(prometheusURL string) *PrometheusHandler {
@@ -65,7 +71,10 @@ func NewPrometheusHandler(prometheusURL string) *PrometheusHandler {
 }
 
 func (h *PrometheusHandler) newClient() (*prometheus.Client, error) {
-	return prometheus.NewClient(h.prometheusURL, ssrf.DatasourceClient(30*time.Second))
+	h.clientOnce.Do(func() {
+		h.client, h.clientErr = prometheus.NewClient(h.prometheusURL, ssrf.DatasourceClient(30*time.Second))
+	})
+	return h.client, h.clientErr
 }
 
 type QueryRequest struct {
