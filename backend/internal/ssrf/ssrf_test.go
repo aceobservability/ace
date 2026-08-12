@@ -168,3 +168,39 @@ func TestDatasourceClient_blocksMetadataRedirect(t *testing.T) {
 		t.Fatal("DatasourceClient should refuse redirect to cloud metadata")
 	}
 }
+
+func TestDatasourceClient_rejectsMetadataDestinationURL(t *testing.T) {
+	t.Parallel()
+
+	// Even if a proxy would dial a different hop, RoundTrip must reject the
+	// destination URL before the base transport runs.
+	baseCalls := 0
+	client := &http.Client{
+		Timeout: 2 * time.Second,
+		Transport: &urlPolicyTransport{
+			base: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				baseCalls++
+				return &http.Response{StatusCode: http.StatusOK, Body: http.NoBody, Request: req}, nil
+			}),
+			validate: func(raw string) error {
+				_, err := ValidateDatasourceURL(raw)
+				return err
+			},
+		},
+	}
+
+	resp, err := client.Get("http://169.254.169.254/latest/meta-data")
+	if err == nil {
+		resp.Body.Close()
+		t.Fatal("expected metadata destination URL to be rejected")
+	}
+	if baseCalls != 0 {
+		t.Fatalf("base transport should not run for rejected destination, calls=%d", baseCalls)
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}

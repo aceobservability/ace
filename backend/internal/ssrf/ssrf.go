@@ -161,14 +161,21 @@ func IsLocalURL(raw string) bool {
 // Use for untrusted user-supplied hosts only — not for configured datasources
 // that may legitimately live on private networks.
 func SafeClient(timeout time.Duration) *http.Client {
+	base := dialBlockingTransport(func(ip net.IP) error {
+		if isBlockedIP(ip) {
+			return fmt.Errorf("connections to private/internal addresses are not allowed")
+		}
+		return nil
+	}, false /* useProxy */)
 	return &http.Client{
 		Timeout: timeout,
-		Transport: dialBlockingTransport(func(ip net.IP) error {
-			if isBlockedIP(ip) {
-				return fmt.Errorf("connections to private/internal addresses are not allowed")
-			}
-			return nil
-		}),
+		Transport: &urlPolicyTransport{
+			base: base,
+			validate: func(raw string) error {
+				_, err := ValidateURL(raw)
+				return err
+			},
+		},
 	}
 }
 
@@ -181,11 +188,19 @@ func rejectCloudMetadata(ip net.IP) error {
 
 // DatasourceClient returns an *http.Client for configured observability
 // datasources. Private/internal targets are allowed; the cloud metadata
-// endpoint is blocked at dial time (DNS rebinding) and on redirects.
+// endpoint is blocked on the request URL (including when an HTTP proxy is
+// used), at dial time for direct connections, and on redirects.
 func DatasourceClient(timeout time.Duration) *http.Client {
+	base := dialBlockingTransport(rejectCloudMetadata, true /* useProxy */)
 	return &http.Client{
-		Timeout:   timeout,
-		Transport: dialBlockingTransport(rejectCloudMetadata),
+		Timeout: timeout,
+		Transport: &urlPolicyTransport{
+			base: base,
+			validate: func(raw string) error {
+				_, err := ValidateDatasourceURL(raw)
+				return err
+			},
+		},
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= 10 {
 				return fmt.Errorf("stopped after 10 redirects")
@@ -202,23 +217,41 @@ func DatasourceClient(timeout time.Duration) *http.Client {
 // DatasourceClient. Use for non-HTTP transports (e.g. websocket) that cannot
 // take an *http.Client.
 func DatasourceDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
-	return dialBlockingTransport(rejectCloudMetadata).DialContext(ctx, network, addr)
+	// Direct dial path — no HTTP proxy hop — so dial policy alone is sufficient.
+	return dialBlockingTransport(rejectCloudMetadata, false).DialContext(ctx, network, addr)
+}
+
+// urlPolicyTransport validates the destination request URL before the base
+// transport runs. This matters when ProxyFromEnvironment is set: DialContext
+// only sees the proxy hop, so destination policy must run on RoundTrip.
+type urlPolicyTransport struct {
+	base     http.RoundTripper
+	validate func(raw string) error
+}
+
+func (t *urlPolicyTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if req.URL == nil {
+		return nil, fmt.Errorf("missing request URL")
+	}
+	if err := t.validate(req.URL.String()); err != nil {
+		return nil, err
+	}
+	return t.base.RoundTrip(req)
 }
 
 // dialBlockingTransport builds a transport that resolves each dial target and
 // rejects IPs for which reject returns a non-nil error, then dials allowed
 // addresses in order (fallback if the first is unreachable).
 //
-// ProxyFromEnvironment is honored so HTTP_PROXY/HTTPS_PROXY still work for
-// datasource egress. When a proxy is used, DialContext connects to the proxy
-// hop; destination policy still applies via CheckRedirect / URL validators.
-func dialBlockingTransport(reject func(net.IP) error) *http.Transport {
+// When useProxy is true, ProxyFromEnvironment is honored for datasource egress.
+// Destination policy for proxied requests is enforced by urlPolicyTransport
+// (and CheckRedirect), because DialContext only connects to the proxy hop.
+func dialBlockingTransport(reject func(net.IP) error, useProxy bool) *http.Transport {
 	dialer := &net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
 	}
-	return &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+	tr := &http.Transport{
 		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 			host, port, err := net.SplitHostPort(addr)
 			if err != nil {
@@ -260,4 +293,8 @@ func dialBlockingTransport(reject func(net.IP) error) *http.Transport {
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
+	if useProxy {
+		tr.Proxy = http.ProxyFromEnvironment
+	}
+	return tr
 }
