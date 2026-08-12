@@ -273,6 +273,45 @@ func TestURLPolicyTransport_pinsHostnameToValidatedIP(t *testing.T) {
 		}
 	})
 
+	t.Run("proxy hop HTTPS keeps TLS ServerName as DNS", func(t *testing.T) {
+		t.Parallel()
+		var lastProxyReq *http.Request
+		rt := &urlPolicyTransport{
+			base: proxyTransport(func(req *http.Request) (*url.URL, error) {
+				lastProxyReq = req
+				return &url.URL{Scheme: "http", Host: "127.0.0.1:1"}, nil
+			}, func(context.Context, string, string) (net.Conn, error) {
+				return nil, fmt.Errorf("test: skip proxy dial")
+			}),
+			reject:         rejectCloudMetadata,
+			pinDestination: true,
+			validate:       allowAll,
+		}
+
+		req, err := http.NewRequest(http.MethodGet, "https://localhost:9443/health", nil)
+		if err != nil {
+			t.Fatalf("NewRequest: %v", err)
+		}
+		resp, err := rt.RoundTrip(req)
+		if resp != nil {
+			resp.Body.Close()
+		}
+		if err == nil {
+			t.Fatal("expected skip-dial error after pin")
+		}
+		if lastProxyReq == nil {
+			t.Fatal("proxy was not consulted with the pinned request")
+		}
+		assertPinnedIPPort(t, lastProxyReq.URL.Host, "9443")
+		if lastProxyReq.Host != "localhost:9443" {
+			t.Fatalf("req.Host should keep original authority, got %q", lastProxyReq.Host)
+		}
+		tr := rt.tlsByName["localhost"]
+		if tr == nil || tr.TLSClientConfig == nil || tr.TLSClientConfig.ServerName != "localhost" {
+			t.Fatalf("TLS ServerName should keep DNS hostname localhost, got %+v", tr)
+		}
+	})
+
 	t.Run("proxy hop pins literal IP", func(t *testing.T) {
 		t.Parallel()
 		var lastProxyReq *http.Request
