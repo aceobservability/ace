@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // VictoriaLogsClient queries Victoria Logs using LogsQL
@@ -23,7 +25,7 @@ type VictoriaLogsClient struct {
 func NewVictoriaLogsClient(baseURL string) (*VictoriaLogsClient, error) {
 	return &VictoriaLogsClient{
 		baseURL: baseURL,
-		client:  &http.Client{Timeout: 30 * time.Second},
+		client:  ssrf.DatasourceClient(30 * time.Second),
 	}, nil
 }
 
@@ -235,7 +237,7 @@ func (c *VictoriaLogsClient) Stream(ctx context.Context, query string, start tim
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	streamClient := &http.Client{}
+	streamClient := ssrf.DatasourceClient(0)
 	resp, err := streamClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to stream Victoria Logs tail: %w", err)

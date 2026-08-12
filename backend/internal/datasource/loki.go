@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // LokiClient queries Loki using LogQL
@@ -25,7 +26,7 @@ type LokiClient struct {
 func NewLokiClient(baseURL string) (*LokiClient, error) {
 	return &LokiClient{
 		baseURL: baseURL,
-		client:  &http.Client{Timeout: 30 * time.Second},
+		client:  ssrf.DatasourceClient(30 * time.Second),
 	}, nil
 }
 

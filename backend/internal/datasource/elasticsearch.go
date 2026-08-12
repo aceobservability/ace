@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 const (
@@ -68,7 +69,7 @@ func NewElasticsearchClient(ds models.DataSource) (*ElasticsearchClient, error) 
 
 	return &ElasticsearchClient{
 		datasource: ds,
-		httpClient: &http.Client{Timeout: 30 * time.Second},
+		httpClient: ssrf.DatasourceClient(30 * time.Second),
 		cfg:        cfg,
 	}, nil
 }

@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // VictoriaMetricsClient queries VictoriaMetrics using PromQL-compatible API
@@ -21,7 +23,7 @@ type VictoriaMetricsClient struct {
 func NewVictoriaMetricsClient(baseURL string) (*VictoriaMetricsClient, error) {
 	return &VictoriaMetricsClient{
 		baseURL: baseURL,
-		client:  &http.Client{Timeout: 30 * time.Second},
+		client:  ssrf.DatasourceClient(30 * time.Second),
 	}, nil
 }
 

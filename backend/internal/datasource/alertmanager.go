@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // AlertManagerClient wraps HTTP calls to AlertManager's v2 API.
@@ -26,7 +27,7 @@ func NewAlertManagerClient(ds models.DataSource) (*AlertManagerClient, error) {
 	}
 	return &AlertManagerClient{
 		baseURL:    ds.URL,
-		client:     &http.Client{Timeout: 30 * time.Second},
+		client:     ssrf.DatasourceClient(30 * time.Second),
 		datasource: ds,
 	}, nil
 }
