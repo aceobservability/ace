@@ -22,6 +22,8 @@ import (
 	"github.com/aceobservability/ace/backend/internal/handlers"
 	"github.com/aceobservability/ace/backend/internal/httplog"
 	"github.com/aceobservability/ace/backend/internal/ratelimit"
+	"github.com/aceobservability/ace/backend/internal/sso"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 	"github.com/aceobservability/ace/backend/internal/telemetry"
 	"github.com/aceobservability/ace/backend/internal/valkey"
 )
@@ -159,15 +161,19 @@ func main() {
 	mux.HandleFunc("POST /api/auth/logout", authHandler.Logout)
 	mux.HandleFunc("POST /api/auth/logout-all", auth.RequireAuth(jwtManager, authHandler.LogoutAll))
 
+	// Org SSO IdP HTTP: one SafeClient for discovery / exchange / userinfo / TestIssuer.
+	// Never DatasourceClient — that would allow RFC1918 IdPs (ADR-0003 seam 4).
+	ssoLogin := sso.New(ssrf.SafeClient(15 * time.Second))
+
 	// Google SSO routes
-	googleSSOHandler := handlers.NewGoogleSSOHandler(pool, jwtManager, rdb)
+	googleSSOHandler := handlers.NewGoogleSSOHandler(pool, jwtManager, rdb, ssoLogin)
 	mux.HandleFunc("GET /api/auth/google/login", googleSSOHandler.Login)
 	mux.HandleFunc("GET /api/auth/google/callback", googleSSOHandler.Callback)
 	mux.HandleFunc("POST /api/orgs/{id}/sso/google", auth.RequireAuth(jwtManager, googleSSOHandler.ConfigureSSO))
 	mux.HandleFunc("GET /api/orgs/{id}/sso/google", auth.RequireAuth(jwtManager, googleSSOHandler.GetSSOConfig))
 
 	// Microsoft SSO routes
-	microsoftSSOHandler := handlers.NewMicrosoftSSOHandler(pool, jwtManager, rdb)
+	microsoftSSOHandler := handlers.NewMicrosoftSSOHandler(pool, jwtManager, rdb, ssoLogin)
 	mux.HandleFunc("GET /api/auth/microsoft/login", microsoftSSOHandler.Login)
 	mux.HandleFunc("GET /api/auth/microsoft/callback", microsoftSSOHandler.Callback)
 	mux.HandleFunc("POST /api/orgs/{id}/sso/microsoft", auth.RequireAuth(jwtManager, microsoftSSOHandler.ConfigureSSO))
@@ -200,7 +206,7 @@ func main() {
 	mux.HandleFunc("DELETE /api/orgs/{id}/sso/{provider}/role-mappings/{mappingId}", auth.RequireAuth(jwtManager, roleMappingHandler.DeleteMapping))
 
 	// Okta SSO routes
-	oktaSSOHandler := handlers.NewOktaSSOHandler(pool, jwtManager, rdb, auditLogger)
+	oktaSSOHandler := handlers.NewOktaSSOHandler(pool, jwtManager, rdb, auditLogger, ssoLogin)
 	mux.HandleFunc("GET /api/auth/okta/login", oktaSSOHandler.Login)
 	mux.HandleFunc("GET /api/auth/okta/callback", oktaSSOHandler.Callback)
 	mux.HandleFunc("POST /api/orgs/{id}/sso/okta", auth.RequireAuth(jwtManager, oktaSSOHandler.ConfigureSSO))

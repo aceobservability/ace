@@ -1,12 +1,17 @@
 // Package ssrf provides URL validation and HTTP clients with request-forgery
-// policy. SafeClient is for untrusted user-supplied hosts (Grafana).
-// DatasourceClient is for configured observability backends (private networks
-// allowed; cloud metadata blocked at URL, dial, and redirect).
+// policy. SafeClient is for untrusted user-supplied hosts (Grafana) and for
+// organization SSO identity-provider HTTP. DatasourceClient is for configured
+// observability backends (private networks allowed; cloud metadata blocked at
+// URL, dial, and redirect).
 //
 // AI provider base URLs are a third seam: handlers.validateBaseURL at save
 // time plus Go's default http.Client at request time. Do not silently reuse
 // SafeClient or DatasourceClient for AI — see
 // docs/adr/0003-outbound-http-ssrf-policy-seams.md.
+//
+// Org SSO IdP HTTP is a fourth seam that reuses SafeClient (never
+// DatasourceClient — that would allow RFC1918 IdPs). On-prem/private Okta is
+// not a product need.
 package ssrf
 
 import (

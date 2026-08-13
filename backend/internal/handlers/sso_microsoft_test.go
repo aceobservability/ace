@@ -62,7 +62,7 @@ func TestMicrosoftSSOConfigureRequiresAdmin(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try to configure SSO as non-admin
 	body := `{"tenant_id":"test-tenant","client_id":"test-client-id","client_secret":"test-secret"}`
@@ -125,7 +125,7 @@ func TestMicrosoftSSOConfigureAsAdmin(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Configure SSO as admin
 	body := `{"tenant_id":"test-tenant","client_id":"test-client-id","client_secret":"test-secret"}`
@@ -213,7 +213,7 @@ func TestMicrosoftSSOGetConfig(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Get SSO config
 	req := httptest.NewRequest("GET", "/api/orgs/"+orgID.String()+"/sso/microsoft", nil)
@@ -246,7 +246,7 @@ func TestMicrosoftSSOLoginRequiresOrg(t *testing.T) {
 		t.Skip("Database not available")
 	}
 
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try login without org parameter
 	req := httptest.NewRequest("GET", "/api/auth/microsoft/login", nil)
@@ -276,7 +276,7 @@ func TestMicrosoftSSOLoginOrgNotConfigured(t *testing.T) {
 	}
 	defer testPool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
 
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try login with org that doesn't have SSO configured
 	req := httptest.NewRequest("GET", "/api/auth/microsoft/login?org=test-org-no-ms-sso", nil)
@@ -317,7 +317,7 @@ func TestMicrosoftSSOLoginRedirectsToMicrosoft(t *testing.T) {
 		t.Fatalf("Failed to create SSO config: %v", err)
 	}
 
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try login - should redirect to Microsoft
 	req := httptest.NewRequest("GET", "/api/auth/microsoft/login?org=test-org-ms-sso-redirect", nil)
@@ -371,7 +371,7 @@ func TestMicrosoftSSOLoginRedirectsToMicrosoft(t *testing.T) {
 }
 
 func TestMicrosoftSSOCallbackClearsStateCookieWithSecureAttributes(t *testing.T) {
-	handler := NewMicrosoftSSOHandler(nil, nil, nil)
+	handler := NewMicrosoftSSOHandler(nil, nil, nil, testSSO())
 
 	state := "expected-state"
 	stateData := state + ":test-org"
@@ -436,7 +436,7 @@ func TestMicrosoftSSOCallbackRedirectIncludesRefreshToken(t *testing.T) {
 	defer rdb.Close()
 
 	// Create handler with Redis (refresh token manager)
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, rdb)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, rdb, testSSO())
 
 	// Verify the handler has a refresh token manager
 	if handler.refreshTokenManager == nil {
@@ -518,8 +518,134 @@ func TestMicrosoftSSOCallbackRedirectIncludesRefreshToken(t *testing.T) {
 
 func TestMicrosoftSSOCallbackNoRefreshTokenWithoutRedis(t *testing.T) {
 	// Verify that when constructed without Redis, no refresh token manager is set
-	handler := NewMicrosoftSSOHandler(nil, nil, nil)
+	handler := NewMicrosoftSSOHandler(nil, nil, nil, testSSO())
 	if handler.refreshTokenManager != nil {
 		t.Error("Expected no refreshTokenManager when Redis is nil")
+	}
+}
+
+func TestMicrosoftSSOConfigureRejectsUnsafeTenant(t *testing.T) {
+	if testPool == nil {
+		t.Skip("Database not available")
+	}
+	ctx := context.Background()
+	slug := "ms-bad-tenant-" + uuid.NewString()[:8]
+
+	var orgID uuid.UUID
+	if err := testPool.QueryRow(ctx,
+		`INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id`,
+		"MS Bad Tenant", slug,
+	).Scan(&orgID); err != nil {
+		t.Fatalf("org: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM sso_configs WHERE organization_id = $1`, orgID)
+	defer testPool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
+
+	var userID uuid.UUID
+	if err := testPool.QueryRow(ctx,
+		`INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id`,
+		slug+"@example.com", "Admin",
+	).Scan(&userID); err != nil {
+		t.Fatalf("user: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM users WHERE id = $1`, userID)
+
+	if _, err := testPool.Exec(ctx,
+		`INSERT INTO organization_memberships (user_id, organization_id, role) VALUES ($1, $2, 'admin')`,
+		userID, orgID,
+	); err != nil {
+		t.Fatalf("membership: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM organization_memberships WHERE user_id = $1`, userID)
+
+	token, err := testJWTManager.GenerateAccessToken(userID, slug+"@example.com", "Admin")
+	if err != nil {
+		t.Fatalf("token: %v", err)
+	}
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
+
+	for _, tenant := range []string{"foo/bar", "https://evil.com", "a b"} {
+		t.Run(tenant, func(t *testing.T) {
+			body := fmt.Sprintf(`{"tenant_id":%q,"client_id":"cid","client_secret":"cs"}`, tenant)
+			req := httptest.NewRequest("POST", "/api/orgs/"+orgID.String()+"/sso/microsoft", bytes.NewBufferString(body))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+			req.SetPathValue("id", orgID.String())
+			w := httptest.NewRecorder()
+			auth.RequireAuth(testJWTManager, handler.ConfigureSSO)(w, req)
+			if w.Code != http.StatusBadRequest {
+				t.Errorf("tenant %q: status %d, want 400: %s", tenant, w.Code, w.Body.String())
+			}
+		})
+	}
+}
+
+func TestMicrosoftSSOConfigurePersistsTrimmedTenant(t *testing.T) {
+	if testPool == nil {
+		t.Skip("Database not available")
+	}
+	ctx := context.Background()
+	slug := "ms-trim-tenant-" + uuid.NewString()[:8]
+
+	var orgID uuid.UUID
+	if err := testPool.QueryRow(ctx,
+		`INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id`,
+		"MS Trim Tenant", slug,
+	).Scan(&orgID); err != nil {
+		t.Fatalf("org: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM sso_configs WHERE organization_id = $1`, orgID)
+	defer testPool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
+
+	var userID uuid.UUID
+	if err := testPool.QueryRow(ctx,
+		`INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id`,
+		slug+"@example.com", "Admin",
+	).Scan(&userID); err != nil {
+		t.Fatalf("user: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM users WHERE id = $1`, userID)
+
+	if _, err := testPool.Exec(ctx,
+		`INSERT INTO organization_memberships (user_id, organization_id, role) VALUES ($1, $2, 'admin')`,
+		userID, orgID,
+	); err != nil {
+		t.Fatalf("membership: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM organization_memberships WHERE user_id = $1`, userID)
+
+	token, err := testJWTManager.GenerateAccessToken(userID, slug+"@example.com", "Admin")
+	if err != nil {
+		t.Fatalf("token: %v", err)
+	}
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
+
+	body := `{"tenant_id":"  common  ","client_id":"cid","client_secret":"cs"}`
+	req := httptest.NewRequest("POST", "/api/orgs/"+orgID.String()+"/sso/microsoft", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.SetPathValue("id", orgID.String())
+	w := httptest.NewRecorder()
+	auth.RequireAuth(testJWTManager, handler.ConfigureSSO)(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp MicrosoftSSOConfigResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.TenantID != "common" {
+		t.Errorf("response tenant_id=%q, want common", resp.TenantID)
+	}
+
+	var stored string
+	if err := testPool.QueryRow(ctx,
+		`SELECT tenant_id FROM sso_configs WHERE organization_id = $1 AND provider = 'microsoft'`, orgID,
+	).Scan(&stored); err != nil {
+		t.Fatalf("stored: %v", err)
+	}
+	if stored != "common" {
+		t.Errorf("stored tenant_id=%q, want common", stored)
 	}
 }
