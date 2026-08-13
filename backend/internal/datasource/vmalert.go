@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // VMAlertClient wraps HTTP calls to VMAlert's API.
@@ -25,7 +26,7 @@ func NewVMAlertClient(ds models.DataSource) (*VMAlertClient, error) {
 	}
 	return &VMAlertClient{
 		baseURL:    ds.URL,
-		client:     &http.Client{Timeout: 30 * time.Second},
+		client:     ssrf.DatasourceClient(30 * time.Second),
 		datasource: ds,
 	}, nil
 }

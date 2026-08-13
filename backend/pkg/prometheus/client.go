@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/prometheus/client_golang/api"
@@ -34,10 +35,17 @@ type MetricResult struct {
 	Values [][]interface{}   `json:"values"`
 }
 
-// NewClient creates a new Prometheus client with the given URL
-func NewClient(prometheusURL string) (*Client, error) {
+// NewClient creates a new Prometheus client with the given URL and HTTP client.
+// httpClient is required so callers cannot silently inherit client_golang's
+// default transport (which has no SSRF dial/redirect policy).
+func NewClient(prometheusURL string, httpClient *http.Client) (*Client, error) {
+	if httpClient == nil {
+		return nil, fmt.Errorf("http client is required")
+	}
+
 	client, err := api.NewClient(api.Config{
 		Address: prometheusURL,
+		Client:  httpClient,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Prometheus client: %w", err)

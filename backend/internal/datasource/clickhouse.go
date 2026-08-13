@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 const (
@@ -67,7 +68,7 @@ func NewClickHouseClient(ds models.DataSource) (*ClickHouseClient, error) {
 
 	return &ClickHouseClient{
 		datasource: ds,
-		httpClient: &http.Client{Timeout: 30 * time.Second},
+		httpClient: ssrf.DatasourceClient(30 * time.Second),
 	}, nil
 }
 

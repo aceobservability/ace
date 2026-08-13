@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 	"github.com/gorilla/websocket"
 )
 
@@ -25,7 +26,7 @@ type LokiClient struct {
 func NewLokiClient(baseURL string) (*LokiClient, error) {
 	return &LokiClient{
 		baseURL: baseURL,
-		client:  &http.Client{Timeout: 30 * time.Second},
+		client:  ssrf.DatasourceClient(30 * time.Second),
 	}, nil
 }
 
@@ -259,7 +260,9 @@ func (c *LokiClient) Stream(ctx context.Context, query string, start time.Time, 
 		return err
 	}
 
-	conn, _, err := websocket.DefaultDialer.DialContext(ctx, wsURL, nil)
+	dialer := *websocket.DefaultDialer
+	dialer.NetDialContext = ssrf.DatasourceDialContext
+	conn, _, err := dialer.DialContext(ctx, wsURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to connect to Loki tail endpoint: %w", err)
 	}
