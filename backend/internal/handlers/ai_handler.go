@@ -27,9 +27,13 @@ func jsonError(w http.ResponseWriter, msg string, code int) {
 	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
 
-// validateBaseURL checks that a URL is safe to use as a provider base URL.
-// It requires http:// or https:// scheme, rejects userinfo (@) and fragments (#),
-// and blocks cloud metadata IPs (169.254.169.254).
+// validateBaseURL is the AI-provider config-time URL check (create/update).
+// It is not ssrf.ValidateURL or ssrf.ValidateDatasourceURL: localhost and
+// 127.0.0.1 are allowed for Ollama; other private/loopback addresses are
+// rejected; only 169.254.169.254 is treated as metadata. Enforcement is
+// save-time only — outbound HTTP in ai_provider.go uses the default
+// http.Client (no dial/redirect policy). See
+// docs/adr/0003-outbound-http-ssrf-policy-seams.md.
 func validateBaseURL(raw string) error {
 	u, err := url.Parse(raw)
 	if err != nil {
@@ -77,20 +81,19 @@ func validateBaseURL(raw string) error {
 	return nil
 }
 
-// checkDangerousIP returns an error if the given IP is a cloud metadata address,
-// loopback (other than 127.0.0.1 which is allowed for Ollama), or private RFC 1918 range.
+// checkDangerousIP rejects cloud metadata 169.254.169.254, loopback
+// (127.0.0.1 is allowed only via validateBaseURL's hostname early-return),
+// and RFC1918 / IPv6 ULA (ip.IsPrivate). It does not reject the rest of
+// 169.254.0.0/16 or fe80::/10 (unlike ssrf.SafeClient).
 func checkDangerousIP(ip net.IP) error {
-	// Block link-local / cloud metadata (169.254.x.x)
 	if ip.Equal(net.ParseIP("169.254.169.254")) {
 		return fmt.Errorf("base_url must not resolve to cloud metadata IP")
 	}
 
-	// Block loopback range (127.x.x.x) except 127.0.0.1 which is allowed above
 	if ip.IsLoopback() {
 		return fmt.Errorf("base_url must not resolve to loopback address")
 	}
 
-	// Block RFC 1918 private ranges: 10.x.x.x, 172.16-31.x.x, 192.168.x.x
 	if ip.IsPrivate() {
 		return fmt.Errorf("base_url must not resolve to private network address")
 	}

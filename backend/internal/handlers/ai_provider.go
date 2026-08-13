@@ -46,7 +46,11 @@ type ChatRequest struct {
 }
 
 // OpenAICompatibleProvider implements AIProvider for any OpenAI-compatible API
-// (OpenAI, Ollama, OpenRouter, vLLM, LiteLLM, etc.)
+// (OpenAI, Ollama, OpenRouter, vLLM, LiteLLM, etc.).
+//
+// Outbound HTTP uses Go's default http.Client (timeout only). Base URLs are
+// checked at save time by validateBaseURL, not by ssrf.SafeClient or
+// ssrf.DatasourceClient — see docs/adr/0003-outbound-http-ssrf-policy-seams.md.
 type OpenAICompatibleProvider struct {
 	BaseURL     string
 	APIKey      string // empty for local providers like Ollama
@@ -190,6 +194,10 @@ const defaultCopilotTokenEndpoint = "https://api.github.com/copilot_internal/v2/
 // It uses a two-step auth: first obtain a short-lived Copilot session token
 // from the GitHub API using the user's encrypted GitHub access token, then
 // use that session token to call the Copilot API.
+//
+// Token and chat HTTP use the default http.Client. endpoints.api from GitHub's
+// token JSON is used as-is (not validateBaseURL). See
+// docs/adr/0003-outbound-http-ssrf-policy-seams.md.
 type CopilotProvider struct {
 	EncryptedGHToken string // AES-GCM encrypted GitHub access token
 

@@ -1,5 +1,12 @@
-// Package ssrf provides URL validation and a safe HTTP client that blocks
-// server-side request forgery by rejecting private/internal IP addresses.
+// Package ssrf provides URL validation and HTTP clients with request-forgery
+// policy. SafeClient is for untrusted user-supplied hosts (Grafana).
+// DatasourceClient is for configured observability backends (private networks
+// allowed; cloud metadata blocked at URL, dial, and redirect).
+//
+// AI provider base URLs are a third seam: handlers.validateBaseURL at save
+// time plus Go's default http.Client at request time. Do not silently reuse
+// SafeClient or DatasourceClient for AI — see
+// docs/adr/0003-outbound-http-ssrf-policy-seams.md.
 package ssrf
 
 import (
