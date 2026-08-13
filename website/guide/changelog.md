@@ -4,6 +4,13 @@ title: "Changelog"
 
 # Changelog
 
+## [0.19.1](https://github.com/aceobservability/ace/compare/v0.19.0...v0.19.1) (2026-08-13)
+
+
+### Bug Fixes
+
+* resolve CodeQL go/request-forgery SSRF alerts ([#371](https://github.com/aceobservability/ace/issues/371)) ([cc1cc79](https://github.com/aceobservability/ace/commit/cc1cc7967ce1cb6fdf07901bbe1ed26fac745767))
+
 ## [0.19.0](https://github.com/aceobservability/ace/compare/v0.18.0...v0.19.0) (2026-08-10)
 
 
