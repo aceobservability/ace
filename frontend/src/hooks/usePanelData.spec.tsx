@@ -3,8 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import * as datasourceApi from '@/api/datasources'
 import { usePanelData } from '@/hooks/usePanelData'
 import * as promqlClient from '@/promql/client'
+import type { TraceSpan } from '@/types/datasource'
 import type { Panel } from '@/types/panel'
 import { clearRegistry, registerPanel } from '@/utils/panelRegistry'
+import * as traceClickHouse from '@/utils/traceClickHouse'
 
 const panel: Panel = {
   id: 'panel-1',
@@ -85,7 +87,7 @@ describe('usePanelData', () => {
       },
     })
 
-    const { result } = renderHook(() => usePanelData(promPanel, query => query))
+    const { result } = renderHook(() => usePanelData(promPanel, (query) => query))
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -120,7 +122,7 @@ describe('usePanelData', () => {
       },
     })
 
-    const { result } = renderHook(() => usePanelData(logsPanel, query => query))
+    const { result } = renderHook(() => usePanelData(logsPanel, (query) => query))
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -152,7 +154,7 @@ describe('usePanelData', () => {
       },
     ])
 
-    const { result } = renderHook(() => usePanelData(tracePanel, query => query))
+    const { result } = renderHook(() => usePanelData(tracePanel, (query) => query))
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)
@@ -165,15 +167,70 @@ describe('usePanelData', () => {
     expect(result.current.traceSummaries).toHaveLength(1)
   })
 
+  it.each([
+    'trace_list',
+    'trace_heatmap',
+  ] as const)('converts ClickHouse spans for %s with the shared explore helper', async (panelType) => {
+    const spans: TraceSpan[] = [
+      {
+        spanId: 'root',
+        operationName: 'POST /checkout',
+        serviceName: 'checkout',
+        startTimeUnixNano: 1_000,
+        durationNano: 50,
+        tags: { traceId: 'trace-a' },
+      },
+      {
+        spanId: 'child',
+        parentSpanId: 'root',
+        operationName: 'SELECT orders',
+        serviceName: 'db',
+        startTimeUnixNano: 1_010,
+        durationNano: 20,
+        tags: { traceId: 'trace-a' },
+        status: 'error',
+      },
+    ]
+    const convertSpy = vi.spyOn(traceClickHouse, 'convertClickHouseSpansToTraceSummaries')
+
+    vi.spyOn(datasourceApi, 'queryDataSource').mockResolvedValue({
+      status: 'success',
+      resultType: 'traces',
+      data: {
+        resultType: 'traces',
+        traces: spans,
+      },
+    })
+
+    const tracePanel: Panel = {
+      ...panel,
+      type: panelType,
+      query: {
+        datasource_id: 'ds-clickhouse',
+        expr: 'SELECT * FROM otel_traces',
+        signal: 'traces',
+      },
+    }
+
+    const { result } = renderHook(() => usePanelData(tracePanel, (query) => query))
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+
+    expect(convertSpy).toHaveBeenCalledWith(spans)
+    expect(result.current.traceSummaries).toEqual(
+      traceClickHouse.convertClickHouseSpansToTraceSummaries(spans),
+    )
+    expect(result.current.traceSpans).toEqual(spans)
+  })
+
   it('treats queryMode none registry panels as ready without fetching', async () => {
     registerPanel({
       type: 'text',
-      component: async () => ({ default: () => null }),
-      dataAdapter: () => ({}),
       defaultQuery: { content: 'hi' },
       category: 'widgets',
       label: 'Text',
-      icon: async () => ({}),
       queryMode: 'none',
     })
 
@@ -183,7 +240,7 @@ describe('usePanelData', () => {
       query: { content: 'hello' },
     }
 
-    const { result } = renderHook(() => usePanelData(textPanel, query => query))
+    const { result } = renderHook(() => usePanelData(textPanel, (query) => query))
 
     await waitFor(() => {
       expect(result.current.hasQuery).toBe(true)
