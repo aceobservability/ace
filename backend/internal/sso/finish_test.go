@@ -3,6 +3,7 @@ package sso
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -100,6 +101,102 @@ func TestStart_microsoftTenantIsPathSegment(t *testing.T) {
 	}
 	if strings.HasPrefix(started.AuthURL, "https://tenant-guid-not-a-host") {
 		t.Fatal("microsoft tenant_id must not become the IdP host")
+	}
+}
+
+func TestStart_typedBoundaryErrors(t *testing.T) {
+	if testPool == nil {
+		t.Skip("database not available")
+	}
+	ctx := context.Background()
+	mod := New(&http.Client{})
+
+	_, err := mod.Start(ctx, testPool, StartRequest{
+		Provider:    ProviderGoogle,
+		OrgSlug:     "no-such-org-" + uuid.NewString()[:8],
+		RedirectURL: "http://localhost:8080/cb",
+	})
+	if !errors.Is(err, ErrOrgNotFound) {
+		t.Fatalf("missing org: %v, want ErrOrgNotFound", err)
+	}
+
+	slug := "sso-ncfg-" + uuid.NewString()[:8]
+	var orgID uuid.UUID
+	if err := testPool.QueryRow(ctx,
+		`INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id`,
+		"ncfg", slug,
+	).Scan(&orgID); err != nil {
+		t.Fatalf("org: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
+
+	_, err = mod.Start(ctx, testPool, StartRequest{
+		Provider:    ProviderGoogle,
+		OrgSlug:     slug,
+		RedirectURL: "http://localhost:8080/cb",
+	})
+	if !errors.Is(err, ErrNotConfigured) {
+		t.Fatalf("missing config: %v, want ErrNotConfigured", err)
+	}
+	if err.Error() != "google SSO not configured for this organization" {
+		t.Fatalf("Error() = %q", err.Error())
+	}
+
+	if _, err := testPool.Exec(ctx,
+		`INSERT INTO sso_configs (organization_id, provider, client_id, client_secret, enabled)
+		 VALUES ($1, 'google', 'cid', 'csecret', false)`, orgID,
+	); err != nil {
+		t.Fatalf("config: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM sso_configs WHERE organization_id = $1`, orgID)
+
+	_, err = mod.Start(ctx, testPool, StartRequest{
+		Provider:    ProviderGoogle,
+		OrgSlug:     slug,
+		RedirectURL: "http://localhost:8080/cb",
+	})
+	if !errors.Is(err, ErrNotEnabled) {
+		t.Fatalf("disabled: %v, want ErrNotEnabled", err)
+	}
+}
+
+func TestGoogleIdentity_rejectsNon2xx(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"id":"x","email":"attacker@evil.example","verified_email":true,"name":"X"}`))
+	}))
+	defer srv.Close()
+
+	prev := googleUserInfoURL
+	googleUserInfoURL = srv.URL
+	defer func() { googleUserInfoURL = prev }()
+
+	identity, err := googleIdentity(context.Background(), &oauth2.Config{}, &oauth2.Token{AccessToken: "t"})
+	if err == nil {
+		t.Fatalf("401 userinfo must fail closed, got %+v", identity)
+	}
+	if identity != nil {
+		t.Fatal("must not return identity from error body")
+	}
+}
+
+func TestMicrosoftIdentity_rejectsNon2xx(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"id":"x","displayName":"X","mail":"attacker@evil.example"}`))
+	}))
+	defer srv.Close()
+
+	prev := microsoftGraphURL
+	microsoftGraphURL = srv.URL
+	defer func() { microsoftGraphURL = prev }()
+
+	identity, err := microsoftIdentity(context.Background(), &oauth2.Config{}, &oauth2.Token{AccessToken: "t"})
+	if err == nil {
+		t.Fatalf("500 graph must fail closed, got %+v", identity)
+	}
+	if identity != nil {
+		t.Fatal("must not return identity from error body")
 	}
 }
 

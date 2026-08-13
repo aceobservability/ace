@@ -140,6 +140,9 @@ func googleIdentity(ctx context.Context, oauthCfg *oauth2.Config, token *oauth2.
 		return nil, fmt.Errorf("failed to get user info")
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("user info request failed")
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -151,7 +154,7 @@ func googleIdentity(ctx context.Context, oauthCfg *oauth2.Config, token *oauth2.
 		return nil, fmt.Errorf("failed to parse user info")
 	}
 	if !userInfo.VerifiedEmail {
-		return nil, fmt.Errorf("email not verified")
+		return nil, fmt.Errorf("%w", ErrEmailUnverified)
 	}
 	return &idpIdentity{
 		providerUserID: userInfo.ID,
@@ -167,6 +170,9 @@ func microsoftIdentity(ctx context.Context, oauthCfg *oauth2.Config, token *oaut
 		return nil, fmt.Errorf("failed to get user info")
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("user info request failed")
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -182,7 +188,7 @@ func microsoftIdentity(ctx context.Context, oauthCfg *oauth2.Config, token *oaut
 		email = userInfo.UserPrincipalName
 	}
 	if email == "" {
-		return nil, fmt.Errorf("no email found in user info")
+		return nil, fmt.Errorf("%w in user info", ErrNoEmail)
 	}
 	return &idpIdentity{
 		providerUserID: userInfo.ID,
@@ -206,7 +212,7 @@ func oktaIdentity(ctx context.Context, cfg *providerConfig, token *oauth2.Token)
 	verifier := provider.Verifier(&oidc.Config{ClientID: cfg.clientID})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify ID token")
+		return nil, fmt.Errorf("%w", ErrIDToken)
 	}
 
 	var rawClaims map[string]json.RawMessage
@@ -222,7 +228,7 @@ func oktaIdentity(ctx context.Context, cfg *providerConfig, token *oauth2.Token)
 		_ = json.Unmarshal(nameRaw, &name)
 	}
 	if email == "" {
-		return nil, fmt.Errorf("no email found in ID token")
+		return nil, fmt.Errorf("%w in ID token", ErrNoEmail)
 	}
 
 	var userGroups []string

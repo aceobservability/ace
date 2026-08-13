@@ -90,13 +90,7 @@ func (h *OktaSSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 		RedirectURL: h.baseURL + "/api/auth/okta/callback",
 	})
 	if err != nil {
-		if err.Error() == "failed to generate state" {
-			http.Error(w, `{"error":"failed to generate state"}`, http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		writeSSOStartError(w, err)
 		return
 	}
 
@@ -257,7 +251,8 @@ func (h *OktaSSOHandler) ConfigureSSO(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := sso.ValidateIssuer(req.TenantID); err != nil {
+	tenantID := strings.TrimSpace(req.TenantID)
+	if err := sso.ValidateIssuer(tenantID); err != nil {
 		http.Error(w, `{"error":"tenant_id must be a valid hostname (e.g. dev-12345.okta.com)"}`, http.StatusBadRequest)
 		return
 	}
@@ -269,7 +264,7 @@ func (h *OktaSSOHandler) ConfigureSSO(w http.ResponseWriter, r *http.Request) {
 		 ON CONFLICT (organization_id, provider) DO UPDATE
 		 SET client_id = $2, client_secret = $3, tenant_id = $4, enabled = $5, groups_claim_name = $6, default_role = $7, updated_at = NOW()
 		 RETURNING tenant_id, client_id, groups_claim_name, default_role, enabled, created_at, updated_at`,
-		orgID, req.ClientID, req.ClientSecret, req.TenantID, enabled, groupsClaimName, defaultRole,
+		orgID, req.ClientID, req.ClientSecret, tenantID, enabled, groupsClaimName, defaultRole,
 	).Scan(&config.TenantID, &config.ClientID, &config.GroupsClaimName, &config.DefaultRole, &config.Enabled, &config.CreatedAt, &config.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"failed to save SSO config"}`, http.StatusInternalServerError)

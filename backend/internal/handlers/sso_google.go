@@ -79,13 +79,7 @@ func (h *GoogleSSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 		RedirectURL: h.baseURL + "/api/auth/google/callback",
 	})
 	if err != nil {
-		if err.Error() == "failed to generate state" {
-			http.Error(w, `{"error":"failed to generate state"}`, http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		writeSSOStartError(w, err)
 		return
 	}
 

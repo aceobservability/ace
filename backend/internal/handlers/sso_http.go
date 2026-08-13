@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
+
+	"github.com/aceobservability/ace/backend/internal/sso"
 )
 
 func ssoStateCookie(name, value string, maxAge int) *http.Cookie {
@@ -33,22 +35,31 @@ func ssoHashRedirect(w http.ResponseWriter, r *http.Request, accessToken, refres
 	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 }
 
-func writeSSOFinishError(w http.ResponseWriter, err error) {
-	msg := err.Error()
-	switch msg {
-	case "email not verified", "no email found in user info", "no email found in ID token":
-		http.Error(w, `{"error":"`+msg+`"}`, http.StatusBadRequest)
-	case "organization not found":
-		http.Error(w, `{"error":"organization not found"}`, http.StatusNotFound)
-	case "failed to verify ID token":
-		http.Error(w, `{"error":"failed to verify ID token"}`, http.StatusUnauthorized)
-	default:
-		if strings.Contains(msg, "not configured") || strings.Contains(msg, "not enabled") {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
-			return
-		}
-		http.Error(w, `{"error":"`+msg+`"}`, http.StatusInternalServerError)
+func writeSSOJSON(w http.ResponseWriter, status int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
+}
+
+func writeSSOStartError(w http.ResponseWriter, err error) {
+	status := http.StatusBadRequest
+	if errors.Is(err, sso.ErrGenerateState) {
+		status = http.StatusInternalServerError
 	}
+	writeSSOJSON(w, status, err.Error())
+}
+
+func writeSSOFinishError(w http.ResponseWriter, err error) {
+	status := http.StatusInternalServerError
+	switch {
+	case errors.Is(err, sso.ErrEmailUnverified), errors.Is(err, sso.ErrNoEmail):
+		status = http.StatusBadRequest
+	case errors.Is(err, sso.ErrOrgNotFound):
+		status = http.StatusNotFound
+	case errors.Is(err, sso.ErrIDToken):
+		status = http.StatusUnauthorized
+	case errors.Is(err, sso.ErrNotConfigured), errors.Is(err, sso.ErrNotEnabled):
+		status = http.StatusBadRequest
+	}
+	writeSSOJSON(w, status, err.Error())
 }

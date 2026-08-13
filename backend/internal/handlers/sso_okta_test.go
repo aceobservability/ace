@@ -623,3 +623,41 @@ func TestOktaSSOConfigureInvalidDefaultRole(t *testing.T) {
 		t.Errorf("Expected 400 for invalid default_role, got %d: %s", w.Code, w.Body.String())
 	}
 }
+
+func TestOktaSSOConfigurePersistsTrimmedTenant(t *testing.T) {
+	f := setupOktaTestFixture(t, "Okta Trim Tenant", "okta-trim-"+uuid.NewString()[:8], "okta-trim@example.com", "Admin", "admin")
+	defer f.cleanupFn()
+
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
+
+	body := `{"client_id":"cid","client_secret":"cs","tenant_id":"  example.com  "}`
+	req := httptest.NewRequest("POST", "/api/orgs/"+f.orgID.String()+"/sso/okta", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+f.token)
+	req.SetPathValue("id", f.orgID.String())
+	w := httptest.NewRecorder()
+
+	auth.RequireAuth(testJWTManager, handler.ConfigureSSO)(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp OktaSSOConfigResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.TenantID != "example.com" {
+		t.Errorf("response tenant_id=%q, want example.com", resp.TenantID)
+	}
+
+	var stored string
+	if err := testPool.QueryRow(context.Background(),
+		`SELECT tenant_id FROM sso_configs WHERE organization_id = $1 AND provider = 'okta'`, f.orgID,
+	).Scan(&stored); err != nil {
+		t.Fatalf("stored: %v", err)
+	}
+	if stored != "example.com" {
+		t.Errorf("stored tenant_id=%q, want example.com", stored)
+	}
+}

@@ -523,3 +523,129 @@ func TestMicrosoftSSOCallbackNoRefreshTokenWithoutRedis(t *testing.T) {
 		t.Error("Expected no refreshTokenManager when Redis is nil")
 	}
 }
+
+func TestMicrosoftSSOConfigureRejectsUnsafeTenant(t *testing.T) {
+	if testPool == nil {
+		t.Skip("Database not available")
+	}
+	ctx := context.Background()
+	slug := "ms-bad-tenant-" + uuid.NewString()[:8]
+
+	var orgID uuid.UUID
+	if err := testPool.QueryRow(ctx,
+		`INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id`,
+		"MS Bad Tenant", slug,
+	).Scan(&orgID); err != nil {
+		t.Fatalf("org: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM sso_configs WHERE organization_id = $1`, orgID)
+	defer testPool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
+
+	var userID uuid.UUID
+	if err := testPool.QueryRow(ctx,
+		`INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id`,
+		slug+"@example.com", "Admin",
+	).Scan(&userID); err != nil {
+		t.Fatalf("user: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM users WHERE id = $1`, userID)
+
+	if _, err := testPool.Exec(ctx,
+		`INSERT INTO organization_memberships (user_id, organization_id, role) VALUES ($1, $2, 'admin')`,
+		userID, orgID,
+	); err != nil {
+		t.Fatalf("membership: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM organization_memberships WHERE user_id = $1`, userID)
+
+	token, err := testJWTManager.GenerateAccessToken(userID, slug+"@example.com", "Admin")
+	if err != nil {
+		t.Fatalf("token: %v", err)
+	}
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
+
+	for _, tenant := range []string{"foo/bar", "https://evil.com", "a b"} {
+		t.Run(tenant, func(t *testing.T) {
+			body := fmt.Sprintf(`{"tenant_id":%q,"client_id":"cid","client_secret":"cs"}`, tenant)
+			req := httptest.NewRequest("POST", "/api/orgs/"+orgID.String()+"/sso/microsoft", bytes.NewBufferString(body))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+token)
+			req.SetPathValue("id", orgID.String())
+			w := httptest.NewRecorder()
+			auth.RequireAuth(testJWTManager, handler.ConfigureSSO)(w, req)
+			if w.Code != http.StatusBadRequest {
+				t.Errorf("tenant %q: status %d, want 400: %s", tenant, w.Code, w.Body.String())
+			}
+		})
+	}
+}
+
+func TestMicrosoftSSOConfigurePersistsTrimmedTenant(t *testing.T) {
+	if testPool == nil {
+		t.Skip("Database not available")
+	}
+	ctx := context.Background()
+	slug := "ms-trim-tenant-" + uuid.NewString()[:8]
+
+	var orgID uuid.UUID
+	if err := testPool.QueryRow(ctx,
+		`INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id`,
+		"MS Trim Tenant", slug,
+	).Scan(&orgID); err != nil {
+		t.Fatalf("org: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM sso_configs WHERE organization_id = $1`, orgID)
+	defer testPool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
+
+	var userID uuid.UUID
+	if err := testPool.QueryRow(ctx,
+		`INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id`,
+		slug+"@example.com", "Admin",
+	).Scan(&userID); err != nil {
+		t.Fatalf("user: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM users WHERE id = $1`, userID)
+
+	if _, err := testPool.Exec(ctx,
+		`INSERT INTO organization_memberships (user_id, organization_id, role) VALUES ($1, $2, 'admin')`,
+		userID, orgID,
+	); err != nil {
+		t.Fatalf("membership: %v", err)
+	}
+	defer testPool.Exec(ctx, `DELETE FROM organization_memberships WHERE user_id = $1`, userID)
+
+	token, err := testJWTManager.GenerateAccessToken(userID, slug+"@example.com", "Admin")
+	if err != nil {
+		t.Fatalf("token: %v", err)
+	}
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
+
+	body := `{"tenant_id":"  common  ","client_id":"cid","client_secret":"cs"}`
+	req := httptest.NewRequest("POST", "/api/orgs/"+orgID.String()+"/sso/microsoft", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.SetPathValue("id", orgID.String())
+	w := httptest.NewRecorder()
+	auth.RequireAuth(testJWTManager, handler.ConfigureSSO)(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp MicrosoftSSOConfigResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.TenantID != "common" {
+		t.Errorf("response tenant_id=%q, want common", resp.TenantID)
+	}
+
+	var stored string
+	if err := testPool.QueryRow(ctx,
+		`SELECT tenant_id FROM sso_configs WHERE organization_id = $1 AND provider = 'microsoft'`, orgID,
+	).Scan(&stored); err != nil {
+		t.Fatalf("stored: %v", err)
+	}
+	if stored != "common" {
+		t.Errorf("stored tenant_id=%q, want common", stored)
+	}
+}

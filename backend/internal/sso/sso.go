@@ -89,7 +89,7 @@ func (m *Module) Start(ctx context.Context, pool *pgxpool.Pool, req StartRequest
 	}
 	state, err := generateState()
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate state")
+		return nil, fmt.Errorf("%w", ErrGenerateState)
 	}
 	return &StartResult{
 		AuthURL: oauthCfg.AuthCodeURL(state),
@@ -120,7 +120,7 @@ func loadEnabledConfig(ctx context.Context, pool *pgxpool.Pool, orgSlug string, 
 	err := pool.QueryRow(ctx, `SELECT id FROM organizations WHERE slug = $1`, orgSlug).Scan(&orgID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, fmt.Errorf("organization not found")
+			return nil, fmt.Errorf("%w", ErrOrgNotFound)
 		}
 		return nil, err
 	}
@@ -135,12 +135,12 @@ func loadEnabledConfig(ctx context.Context, pool *pgxpool.Pool, orgSlug string, 
 	).Scan(&cfg.id, &cfg.orgID, &cfg.clientID, &cfg.clientSecret, &tenantID, &enabled, &cfg.groupsClaimName, &cfg.defaultRole)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, fmt.Errorf("%s SSO not configured for this organization", provider)
+			return nil, fmt.Errorf("%s %w", provider, ErrNotConfigured)
 		}
 		return nil, err
 	}
 	if !enabled {
-		return nil, fmt.Errorf("%s SSO is not enabled for this organization", provider)
+		return nil, fmt.Errorf("%s %w", provider, ErrNotEnabled)
 	}
 
 	if tenantID != nil {
@@ -161,8 +161,9 @@ func oauth2Config(provider Provider, cfg *providerConfig, redirectURL string) (*
 			Endpoint:     googleEndpoint,
 		}, nil
 	case ProviderMicrosoft:
-		if cfg.tenantID == "" {
-			return nil, fmt.Errorf("microsoft SSO tenant_id not configured")
+		tenant, err := ValidateMicrosoftTenant(cfg.tenantID)
+		if err != nil {
+			return nil, err
 		}
 		return &oauth2.Config{
 			ClientID:     cfg.clientID,
@@ -170,8 +171,8 @@ func oauth2Config(provider Provider, cfg *providerConfig, redirectURL string) (*
 			RedirectURL:  redirectURL,
 			Scopes:       []string{"openid", "email", "profile", "User.Read"},
 			Endpoint: oauth2.Endpoint{
-				AuthURL:  fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/authorize", cfg.tenantID),
-				TokenURL: fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", cfg.tenantID),
+				AuthURL:  fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/authorize", tenant),
+				TokenURL: fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", tenant),
 			},
 		}, nil
 	case ProviderOkta:

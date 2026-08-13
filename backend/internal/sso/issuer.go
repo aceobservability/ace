@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 
@@ -34,6 +35,21 @@ func ValidateIssuer(tenantID string) error {
 		return fmt.Errorf("invalid Okta token URL: %w", err)
 	}
 	return nil
+}
+
+// ValidateMicrosoftTenant checks that tenant_id is a single path segment for
+// https://login.microsoftonline.com/{tenant}/oauth2/v2.0/{authorize|token}.
+// It is not a hostname — do not run ValidateIssuer or ValidateURL on it.
+// GUID, "common", "organizations", and "consumers" are valid.
+func ValidateMicrosoftTenant(tenantID string) (string, error) {
+	tenantID = strings.TrimSpace(tenantID)
+	if tenantID == "" {
+		return "", fmt.Errorf("microsoft SSO tenant_id not configured")
+	}
+	if strings.Contains(tenantID, "://") || strings.ContainsAny(tenantID, "/@\\?#") || strings.ContainsFunc(tenantID, unicode.IsSpace) {
+		return "", fmt.Errorf("invalid microsoft tenant_id")
+	}
+	return tenantID, nil
 }
 
 // TestIssuer runs OIDC discovery against the Okta domain using the injected

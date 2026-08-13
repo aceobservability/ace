@@ -81,13 +81,7 @@ func (h *MicrosoftSSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 		RedirectURL: h.baseURL + "/api/auth/microsoft/callback",
 	})
 	if err != nil {
-		if err.Error() == "failed to generate state" {
-			http.Error(w, `{"error":"failed to generate state"}`, http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		writeSSOStartError(w, err)
 		return
 	}
 
@@ -223,6 +217,12 @@ func (h *MicrosoftSSOHandler) ConfigureSSO(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	tenantID, err := sso.ValidateMicrosoftTenant(req.TenantID)
+	if err != nil {
+		http.Error(w, `{"error":"invalid tenant_id"}`, http.StatusBadRequest)
+		return
+	}
+
 	enabled := true
 	if req.Enabled != nil {
 		enabled = *req.Enabled
@@ -235,7 +235,7 @@ func (h *MicrosoftSSOHandler) ConfigureSSO(w http.ResponseWriter, r *http.Reques
 		 ON CONFLICT (organization_id, provider) DO UPDATE
 		 SET client_id = $2, client_secret = $3, tenant_id = $4, enabled = $5, updated_at = NOW()
 		 RETURNING tenant_id, client_id, enabled, created_at, updated_at`,
-		orgID, req.ClientID, req.ClientSecret, req.TenantID, enabled,
+		orgID, req.ClientID, req.ClientSecret, tenantID, enabled,
 	).Scan(&config.TenantID, &config.ClientID, &config.Enabled, &config.CreatedAt, &config.UpdatedAt)
 	if err != nil {
 		http.Error(w, `{"error":"failed to save SSO config"}`, http.StatusInternalServerError)

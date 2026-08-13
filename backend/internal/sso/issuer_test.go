@@ -72,6 +72,68 @@ func TestTestIssuer_safeClientRejectsMetadata(t *testing.T) {
 	}
 }
 
+func TestValidateMicrosoftTenant_acceptsPathSegments(t *testing.T) {
+	valid := []string{
+		"common",
+		"organizations",
+		"consumers",
+		"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+		"  common  ",
+		"tenant-guid-not-a-host",
+	}
+	for _, in := range valid {
+		got, err := ValidateMicrosoftTenant(in)
+		if err != nil {
+			t.Errorf("ValidateMicrosoftTenant(%q): %v", in, err)
+			continue
+		}
+		want := strings.TrimSpace(in)
+		if got != want {
+			t.Errorf("ValidateMicrosoftTenant(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestValidateMicrosoftTenant_rejectsUnsafe(t *testing.T) {
+	invalid := []string{"", "   ", "foo/bar", "https://evil.com", "a b", "foo@bar", "foo?x=1", "foo#frag", `foo\bar`}
+	for _, in := range invalid {
+		if _, err := ValidateMicrosoftTenant(in); err == nil {
+			t.Errorf("ValidateMicrosoftTenant(%q) succeeded, want reject", in)
+		}
+	}
+}
+
+func TestOAuth2Config_microsoftTenantPathIntegrity(t *testing.T) {
+	valid := []string{"common", "organizations", "consumers", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "  common  "}
+	for _, tenant := range valid {
+		cfg := &providerConfig{clientID: "c", clientSecret: "s", tenantID: tenant}
+		oc, err := oauth2Config(ProviderMicrosoft, cfg, "http://localhost/cb")
+		if err != nil {
+			t.Fatalf("tenant %q: %v", tenant, err)
+		}
+		trimmed := strings.TrimSpace(tenant)
+		wantAuth := "https://login.microsoftonline.com/" + trimmed + "/oauth2/v2.0/authorize"
+		wantToken := "https://login.microsoftonline.com/" + trimmed + "/oauth2/v2.0/token"
+		if oc.Endpoint.AuthURL != wantAuth {
+			t.Errorf("AuthURL=%s want %s", oc.Endpoint.AuthURL, wantAuth)
+		}
+		if oc.Endpoint.TokenURL != wantToken {
+			t.Errorf("TokenURL=%s want %s", oc.Endpoint.TokenURL, wantToken)
+		}
+		if strings.HasPrefix(oc.Endpoint.AuthURL, "https://"+trimmed) && !strings.Contains(oc.Endpoint.AuthURL, "login.microsoftonline.com") {
+			t.Fatalf("tenant %q must not become the IdP host", tenant)
+		}
+	}
+
+	invalid := []string{"foo/bar", "https://evil.com", "a b"}
+	for _, tenant := range invalid {
+		cfg := &providerConfig{clientID: "c", clientSecret: "s", tenantID: tenant}
+		if _, err := oauth2Config(ProviderMicrosoft, cfg, "http://localhost/cb"); err == nil {
+			t.Errorf("oauth2Config microsoft tenant %q should be rejected", tenant)
+		}
+	}
+}
+
 func TestNew_panicsOnNilClient(t *testing.T) {
 	defer func() {
 		if recover() == nil {
