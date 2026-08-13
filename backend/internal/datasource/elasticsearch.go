@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
-	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 const (
@@ -69,9 +68,13 @@ func NewElasticsearchClient(ds models.DataSource) (*ElasticsearchClient, error) 
 
 	return &ElasticsearchClient{
 		datasource: ds,
-		httpClient: ssrf.DatasourceClient(30 * time.Second),
+		httpClient: newDatasourceHTTPClient(ds, 30*time.Second),
 		cfg:        cfg,
 	}, nil
+}
+
+func (c *ElasticsearchClient) TestConnection(ctx context.Context) error {
+	return runHTTPConnectionCheck(ctx, c.datasource, c.httpClient, []string{"/_cluster/health", "/_cat/indices?format=json&h=index&bytes=b", "/"})
 }
 
 func (c *ElasticsearchClient) Query(ctx context.Context, query string, start, end time.Time, step time.Duration, limit int) (*QueryResult, error) {
@@ -218,10 +221,6 @@ func (c *ElasticsearchClient) search(ctx context.Context, index string, requestB
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-
-	if err := applyDataSourceAuth(req, c.datasource); err != nil {
-		return nil, err
-	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

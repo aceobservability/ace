@@ -5,9 +5,56 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
+
+// dataSourceAuthRoundTripper stamps stored datasource credentials onto every
+// outbound request while leaving the inner DatasourceClient dial/pin/proxy/TLS
+// policy untouched.
+type dataSourceAuthRoundTripper struct {
+	base http.RoundTripper
+	ds   models.DataSource
+}
+
+func (t *dataSourceAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	cloned := req.Clone(req.Context())
+	if err := applyDataSourceAuth(cloned, t.ds); err != nil {
+		return nil, err
+	}
+	return t.base.RoundTrip(cloned)
+}
+
+// newDatasourceHTTPClient builds ssrf.DatasourceClient(timeout) then wraps it
+// with stored-credential auth. Per-type timeouts stay at the call site
+// (15s / 30s / stream 0).
+func newDatasourceHTTPClient(ds models.DataSource, timeout time.Duration) *http.Client {
+	return wrapDatasourceAuth(ssrf.DatasourceClient(timeout), ds)
+}
+
+func wrapDatasourceAuth(client *http.Client, ds models.DataSource) *http.Client {
+	base := client.Transport
+	if base == nil {
+		base = http.DefaultTransport
+	}
+	client.Transport = &dataSourceAuthRoundTripper{base: base, ds: ds}
+	return client
+}
+
+// dataSourceAuthHeader is the websocket call site for the same credential
+// helper used by dataSourceAuthRoundTripper.
+func dataSourceAuthHeader(ds models.DataSource) (http.Header, error) {
+	req, err := http.NewRequest(http.MethodGet, "http://datasource.invalid", nil)
+	if err != nil {
+		return nil, err
+	}
+	if err := applyDataSourceAuth(req, ds); err != nil {
+		return nil, err
+	}
+	return req.Header, nil
+}
 
 type datasourceAuthConfig struct {
 	Username string `json:"username"`

@@ -9,14 +9,12 @@ import (
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
-	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // VMAlertClient wraps HTTP calls to VMAlert's API.
 type VMAlertClient struct {
-	baseURL    string
-	client     *http.Client
-	datasource models.DataSource
+	baseURL string
+	client  *http.Client
 }
 
 // NewVMAlertClient creates a new VMAlert client from a datasource record.
@@ -25,9 +23,8 @@ func NewVMAlertClient(ds models.DataSource) (*VMAlertClient, error) {
 		return nil, fmt.Errorf("vmalert datasource URL is required")
 	}
 	return &VMAlertClient{
-		baseURL:    ds.URL,
-		client:     ssrf.DatasourceClient(30 * time.Second),
-		datasource: ds,
+		baseURL: ds.URL,
+		client:  newDatasourceHTTPClient(ds, 30*time.Second),
 	}, nil
 }
 
@@ -105,10 +102,6 @@ func (c *VMAlertClient) Health(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to create health request: %w", err)
 	}
-	if err := applyDataSourceAuth(req, c.datasource); err != nil {
-		return err
-	}
-
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("health check failed: %w", err)
@@ -128,10 +121,6 @@ func doVMAlertRequest[T any](ctx context.Context, c *VMAlertClient, path string)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request for %s: %w", path, err)
 	}
-	if err := applyDataSourceAuth(req, c.datasource); err != nil {
-		return nil, err
-	}
-
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request to %s failed: %w", path, err)

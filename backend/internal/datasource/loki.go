@@ -13,21 +13,28 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aceobservability/ace/backend/internal/models"
 	"github.com/aceobservability/ace/backend/internal/ssrf"
 	"github.com/gorilla/websocket"
 )
 
 // LokiClient queries Loki using LogQL
 type LokiClient struct {
-	baseURL string
-	client  *http.Client
+	datasource models.DataSource
+	baseURL    string
+	client     *http.Client
 }
 
-func NewLokiClient(baseURL string) (*LokiClient, error) {
+func NewLokiClient(ds models.DataSource) (*LokiClient, error) {
 	return &LokiClient{
-		baseURL: baseURL,
-		client:  ssrf.DatasourceClient(30 * time.Second),
+		datasource: ds,
+		baseURL:    ds.URL,
+		client:     newDatasourceHTTPClient(ds, 30*time.Second),
 	}, nil
+}
+
+func (c *LokiClient) TestConnection(ctx context.Context) error {
+	return runHTTPConnectionCheck(ctx, c.datasource, c.client, []string{"/ready", "/loki/api/v1/labels?limit=1", "/"})
 }
 
 type lokiQueryResponse struct {
@@ -260,9 +267,14 @@ func (c *LokiClient) Stream(ctx context.Context, query string, start time.Time, 
 		return err
 	}
 
+	header, err := dataSourceAuthHeader(c.datasource)
+	if err != nil {
+		return err
+	}
+
 	dialer := *websocket.DefaultDialer
 	dialer.NetDialContext = ssrf.DatasourceDialContext
-	conn, _, err := dialer.DialContext(ctx, wsURL, nil)
+	conn, _, err := dialer.DialContext(ctx, wsURL, header)
 	if err != nil {
 		return fmt.Errorf("failed to connect to Loki tail endpoint: %w", err)
 	}

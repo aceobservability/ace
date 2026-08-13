@@ -11,20 +11,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aceobservability/ace/backend/internal/ssrf"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // VictoriaMetricsClient queries VictoriaMetrics using PromQL-compatible API
 type VictoriaMetricsClient struct {
-	baseURL string
-	client  *http.Client
+	datasource models.DataSource
+	baseURL    string
+	client     *http.Client
 }
 
-func NewVictoriaMetricsClient(baseURL string) (*VictoriaMetricsClient, error) {
+func NewVictoriaMetricsClient(ds models.DataSource) (*VictoriaMetricsClient, error) {
 	return &VictoriaMetricsClient{
-		baseURL: baseURL,
-		client:  ssrf.DatasourceClient(30 * time.Second),
+		datasource: ds,
+		baseURL:    ds.URL,
+		client:     newDatasourceHTTPClient(ds, 30*time.Second),
 	}, nil
+}
+
+func (c *VictoriaMetricsClient) TestConnection(ctx context.Context) error {
+	return runHTTPConnectionCheck(ctx, c.datasource, c.client, []string{"/health", "/api/v1/query?query=1", "/"})
 }
 
 type vmQueryResponse struct {

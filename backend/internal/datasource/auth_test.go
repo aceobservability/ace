@@ -96,3 +96,50 @@ func TestApplyDataSourceAuth_InvalidType(t *testing.T) {
 		t.Fatal("expected error for invalid auth type")
 	}
 }
+
+func TestDataSourceAuthHeader_Bearer(t *testing.T) {
+	ds := models.DataSource{
+		AuthType:   "bearer",
+		AuthConfig: []byte(`{"token":"ws-token"}`),
+	}
+
+	header, err := dataSourceAuthHeader(ds)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if header.Get("Authorization") != "Bearer ws-token" {
+		t.Fatalf("unexpected authorization header: %s", header.Get("Authorization"))
+	}
+}
+
+func TestDataSourceAuthRoundTripper_StampsBearer(t *testing.T) {
+	ds := models.DataSource{
+		AuthType:   "bearer",
+		AuthConfig: []byte(`{"token":"rt-token"}`),
+	}
+
+	sawAuth := false
+	inner := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		if req.Header.Get("Authorization") != "Bearer rt-token" {
+			t.Fatalf("unexpected authorization header: %s", req.Header.Get("Authorization"))
+		}
+		sawAuth = true
+		return &http.Response{StatusCode: http.StatusOK, Body: http.NoBody, Request: req}, nil
+	})
+
+	client := wrapDatasourceAuth(&http.Client{Transport: inner}, ds)
+	resp, err := client.Get("http://example.invalid/query")
+	if err != nil {
+		t.Fatalf("round trip failed: %v", err)
+	}
+	_ = resp.Body.Close()
+	if !sawAuth {
+		t.Fatal("expected inner transport to observe the request")
+	}
+}
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}

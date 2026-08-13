@@ -67,17 +67,59 @@ type Client interface {
 	Query(ctx context.Context, query string, start, end time.Time, step time.Duration, limit int) (*QueryResult, error)
 }
 
+// SignalQueryClient is implemented by datasources that dispatch on signal
+// (ClickHouse, CloudWatch, Elasticsearch).
+type SignalQueryClient interface {
+	QueryWithSignal(ctx context.Context, query, signal string, start, end time.Time, step time.Duration, limit int) (*QueryResult, error)
+}
+
+// StreamClient is implemented by log datasources that support live tail.
+type StreamClient interface {
+	Stream(ctx context.Context, query string, start time.Time, limit int, onLog LogStreamCallback) error
+}
+
+// LabelsClient is implemented by log datasources that expose label/field names.
+type LabelsClient interface {
+	Labels(ctx context.Context) ([]string, error)
+}
+
+// MetricLabelsClient is implemented by PromQL datasources that can scope labels
+// to a metric selector.
+type MetricLabelsClient interface {
+	Labels(ctx context.Context, metric string) ([]string, error)
+}
+
+// LabelValuesClient is implemented by log datasources that expose label values.
+type LabelValuesClient interface {
+	LabelValues(ctx context.Context, labelName string) ([]string, error)
+}
+
+// MetricLabelValuesClient is implemented by PromQL datasources that can scope
+// label values to a metric selector.
+type MetricLabelValuesClient interface {
+	LabelValues(ctx context.Context, label, metric string) ([]string, error)
+}
+
+// MetricNamesClient is implemented by PromQL datasources that expose metric names.
+type MetricNamesClient interface {
+	MetricNames(ctx context.Context, search string) ([]string, error)
+}
+
+type connectionTester interface {
+	TestConnection(ctx context.Context) error
+}
+
 // NewClient creates a datasource client based on the datasource type
 func NewClient(ds models.DataSource) (Client, error) {
 	switch ds.Type {
 	case models.DataSourcePrometheus:
-		return NewPrometheusClient(ds.URL)
+		return NewPrometheusClient(ds)
 	case models.DataSourceVictoriaMetrics:
-		return NewVictoriaMetricsClient(ds.URL)
+		return NewVictoriaMetricsClient(ds)
 	case models.DataSourceLoki:
-		return NewLokiClient(ds.URL)
+		return NewLokiClient(ds)
 	case models.DataSourceVictoriaLogs:
-		return NewVictoriaLogsClient(ds.URL)
+		return NewVictoriaLogsClient(ds)
 	case models.DataSourceTempo:
 		return NewTempoClient(ds)
 	case models.DataSourceVictoriaTraces:
@@ -95,46 +137,32 @@ func NewClient(ds models.DataSource) (Client, error) {
 
 func TestConnection(ctx context.Context, ds models.DataSource) error {
 	switch ds.Type {
-	case models.DataSourcePrometheus:
-		return runHTTPConnectionCheck(ctx, ds, []string{"/-/healthy", "/api/v1/query?query=1", "/"})
-	case models.DataSourceVictoriaMetrics:
-		return runHTTPConnectionCheck(ctx, ds, []string{"/health", "/api/v1/query?query=1", "/"})
-	case models.DataSourceLoki:
-		return runHTTPConnectionCheck(ctx, ds, []string{"/ready", "/loki/api/v1/labels?limit=1", "/"})
-	case models.DataSourceVictoriaLogs:
-		return runHTTPConnectionCheck(ctx, ds, []string{"/health", "/select/logsql/field_names?query=*", "/"})
-	case models.DataSourceTempo:
-		client, err := NewTempoClient(ds)
-		if err != nil {
-			return err
-		}
-		return client.TestConnection(ctx)
-	case models.DataSourceVictoriaTraces:
-		client, err := NewVictoriaTracesClient(ds)
-		if err != nil {
-			return err
-		}
-		return client.TestConnection(ctx)
-	case models.DataSourceClickHouse:
-		return runHTTPConnectionCheck(ctx, ds, []string{"/ping", "/?query=SELECT%201", "/"})
-	case models.DataSourceCloudWatch:
-		client, err := NewCloudWatchClient(ds)
-		if err != nil {
-			return err
-		}
-		return client.TestConnection(ctx)
-	case models.DataSourceElasticsearch:
-		return runHTTPConnectionCheck(ctx, ds, []string{"/_cluster/health", "/_cat/indices?format=json&h=index&bytes=b", "/"})
 	case models.DataSourceVMAlert:
-		return runHTTPConnectionCheck(ctx, ds, []string{"/health", "/api/v1/alerts", "/"})
+		client, err := NewVMAlertClient(ds)
+		if err != nil {
+			return err
+		}
+		return runHTTPConnectionCheck(ctx, ds, client.client, []string{"/health", "/api/v1/alerts", "/"})
 	case models.DataSourceAlertManager:
-		return runHTTPConnectionCheck(ctx, ds, []string{"/api/v2/status", "/api/v2/alerts", "/"})
+		client, err := NewAlertManagerClient(ds)
+		if err != nil {
+			return err
+		}
+		return runHTTPConnectionCheck(ctx, ds, client.client, []string{"/api/v2/status", "/api/v2/alerts", "/"})
 	default:
-		return fmt.Errorf("unsupported datasource type: %s", ds.Type)
+		client, err := NewClient(ds)
+		if err != nil {
+			return err
+		}
+		tester, ok := client.(connectionTester)
+		if !ok {
+			return fmt.Errorf("unsupported datasource type: %s", ds.Type)
+		}
+		return tester.TestConnection(ctx)
 	}
 }
 
-func runHTTPConnectionCheck(ctx context.Context, ds models.DataSource, endpoints []string) error {
+func runHTTPConnectionCheck(ctx context.Context, ds models.DataSource, httpClient *http.Client, endpoints []string) error {
 	// Datasource URLs may legitimately target private/internal networks
 	// (local Victoria stack, in-cluster Prometheus, etc.). Match create/update
 	// policy: only reject non-http(s) and cloud metadata.
@@ -149,11 +177,11 @@ func runHTTPConnectionCheck(ctx context.Context, ds models.DataSource, endpoints
 		return fmt.Errorf("datasource url rejected")
 	}
 
-	baseURL := ds.URL
+	if httpClient == nil {
+		httpClient = newDatasourceHTTPClient(ds, 10*time.Second)
+	}
 
-	// DatasourceClient allows private/internal targets but blocks cloud
-	// metadata at dial time and on redirects (DNS rebinding / open redirect).
-	httpClient := ssrf.DatasourceClient(10 * time.Second)
+	baseURL := ds.URL
 
 	var lastErr error
 	for _, endpoint := range endpoints {
@@ -167,10 +195,6 @@ func runHTTPConnectionCheck(ctx context.Context, ds models.DataSource, endpoints
 		if err != nil {
 			lastErr = fmt.Errorf("failed to create request: %w", err)
 			continue
-		}
-
-		if err := applyDataSourceAuth(req, ds); err != nil {
-			return err
 		}
 
 		resp, err := httpClient.Do(req)

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
-	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // VictoriaTracesClient is used for trace datasource connectivity checks.
@@ -25,7 +24,7 @@ func NewVictoriaTracesClient(ds models.DataSource) (*VictoriaTracesClient, error
 
 	return &VictoriaTracesClient{
 		datasource: ds,
-		httpClient: ssrf.DatasourceClient(15 * time.Second),
+		httpClient: newDatasourceHTTPClient(ds, 15*time.Second),
 	}, nil
 }
 
@@ -41,7 +40,7 @@ func (c *VictoriaTracesClient) Query(ctx context.Context, query string, start, e
 }
 
 func (c *VictoriaTracesClient) TestConnection(ctx context.Context) error {
-	return runHTTPConnectionCheck(ctx, c.datasource, []string{"/health", "/ready", "/"})
+	return runHTTPConnectionCheck(ctx, c.datasource, c.httpClient, []string{"/health", "/ready", "/"})
 }
 
 func (c *VictoriaTracesClient) GetTrace(ctx context.Context, traceID string) (*Trace, error) {

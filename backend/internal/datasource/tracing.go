@@ -287,10 +287,6 @@ func doTracingRequest(ctx context.Context, httpClient *http.Client, ds models.Da
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	if err := applyDataSourceAuth(req, ds); err != nil {
-		return nil, err
-	}
-
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
