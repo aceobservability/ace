@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aceobservability/ace/backend/internal/auth"
-	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // ---------------------------------------------------------------------------
@@ -81,7 +80,7 @@ func TestOktaSSOConfigureRequiresAdmin(t *testing.T) {
 	f := setupOktaTestFixture(t, "Okta Non-Admin Org", "okta-non-admin", "okta-nonadmin@example.com", "Viewer", "viewer")
 	defer f.cleanupFn()
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	body := `{"client_id":"cid","client_secret":"cs","tenant_id":"dev-123.okta.com"}`
 	req := httptest.NewRequest("POST", "/api/orgs/"+f.orgID.String()+"/sso/okta", bytes.NewBufferString(body))
@@ -104,9 +103,9 @@ func TestOktaSSOConfigureAsAdmin(t *testing.T) {
 	f := setupOktaTestFixture(t, "Okta Admin Org", "okta-admin-org", "okta-admin@example.com", "Admin", "admin")
 	defer f.cleanupFn()
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
-	body := `{"client_id":"okta-cid","client_secret":"okta-secret","tenant_id":"dev-123.okta.com","groups_claim_name":"myGroups","default_role":"editor"}`
+	body := `{"client_id":"okta-cid","client_secret":"okta-secret","tenant_id":"example.com","groups_claim_name":"myGroups","default_role":"editor"}`
 	req := httptest.NewRequest("POST", "/api/orgs/"+f.orgID.String()+"/sso/okta", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+f.token)
@@ -127,8 +126,8 @@ func TestOktaSSOConfigureAsAdmin(t *testing.T) {
 	if resp.ClientID != "okta-cid" {
 		t.Errorf("Expected client_id 'okta-cid', got '%s'", resp.ClientID)
 	}
-	if resp.TenantID != "dev-123.okta.com" {
-		t.Errorf("Expected tenant_id 'dev-123.okta.com', got '%s'", resp.TenantID)
+	if resp.TenantID != "example.com" {
+		t.Errorf("Expected tenant_id 'example.com', got '%s'", resp.TenantID)
 	}
 	if resp.GroupsClaimName != "myGroups" {
 		t.Errorf("Expected groups_claim_name 'myGroups', got '%s'", resp.GroupsClaimName)
@@ -154,7 +153,7 @@ func TestOktaSSOConfigureAsAdmin(t *testing.T) {
 	if dbClientID != "okta-cid" {
 		t.Errorf("DB client_id mismatch: %s", dbClientID)
 	}
-	if dbTenantID != "dev-123.okta.com" {
+	if dbTenantID != "example.com" {
 		t.Errorf("DB tenant_id mismatch: %s", dbTenantID)
 	}
 	if !dbEnabled {
@@ -175,7 +174,7 @@ func TestOktaSSOGetConfigRequiresAdmin(t *testing.T) {
 	f := setupOktaTestFixture(t, "Okta Get NonAdmin", "okta-get-nonadmin", "okta-get-nonadmin@example.com", "Viewer", "viewer")
 	defer f.cleanupFn()
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	req := httptest.NewRequest("GET", "/api/orgs/"+f.orgID.String()+"/sso/okta", nil)
 	req.Header.Set("Authorization", "Bearer "+f.token)
@@ -205,7 +204,7 @@ func TestOktaSSOGetConfigAsAdmin(t *testing.T) {
 		t.Fatalf("Failed to insert SSO config: %v", err)
 	}
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	req := httptest.NewRequest("GET", "/api/orgs/"+f.orgID.String()+"/sso/okta", nil)
 	req.Header.Set("Authorization", "Bearer "+f.token)
@@ -249,7 +248,7 @@ func TestOktaSSOGetConfigNoConfig(t *testing.T) {
 	f := setupOktaTestFixture(t, "Okta Get Empty", "okta-get-empty", "okta-get-empty@example.com", "Admin", "admin")
 	defer f.cleanupFn()
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	req := httptest.NewRequest("GET", "/api/orgs/"+f.orgID.String()+"/sso/okta", nil)
 	req.Header.Set("Authorization", "Bearer "+f.token)
@@ -276,7 +275,7 @@ func TestOktaSSOLoginRequiresOrg(t *testing.T) {
 		t.Skip("Database not available")
 	}
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	req := httptest.NewRequest("GET", "/api/auth/okta/login", nil)
 	w := httptest.NewRecorder()
@@ -295,7 +294,7 @@ func TestOktaSSOLoginOrgNotConfigured(t *testing.T) {
 	f := setupOktaTestFixture(t, "Okta Login NoCfg", "okta-login-nocfg", "okta-login-nocfg@example.com", "User", "viewer")
 	defer f.cleanupFn()
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	req := httptest.NewRequest("GET", "/api/auth/okta/login?org=okta-login-nocfg", nil)
 	w := httptest.NewRecorder()
@@ -323,7 +322,7 @@ func TestOktaSSOLoginRedirects(t *testing.T) {
 		t.Fatalf("Failed to create SSO config: %v", err)
 	}
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	req := httptest.NewRequest("GET", "/api/auth/okta/login?org=okta-login-redirect", nil)
 	w := httptest.NewRecorder()
@@ -362,7 +361,7 @@ func TestOktaSSOLoginStateCookieAttributes(t *testing.T) {
 		t.Fatalf("Failed to create SSO config: %v", err)
 	}
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	req := httptest.NewRequest("GET", "/api/auth/okta/login?org=okta-login-cookie", nil)
 	w := httptest.NewRecorder()
@@ -407,7 +406,7 @@ func TestOktaSSOLoginStateCookieAttributes(t *testing.T) {
 // 10. Callback: clears state cookie with secure attributes
 // ---------------------------------------------------------------------------
 func TestOktaSSOCallbackClearsStateCookie(t *testing.T) {
-	handler := NewOktaSSOHandler(nil, nil, nil, nil)
+	handler := NewOktaSSOHandler(nil, nil, nil, nil, testSSO())
 
 	state := "expected-state"
 	stateData := state + ":test-org"
@@ -455,203 +454,13 @@ func TestOktaSSOCallbackClearsStateCookie(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// 11. ResolveRoleFromMappings: integration test for role resolution
-// ---------------------------------------------------------------------------
-func TestOktaResolveRoleFromMappings(t *testing.T) {
-	tests := []struct {
-		name        string
-		groups      []string
-		mappings    []models.SSOConfigRoleMapping
-		defaultRole string
-		wantRole    string
-	}{
-		{
-			name:        "no groups -> default",
-			groups:      nil,
-			mappings:    []models.SSOConfigRoleMapping{{SSOGroupName: "admins", AceRole: "admin"}},
-			defaultRole: "viewer",
-			wantRole:    "viewer",
-		},
-		{
-			name:   "single match",
-			groups: []string{"engineers"},
-			mappings: []models.SSOConfigRoleMapping{
-				{SSOGroupName: "engineers", AceRole: "editor"},
-			},
-			defaultRole: "viewer",
-			wantRole:    "editor",
-		},
-		{
-			name:   "highest privilege wins",
-			groups: []string{"engineers", "admins"},
-			mappings: []models.SSOConfigRoleMapping{
-				{SSOGroupName: "engineers", AceRole: "editor"},
-				{SSOGroupName: "admins", AceRole: "admin"},
-			},
-			defaultRole: "viewer",
-			wantRole:    "admin",
-		},
-		{
-			name:        "no mapping match -> default",
-			groups:      []string{"unrelated-group"},
-			mappings:    []models.SSOConfigRoleMapping{{SSOGroupName: "admins", AceRole: "admin"}},
-			defaultRole: "viewer",
-			wantRole:    "viewer",
-		},
-		{
-			name:   "auditor is lateral to viewer (viewer wins)",
-			groups: []string{"auditors", "readers"},
-			mappings: []models.SSOConfigRoleMapping{
-				{SSOGroupName: "auditors", AceRole: "auditor"},
-				{SSOGroupName: "readers", AceRole: "viewer"},
-			},
-			defaultRole: "viewer",
-			wantRole:    "viewer",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := ResolveRoleFromMappings(tc.groups, tc.mappings, tc.defaultRole)
-			if got != tc.wantRole {
-				t.Errorf("ResolveRoleFromMappings() = %q, want %q", got, tc.wantRole)
-			}
-		})
-	}
-}
-
-// ---------------------------------------------------------------------------
-// 12. Membership upsert: role_source = 'sso' vs 'manual'
-// ---------------------------------------------------------------------------
-func TestOktaMembershipRoleSourceUpsert(t *testing.T) {
-	if testPool == nil {
-		t.Skip("Database not available")
-	}
-
-	ctx := context.Background()
-
-	// Create org
-	var orgID uuid.UUID
-	err := testPool.QueryRow(ctx,
-		`INSERT INTO organizations (name, slug) VALUES ('Okta RS Org', 'okta-rs-org') RETURNING id`,
-	).Scan(&orgID)
-	if err != nil {
-		t.Fatalf("Failed to create org: %v", err)
-	}
-	defer testPool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
-
-	// Create user
-	var userID uuid.UUID
-	err = testPool.QueryRow(ctx,
-		`INSERT INTO users (email, name) VALUES ('okta-rs@example.com', 'RS User') RETURNING id`,
-	).Scan(&userID)
-	if err != nil {
-		t.Fatalf("Failed to create user: %v", err)
-	}
-	defer testPool.Exec(ctx, `DELETE FROM users WHERE id = $1`, userID)
-	defer testPool.Exec(ctx, `DELETE FROM organization_memberships WHERE user_id = $1`, userID)
-
-	// Subtest: INSERT with role_source = 'sso'
-	t.Run("insert_sso_role_source", func(t *testing.T) {
-		_, err := testPool.Exec(ctx,
-			`INSERT INTO organization_memberships (user_id, organization_id, role, role_source) VALUES ($1, $2, 'editor', 'sso')`,
-			userID, orgID,
-		)
-		if err != nil {
-			t.Fatalf("Failed to insert membership: %v", err)
-		}
-
-		var role, roleSource string
-		err = testPool.QueryRow(ctx,
-			`SELECT role, role_source FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
-			userID, orgID,
-		).Scan(&role, &roleSource)
-		if err != nil {
-			t.Fatalf("Failed to query: %v", err)
-		}
-		if role != "editor" {
-			t.Errorf("Expected role 'editor', got '%s'", role)
-		}
-		if roleSource != "sso" {
-			t.Errorf("Expected role_source 'sso', got '%s'", roleSource)
-		}
-	})
-
-	// Subtest: SSO updates role when role_source='sso'
-	t.Run("sso_updates_sso_role_source", func(t *testing.T) {
-		_, err := testPool.Exec(ctx,
-			`UPDATE organization_memberships SET role = 'admin' WHERE user_id = $1 AND organization_id = $2`,
-			userID, orgID,
-		)
-		if err != nil {
-			t.Fatalf("Failed to update membership: %v", err)
-		}
-
-		var role, roleSource string
-		err = testPool.QueryRow(ctx,
-			`SELECT role, role_source FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
-			userID, orgID,
-		).Scan(&role, &roleSource)
-		if err != nil {
-			t.Fatalf("Failed to query: %v", err)
-		}
-		if role != "admin" {
-			t.Errorf("Expected role 'admin', got '%s'", role)
-		}
-		if roleSource != "sso" {
-			t.Errorf("Expected role_source to remain 'sso', got '%s'", roleSource)
-		}
-	})
-
-	// Subtest: manual override preserves role_source='manual'
-	t.Run("manual_override_preserved", func(t *testing.T) {
-		// Set role_source to 'manual'
-		_, err := testPool.Exec(ctx,
-			`UPDATE organization_memberships SET role = 'viewer', role_source = 'manual' WHERE user_id = $1 AND organization_id = $2`,
-			userID, orgID,
-		)
-		if err != nil {
-			t.Fatalf("Failed to set manual: %v", err)
-		}
-
-		// Simulate what the Okta handler does: check role_source before updating
-		var existingRoleSource string
-		err = testPool.QueryRow(ctx,
-			`SELECT role_source FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
-			userID, orgID,
-		).Scan(&existingRoleSource)
-		if err != nil {
-			t.Fatalf("Failed to query: %v", err)
-		}
-
-		if existingRoleSource != "manual" {
-			t.Fatalf("Expected role_source 'manual', got '%s'", existingRoleSource)
-		}
-
-		// The handler should NOT update the role when role_source = 'manual'
-		// Verify the role stays as 'viewer'
-		var role string
-		err = testPool.QueryRow(ctx,
-			`SELECT role FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
-			userID, orgID,
-		).Scan(&role)
-		if err != nil {
-			t.Fatalf("Failed to query role: %v", err)
-		}
-		if role != "viewer" {
-			t.Errorf("Expected role to remain 'viewer' (manual override), got '%s'", role)
-		}
-	})
-}
-
-// ---------------------------------------------------------------------------
 // 13. TestConnection: admin -> returns status response
 // ---------------------------------------------------------------------------
 func TestOktaSSOTestConnectionRequiresAdmin(t *testing.T) {
 	f := setupOktaTestFixture(t, "Okta Test Conn", "okta-test-conn", "okta-test-conn@example.com", "Viewer", "viewer")
 	defer f.cleanupFn()
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	req := httptest.NewRequest("POST", "/api/orgs/"+f.orgID.String()+"/sso/okta/test", nil)
 	req.Header.Set("Authorization", "Bearer "+f.token)
@@ -672,7 +481,7 @@ func TestOktaSSOTestConnectionNoConfig(t *testing.T) {
 	f := setupOktaTestFixture(t, "Okta Test No Cfg", "okta-test-nocfg", "okta-test-nocfg@example.com", "Admin", "admin")
 	defer f.cleanupFn()
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	req := httptest.NewRequest("POST", "/api/orgs/"+f.orgID.String()+"/sso/okta/test", nil)
 	req.Header.Set("Authorization", "Bearer "+f.token)
@@ -702,7 +511,7 @@ func TestOktaSSOTestConnectionReturnsStatus(t *testing.T) {
 		t.Fatalf("Failed to insert SSO config: %v", err)
 	}
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	req := httptest.NewRequest("POST", "/api/orgs/"+f.orgID.String()+"/sso/okta/test", nil)
 	req.Header.Set("Authorization", "Bearer "+f.token)
@@ -736,20 +545,23 @@ func TestOktaSSOConfigureInvalidTenantID(t *testing.T) {
 	f := setupOktaTestFixture(t, "Okta Invalid Tenant", "okta-invalid-tenant", "okta-invalid-tenant@example.com", "Admin", "admin")
 	defer f.cleanupFn()
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
-	// No dot in tenant_id
-	body := `{"client_id":"cid","client_secret":"cs","tenant_id":"nodothost"}`
-	req := httptest.NewRequest("POST", "/api/orgs/"+f.orgID.String()+"/sso/okta", bytes.NewBufferString(body))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+f.token)
-	req.SetPathValue("id", f.orgID.String())
-	w := httptest.NewRecorder()
+	for _, tenant := range []string{"nodothost", "10.0.0.1", "169.254.169.254", "https://dev-123.okta.com"} {
+		t.Run(tenant, func(t *testing.T) {
+			body := `{"client_id":"cid","client_secret":"cs","tenant_id":"` + tenant + `"}`
+			req := httptest.NewRequest("POST", "/api/orgs/"+f.orgID.String()+"/sso/okta", bytes.NewBufferString(body))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+f.token)
+			req.SetPathValue("id", f.orgID.String())
+			w := httptest.NewRecorder()
 
-	auth.RequireAuth(testJWTManager, handler.ConfigureSSO)(w, req)
+			auth.RequireAuth(testJWTManager, handler.ConfigureSSO)(w, req)
 
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("Expected 400 for invalid tenant_id, got %d: %s", w.Code, w.Body.String())
+			if w.Code != http.StatusBadRequest {
+				t.Errorf("Expected 400 for tenant_id %q, got %d: %s", tenant, w.Code, w.Body.String())
+			}
+		})
 	}
 }
 
@@ -760,10 +572,10 @@ func TestOktaSSOConfigureDefaults(t *testing.T) {
 	f := setupOktaTestFixture(t, "Okta Defaults", "okta-defaults", "okta-defaults@example.com", "Admin", "admin")
 	defer f.cleanupFn()
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	// Omit groups_claim_name and default_role
-	body := `{"client_id":"cid","client_secret":"cs","tenant_id":"dev-def.okta.com"}`
+	body := `{"client_id":"cid","client_secret":"cs","tenant_id":"example.com"}`
 	req := httptest.NewRequest("POST", "/api/orgs/"+f.orgID.String()+"/sso/okta", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+f.token)
@@ -796,7 +608,7 @@ func TestOktaSSOConfigureInvalidDefaultRole(t *testing.T) {
 	f := setupOktaTestFixture(t, "Okta Invalid Role", "okta-invalid-role", "okta-invalid-role@example.com", "Admin", "admin")
 	defer f.cleanupFn()
 
-	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil)
+	handler := NewOktaSSOHandler(testPool, testJWTManager, nil, nil, testSSO())
 
 	body := `{"client_id":"cid","client_secret":"cs","tenant_id":"dev-123.okta.com","default_role":"superadmin"}`
 	req := httptest.NewRequest("POST", "/api/orgs/"+f.orgID.String()+"/sso/okta", bytes.NewBufferString(body))
@@ -809,32 +621,5 @@ func TestOktaSSOConfigureInvalidDefaultRole(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Expected 400 for invalid default_role, got %d: %s", w.Code, w.Body.String())
-	}
-}
-
-// ---------------------------------------------------------------------------
-// 19. isValidHostname
-// ---------------------------------------------------------------------------
-func TestOktaIsValidHostname(t *testing.T) {
-	tests := []struct {
-		input string
-		want  bool
-	}{
-		{"dev-123.okta.com", true},
-		{"my-org.oktapreview.com", true},
-		{"a.b", true},
-		{"", false},
-		{"nodot", false},
-		{"https://dev-123.okta.com", false},
-		{"dev 123.okta.com", false},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.input, func(t *testing.T) {
-			got := isValidHostname(tc.input)
-			if got != tc.want {
-				t.Errorf("isValidHostname(%q) = %v, want %v", tc.input, got, tc.want)
-			}
-		})
 	}
 }

@@ -62,7 +62,7 @@ func TestMicrosoftSSOConfigureRequiresAdmin(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try to configure SSO as non-admin
 	body := `{"tenant_id":"test-tenant","client_id":"test-client-id","client_secret":"test-secret"}`
@@ -125,7 +125,7 @@ func TestMicrosoftSSOConfigureAsAdmin(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Configure SSO as admin
 	body := `{"tenant_id":"test-tenant","client_id":"test-client-id","client_secret":"test-secret"}`
@@ -213,7 +213,7 @@ func TestMicrosoftSSOGetConfig(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Get SSO config
 	req := httptest.NewRequest("GET", "/api/orgs/"+orgID.String()+"/sso/microsoft", nil)
@@ -246,7 +246,7 @@ func TestMicrosoftSSOLoginRequiresOrg(t *testing.T) {
 		t.Skip("Database not available")
 	}
 
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try login without org parameter
 	req := httptest.NewRequest("GET", "/api/auth/microsoft/login", nil)
@@ -276,7 +276,7 @@ func TestMicrosoftSSOLoginOrgNotConfigured(t *testing.T) {
 	}
 	defer testPool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
 
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try login with org that doesn't have SSO configured
 	req := httptest.NewRequest("GET", "/api/auth/microsoft/login?org=test-org-no-ms-sso", nil)
@@ -317,7 +317,7 @@ func TestMicrosoftSSOLoginRedirectsToMicrosoft(t *testing.T) {
 		t.Fatalf("Failed to create SSO config: %v", err)
 	}
 
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try login - should redirect to Microsoft
 	req := httptest.NewRequest("GET", "/api/auth/microsoft/login?org=test-org-ms-sso-redirect", nil)
@@ -371,7 +371,7 @@ func TestMicrosoftSSOLoginRedirectsToMicrosoft(t *testing.T) {
 }
 
 func TestMicrosoftSSOCallbackClearsStateCookieWithSecureAttributes(t *testing.T) {
-	handler := NewMicrosoftSSOHandler(nil, nil, nil)
+	handler := NewMicrosoftSSOHandler(nil, nil, nil, testSSO())
 
 	state := "expected-state"
 	stateData := state + ":test-org"
@@ -436,7 +436,7 @@ func TestMicrosoftSSOCallbackRedirectIncludesRefreshToken(t *testing.T) {
 	defer rdb.Close()
 
 	// Create handler with Redis (refresh token manager)
-	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, rdb)
+	handler := NewMicrosoftSSOHandler(testPool, testJWTManager, rdb, testSSO())
 
 	// Verify the handler has a refresh token manager
 	if handler.refreshTokenManager == nil {
@@ -518,7 +518,7 @@ func TestMicrosoftSSOCallbackRedirectIncludesRefreshToken(t *testing.T) {
 
 func TestMicrosoftSSOCallbackNoRefreshTokenWithoutRedis(t *testing.T) {
 	// Verify that when constructed without Redis, no refresh token manager is set
-	handler := NewMicrosoftSSOHandler(nil, nil, nil)
+	handler := NewMicrosoftSSOHandler(nil, nil, nil, testSSO())
 	if handler.refreshTokenManager != nil {
 		t.Error("Expected no refreshTokenManager when Redis is nil")
 	}

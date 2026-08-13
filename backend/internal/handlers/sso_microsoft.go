@@ -2,37 +2,34 @@ package handlers
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
-	"golang.org/x/oauth2"
 
 	"github.com/aceobservability/ace/backend/internal/auth"
+	"github.com/aceobservability/ace/backend/internal/sso"
 )
 
-const (
-	microsoftGraphUserURL = "https://graph.microsoft.com/v1.0/me"
-)
+const microsoftStateCookie = "ms_oauth_state"
 
 type MicrosoftSSOHandler struct {
 	pool                *pgxpool.Pool
 	jwtManager          *auth.JWTManager
 	refreshTokenManager *auth.RefreshTokenManager
+	login               *sso.Module
 	baseURL             string
 }
 
-func NewMicrosoftSSOHandler(pool *pgxpool.Pool, jwtManager *auth.JWTManager, rdb *redis.Client) *MicrosoftSSOHandler {
+func NewMicrosoftSSOHandler(pool *pgxpool.Pool, jwtManager *auth.JWTManager, rdb *redis.Client, login *sso.Module) *MicrosoftSSOHandler {
 	baseURL := os.Getenv("BASE_URL")
 	if baseURL == "" {
 		baseURL = "http://localhost:8080"
@@ -45,16 +42,9 @@ func NewMicrosoftSSOHandler(pool *pgxpool.Pool, jwtManager *auth.JWTManager, rdb
 		pool:                pool,
 		jwtManager:          jwtManager,
 		refreshTokenManager: rtm,
+		login:               login,
 		baseURL:             baseURL,
 	}
-}
-
-// MicrosoftUserInfo represents the user info returned by Microsoft Graph
-type MicrosoftUserInfo struct {
-	ID                string `json:"id"`
-	DisplayName       string `json:"displayName"`
-	Mail              string `json:"mail"`
-	UserPrincipalName string `json:"userPrincipalName"`
 }
 
 // MicrosoftSSOConfigRequest represents the request body for configuring Microsoft SSO
@@ -74,59 +64,6 @@ type MicrosoftSSOConfigResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// getMicrosoftEndpoint returns the Microsoft OAuth2 endpoint for the given tenant
-func getMicrosoftEndpoint(tenantID string) oauth2.Endpoint {
-	return oauth2.Endpoint{
-		AuthURL:  fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/authorize", tenantID),
-		TokenURL: fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", tenantID),
-	}
-}
-
-// getOAuthConfig creates an OAuth2 config for the given org
-func (h *MicrosoftSSOHandler) getOAuthConfig(ctx context.Context, orgSlug string) (*oauth2.Config, error) {
-	// Get organization by slug
-	var orgID uuid.UUID
-	err := h.pool.QueryRow(ctx, `SELECT id FROM organizations WHERE slug = $1`, orgSlug).Scan(&orgID)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, fmt.Errorf("organization not found")
-		}
-		return nil, err
-	}
-
-	// Get SSO config for organization
-	var clientID, clientSecret string
-	var tenantID *string
-	var enabled bool
-	err = h.pool.QueryRow(ctx,
-		`SELECT client_id, client_secret, tenant_id, enabled FROM sso_configs
-		 WHERE organization_id = $1 AND provider = 'microsoft'`,
-		orgID,
-	).Scan(&clientID, &clientSecret, &tenantID, &enabled)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, fmt.Errorf("microsoft SSO not configured for this organization")
-		}
-		return nil, err
-	}
-
-	if !enabled {
-		return nil, fmt.Errorf("microsoft SSO is not enabled for this organization")
-	}
-
-	if tenantID == nil || *tenantID == "" {
-		return nil, fmt.Errorf("microsoft SSO tenant_id not configured")
-	}
-
-	return &oauth2.Config{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		RedirectURL:  h.baseURL + "/api/auth/microsoft/callback",
-		Scopes:       []string{"openid", "email", "profile", "User.Read"},
-		Endpoint:     getMicrosoftEndpoint(*tenantID),
-	}, nil
-}
-
 // Login initiates the Microsoft OAuth flow
 func (h *MicrosoftSSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 	orgSlug := r.URL.Query().Get("org")
@@ -138,90 +75,58 @@ func (h *MicrosoftSSOHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	config, err := h.getOAuthConfig(ctx, orgSlug)
+	started, err := h.login.Start(ctx, h.pool, sso.StartRequest{
+		Provider:    sso.ProviderMicrosoft,
+		OrgSlug:     orgSlug,
+		RedirectURL: h.baseURL + "/api/auth/microsoft/callback",
+	})
 	if err != nil {
+		if err.Error() == "failed to generate state" {
+			http.Error(w, `{"error":"failed to generate state"}`, http.StatusInternalServerError)
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
-	state, err := generateMicrosoftState()
-	if err != nil {
-		http.Error(w, `{"error":"failed to generate state"}`, http.StatusInternalServerError)
-		return
-	}
-
-	// Store state with org slug in cookie (short-lived)
-	stateData := fmt.Sprintf("%s:%s", state, orgSlug)
-	http.SetCookie(w, &http.Cookie{
-		Name:     "ms_oauth_state",
-		Value:    base64.URLEncoding.EncodeToString([]byte(stateData)),
-		Path:     "/",
-		MaxAge:   300, // 5 minutes
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-	})
-
-	// Redirect to Microsoft
-	url := config.AuthCodeURL(state)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-}
-
-// generateMicrosoftState creates a cryptographically secure state parameter
-func generateMicrosoftState() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return base64.URLEncoding.EncodeToString(b), nil
+	stateData := fmt.Sprintf("%s:%s", started.State, orgSlug)
+	http.SetCookie(w, ssoStateCookie(microsoftStateCookie, base64.URLEncoding.EncodeToString([]byte(stateData)), 300))
+	http.Redirect(w, r, started.AuthURL, http.StatusTemporaryRedirect)
 }
 
 // Callback handles the Microsoft OAuth callback
 func (h *MicrosoftSSOHandler) Callback(w http.ResponseWriter, r *http.Request) {
-	// Get state cookie
-	stateCookie, err := r.Cookie("ms_oauth_state")
+	stateCookie, err := r.Cookie(microsoftStateCookie)
 	if err != nil {
 		http.Error(w, `{"error":"missing state cookie"}`, http.StatusBadRequest)
 		return
 	}
 
-	// Decode state data
 	stateDataBytes, err := base64.URLEncoding.DecodeString(stateCookie.Value)
 	if err != nil {
 		http.Error(w, `{"error":"invalid state cookie"}`, http.StatusBadRequest)
 		return
 	}
 
-	// Parse state:orgSlug
 	stateData := string(stateDataBytes)
-	var expectedState, orgSlug string
-	_, err = fmt.Sscanf(stateData, "%[^:]:%s", &expectedState, &orgSlug)
-	if err != nil || expectedState == "" || orgSlug == "" {
+	parts := strings.SplitN(stateData, ":", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		http.Error(w, `{"error":"invalid state format"}`, http.StatusBadRequest)
 		return
 	}
+	expectedState := parts[0]
+	orgSlug := parts[1]
 
-	// Verify state
 	state := r.URL.Query().Get("state")
 	if state != expectedState {
 		http.Error(w, `{"error":"state mismatch"}`, http.StatusBadRequest)
 		return
 	}
 
-	// Clear state cookie
-	http.SetCookie(w, &http.Cookie{
-		Name:     "ms_oauth_state",
-		Value:    "",
-		Path:     "/",
-		MaxAge:   -1,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-	})
+	http.SetCookie(w, ssoStateCookie(microsoftStateCookie, "", -1))
 
-	// Check for errors from Microsoft
 	if errParam := r.URL.Query().Get("error"); errParam != "" {
 		errDesc := r.URL.Query().Get("error_description")
 		w.Header().Set("Content-Type", "application/json")
@@ -239,135 +144,23 @@ func (h *MicrosoftSSOHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	// Get OAuth config
-	config, err := h.getOAuthConfig(ctx, orgSlug)
+	result, err := h.login.Finish(ctx, h.pool, sso.FinishRequest{
+		Provider:    sso.ProviderMicrosoft,
+		OrgSlug:     orgSlug,
+		RedirectURL: h.baseURL + "/api/auth/microsoft/callback",
+		Code:        code,
+	})
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		writeSSOFinishError(w, err)
 		return
 	}
 
-	// Exchange code for token
-	token, err := config.Exchange(ctx, code)
-	if err != nil {
-		http.Error(w, `{"error":"failed to exchange code for token"}`, http.StatusInternalServerError)
-		return
-	}
-
-	// Get user info from Microsoft Graph
-	client := config.Client(ctx, token)
-	resp, err := client.Get(microsoftGraphUserURL)
-	if err != nil {
-		http.Error(w, `{"error":"failed to get user info"}`, http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		http.Error(w, `{"error":"failed to read user info"}`, http.StatusInternalServerError)
-		return
-	}
-
-	var userInfo MicrosoftUserInfo
-	if err := json.Unmarshal(body, &userInfo); err != nil {
-		http.Error(w, `{"error":"failed to parse user info"}`, http.StatusInternalServerError)
-		return
-	}
-
-	// Get email - prefer mail, fallback to userPrincipalName
-	email := userInfo.Mail
-	if email == "" {
-		email = userInfo.UserPrincipalName
-	}
-	if email == "" {
-		http.Error(w, `{"error":"no email found in user info"}`, http.StatusBadRequest)
-		return
-	}
-
-	// Get organization ID
-	var orgID uuid.UUID
-	err = h.pool.QueryRow(ctx, `SELECT id FROM organizations WHERE slug = $1`, orgSlug).Scan(&orgID)
-	if err != nil {
-		http.Error(w, `{"error":"organization not found"}`, http.StatusNotFound)
-		return
-	}
-
-	// Find or create user
-	var userID uuid.UUID
-	var userEmail string
-	var userName *string
-
-	// Check if user exists by email
-	err = h.pool.QueryRow(ctx,
-		`SELECT id, email, name FROM users WHERE email = $1`,
-		email,
-	).Scan(&userID, &userEmail, &userName)
-
-	if err == pgx.ErrNoRows {
-		// Create new user
-		name := userInfo.DisplayName
-		err = h.pool.QueryRow(ctx,
-			`INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id, email, name`,
-			email, &name,
-		).Scan(&userID, &userEmail, &userName)
-		if err != nil {
-			http.Error(w, `{"error":"failed to create user"}`, http.StatusInternalServerError)
-			return
-		}
-	} else if err != nil {
-		http.Error(w, `{"error":"failed to check user"}`, http.StatusInternalServerError)
-		return
-	}
-
-	// Check if user is member of organization, if not add them
-	var membershipExists bool
-	err = h.pool.QueryRow(ctx,
-		`SELECT EXISTS(SELECT 1 FROM organization_memberships WHERE user_id = $1 AND organization_id = $2)`,
-		userID, orgID,
-	).Scan(&membershipExists)
-	if err != nil {
-		http.Error(w, `{"error":"failed to check membership"}`, http.StatusInternalServerError)
-		return
-	}
-
-	if !membershipExists {
-		// Add user as viewer to organization
-		_, err = h.pool.Exec(ctx,
-			`INSERT INTO organization_memberships (user_id, organization_id, role) VALUES ($1, $2, 'viewer')`,
-			userID, orgID,
-		)
-		if err != nil {
-			http.Error(w, `{"error":"failed to add user to organization"}`, http.StatusInternalServerError)
-			return
-		}
-	}
-
-	// Add or update user auth method
-	_, err = h.pool.Exec(ctx,
-		`INSERT INTO user_auth_methods (user_id, provider, provider_user_id)
-		 VALUES ($1, 'microsoft', $2)
-		 ON CONFLICT (user_id, provider) DO UPDATE SET provider_user_id = $2, updated_at = NOW()`,
-		userID, userInfo.ID,
-	)
-	if err != nil {
-		http.Error(w, `{"error":"failed to link microsoft account"}`, http.StatusInternalServerError)
-		return
-	}
-
-	// Generate JWT access token
-	name := ""
-	if userName != nil {
-		name = *userName
-	}
-	accessToken, err := h.jwtManager.GenerateAccessToken(userID, userEmail, name)
+	accessToken, err := h.jwtManager.GenerateAccessToken(result.UserID, result.Email, result.Name)
 	if err != nil {
 		http.Error(w, `{"error":"failed to generate token"}`, http.StatusInternalServerError)
 		return
 	}
 
-	// Generate refresh token if manager is available
 	var refreshToken string
 	if h.refreshTokenManager != nil {
 		refreshToken, err = auth.GenerateRefreshToken()
@@ -375,35 +168,23 @@ func (h *MicrosoftSSOHandler) Callback(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, `{"error":"failed to generate refresh token"}`, http.StatusInternalServerError)
 			return
 		}
-		if err := h.refreshTokenManager.StoreRefreshToken(ctx, refreshToken, userID, userEmail, name); err != nil {
+		if err := h.refreshTokenManager.StoreRefreshToken(ctx, refreshToken, result.UserID, result.Email, result.Name); err != nil {
 			http.Error(w, `{"error":"failed to store refresh token"}`, http.StatusInternalServerError)
 			return
 		}
 	}
 
-	// Redirect to frontend with tokens in hash fragment
-	frontendURL := os.Getenv("FRONTEND_URL")
-	if frontendURL == "" {
-		frontendURL = "http://localhost:5173"
-	}
-
-	redirectURL := fmt.Sprintf("%s/auth/callback#access_token=%s&token_type=Bearer", frontendURL, url.QueryEscape(accessToken))
-	if refreshToken != "" {
-		redirectURL += "&refresh_token=" + url.QueryEscape(refreshToken)
-	}
-	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+	ssoHashRedirect(w, r, accessToken, refreshToken)
 }
 
 // ConfigureSSO creates or updates Microsoft SSO configuration for an organization
 func (h *MicrosoftSSOHandler) ConfigureSSO(w http.ResponseWriter, r *http.Request) {
-	// Get org ID from path
 	orgID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, `{"error":"invalid organization id"}`, http.StatusBadRequest)
 		return
 	}
 
-	// Get current user from context
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
 		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
@@ -413,7 +194,6 @@ func (h *MicrosoftSSOHandler) ConfigureSSO(w http.ResponseWriter, r *http.Reques
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	// Check if user is admin of org
 	var role string
 	err = h.pool.QueryRow(ctx,
 		`SELECT role FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
@@ -448,7 +228,6 @@ func (h *MicrosoftSSOHandler) ConfigureSSO(w http.ResponseWriter, r *http.Reques
 		enabled = *req.Enabled
 	}
 
-	// Upsert SSO config
 	var config MicrosoftSSOConfigResponse
 	err = h.pool.QueryRow(ctx,
 		`INSERT INTO sso_configs (organization_id, provider, client_id, client_secret, tenant_id, enabled)
@@ -469,14 +248,12 @@ func (h *MicrosoftSSOHandler) ConfigureSSO(w http.ResponseWriter, r *http.Reques
 
 // GetSSOConfig returns the Microsoft SSO configuration for an organization
 func (h *MicrosoftSSOHandler) GetSSOConfig(w http.ResponseWriter, r *http.Request) {
-	// Get org ID from path
 	orgID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, `{"error":"invalid organization id"}`, http.StatusBadRequest)
 		return
 	}
 
-	// Get current user from context
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
 		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)
@@ -486,7 +263,6 @@ func (h *MicrosoftSSOHandler) GetSSOConfig(w http.ResponseWriter, r *http.Reques
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	// Check if user is admin of org
 	var role string
 	err = h.pool.QueryRow(ctx,
 		`SELECT role FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
@@ -505,7 +281,6 @@ func (h *MicrosoftSSOHandler) GetSSOConfig(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Get SSO config
 	var config MicrosoftSSOConfigResponse
 	err = h.pool.QueryRow(ctx,
 		`SELECT tenant_id, client_id, enabled, created_at, updated_at FROM sso_configs

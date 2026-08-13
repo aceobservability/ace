@@ -62,7 +62,7 @@ func TestGoogleSSOConfigureRequiresAdmin(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil)
+	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try to configure SSO as non-admin
 	body := `{"client_id":"test-client-id","client_secret":"test-secret"}`
@@ -125,7 +125,7 @@ func TestGoogleSSOConfigureAsAdmin(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil)
+	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Configure SSO as admin
 	body := `{"client_id":"test-client-id","client_secret":"test-secret"}`
@@ -210,7 +210,7 @@ func TestGoogleSSOGetConfig(t *testing.T) {
 	}
 
 	// Create handler
-	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil)
+	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Get SSO config
 	req := httptest.NewRequest("GET", "/api/orgs/"+orgID.String()+"/sso/google", nil)
@@ -240,7 +240,7 @@ func TestGoogleSSOLoginRequiresOrg(t *testing.T) {
 		t.Skip("Database not available")
 	}
 
-	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil)
+	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try login without org parameter
 	req := httptest.NewRequest("GET", "/api/auth/google/login", nil)
@@ -270,7 +270,7 @@ func TestGoogleSSOLoginOrgNotConfigured(t *testing.T) {
 	}
 	defer testPool.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, orgID)
 
-	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil)
+	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try login with org that doesn't have SSO configured
 	req := httptest.NewRequest("GET", "/api/auth/google/login?org=test-org-no-sso", nil)
@@ -311,7 +311,7 @@ func TestGoogleSSOLoginRedirectsToGoogle(t *testing.T) {
 		t.Fatalf("Failed to create SSO config: %v", err)
 	}
 
-	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil)
+	handler := NewGoogleSSOHandler(testPool, testJWTManager, nil, testSSO())
 
 	// Try login - should redirect to Google
 	req := httptest.NewRequest("GET", "/api/auth/google/login?org=test-org-sso-redirect", nil)
@@ -329,7 +329,7 @@ func TestGoogleSSOLoginRedirectsToGoogle(t *testing.T) {
 	}
 
 	// Check it's a Google URL
-	if len(location) < 30 || location[:30] != "https://accounts.google.com/o" {
+	if !strings.HasPrefix(location, "https://accounts.google.com/o") {
 		t.Errorf("Expected redirect to Google, got: %s", location)
 	}
 
@@ -365,7 +365,7 @@ func TestGoogleSSOLoginRedirectsToGoogle(t *testing.T) {
 }
 
 func TestGoogleSSOCallbackClearsStateCookieWithSecureAttributes(t *testing.T) {
-	handler := NewGoogleSSOHandler(nil, nil, nil)
+	handler := NewGoogleSSOHandler(nil, nil, nil, testSSO())
 
 	state := "expected-state"
 	stateData := state + ":test-org"
@@ -434,11 +434,11 @@ func TestGoogleSSOCallbackRedirectIncludesRefreshToken(t *testing.T) {
 		case "/userinfo":
 			// Mock userinfo endpoint
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(GoogleUserInfo{
-				ID:            "google-user-123",
-				Email:         "testgooglecallback@example.com",
-				VerifiedEmail: true,
-				Name:          "Test Google User",
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"id":             "google-user-123",
+				"email":          "testgooglecallback@example.com",
+				"verified_email": true,
+				"name":           "Test Google User",
 			})
 		default:
 			http.Error(w, "not found", http.StatusNotFound)
@@ -501,7 +501,7 @@ func TestGoogleSSOCallbackRedirectIncludesRefreshToken(t *testing.T) {
 	defer rdb.Close()
 
 	// Create handler with Redis (refresh token manager)
-	handler := NewGoogleSSOHandler(testPool, testJWTManager, rdb)
+	handler := NewGoogleSSOHandler(testPool, testJWTManager, rdb, testSSO())
 
 	// Verify the handler has a refresh token manager
 	if handler.refreshTokenManager == nil {
@@ -574,7 +574,7 @@ func TestGoogleSSOCallbackRedirectIncludesRefreshToken(t *testing.T) {
 
 func TestGoogleSSOCallbackNoRefreshTokenWithoutRedis(t *testing.T) {
 	// Verify that when constructed without Redis, no refresh token manager is set
-	handler := NewGoogleSSOHandler(nil, nil, nil)
+	handler := NewGoogleSSOHandler(nil, nil, nil, testSSO())
 	if handler.refreshTokenManager != nil {
 		t.Error("Expected no refreshTokenManager when Redis is nil")
 	}
