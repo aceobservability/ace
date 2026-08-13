@@ -165,12 +165,9 @@ describe('Panel', () => {
   it('renders registry unsupported empty state instead of a blank body', async () => {
     registerPanel({
       type: 'flame_graph',
-      component: async () => ({ default: () => null }),
-      dataAdapter: () => ({}),
       defaultQuery: {},
       category: 'observability',
       label: 'Flame Graph',
-      icon: async () => ({}),
       queryMode: 'none',
       supportStatus: 'unsupported',
       emptyState: {
@@ -282,12 +279,9 @@ describe('Panel', () => {
   it('renders unsupported empty state for registry charts without React bodies', async () => {
     registerPanel({
       type: 'heatmap',
-      component: async () => ({ default: () => null }),
-      dataAdapter: () => ({}),
       defaultQuery: {},
       category: 'charts',
       label: 'Heatmap',
-      icon: async () => ({}),
       supportStatus: 'unsupported',
       emptyState: {
         title: 'Heatmap renderer not available yet',
