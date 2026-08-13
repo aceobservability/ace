@@ -518,94 +518,29 @@ func (h *DataSourceHandler) Query(w http.ResponseWriter, r *http.Request) {
 	var result *datasource.QueryResult
 	var queryErr error
 
-	switch ds.Type {
-	case models.DataSourceClickHouse:
-		clickHouseClient, clientErr := datasource.NewClickHouseClient(ds)
-		if clientErr != nil {
-			analytics.Track(r.Context(), analytics.Event{
-				DistinctID: userID.String(),
-				Name:       "datasource_query_failed",
-				OptOut:     analytics.RequestOptedOut(r),
-				Properties: map[string]any{
-					"user_id":         userID.String(),
-					"organization_id": ds.OrganizationID.String(),
-					"datasource_id":   ds.ID.String(),
-					"datasource_type": ds.Type,
-					"error":           clientErr.Error(),
-				},
-			})
+	client, clientErr := datasource.NewClient(ds)
+	if clientErr != nil {
+		analytics.Track(r.Context(), analytics.Event{
+			DistinctID: userID.String(),
+			Name:       "datasource_query_failed",
+			OptOut:     analytics.RequestOptedOut(r),
+			Properties: map[string]any{
+				"user_id":         userID.String(),
+				"organization_id": ds.OrganizationID.String(),
+				"datasource_id":   ds.ID.String(),
+				"datasource_type": ds.Type,
+				"error":           clientErr.Error(),
+			},
+		})
 
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
-			return
-		}
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
+		return
+	}
 
-		result, queryErr = clickHouseClient.QueryWithSignal(ctx, queryReq.Query, signal, start, end, step, queryReq.Limit)
-	case models.DataSourceCloudWatch:
-		cloudWatchClient, clientErr := datasource.NewCloudWatchClient(ds)
-		if clientErr != nil {
-			analytics.Track(r.Context(), analytics.Event{
-				DistinctID: userID.String(),
-				Name:       "datasource_query_failed",
-				OptOut:     analytics.RequestOptedOut(r),
-				Properties: map[string]any{
-					"user_id":         userID.String(),
-					"organization_id": ds.OrganizationID.String(),
-					"datasource_id":   ds.ID.String(),
-					"datasource_type": ds.Type,
-					"error":           clientErr.Error(),
-				},
-			})
-
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
-			return
-		}
-
-		result, queryErr = cloudWatchClient.QueryWithSignal(ctx, queryReq.Query, signal, start, end, step, queryReq.Limit)
-	case models.DataSourceElasticsearch:
-		elasticsearchClient, clientErr := datasource.NewElasticsearchClient(ds)
-		if clientErr != nil {
-			analytics.Track(r.Context(), analytics.Event{
-				DistinctID: userID.String(),
-				Name:       "datasource_query_failed",
-				OptOut:     analytics.RequestOptedOut(r),
-				Properties: map[string]any{
-					"user_id":         userID.String(),
-					"organization_id": ds.OrganizationID.String(),
-					"datasource_id":   ds.ID.String(),
-					"datasource_type": ds.Type,
-					"error":           clientErr.Error(),
-				},
-			})
-
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
-			return
-		}
-
-		result, queryErr = elasticsearchClient.QueryWithSignal(ctx, queryReq.Query, signal, start, end, step, queryReq.Limit)
-	default:
-		client, clientErr := datasource.NewClient(ds)
-		if clientErr != nil {
-			analytics.Track(r.Context(), analytics.Event{
-				DistinctID: userID.String(),
-				Name:       "datasource_query_failed",
-				OptOut:     analytics.RequestOptedOut(r),
-				Properties: map[string]any{
-					"user_id":         userID.String(),
-					"organization_id": ds.OrganizationID.String(),
-					"datasource_id":   ds.ID.String(),
-					"datasource_type": ds.Type,
-					"error":           clientErr.Error(),
-				},
-			})
-
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
-			return
-		}
-
+	if qws, ok := client.(datasource.SignalQueryClient); ok {
+		result, queryErr = qws.QueryWithSignal(ctx, queryReq.Query, signal, start, end, step, queryReq.Limit)
+	} else {
 		result, queryErr = client.Query(ctx, queryReq.Query, start, end, step, queryReq.Limit)
 	}
 
@@ -1220,22 +1155,12 @@ func (h *DataSourceHandler) Stream(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var streamErr error
-		switch ds.Type {
-		case models.DataSourceLoki:
-			client, err := datasource.NewLokiClient(ds.URL)
-			if err != nil {
-				streamErr = fmt.Errorf("failed to create datasource client: %w", err)
-				break
-			}
-			streamErr = client.Stream(streamCtx, streamQuery, start, limit, onLog)
-		case models.DataSourceVictoriaLogs:
-			client, err := datasource.NewVictoriaLogsClient(ds.URL)
-			if err != nil {
-				streamErr = fmt.Errorf("failed to create datasource client: %w", err)
-				break
-			}
-			streamErr = client.Stream(streamCtx, streamQuery, start, limit, onLog)
-		default:
+		client, err := datasource.NewClient(ds)
+		if err != nil {
+			streamErr = fmt.Errorf("failed to create datasource client: %w", err)
+		} else if streamer, ok := client.(datasource.StreamClient); ok {
+			streamErr = streamer.Stream(streamCtx, streamQuery, start, limit, onLog)
+		} else {
 			streamErr = fmt.Errorf("live streaming is only supported for log datasources")
 		}
 
@@ -1305,57 +1230,28 @@ func (h *DataSourceHandler) Labels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	client, err := datasource.NewClient(ds)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
+		return
+	}
+
+	metric := r.URL.Query().Get("metric")
 	var labels []string
-	switch ds.Type {
-	case models.DataSourceLoki:
-		client, err := datasource.NewLokiClient(ds.URL)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
-			return
-		}
-
-		labels, err = client.Labels(ctx)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch labels: " + err.Error()})
-			return
-		}
-
-	case models.DataSourceVictoriaLogs:
-		client, err := datasource.NewVictoriaLogsClient(ds.URL)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
-			return
-		}
-
-		labels, err = client.Labels(ctx)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch labels: " + err.Error()})
-			return
-		}
-
-	case models.DataSourceVictoriaMetrics, models.DataSourcePrometheus:
-		client, err := datasource.NewVictoriaMetricsClient(ds.URL)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
-			return
-		}
-
-		metric := r.URL.Query().Get("metric")
-		labels, err = client.Labels(ctx, metric)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch labels: " + err.Error()})
-			return
-		}
-
+	switch c := client.(type) {
+	case datasource.MetricLabelsClient:
+		labels, err = c.Labels(ctx, metric)
+	case datasource.LabelsClient:
+		labels, err = c.Labels(ctx)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "label discovery is not supported for this datasource type"})
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch labels: " + err.Error()})
 		return
 	}
 
@@ -1408,55 +1304,28 @@ func (h *DataSourceHandler) LabelValues(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	client, err := datasource.NewClient(ds)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
+		return
+	}
+
+	metric := r.URL.Query().Get("metric")
 	var values []string
-	switch ds.Type {
-	case models.DataSourceLoki:
-		client, err := datasource.NewLokiClient(ds.URL)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
-			return
-		}
-
-		values, err = client.LabelValues(ctx, labelName)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch label values: " + err.Error()})
-			return
-		}
-	case models.DataSourceVictoriaLogs:
-		client, err := datasource.NewVictoriaLogsClient(ds.URL)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
-			return
-		}
-
-		values, err = client.LabelValues(ctx, labelName)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch label values: " + err.Error()})
-			return
-		}
-	case models.DataSourceVictoriaMetrics, models.DataSourcePrometheus:
-		client, err := datasource.NewVictoriaMetricsClient(ds.URL)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
-			return
-		}
-
-		metric := r.URL.Query().Get("metric")
-		values, err = client.LabelValues(ctx, labelName, metric)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch label values: " + err.Error()})
-			return
-		}
-
+	switch c := client.(type) {
+	case datasource.MetricLabelValuesClient:
+		values, err = c.LabelValues(ctx, labelName, metric)
+	case datasource.LabelValuesClient:
+		values, err = c.LabelValues(ctx, labelName)
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "label value discovery is not supported for this datasource type"})
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch label values: " + err.Error()})
 		return
 	}
 
@@ -1503,27 +1372,25 @@ func (h *DataSourceHandler) MetricNames(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var names []string
-	switch ds.Type {
-	case models.DataSourceVictoriaMetrics, models.DataSourcePrometheus:
-		client, err := datasource.NewVictoriaMetricsClient(ds.URL)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
-			return
-		}
+	client, err := datasource.NewClient(ds)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + err.Error()})
+		return
+	}
 
-		search := r.URL.Query().Get("search")
-		names, err = client.MetricNames(ctx, search)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch metric names: " + err.Error()})
-			return
-		}
-
-	default:
+	namesClient, ok := client.(datasource.MetricNamesClient)
+	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "metric name discovery is only supported for Prometheus and VictoriaMetrics datasources"})
+		return
+	}
+
+	search := r.URL.Query().Get("search")
+	names, err := namesClient.MetricNames(ctx, search)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to fetch metric names: " + err.Error()})
 		return
 	}
 
@@ -1610,45 +1477,18 @@ func (h *DataSourceHandler) QueryByParams(w http.ResponseWriter, r *http.Request
 
 	signal := strings.TrimSpace(r.URL.Query().Get("signal"))
 
+	client, clientErr := datasource.NewClient(ds)
+	if clientErr != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
+		return
+	}
+
 	var result *datasource.QueryResult
 	var queryErr error
-
-	switch ds.Type {
-	case models.DataSourceClickHouse:
-		clickHouseClient, clientErr := datasource.NewClickHouseClient(ds)
-		if clientErr != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
-			return
-		}
-
-		result, queryErr = clickHouseClient.QueryWithSignal(ctx, query, signal, start, end, step, limit)
-	case models.DataSourceCloudWatch:
-		cloudWatchClient, clientErr := datasource.NewCloudWatchClient(ds)
-		if clientErr != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
-			return
-		}
-
-		result, queryErr = cloudWatchClient.QueryWithSignal(ctx, query, signal, start, end, step, limit)
-	case models.DataSourceElasticsearch:
-		elasticsearchClient, clientErr := datasource.NewElasticsearchClient(ds)
-		if clientErr != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
-			return
-		}
-
-		result, queryErr = elasticsearchClient.QueryWithSignal(ctx, query, signal, start, end, step, limit)
-	default:
-		client, clientErr := datasource.NewClient(ds)
-		if clientErr != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(ErrorResponse{Status: "error", Error: "failed to create datasource client: " + clientErr.Error()})
-			return
-		}
-
+	if qws, ok := client.(datasource.SignalQueryClient); ok {
+		result, queryErr = qws.QueryWithSignal(ctx, query, signal, start, end, step, limit)
+	} else {
 		result, queryErr = client.Query(ctx, query, start, end, step, limit)
 	}
 

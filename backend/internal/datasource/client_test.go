@@ -145,6 +145,47 @@ func TestNewClient_InvalidType(t *testing.T) {
 	}
 }
 
+var (
+	_ Client                  = (*PrometheusClient)(nil)
+	_ MetricLabelsClient      = (*PrometheusClient)(nil)
+	_ MetricLabelValuesClient = (*PrometheusClient)(nil)
+	_ MetricNamesClient       = (*PrometheusClient)(nil)
+	_ connectionTester        = (*PrometheusClient)(nil)
+
+	_ Client                  = (*VictoriaMetricsClient)(nil)
+	_ MetricLabelsClient      = (*VictoriaMetricsClient)(nil)
+	_ MetricLabelValuesClient = (*VictoriaMetricsClient)(nil)
+	_ MetricNamesClient       = (*VictoriaMetricsClient)(nil)
+	_ connectionTester        = (*VictoriaMetricsClient)(nil)
+
+	_ Client            = (*LokiClient)(nil)
+	_ StreamClient      = (*LokiClient)(nil)
+	_ LabelsClient      = (*LokiClient)(nil)
+	_ LabelValuesClient = (*LokiClient)(nil)
+	_ connectionTester  = (*LokiClient)(nil)
+
+	_ Client            = (*VictoriaLogsClient)(nil)
+	_ StreamClient      = (*VictoriaLogsClient)(nil)
+	_ LabelsClient      = (*VictoriaLogsClient)(nil)
+	_ LabelValuesClient = (*VictoriaLogsClient)(nil)
+	_ connectionTester  = (*VictoriaLogsClient)(nil)
+
+	_ Client            = (*ClickHouseClient)(nil)
+	_ SignalQueryClient = (*ClickHouseClient)(nil)
+	_ connectionTester  = (*ClickHouseClient)(nil)
+
+	_ Client            = (*CloudWatchClient)(nil)
+	_ SignalQueryClient = (*CloudWatchClient)(nil)
+	_ connectionTester  = (*CloudWatchClient)(nil)
+
+	_ Client            = (*ElasticsearchClient)(nil)
+	_ SignalQueryClient = (*ElasticsearchClient)(nil)
+	_ connectionTester  = (*ElasticsearchClient)(nil)
+
+	_ connectionTester = (*TempoClient)(nil)
+	_ connectionTester = (*VictoriaTracesClient)(nil)
+)
+
 func TestDetectLogLevel(t *testing.T) {
 	tests := []struct {
 		labels map[string]string

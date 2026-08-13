@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
-	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 const (
@@ -68,8 +67,12 @@ func NewClickHouseClient(ds models.DataSource) (*ClickHouseClient, error) {
 
 	return &ClickHouseClient{
 		datasource: ds,
-		httpClient: ssrf.DatasourceClient(30 * time.Second),
+		httpClient: newDatasourceHTTPClient(ds, 30*time.Second),
 	}, nil
+}
+
+func (c *ClickHouseClient) TestConnection(ctx context.Context) error {
+	return runHTTPConnectionCheck(ctx, c.datasource, c.httpClient, []string{"/ping", "/?query=SELECT%201", "/"})
 }
 
 func (c *ClickHouseClient) Query(ctx context.Context, query string, start, end time.Time, step time.Duration, limit int) (*QueryResult, error) {
@@ -155,10 +158,6 @@ func (c *ClickHouseClient) queryRows(ctx context.Context, query string, start, e
 	}
 	req.Header.Set("Content-Type", "text/plain; charset=utf-8")
 	req.Header.Set("Accept", "application/json")
-
-	if err := applyDataSourceAuth(req, c.datasource); err != nil {
-		return nil, err
-	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

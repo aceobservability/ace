@@ -13,22 +13,28 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aceobservability/ace/backend/internal/ssrf"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // VictoriaLogsClient queries Victoria Logs using LogsQL
 type VictoriaLogsClient struct {
+	datasource   models.DataSource
 	baseURL      string
 	client       *http.Client
 	streamClient *http.Client
 }
 
-func NewVictoriaLogsClient(baseURL string) (*VictoriaLogsClient, error) {
+func NewVictoriaLogsClient(ds models.DataSource) (*VictoriaLogsClient, error) {
 	return &VictoriaLogsClient{
-		baseURL:      baseURL,
-		client:       ssrf.DatasourceClient(30 * time.Second),
-		streamClient: ssrf.DatasourceClient(0), // Timeout 0: long-lived tails
+		datasource:   ds,
+		baseURL:      ds.URL,
+		client:       newDatasourceHTTPClient(ds, 30*time.Second),
+		streamClient: newDatasourceHTTPClient(ds, 0), // Timeout 0: long-lived tails
 	}, nil
+}
+
+func (c *VictoriaLogsClient) TestConnection(ctx context.Context) error {
+	return runHTTPConnectionCheck(ctx, c.datasource, c.client, []string{"/health", "/select/logsql/field_names?query=*", "/"})
 }
 
 type victoriaLogsFieldNamesResponse struct {

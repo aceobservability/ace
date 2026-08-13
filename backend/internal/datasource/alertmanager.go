@@ -10,14 +10,12 @@ import (
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
-	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // AlertManagerClient wraps HTTP calls to AlertManager's v2 API.
 type AlertManagerClient struct {
-	baseURL    string
-	client     *http.Client
-	datasource models.DataSource
+	baseURL string
+	client  *http.Client
 }
 
 // NewAlertManagerClient creates a new AlertManager client from a datasource record.
@@ -26,9 +24,8 @@ func NewAlertManagerClient(ds models.DataSource) (*AlertManagerClient, error) {
 		return nil, fmt.Errorf("alertmanager datasource URL is required")
 	}
 	return &AlertManagerClient{
-		baseURL:    ds.URL,
-		client:     ssrf.DatasourceClient(30 * time.Second),
-		datasource: ds,
+		baseURL: ds.URL,
+		client:  newDatasourceHTTPClient(ds, 30*time.Second),
 	}, nil
 }
 
@@ -158,10 +155,6 @@ func (c *AlertManagerClient) ExpireSilence(ctx context.Context, id string) error
 	if err != nil {
 		return fmt.Errorf("failed to create expire silence request: %w", err)
 	}
-	if err := applyDataSourceAuth(req, c.datasource); err != nil {
-		return err
-	}
-
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("expire silence request failed: %w", err)
@@ -205,10 +198,6 @@ func doAlertManagerRequest[T any](ctx context.Context, c *AlertManagerClient, me
 
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
-	}
-
-	if err := applyDataSourceAuth(req, c.datasource); err != nil {
-		return zero, err
 	}
 
 	resp, err := c.client.Do(req)

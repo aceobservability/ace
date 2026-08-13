@@ -8,23 +8,34 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
-	"github.com/aceobservability/ace/backend/internal/ssrf"
+	"github.com/aceobservability/ace/backend/internal/models"
 )
 
 // VictoriaMetricsClient queries VictoriaMetrics using PromQL-compatible API
 type VictoriaMetricsClient struct {
-	baseURL string
-	client  *http.Client
+	datasource models.DataSource
+	baseURL    string
+	client     *http.Client
+	meta       *promqlMetadata
 }
 
-func NewVictoriaMetricsClient(baseURL string) (*VictoriaMetricsClient, error) {
+func NewVictoriaMetricsClient(ds models.DataSource) (*VictoriaMetricsClient, error) {
+	httpClient := newDatasourceHTTPClient(ds, 30*time.Second)
 	return &VictoriaMetricsClient{
-		baseURL: baseURL,
-		client:  ssrf.DatasourceClient(30 * time.Second),
+		datasource: ds,
+		baseURL:    ds.URL,
+		client:     httpClient,
+		meta: &promqlMetadata{
+			baseURL: ds.URL,
+			client:  httpClient,
+		},
 	}, nil
+}
+
+func (c *VictoriaMetricsClient) TestConnection(ctx context.Context) error {
+	return runHTTPConnectionCheck(ctx, c.datasource, c.client, []string{"/health", "/api/v1/query?query=1", "/"})
 }
 
 type vmQueryResponse struct {
@@ -95,135 +106,14 @@ func (c *VictoriaMetricsClient) Query(ctx context.Context, query string, start, 
 	return result, nil
 }
 
-// vmMetadataResponse represents the standard VictoriaMetrics JSON response
-// for metadata endpoints that return string arrays.
-type vmMetadataResponse struct {
-	Status string   `json:"status"`
-	Data   []string `json:"data"`
-	Error  string   `json:"error,omitempty"`
-}
-
-// MetricNames returns all metric names from VictoriaMetrics, optionally filtered
-// by a case-insensitive substring match on the search parameter.
 func (c *VictoriaMetricsClient) MetricNames(ctx context.Context, search string) ([]string, error) {
-	reqURL := fmt.Sprintf("%s/api/v1/label/__name__/values", c.baseURL)
-	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create metric names request: %w", err)
-	}
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch metric names: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read metric names response: %w", err)
-	}
-
-	var vmResp vmMetadataResponse
-	if err := json.Unmarshal(body, &vmResp); err != nil {
-		return nil, fmt.Errorf("failed to parse metric names response: %w", err)
-	}
-
-	if vmResp.Status != "success" {
-		return nil, fmt.Errorf("metric names query failed: %s", vmResp.Error)
-	}
-
-	if search == "" {
-		return vmResp.Data, nil
-	}
-
-	searchLower := strings.ToLower(search)
-	var filtered []string
-	for _, name := range vmResp.Data {
-		if strings.Contains(strings.ToLower(name), searchLower) {
-			filtered = append(filtered, name)
-		}
-	}
-	return filtered, nil
+	return c.meta.MetricNames(ctx, search)
 }
 
-// Labels returns all label names from VictoriaMetrics, optionally scoped to a
-// specific metric via the match[] query parameter.
 func (c *VictoriaMetricsClient) Labels(ctx context.Context, metric string) ([]string, error) {
-	params := url.Values{}
-	if metric != "" {
-		params.Set("match[]", metric)
-	}
-
-	reqURL := fmt.Sprintf("%s/api/v1/labels", c.baseURL)
-	if len(params) > 0 {
-		reqURL += "?" + params.Encode()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create labels request: %w", err)
-	}
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch labels: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read labels response: %w", err)
-	}
-
-	var vmResp vmMetadataResponse
-	if err := json.Unmarshal(body, &vmResp); err != nil {
-		return nil, fmt.Errorf("failed to parse labels response: %w", err)
-	}
-
-	if vmResp.Status != "success" {
-		return nil, fmt.Errorf("labels query failed: %s", vmResp.Error)
-	}
-
-	return vmResp.Data, nil
+	return c.meta.Labels(ctx, metric)
 }
 
-// LabelValues returns all values for a given label from VictoriaMetrics,
-// optionally scoped to a specific metric via the match[] query parameter.
 func (c *VictoriaMetricsClient) LabelValues(ctx context.Context, label string, metric string) ([]string, error) {
-	params := url.Values{}
-	if metric != "" {
-		params.Set("match[]", metric)
-	}
-
-	reqURL := fmt.Sprintf("%s/api/v1/label/%s/values", c.baseURL, url.PathEscape(label))
-	if len(params) > 0 {
-		reqURL += "?" + params.Encode()
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create label values request: %w", err)
-	}
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch label values: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read label values response: %w", err)
-	}
-
-	var vmResp vmMetadataResponse
-	if err := json.Unmarshal(body, &vmResp); err != nil {
-		return nil, fmt.Errorf("failed to parse label values response: %w", err)
-	}
-
-	if vmResp.Status != "success" {
-		return nil, fmt.Errorf("label values query failed: %s", vmResp.Error)
-	}
-
-	return vmResp.Data, nil
+	return c.meta.LabelValues(ctx, label, metric)
 }

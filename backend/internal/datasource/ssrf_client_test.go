@@ -5,17 +5,25 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
+
+func testDS(typ models.DataSourceType, rawURL string) models.DataSource {
+	return models.DataSource{Type: typ, URL: rawURL}
+}
 
 const cloudMetadataURL = "http://169.254.169.254/"
 
 func TestDatasourceClientsWireDialAndRedirectPolicy(t *testing.T) {
 	t.Parallel()
+
+	policyType := reflect.TypeOf(ssrf.DatasourceClient(time.Second).Transport)
 
 	clients := constructedDatasourceHTTPClients(t)
 	for name, client := range clients {
@@ -26,14 +34,24 @@ func TestDatasourceClientsWireDialAndRedirectPolicy(t *testing.T) {
 			if client.CheckRedirect == nil {
 				t.Fatal("expected DatasourceClient redirect policy (CheckRedirect)")
 			}
-			if client.Transport == nil {
-				t.Fatal("expected DatasourceClient dial policy (Transport)")
+			authRT, ok := client.Transport.(*dataSourceAuthRoundTripper)
+			if !ok {
+				t.Fatalf("Transport type %T, want *dataSourceAuthRoundTripper", client.Transport)
+			}
+			if authRT.base == nil {
+				t.Fatal("auth round tripper inner transport is nil")
+			}
+			if authRT.base == http.DefaultTransport {
+				t.Fatal("auth round tripper must not fall back to http.DefaultTransport")
+			}
+			if got := reflect.TypeOf(authRT.base); got != policyType {
+				t.Fatalf("inner transport type %s, want DatasourceClient policy %s", got, policyType)
 			}
 		})
 	}
 
 	t.Run("victorialogs_stream_timeout", func(t *testing.T) {
-		c, err := NewVictoriaLogsClient("http://127.0.0.1:9428")
+		c, err := NewVictoriaLogsClient(testDS(models.DataSourceVictoriaLogs, "http://127.0.0.1:9428"))
 		if err != nil {
 			t.Fatalf("NewVictoriaLogsClient: %v", err)
 		}
@@ -103,7 +121,7 @@ func TestDatasourceClientsBlockMetadataRedirect(t *testing.T) {
 func TestLokiStreamBlocksMetadata(t *testing.T) {
 	t.Parallel()
 
-	client, err := NewLokiClient(strings.TrimRight(cloudMetadataURL, "/"))
+	client, err := NewLokiClient(testDS(models.DataSourceLoki, strings.TrimRight(cloudMetadataURL, "/")))
 	if err != nil {
 		t.Fatalf("NewLokiClient failed: %v", err)
 	}
@@ -120,7 +138,7 @@ func TestLokiStreamBlocksMetadata(t *testing.T) {
 func TestVictoriaLogsStreamBlocksMetadata(t *testing.T) {
 	t.Parallel()
 
-	client, err := NewVictoriaLogsClient(strings.TrimRight(cloudMetadataURL, "/"))
+	client, err := NewVictoriaLogsClient(testDS(models.DataSourceVictoriaLogs, strings.TrimRight(cloudMetadataURL, "/")))
 	if err != nil {
 		t.Fatalf("NewVictoriaLogsClient failed: %v", err)
 	}
@@ -147,15 +165,19 @@ func isOutboundPolicyError(err error) bool {
 func constructedDatasourceHTTPClients(t *testing.T) map[string]*http.Client {
 	t.Helper()
 
-	vm, err := NewVictoriaMetricsClient("http://127.0.0.1:8428")
+	prom, err := NewPrometheusClient(testDS(models.DataSourcePrometheus, "http://127.0.0.1:9090"))
+	if err != nil {
+		t.Fatalf("NewPrometheusClient: %v", err)
+	}
+	vm, err := NewVictoriaMetricsClient(testDS(models.DataSourceVictoriaMetrics, "http://127.0.0.1:8428"))
 	if err != nil {
 		t.Fatalf("NewVictoriaMetricsClient: %v", err)
 	}
-	loki, err := NewLokiClient("http://127.0.0.1:3100")
+	loki, err := NewLokiClient(testDS(models.DataSourceLoki, "http://127.0.0.1:3100"))
 	if err != nil {
 		t.Fatalf("NewLokiClient: %v", err)
 	}
-	vlogs, err := NewVictoriaLogsClient("http://127.0.0.1:9428")
+	vlogs, err := NewVictoriaLogsClient(testDS(models.DataSourceVictoriaLogs, "http://127.0.0.1:9428"))
 	if err != nil {
 		t.Fatalf("NewVictoriaLogsClient: %v", err)
 	}
@@ -185,6 +207,7 @@ func constructedDatasourceHTTPClients(t *testing.T) map[string]*http.Client {
 	}
 
 	return map[string]*http.Client{
+		"prometheus":          prom.httpClient,
 		"victoriametrics":     vm.client,
 		"loki":                loki.client,
 		"victorialogs":        vlogs.client,
@@ -201,7 +224,7 @@ func constructedDatasourceHTTPClients(t *testing.T) map[string]*http.Client {
 func datasourceQueryFns() map[string]func(context.Context, string) error {
 	return map[string]func(context.Context, string) error{
 		"prometheus": func(ctx context.Context, baseURL string) error {
-			client, err := NewPrometheusClient(baseURL)
+			client, err := NewPrometheusClient(testDS(models.DataSourcePrometheus, baseURL))
 			if err != nil {
 				return err
 			}
@@ -215,7 +238,7 @@ func datasourceQueryFns() map[string]func(context.Context, string) error {
 			return nil
 		},
 		"victoriametrics": func(ctx context.Context, baseURL string) error {
-			client, err := NewVictoriaMetricsClient(baseURL)
+			client, err := NewVictoriaMetricsClient(testDS(models.DataSourceVictoriaMetrics, baseURL))
 			if err != nil {
 				return err
 			}
@@ -223,7 +246,7 @@ func datasourceQueryFns() map[string]func(context.Context, string) error {
 			return err
 		},
 		"loki": func(ctx context.Context, baseURL string) error {
-			client, err := NewLokiClient(baseURL)
+			client, err := NewLokiClient(testDS(models.DataSourceLoki, baseURL))
 			if err != nil {
 				return err
 			}
@@ -231,7 +254,7 @@ func datasourceQueryFns() map[string]func(context.Context, string) error {
 			return err
 		},
 		"victorialogs": func(ctx context.Context, baseURL string) error {
-			client, err := NewVictoriaLogsClient(baseURL)
+			client, err := NewVictoriaLogsClient(testDS(models.DataSourceVictoriaLogs, baseURL))
 			if err != nil {
 				return err
 			}

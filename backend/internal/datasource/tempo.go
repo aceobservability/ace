@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
-	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 // TempoClient is used for trace datasource connectivity checks.
@@ -25,7 +24,7 @@ func NewTempoClient(ds models.DataSource) (*TempoClient, error) {
 
 	return &TempoClient{
 		datasource: ds,
-		httpClient: ssrf.DatasourceClient(15 * time.Second),
+		httpClient: newDatasourceHTTPClient(ds, 15*time.Second),
 	}, nil
 }
 
@@ -41,7 +40,7 @@ func (c *TempoClient) Query(ctx context.Context, query string, start, end time.T
 }
 
 func (c *TempoClient) TestConnection(ctx context.Context) error {
-	return runHTTPConnectionCheck(ctx, c.datasource, []string{"/ready", "/api/search?limit=1", "/"})
+	return runHTTPConnectionCheck(ctx, c.datasource, c.httpClient, []string{"/ready", "/api/search?limit=1", "/"})
 }
 
 func (c *TempoClient) GetTrace(ctx context.Context, traceID string) (*Trace, error) {
