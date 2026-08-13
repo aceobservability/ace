@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/aceobservability/ace/backend/internal/models"
@@ -283,6 +284,23 @@ func TestSameDatasourceOrigin_UsesHostHeaderWhenURLPinned(t *testing.T) {
 	if sameDatasourceOrigin(req, dsURL) {
 		t.Fatal("expected mismatched Host header to fail origin check")
 	}
+}
+
+func TestWrapDatasourceAuth_NilTransportPanics(t *testing.T) {
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			t.Fatal("expected panic when Transport is nil")
+		}
+		msg, ok := recovered.(string)
+		if !ok {
+			t.Fatalf("panic value type %T, want string", recovered)
+		}
+		if !strings.Contains(msg, "non-nil Transport") {
+			t.Fatalf("panic message %q, want non-nil Transport", msg)
+		}
+	}()
+	_ = wrapDatasourceAuth(&http.Client{}, models.DataSource{})
 }
 
 type roundTripperFunc func(*http.Request) (*http.Response, error)

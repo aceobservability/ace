@@ -120,11 +120,12 @@ func newDatasourceHTTPClient(ds models.DataSource, timeout time.Duration) *http.
 }
 
 func wrapDatasourceAuth(client *http.Client, ds models.DataSource) *http.Client {
-	base := client.Transport
-	if base == nil {
-		base = http.DefaultTransport
+	if client.Transport == nil {
+		panic("datasource: wrapDatasourceAuth requires a non-nil Transport (DatasourceClient policy)")
 	}
-	client.Transport = &dataSourceAuthRoundTripper{base: base, ds: ds}
+	// Mutate in place: DatasourceClient returns a fresh *http.Client per call.
+	// Do not share that client across datasources.
+	client.Transport = &dataSourceAuthRoundTripper{base: client.Transport, ds: ds}
 	return client
 }
 

@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/aceobservability/ace/backend/internal/models"
+	"github.com/aceobservability/ace/backend/internal/ssrf"
 )
 
 func testDS(typ models.DataSourceType, rawURL string) models.DataSource {
@@ -21,6 +23,8 @@ const cloudMetadataURL = "http://169.254.169.254/"
 func TestDatasourceClientsWireDialAndRedirectPolicy(t *testing.T) {
 	t.Parallel()
 
+	policyType := reflect.TypeOf(ssrf.DatasourceClient(time.Second).Transport)
+
 	clients := constructedDatasourceHTTPClients(t)
 	for name, client := range clients {
 		t.Run(name, func(t *testing.T) {
@@ -30,8 +34,18 @@ func TestDatasourceClientsWireDialAndRedirectPolicy(t *testing.T) {
 			if client.CheckRedirect == nil {
 				t.Fatal("expected DatasourceClient redirect policy (CheckRedirect)")
 			}
-			if client.Transport == nil {
-				t.Fatal("expected DatasourceClient dial policy (Transport)")
+			authRT, ok := client.Transport.(*dataSourceAuthRoundTripper)
+			if !ok {
+				t.Fatalf("Transport type %T, want *dataSourceAuthRoundTripper", client.Transport)
+			}
+			if authRT.base == nil {
+				t.Fatal("auth round tripper inner transport is nil")
+			}
+			if authRT.base == http.DefaultTransport {
+				t.Fatal("auth round tripper must not fall back to http.DefaultTransport")
+			}
+			if got := reflect.TypeOf(authRT.base); got != policyType {
+				t.Fatalf("inner transport type %s, want DatasourceClient policy %s", got, policyType)
 			}
 		})
 	}

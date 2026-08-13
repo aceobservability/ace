@@ -13,7 +13,7 @@ type PrometheusClient struct {
 	datasource models.DataSource
 	client     *promclient.Client
 	httpClient *http.Client
-	meta       *VictoriaMetricsClient
+	meta       *promqlMetadata
 }
 
 func NewPrometheusClient(ds models.DataSource) (*PrometheusClient, error) {
@@ -26,10 +26,9 @@ func NewPrometheusClient(ds models.DataSource) (*PrometheusClient, error) {
 		datasource: ds,
 		client:     client,
 		httpClient: httpClient,
-		meta: &VictoriaMetricsClient{
-			datasource: ds,
-			baseURL:    ds.URL,
-			client:     httpClient,
+		meta: &promqlMetadata{
+			baseURL: ds.URL,
+			client:  httpClient,
 		},
 	}, nil
 }
