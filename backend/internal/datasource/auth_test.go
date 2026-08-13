@@ -286,6 +286,50 @@ func TestSameDatasourceOrigin_UsesHostHeaderWhenURLPinned(t *testing.T) {
 	}
 }
 
+func TestDataSourceAuthRoundTripper_SchemeDowngradeDropsCredentials(t *testing.T) {
+	ds := models.DataSource{
+		URL:        "https://origin.invalid:8443/query",
+		AuthType:   "bearer",
+		AuthConfig: []byte(`{"token":"secret-token"}`),
+	}
+
+	var hops []string
+	inner := roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		hops = append(hops, req.URL.Scheme+"://"+req.URL.Host+":"+req.Header.Get("Authorization"))
+		switch req.URL.Scheme + "://" + req.URL.Host + req.URL.Path {
+		case "https://origin.invalid:8443/query":
+			return &http.Response{
+				StatusCode: http.StatusFound,
+				Header:     http.Header{"Location": []string{"http://origin.invalid:8443/next"}},
+				Body:       http.NoBody,
+				Request:    req,
+			}, nil
+		case "http://origin.invalid:8443/next":
+			return &http.Response{StatusCode: http.StatusOK, Body: http.NoBody, Request: req}, nil
+		default:
+			t.Fatalf("unexpected hop %s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path)
+			return nil, nil
+		}
+	})
+
+	client := wrapDatasourceAuth(&http.Client{Transport: inner}, ds)
+	resp, err := client.Get("https://origin.invalid:8443/query")
+	if err != nil {
+		t.Fatalf("round trip failed: %v", err)
+	}
+	_ = resp.Body.Close()
+
+	if len(hops) != 2 {
+		t.Fatalf("expected 2 hops, got %v", hops)
+	}
+	if hops[0] != "https://origin.invalid:8443:Bearer secret-token" {
+		t.Fatalf("https hop auth = %q", hops[0])
+	}
+	if hops[1] != "http://origin.invalid:8443:" {
+		t.Fatalf("http scheme-downgrade hop must not keep credentials, got %q", hops[1])
+	}
+}
+
 func TestWrapDatasourceAuth_NilTransportPanics(t *testing.T) {
 	defer func() {
 		recovered := recover()

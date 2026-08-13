@@ -37,16 +37,17 @@ func (t *dataSourceAuthRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 	return t.base.RoundTrip(cloned)
 }
 
-// sameDatasourceOrigin reports whether req targets the same host:port as the
-// configured datasource URL. req.Host is preferred over URL.Host so IP pinning
-// in the SSRF transport (which rewrites URL.Host but keeps the Host header)
-// still matches the configured origin.
+// sameDatasourceOrigin reports whether req targets the same scheme+host+port
+// as the configured datasource URL. Scheme is part of the origin so an
+// HTTPS→HTTP redirect on the same host:port does not keep credentials.
+// req.Host is preferred over URL.Host so IP pinning in the SSRF transport
+// (which rewrites URL.Host but keeps the Host header) still matches.
 func sameDatasourceOrigin(req *http.Request, rawURL string) bool {
 	configured, err := url.Parse(rawURL)
 	if err != nil || strings.TrimSpace(configured.Host) == "" {
 		return false
 	}
-	want := canonicalHostPort(configured.Scheme, configured.Host)
+	want := canonicalOrigin(configured.Scheme, configured.Host)
 
 	if host := strings.TrimSpace(req.Host); host != "" {
 		scheme := ""
@@ -56,17 +57,20 @@ func sameDatasourceOrigin(req *http.Request, rawURL string) bool {
 		if scheme == "" {
 			scheme = configured.Scheme
 		}
-		if canonicalHostPort(scheme, host) == want {
+		if canonicalOrigin(scheme, host) == want {
 			return true
 		}
 	}
 	if req.URL != nil && strings.TrimSpace(req.URL.Host) != "" {
-		return canonicalHostPort(req.URL.Scheme, req.URL.Host) == want
+		return canonicalOrigin(req.URL.Scheme, req.URL.Host) == want
 	}
 	return false
 }
 
-func canonicalHostPort(scheme, host string) string {
+// canonicalOrigin returns scheme://host:port for origin comparison.
+// Scheme is required so HTTPS and HTTP are never treated as the same origin,
+// including when both use an explicit non-default port.
+func canonicalOrigin(scheme, host string) string {
 	hostname := host
 	port := ""
 	if h, p, err := net.SplitHostPort(host); err == nil {
@@ -79,7 +83,7 @@ func canonicalHostPort(scheme, host string) string {
 	if port == "" {
 		port = defaultPortForScheme(scheme)
 	}
-	return strings.ToLower(hostname) + ":" + port
+	return strings.ToLower(strings.TrimSpace(scheme)) + "://" + strings.ToLower(hostname) + ":" + port
 }
 
 func defaultPortForScheme(scheme string) string {
