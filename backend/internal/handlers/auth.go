@@ -104,6 +104,7 @@ func (h *AuthHandler) GetAuthConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 // Register creates the first user when the users table is empty. After that it returns 403.
+// Public signup is not available: POST /api/auth/register stays first-user-only then closed.
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

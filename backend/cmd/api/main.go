@@ -153,6 +153,7 @@ func main() {
 	}
 	authHandler := handlers.NewAuthHandler(pool, jwtManager, rdb)
 	mux.HandleFunc("GET /api/auth/config", authHandler.GetAuthConfig)
+	// POST /api/auth/register is first-user only; once any user exists it returns 403.
 	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	mux.HandleFunc("GET /api/auth/me", auth.RequireAuth(jwtManager, authHandler.Me))
