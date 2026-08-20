@@ -11,4 +11,5 @@ var (
 	ErrIDToken         = errors.New("failed to verify ID token")
 	ErrNotConfigured   = errors.New("SSO not configured for this organization")
 	ErrNotEnabled      = errors.New("SSO is not enabled for this organization")
+	ErrNoAccount       = errors.New("no existing account for this email")
 )

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { API_BASE } from '@/api/base'
 import type { SSOProvider } from '@/api/auth'
-import { fetchSSOProviders } from '@/api/auth'
+import { fetchAuthConfig, fetchSSOProviders } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { safeRedirectPath } from '@/lib/safeRedirect'
 import { storeSsoRedirect } from '@/lib/ssoRedirect'
@@ -35,6 +35,16 @@ export function LoginPage() {
   const [orgSlug, setOrgSlug] = useState<string | null>(null)
   const [ssoProviders, setSsoProviders] = useState<SSOProvider[]>([])
   const [ssoLoading, setSsoLoading] = useState(false)
+  const [registrationOpen, setRegistrationOpen] = useState(false)
+
+  useEffect(() => {
+    void fetchAuthConfig().then(config => {
+      setRegistrationOpen(config.registrationOpen)
+      if (!config.registrationOpen) {
+        setMode('login')
+      }
+    })
+  }, [])
 
   useEffect(() => {
     const org = searchParams.get('org')
@@ -265,19 +275,21 @@ export function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-[var(--color-outline)]">
-            {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
-            <button
-              type="button"
-              className="ml-1 cursor-pointer border-none bg-transparent p-0 text-sm font-medium text-[var(--color-primary)] hover:underline"
-              onClick={switchMode}
-              data-testid="auth-mode-switch-btn"
-            >
-              {mode === 'login' ? 'Create one' : 'Sign in'}
-            </button>
-          </p>
-        </div>
+        {registrationOpen && (
+          <div className="mt-6 text-center">
+            <p className="text-sm text-[var(--color-outline)]">
+              {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
+              <button
+                type="button"
+                className="ml-1 cursor-pointer border-none bg-transparent p-0 text-sm font-medium text-[var(--color-primary)] hover:underline"
+                onClick={switchMode}
+                data-testid="auth-mode-switch-btn"
+              >
+                {mode === 'login' ? 'Create one' : 'Sign in'}
+              </button>
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

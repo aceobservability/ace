@@ -23,6 +23,7 @@ func TestWriteSSOFinishError_mapsSentinels(t *testing.T) {
 		{"id token", fmt.Errorf("%w", sso.ErrIDToken), http.StatusUnauthorized},
 		{"not configured", fmt.Errorf("%s %w", sso.ProviderGoogle, sso.ErrNotConfigured), http.StatusBadRequest},
 		{"not enabled", fmt.Errorf("%s %w", sso.ProviderOkta, sso.ErrNotEnabled), http.StatusBadRequest},
+		{"no account", sso.ErrNoAccount, http.StatusForbidden},
 		{"other", errors.New("failed to exchange code for token"), http.StatusInternalServerError},
 	}
 	for _, tt := range tests {

@@ -41,24 +41,54 @@ func setupOrgTestWithRedis(t *testing.T) (*OrganizationHandler, *AuthHandler, fu
 	return orgHandler, authHandler, cleanup
 }
 
-func createTestUser(t *testing.T, authHandler *AuthHandler, email string) AuthResponse {
+func createTestUserNamed(t *testing.T, authHandler *AuthHandler, email, name string) AuthResponse {
+	t.Helper()
 	ctx := context.Background()
 	testPool.Exec(ctx, "DELETE FROM organization_memberships WHERE user_id IN (SELECT id FROM users WHERE email = $1)", email)
+	testPool.Exec(ctx, "DELETE FROM user_auth_methods WHERE user_id IN (SELECT id FROM users WHERE email = $1)", email)
 	testPool.Exec(ctx, "DELETE FROM users WHERE email = $1", email)
 
-	regBody := `{"email":"` + email + `","password":"TestPassword123!","name":"Test User"}`
-	regReq := httptest.NewRequest("POST", "/api/auth/register", bytes.NewBufferString(regBody))
-	regReq.Header.Set("Content-Type", "application/json")
-	regW := httptest.NewRecorder()
-	authHandler.Register(regW, regReq)
-
-	if regW.Code != http.StatusCreated {
-		t.Fatalf("Failed to register user: %d - %s", regW.Code, regW.Body.String())
+	hash, err := auth.HashPassword("TestPassword123!")
+	if err != nil {
+		t.Fatalf("hash password: %v", err)
 	}
 
-	var response AuthResponse
-	json.NewDecoder(regW.Body).Decode(&response)
+	var userID uuid.UUID
+	err = testPool.QueryRow(ctx,
+		`INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING id`,
+		email, hash, name,
+	).Scan(&userID)
+	if err != nil {
+		t.Fatalf("insert user: %v", err)
+	}
+
+	accessToken, err := testJWTManager.GenerateAccessToken(userID, email, name)
+	if err != nil {
+		t.Fatalf("jwt: %v", err)
+	}
+
+	response := AuthResponse{
+		AccessToken: accessToken,
+		TokenType:   "Bearer",
+		ExpiresIn:   900,
+	}
+
+	if authHandler != nil && authHandler.refreshTokenManager != nil {
+		refreshToken, err := auth.GenerateRefreshToken()
+		if err != nil {
+			t.Fatalf("refresh token: %v", err)
+		}
+		if err := authHandler.refreshTokenManager.StoreRefreshToken(ctx, refreshToken, userID, email, name); err != nil {
+			t.Fatalf("store refresh: %v", err)
+		}
+		response.RefreshToken = refreshToken
+	}
 	return response
+}
+
+func createTestUser(t *testing.T, authHandler *AuthHandler, email string) AuthResponse {
+	t.Helper()
+	return createTestUserNamed(t, authHandler, email, "Test User")
 }
 
 func TestCreateOrganization(t *testing.T) {

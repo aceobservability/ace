@@ -128,25 +128,10 @@ func auditTestSetup(t *testing.T) (
 	return handler, orgID, tokens, cleanup
 }
 
-// createTestUserWithEmail registers a fresh user and returns the auth response.
+// createTestUserWithEmail inserts a user with a password and returns the auth response.
 func createTestUserWithEmail(t *testing.T, authHandler *AuthHandler, email string) AuthResponse {
 	t.Helper()
-	ctx := context.Background()
-	testPool.Exec(ctx, "DELETE FROM users WHERE email = $1", email)
-
-	body := `{"email":"` + email + `","password":"TestPassword123!","name":"Test User"}`
-	req := httptest.NewRequest(http.MethodPost, "/api/auth/register", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	authHandler.Register(w, req)
-
-	if w.Code != http.StatusCreated {
-		t.Fatalf("register %s: %d %s", email, w.Code, w.Body.String())
-	}
-
-	var resp AuthResponse
-	json.NewDecoder(w.Body).Decode(&resp)
-	return resp
+	return createTestUser(t, authHandler, email)
 }
 
 // doListAuditLog fires GET /api/orgs/{id}/audit-log with the given token and params.

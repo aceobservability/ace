@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/mail"
 	"time"
@@ -10,12 +11,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/aceobservability/ace/backend/internal/analytics"
 	"github.com/aceobservability/ace/backend/internal/auth"
 )
+
+// Serializes first-user bootstrap so two empty-DB registers cannot both succeed.
+const registerBootstrapLockKey int64 = 394001
 
 type AuthHandler struct {
 	pool                *pgxpool.Pool
@@ -33,6 +38,11 @@ func NewAuthHandler(pool *pgxpool.Pool, jwtManager *auth.JWTManager, rdb *redis.
 		jwtManager:          jwtManager,
 		refreshTokenManager: rtm,
 	}
+}
+
+// AuthConfigResponse is the public auth configuration for the login SPA.
+type AuthConfigResponse struct {
+	RegistrationOpen bool `json:"registrationOpen"`
 }
 
 // RegisterRequest represents the registration request body
@@ -78,7 +88,22 @@ type OrganizationMembership struct {
 	Role             string    `json:"role"`
 }
 
-// Register handles user registration
+// GetAuthConfig reports whether first-user registration is still open.
+func (h *AuthHandler) GetAuthConfig(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	open, err := registrationOpen(ctx, h.pool)
+	if err != nil {
+		http.Error(w, `{"error":"failed to load auth config"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(AuthConfigResponse{RegistrationOpen: open})
+}
+
+// Register creates the first user when the users table is empty. After that it returns 403.
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -98,33 +123,52 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Hash password
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	defer cancel()
+
+	// Fast path: closed deploys should not pay for password hashing.
+	open, err := registrationOpen(ctx, h.pool)
+	if err != nil {
+		http.Error(w, `{"error":"failed to check registration"}`, http.StatusInternalServerError)
+		return
+	}
+	if !open {
+		http.Error(w, `{"error":"registration is closed"}`, http.StatusForbidden)
+		return
+	}
+
 	passwordHash, err := auth.HashPassword(req.Password)
 	if err != nil {
 		http.Error(w, `{"error":"failed to process password"}`, http.StatusInternalServerError)
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
-	// Check if user already exists
-	var existingID uuid.UUID
-	err = h.pool.QueryRow(ctx, `SELECT id FROM users WHERE email = $1`, req.Email).Scan(&existingID)
-	if err == nil {
-		http.Error(w, `{"error":"email already registered"}`, http.StatusConflict)
+	tx, err := h.pool.Begin(ctx)
+	if err != nil {
+		http.Error(w, `{"error":"failed to start transaction"}`, http.StatusInternalServerError)
 		return
 	}
-	if err != pgx.ErrNoRows {
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock($1)`, registerBootstrapLockKey); err != nil {
+		http.Error(w, `{"error":"failed to lock registration"}`, http.StatusInternalServerError)
+		return
+	}
+
+	var taken bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users)`).Scan(&taken); err != nil {
 		http.Error(w, `{"error":"failed to check existing user"}`, http.StatusInternalServerError)
 		return
 	}
+	if taken {
+		http.Error(w, `{"error":"registration is closed"}`, http.StatusForbidden)
+		return
+	}
 
-	// Create user
 	var userID uuid.UUID
 	var userEmail string
 	var userName *string
-	err = h.pool.QueryRow(ctx,
+	err = tx.QueryRow(ctx,
 		`INSERT INTO users (email, password_hash, name)
 		 VALUES ($1, $2, $3)
 		 RETURNING id, email, name`,
@@ -132,6 +176,16 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	).Scan(&userID, &userEmail, &userName)
 
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			http.Error(w, `{"error":"email already registered"}`, http.StatusConflict)
+			return
+		}
+		http.Error(w, `{"error":"failed to create user"}`, http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(ctx); err != nil {
 		http.Error(w, `{"error":"failed to create user"}`, http.StatusInternalServerError)
 		return
 	}
@@ -511,6 +565,15 @@ type passwordError struct {
 
 func (e *passwordError) Error() string {
 	return e.message
+}
+
+func registrationOpen(ctx context.Context, pool *pgxpool.Pool) (bool, error) {
+	var taken bool
+	err := pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users)`).Scan(&taken)
+	if err != nil {
+		return false, err
+	}
+	return !taken, nil
 }
 
 // AuthMethodResponse represents a user's authentication method

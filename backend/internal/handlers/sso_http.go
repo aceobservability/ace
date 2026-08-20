@@ -60,6 +60,8 @@ func writeSSOFinishError(w http.ResponseWriter, err error) {
 		status = http.StatusUnauthorized
 	case errors.Is(err, sso.ErrNotConfigured), errors.Is(err, sso.ErrNotEnabled):
 		status = http.StatusBadRequest
+	case errors.Is(err, sso.ErrNoAccount):
+		status = http.StatusForbidden
 	}
 	writeSSOJSON(w, status, err.Error())
 }

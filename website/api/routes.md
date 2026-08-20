@@ -16,7 +16,8 @@ title: API Routes
 
 | Method | Path | Auth | Org Member | Description |
 |--------|------|------|------------|-------------|
-| POST | `/api/auth/register` | - | - | Register handles user registration |
+| GET | `/api/auth/config` | - | - | GetAuthConfig reports whether first-user registration is still open. |
+| POST | `/api/auth/register` | - | - | Register creates the first user when the users table is empty. After that it returns 403. |
 | POST | `/api/auth/login` | - | - | Login handles user login |
 | GET | `/api/auth/me` | Yes | - | Me returns the current user's profile |
 | GET | `/api/auth/me/methods` | Yes | - | GetAuthMethods lists all auth methods for the current user |
