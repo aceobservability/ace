@@ -24,7 +24,7 @@ type FinishRequest struct {
 	Code        string
 }
 
-// FinishResult is the local user identity after exchange + upsert.
+// FinishResult is the local user identity after exchange + existing-user lookup.
 type FinishResult struct {
 	UserID uuid.UUID
 	Email  string
@@ -54,9 +54,10 @@ type idpIdentity struct {
 }
 
 // Finish exchanges the authorization code, fetches identity from the IdP
-// through the injected client, upserts the user, and applies membership.
-// Google/Microsoft insert viewer if the user has no membership. Okta applies
-// role mappings (and respects manual role_source overrides).
+// through the injected client, signs in an existing user (email match), and
+// applies membership. Google/Microsoft never create users or insert viewer
+// membership. Okta applies role mappings for existing users only (and respects
+// manual role_source overrides).
 func (m *Module) Finish(ctx context.Context, pool *pgxpool.Pool, req FinishRequest) (*FinishResult, error) {
 	cfg, err := loadEnabledConfig(ctx, pool, req.OrgSlug, req.Provider)
 	if err != nil {
@@ -78,16 +79,14 @@ func (m *Module) Finish(ctx context.Context, pool *pgxpool.Pool, req FinishReque
 		return nil, err
 	}
 
-	userID, email, name, err := upsertUser(ctx, pool, identity.email, identity.name)
+	userID, email, name, err := findExistingUser(ctx, pool, identity.email)
 	if err != nil {
 		return nil, err
 	}
 
 	switch req.Provider {
 	case ProviderGoogle, ProviderMicrosoft:
-		if err := ensureViewerMembership(ctx, pool, userID, cfg.orgID); err != nil {
-			return nil, err
-		}
+		// Sign-in only. Do not create org memberships for strangers.
 	case ProviderOkta:
 		if err := applyOktaMembership(ctx, pool, userID, cfg, identity.groups); err != nil {
 			return nil, err
@@ -248,7 +247,7 @@ func oktaIdentity(ctx context.Context, cfg *providerConfig, token *oauth2.Token)
 	}, nil
 }
 
-func upsertUser(ctx context.Context, pool *pgxpool.Pool, email, name string) (uuid.UUID, string, string, error) {
+func findExistingUser(ctx context.Context, pool *pgxpool.Pool, email string) (uuid.UUID, string, string, error) {
 	var userID uuid.UUID
 	var userEmail string
 	var userName *string
@@ -257,16 +256,10 @@ func upsertUser(ctx context.Context, pool *pgxpool.Pool, email, name string) (uu
 		`SELECT id, email, name FROM users WHERE email = $1`,
 		email,
 	).Scan(&userID, &userEmail, &userName)
-
 	if err == pgx.ErrNoRows {
-		err = pool.QueryRow(ctx,
-			`INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id, email, name`,
-			email, &name,
-		).Scan(&userID, &userEmail, &userName)
-		if err != nil {
-			return uuid.Nil, "", "", fmt.Errorf("failed to create user")
-		}
-	} else if err != nil {
+		return uuid.Nil, "", "", ErrNoAccount
+	}
+	if err != nil {
 		return uuid.Nil, "", "", fmt.Errorf("failed to check user")
 	}
 
@@ -275,28 +268,6 @@ func upsertUser(ctx context.Context, pool *pgxpool.Pool, email, name string) (uu
 		displayName = *userName
 	}
 	return userID, userEmail, displayName, nil
-}
-
-func ensureViewerMembership(ctx context.Context, pool *pgxpool.Pool, userID, orgID uuid.UUID) error {
-	var membershipExists bool
-	err := pool.QueryRow(ctx,
-		`SELECT EXISTS(SELECT 1 FROM organization_memberships WHERE user_id = $1 AND organization_id = $2)`,
-		userID, orgID,
-	).Scan(&membershipExists)
-	if err != nil {
-		return fmt.Errorf("failed to check membership")
-	}
-	if membershipExists {
-		return nil
-	}
-	_, err = pool.Exec(ctx,
-		`INSERT INTO organization_memberships (user_id, organization_id, role) VALUES ($1, $2, 'viewer')`,
-		userID, orgID,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to add user to organization")
-	}
-	return nil
 }
 
 func applyOktaMembership(ctx context.Context, pool *pgxpool.Pool, userID uuid.UUID, cfg *providerConfig, userGroups []string) error {

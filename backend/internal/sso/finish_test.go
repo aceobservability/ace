@@ -200,11 +200,88 @@ func TestMicrosoftIdentity_rejectsNon2xx(t *testing.T) {
 	}
 }
 
-func TestFinish_googleExchangeUpsertViewer(t *testing.T) {
+func TestFinish_googleUnknownEmailDoesNotCreateUser(t *testing.T) {
+	slug := "g-nouser-" + uuid.NewString()[:8]
+	email := "stranger@" + slug + ".example"
+	orgID, cleanup := setupOrgWithSSO(t, "google", slug, "")
+	defer cleanup()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/token"):
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"access_token": "mock-access",
+				"token_type":   "Bearer",
+				"expires_in":   3600,
+			})
+		case strings.HasSuffix(r.URL.Path, "/userinfo"):
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(googleUserInfo{
+				ID:            "google-stranger-1",
+				Email:         email,
+				VerifiedEmail: true,
+				Name:          "Stranger",
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	prevEndpoint, prevUserInfo := googleEndpoint, googleUserInfoURL
+	googleEndpoint = oauth2.Endpoint{AuthURL: srv.URL + "/auth", TokenURL: srv.URL + "/token"}
+	googleUserInfoURL = srv.URL + "/userinfo"
+	defer func() {
+		googleEndpoint = prevEndpoint
+		googleUserInfoURL = prevUserInfo
+	}()
+
+	mod := New(&http.Client{})
+	ctx := context.Background()
+	_, err := mod.Finish(ctx, testPool, FinishRequest{
+		Provider:    ProviderGoogle,
+		OrgSlug:     slug,
+		RedirectURL: "http://localhost:8080/api/auth/google/callback",
+		Code:        "auth-code",
+	})
+	if !errors.Is(err, ErrNoAccount) {
+		t.Fatalf("Finish: %v, want ErrNoAccount", err)
+	}
+
+	var userCount int
+	if err := testPool.QueryRow(ctx, `SELECT COUNT(*) FROM users WHERE email = $1`, email).Scan(&userCount); err != nil {
+		t.Fatalf("count users: %v", err)
+	}
+	if userCount != 0 {
+		t.Fatalf("must not create user for unknown Google email, count=%d", userCount)
+	}
+
+	var membershipCount int
+	if err := testPool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM organization_memberships WHERE organization_id = $1`, orgID,
+	).Scan(&membershipCount); err != nil {
+		t.Fatalf("count memberships: %v", err)
+	}
+	if membershipCount != 0 {
+		t.Fatalf("must not insert membership for stranger, count=%d", membershipCount)
+	}
+}
+
+func TestFinish_googleExistingUserNoViewerInsert(t *testing.T) {
 	slug := "g-finish-" + uuid.NewString()[:8]
 	email := "user@" + slug + ".example"
 	orgID, cleanup := setupOrgWithSSO(t, "google", slug, "")
 	defer cleanup()
+
+	ctx := context.Background()
+	var existingID uuid.UUID
+	if err := testPool.QueryRow(ctx,
+		`INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id`,
+		email, "Google User",
+	).Scan(&existingID); err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
 
 	var hits struct {
 		token, userinfo int
@@ -245,8 +322,6 @@ func TestFinish_googleExchangeUpsertViewer(t *testing.T) {
 	rec := &recordingTransport{base: http.DefaultTransport}
 	mod := New(&http.Client{Transport: rec})
 
-	// Seed a Google role mapping — Finish must still insert viewer, not apply it.
-	ctx := context.Background()
 	var ssoConfigID uuid.UUID
 	if err := testPool.QueryRow(ctx,
 		`SELECT id FROM sso_configs WHERE organization_id = $1 AND provider = 'google'`, orgID,
@@ -269,6 +344,9 @@ func TestFinish_googleExchangeUpsertViewer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Finish: %v", err)
 	}
+	if result.UserID != existingID {
+		t.Errorf("user id = %s, want existing %s", result.UserID, existingID)
+	}
 	if result.Email != email {
 		t.Errorf("email = %q, want %q", result.Email, email)
 	}
@@ -279,15 +357,15 @@ func TestFinish_googleExchangeUpsertViewer(t *testing.T) {
 		t.Fatalf("injected client did not see token/userinfo: %v", rec.urls)
 	}
 
-	var role string
+	var membershipCount int
 	if err := testPool.QueryRow(ctx,
-		`SELECT role FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
+		`SELECT COUNT(*) FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
 		result.UserID, orgID,
-	).Scan(&role); err != nil {
-		t.Fatalf("membership: %v", err)
+	).Scan(&membershipCount); err != nil {
+		t.Fatalf("membership count: %v", err)
 	}
-	if role != "viewer" {
-		t.Errorf("google login must stay viewer-if-missing, got %q", role)
+	if membershipCount != 0 {
+		t.Errorf("google login must not auto-insert viewer membership, count=%d", membershipCount)
 	}
 
 	var providerUserID string
@@ -302,11 +380,82 @@ func TestFinish_googleExchangeUpsertViewer(t *testing.T) {
 	}
 }
 
-func TestFinish_microsoftExchangeUpsertViewer(t *testing.T) {
+func TestFinish_microsoftUnknownEmailDoesNotCreateUser(t *testing.T) {
+	slug := "ms-nouser-" + uuid.NewString()[:8]
+	email := "stranger@" + slug + ".example"
+	orgID, cleanup := setupOrgWithSSO(t, "microsoft", slug, "common")
+	defer cleanup()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.Contains(r.URL.Path, "/token"):
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"access_token": "mock-ms",
+				"token_type":   "Bearer",
+				"expires_in":   3600,
+			})
+		default:
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(microsoftUserInfo{
+				ID:          "ms-stranger-1",
+				DisplayName: "MS Stranger",
+				Mail:        email,
+			})
+		}
+	}))
+	defer srv.Close()
+
+	prevGraph := microsoftGraphURL
+	microsoftGraphURL = srv.URL + "/v1.0/me"
+	defer func() { microsoftGraphURL = prevGraph }()
+
+	rec := &recordingTransport{base: rewriteHost{target: srv.URL, base: http.DefaultTransport}}
+	mod := New(&http.Client{Transport: rec})
+
+	_, err := mod.Finish(context.Background(), testPool, FinishRequest{
+		Provider:    ProviderMicrosoft,
+		OrgSlug:     slug,
+		RedirectURL: "http://localhost:8080/api/auth/microsoft/callback",
+		Code:        "auth-code",
+	})
+	if !errors.Is(err, ErrNoAccount) {
+		t.Fatalf("Finish: %v, want ErrNoAccount", err)
+	}
+
+	var userCount int
+	if err := testPool.QueryRow(context.Background(), `SELECT COUNT(*) FROM users WHERE email = $1`, email).Scan(&userCount); err != nil {
+		t.Fatalf("count users: %v", err)
+	}
+	if userCount != 0 {
+		t.Fatalf("must not create user for unknown Microsoft email, count=%d", userCount)
+	}
+
+	var membershipCount int
+	if err := testPool.QueryRow(context.Background(),
+		`SELECT COUNT(*) FROM organization_memberships WHERE organization_id = $1`, orgID,
+	).Scan(&membershipCount); err != nil {
+		t.Fatalf("count memberships: %v", err)
+	}
+	if membershipCount != 0 {
+		t.Fatalf("must not insert membership for stranger, count=%d", membershipCount)
+	}
+}
+
+func TestFinish_microsoftExistingUserNoViewerInsert(t *testing.T) {
 	slug := "ms-finish-" + uuid.NewString()[:8]
 	email := "user@" + slug + ".example"
 	orgID, cleanup := setupOrgWithSSO(t, "microsoft", slug, "common")
 	defer cleanup()
+
+	ctx := context.Background()
+	var existingID uuid.UUID
+	if err := testPool.QueryRow(ctx,
+		`INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id`,
+		email, "MS User",
+	).Scan(&existingID); err != nil {
+		t.Fatalf("seed user: %v", err)
+	}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -334,12 +483,10 @@ func TestFinish_microsoftExchangeUpsertViewer(t *testing.T) {
 	microsoftGraphURL = srv.URL + "/v1.0/me"
 	defer func() { microsoftGraphURL = prevGraph }()
 
-	// Microsoft token URL is built from tenant_id (login.microsoftonline.com/...).
-	// Point the oauth2 config at the mock by swapping tenant host via a rewrite client.
 	rec := &recordingTransport{base: rewriteHost{target: srv.URL, base: http.DefaultTransport}}
 	mod := New(&http.Client{Transport: rec})
 
-	result, err := mod.Finish(context.Background(), testPool, FinishRequest{
+	result, err := mod.Finish(ctx, testPool, FinishRequest{
 		Provider:    ProviderMicrosoft,
 		OrgSlug:     slug,
 		RedirectURL: "http://localhost:8080/api/auth/microsoft/callback",
@@ -348,19 +495,22 @@ func TestFinish_microsoftExchangeUpsertViewer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Finish: %v", err)
 	}
+	if result.UserID != existingID {
+		t.Errorf("user id = %s, want existing %s", result.UserID, existingID)
+	}
 	if result.Email != email {
 		t.Errorf("email = %q, want %q", result.Email, email)
 	}
 
-	var role string
-	if err := testPool.QueryRow(context.Background(),
-		`SELECT role FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
+	var membershipCount int
+	if err := testPool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM organization_memberships WHERE user_id = $1 AND organization_id = $2`,
 		result.UserID, orgID,
-	).Scan(&role); err != nil {
-		t.Fatalf("membership: %v", err)
+	).Scan(&membershipCount); err != nil {
+		t.Fatalf("membership count: %v", err)
 	}
-	if role != "viewer" {
-		t.Errorf("microsoft login must stay viewer-if-missing, got %q", role)
+	if membershipCount != 0 {
+		t.Errorf("microsoft login must not auto-insert viewer membership, count=%d", membershipCount)
 	}
 	if !rec.seen("login.microsoftonline.com") && !rec.seen("/token") {
 		t.Fatalf("injected client did not see token exchange: %v", rec.urls)

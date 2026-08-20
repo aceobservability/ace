@@ -55,6 +55,10 @@ export type SSOProvider = {
   provider: string
 }
 
+export type AuthConfig = {
+  registrationOpen: boolean
+}
+
 function normalizeMe(me: MeApiResponse): MeResponse {
   return {
     ...me,
@@ -106,6 +110,9 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
   if (!response.ok) {
     if (response.status === 409) {
       throw new Error('Email already registered')
+    }
+    if (response.status === 403) {
+      throw new Error('Registration is closed')
     }
     if (response.status === 400) {
       const error = await response.json().catch(() => ({}))
@@ -189,6 +196,17 @@ export async function fetchSSOProviders(orgSlug: string): Promise<SSOProvider[]>
     return (await response.json()) as SSOProvider[]
   } catch {
     return []
+  }
+}
+
+export async function fetchAuthConfig(): Promise<AuthConfig> {
+  try {
+    const response = await fetch(`${API_BASE}/api/auth/config`)
+    if (!response.ok) return { registrationOpen: false }
+    const data = (await response.json()) as AuthConfig
+    return { registrationOpen: Boolean(data.registrationOpen) }
+  } catch {
+    return { registrationOpen: false }
   }
 }
 

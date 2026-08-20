@@ -152,6 +152,7 @@ func main() {
 		rdb = valkeyClient.GetRedis()
 	}
 	authHandler := handlers.NewAuthHandler(pool, jwtManager, rdb)
+	mux.HandleFunc("GET /api/auth/config", authHandler.GetAuthConfig)
 	mux.HandleFunc("POST /api/auth/register", authHandler.Register)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	mux.HandleFunc("GET /api/auth/me", auth.RequireAuth(jwtManager, authHandler.Me))

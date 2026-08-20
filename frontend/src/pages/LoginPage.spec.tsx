@@ -38,6 +38,7 @@ describe('LoginPage', () => {
       isAuthenticated: false,
     })
     vi.restoreAllMocks()
+    vi.spyOn(authApi, 'fetchAuthConfig').mockResolvedValue({ registrationOpen: false })
   })
 
   it('submits credentials and navigates to the redirect target', async () => {
@@ -74,5 +75,23 @@ describe('LoginPage', () => {
 
     expect(await screen.findByTestId('sso-providers')).toBeTruthy()
     expect(screen.getByTestId('sso-btn-google')).toBeTruthy()
+  })
+
+  it('hides create-account when registration is closed', async () => {
+    renderLogin()
+
+    await waitFor(() => {
+      expect(authApi.fetchAuthConfig).toHaveBeenCalled()
+    })
+    expect(screen.queryByTestId('auth-mode-switch-btn')).toBeNull()
+    expect(screen.queryByText('Create one')).toBeNull()
+  })
+
+  it('shows create-account when registration is open', async () => {
+    vi.spyOn(authApi, 'fetchAuthConfig').mockResolvedValue({ registrationOpen: true })
+    renderLogin()
+
+    expect(await screen.findByTestId('auth-mode-switch-btn')).toBeTruthy()
+    expect(screen.getByText('Create one')).toBeTruthy()
   })
 })

@@ -14,7 +14,7 @@ Most endpoints require a Bearer JWT token in the `Authorization` header:
 Authorization: Bearer <access_token>
 ```
 
-Obtain tokens via `POST /api/auth/login` or `POST /api/auth/register`. Tokens expire after 15 minutes. Use `POST /api/auth/refresh` with a refresh token to obtain a new access token.
+Obtain tokens via `POST /api/auth/login`. First-user bootstrap uses `POST /api/auth/register` only while `GET /api/auth/config` reports `"registrationOpen": true` (empty `users` table); after that register returns 403. Tokens expire after 15 minutes. Use `POST /api/auth/refresh` with a refresh token to obtain a new access token.
 
 ## Organization scope
 

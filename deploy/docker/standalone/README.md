@@ -24,7 +24,7 @@ Open http://localhost:8080 — the SPA and API share the same origin (`/api` is 
 
 ## First admin user
 
-Migrations run automatically on startup. Create the first user via the registration UI or API:
+Migrations run automatically on startup. Create the **first** user via the registration UI or API while no users exist (`GET /api/auth/config` → `"registrationOpen": true`). After that, `POST /api/auth/register` returns 403 and the login page hides “Create one”.
 
 ```bash
 curl -fsS -X POST http://localhost:8080/api/auth/register \
