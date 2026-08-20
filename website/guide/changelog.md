@@ -4,6 +4,13 @@ title: "Changelog"
 
 # Changelog
 
+## [0.19.2](https://github.com/aceobservability/ace/compare/v0.19.1...v0.19.2) (2026-08-20)
+
+
+### Bug Fixes
+
+* close public signup after first user ([#396](https://github.com/aceobservability/ace/issues/396)) ([8d43794](https://github.com/aceobservability/ace/commit/8d437946433f2caa8cd3c13f78e7ce80e4740947))
+
 ## [0.19.1](https://github.com/aceobservability/ace/compare/v0.19.0...v0.19.1) (2026-08-13)
 
 
