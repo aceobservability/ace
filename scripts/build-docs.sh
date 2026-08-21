@@ -15,6 +15,9 @@ copy_with_frontmatter() {
   mkdir -p "$(dirname "$dest")"
   printf -- '---\ntitle: "%s"\n---\n\n' "$title" > "$dest"
   cat "$src" >> "$dest"
+  # Root markdown uses GitHub-relative paths (website/guide/foo.md). VitePress
+  # pages live under /guide/, so rewrite those links after copy.
+  sed -i -E 's|\]\(website/guide/([^)]+)\.md\)|](/guide/\1)|g' "$dest"
 }
 
 copy_with_frontmatter "$REPO_ROOT/README.md"      "$WEBSITE/guide/getting-started.md" "Getting Started"
