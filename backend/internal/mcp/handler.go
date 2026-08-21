@@ -21,10 +21,27 @@ import (
 
 const toolTimeout = 5 * time.Second
 
+// ServerOption configures optional MCP tool backends. Extra options keep
+// NewHandler(auth, ds) stable so parallel tool PRs can rebase.
+type ServerOption func(*server)
+
+// WithDashboards registers dashboard and panel handlers for list/create/upsert tools.
+func WithDashboards(dash *handlers.DashboardHandler, panel *handlers.PanelHandler) ServerOption {
+	return func(s *server) {
+		s.dash = dash
+		s.panel = panel
+	}
+}
+
 // NewHandler returns a Streamable HTTP MCP handler. Wrap it with auth.RequireAuth
 // and mount it at /mcp and /mcp/ so the API route wins over any SPA catch-all.
-func NewHandler(authHandler *handlers.AuthHandler, dsHandler *handlers.DataSourceHandler) http.Handler {
+func NewHandler(authHandler *handlers.AuthHandler, dsHandler *handlers.DataSourceHandler, opts ...ServerOption) http.Handler {
 	s := &server{auth: authHandler, ds: dsHandler}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(s)
+		}
+	}
 	mcpServer := mcp.NewServer(&mcp.Implementation{Name: "ace", Version: "1.0.0"}, nil)
 	mcp.AddTool(mcpServer, &mcp.Tool{
 		Name:        "whoami",
@@ -39,6 +56,7 @@ func NewHandler(authHandler *handlers.AuthHandler, dsHandler *handlers.DataSourc
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true, Title: "List datasources"},
 	}, s.listDatasources)
 	registerQueryTools(mcpServer, s)
+	registerDashboardTools(mcpServer, s)
 
 	return mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
 		return mcpServer
@@ -46,8 +64,10 @@ func NewHandler(authHandler *handlers.AuthHandler, dsHandler *handlers.DataSourc
 }
 
 type server struct {
-	auth *handlers.AuthHandler
-	ds   *handlers.DataSourceHandler
+	auth  *handlers.AuthHandler
+	ds    *handlers.DataSourceHandler
+	dash  *handlers.DashboardHandler
+	panel *handlers.PanelHandler
 }
 
 type whoamiOrg struct {

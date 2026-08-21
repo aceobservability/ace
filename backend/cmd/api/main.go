@@ -346,7 +346,7 @@ func main() {
 	// Remote MCP (Streamable HTTP, MCP spec 2025-03-26). Same process and Ace
 	// access JWT as /api — no second token type. Exact /mcp plus /mcp/ prefix
 	// so the API wins over any SPA catch-all in front of this mux.
-	mcpHandler := acemcp.NewHandler(authHandler, dsHandler)
+	mcpHandler := acemcp.NewHandler(authHandler, dsHandler, acemcp.WithDashboards(dashboardHandler, panelHandler))
 	mux.Handle("/mcp", auth.RequireAuth(jwtManager, mcpHandler.ServeHTTP))
 	mux.Handle("/mcp/", auth.RequireAuth(jwtManager, mcpHandler.ServeHTTP))
 

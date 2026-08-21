@@ -20,10 +20,12 @@ import (
 )
 
 var (
-	testPool        *pgxpool.Pool
-	testJWTManager  *auth.JWTManager
-	testAuthHandler *handlers.AuthHandler
-	testDSHandler   *handlers.DataSourceHandler
+	testPool         *pgxpool.Pool
+	testJWTManager   *auth.JWTManager
+	testAuthHandler  *handlers.AuthHandler
+	testDSHandler    *handlers.DataSourceHandler
+	testDashHandler  *handlers.DashboardHandler
+	testPanelHandler *handlers.PanelHandler
 )
 
 func TestMain(m *testing.M) {
@@ -52,6 +54,8 @@ func TestMain(m *testing.M) {
 
 	testAuthHandler = handlers.NewAuthHandler(testPool, testJWTManager, nil)
 	testDSHandler = handlers.NewDataSourceHandler(testPool)
+	testDashHandler = handlers.NewDashboardHandler(testPool)
+	testPanelHandler = handlers.NewPanelHandler(testPool)
 
 	code := m.Run()
 	testPool.Exec(ctx, "DELETE FROM users WHERE email LIKE 'testmcp%@example.com'")
@@ -59,8 +63,8 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func mcpMux(jwt *auth.JWTManager, authHandler *handlers.AuthHandler, dsHandler *handlers.DataSourceHandler) http.Handler {
-	h := NewHandler(authHandler, dsHandler)
+func mcpMux(jwt *auth.JWTManager, authHandler *handlers.AuthHandler, dsHandler *handlers.DataSourceHandler, opts ...ServerOption) http.Handler {
+	h := NewHandler(authHandler, dsHandler, opts...)
 	mux := http.NewServeMux()
 	mux.Handle("/mcp", auth.RequireAuth(jwt, h.ServeHTTP))
 	mux.Handle("/mcp/", auth.RequireAuth(jwt, h.ServeHTTP))
@@ -299,7 +303,7 @@ func TestResolveOrgID(t *testing.T) {
 
 func connectMCP(t *testing.T, accessToken string) *mcpsdk.ClientSession {
 	t.Helper()
-	handler := mcpMux(testJWTManager, testAuthHandler, testDSHandler)
+	handler := mcpMux(testJWTManager, testAuthHandler, testDSHandler, WithDashboards(testDashHandler, testPanelHandler))
 	httpServer := httptest.NewServer(handler)
 	t.Cleanup(httpServer.Close)
 
@@ -401,6 +405,7 @@ func insertTestUser(t *testing.T, email, name string) (accessToken string, userI
 func insertTestOrg(t *testing.T, name, slug string) uuid.UUID {
 	t.Helper()
 	ctx := context.Background()
+	testPool.Exec(ctx, "DELETE FROM dashboards WHERE organization_id IN (SELECT id FROM organizations WHERE slug = $1)", slug)
 	testPool.Exec(ctx, "DELETE FROM datasources WHERE organization_id IN (SELECT id FROM organizations WHERE slug = $1)", slug)
 	testPool.Exec(ctx, "DELETE FROM organization_memberships WHERE organization_id IN (SELECT id FROM organizations WHERE slug = $1)", slug)
 	testPool.Exec(ctx, "DELETE FROM organizations WHERE slug = $1", slug)
