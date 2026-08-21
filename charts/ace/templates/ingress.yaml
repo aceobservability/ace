@@ -37,6 +37,14 @@ spec:
                 name: {{ include "ace.fullname" $ }}-backend
                 port:
                   name: http
+          # MCP Streamable HTTP → backend (must not fall through to the SPA)
+          - path: /mcp
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ace.fullname" $ }}-backend
+                port:
+                  name: http
           # Everything else → frontend SPA
           - path: /
             pathType: Prefix

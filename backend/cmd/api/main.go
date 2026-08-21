@@ -21,6 +21,7 @@ import (
 	"github.com/aceobservability/ace/backend/internal/db"
 	"github.com/aceobservability/ace/backend/internal/handlers"
 	"github.com/aceobservability/ace/backend/internal/httplog"
+	acemcp "github.com/aceobservability/ace/backend/internal/mcp"
 	"github.com/aceobservability/ace/backend/internal/ratelimit"
 	"github.com/aceobservability/ace/backend/internal/sso"
 	"github.com/aceobservability/ace/backend/internal/ssrf"
@@ -342,6 +343,13 @@ func main() {
 	mux.HandleFunc("GET /api/grafana/dashboards", auth.RequireAuth(jwtManager, grafanaDiscoveryHandler.ListDashboards))
 	mux.HandleFunc("GET /api/grafana/dashboards/{uid}", auth.RequireAuth(jwtManager, grafanaDiscoveryHandler.GetDashboard))
 
+	// Remote MCP (Streamable HTTP, MCP spec 2025-03-26). Same process and Ace
+	// access JWT as /api — no second token type. Exact /mcp plus /mcp/ prefix
+	// so the API wins over any SPA catch-all in front of this mux.
+	mcpHandler := acemcp.NewHandler(authHandler, dsHandler, acemcp.WithDashboards(dashboardHandler, panelHandler))
+	mux.Handle("/mcp", auth.RequireAuth(jwtManager, mcpHandler.ServeHTTP))
+	mux.Handle("/mcp/", auth.RequireAuth(jwtManager, mcpHandler.ServeHTTP))
+
 	// Apply middleware (httplog inside otelhttp so trace_id is available in context)
 	handler := httplog.NewMiddleware(logger)(mux)
 	handler = otelhttp.NewHandler(handler, "ace-api")
@@ -385,11 +393,18 @@ func main() {
 	logger.Info("server stopped")
 }
 
+// corsAllowHeaders includes MCP Streamable HTTP request headers used by
+// browser MCP clients (Cursor remote MCP, SSE Last-Event-ID, session id).
+const corsAllowHeaders = "Content-Type, Authorization, Accept, MCP-Protocol-Version, Mcp-Session-Id, Last-Event-ID"
+
+const corsExposeHeaders = "Mcp-Session-Id, MCP-Protocol-Version"
+
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", corsAllowHeaders)
+		w.Header().Set("Access-Control-Expose-Headers", corsExposeHeaders)
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
