@@ -340,6 +340,46 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // Me returns the current user's profile
+// GetUserWithOrgs returns the signed-in user plus organization memberships.
+// This is the payload for GET /api/auth/me and the MCP whoami tool.
+func (h *AuthHandler) GetUserWithOrgs(ctx context.Context, userID uuid.UUID) (*UserResponse, error) {
+	var user UserResponse
+	err := h.pool.QueryRow(ctx,
+		`SELECT id, email, name, created_at FROM users WHERE id = $1`,
+		userID,
+	).Scan(&user.ID, &user.Email, &user.Name, &user.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := h.pool.Query(ctx,
+		`SELECT o.id, o.name, o.slug, om.role
+		 FROM organization_memberships om
+		 JOIN organizations o ON o.id = om.organization_id
+		 WHERE om.user_id = $1
+		 ORDER BY o.name`,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	user.Orgs = []OrganizationMembership{}
+	for rows.Next() {
+		var membership OrganizationMembership
+		if err := rows.Scan(&membership.OrganizationID, &membership.OrganizationName,
+			&membership.OrganizationSlug, &membership.Role); err != nil {
+			return nil, err
+		}
+		user.Orgs = append(user.Orgs, membership)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
@@ -350,46 +390,14 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	// Get user
-	var user UserResponse
-	err := h.pool.QueryRow(ctx,
-		`SELECT id, email, name, created_at FROM users WHERE id = $1`,
-		userID,
-	).Scan(&user.ID, &user.Email, &user.Name, &user.CreatedAt)
-
-	if err == pgx.ErrNoRows {
+	user, err := h.GetUserWithOrgs(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
 		http.Error(w, `{"error":"user not found"}`, http.StatusNotFound)
 		return
 	}
 	if err != nil {
 		http.Error(w, `{"error":"failed to get user"}`, http.StatusInternalServerError)
 		return
-	}
-
-	// Get organization memberships
-	rows, err := h.pool.Query(ctx,
-		`SELECT o.id, o.name, o.slug, om.role
-		 FROM organization_memberships om
-		 JOIN organizations o ON o.id = om.organization_id
-		 WHERE om.user_id = $1
-		 ORDER BY o.name`,
-		userID,
-	)
-	if err != nil {
-		http.Error(w, `{"error":"failed to get organizations"}`, http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
-	user.Orgs = []OrganizationMembership{}
-	for rows.Next() {
-		var membership OrganizationMembership
-		if err := rows.Scan(&membership.OrganizationID, &membership.OrganizationName,
-			&membership.OrganizationSlug, &membership.Role); err != nil {
-			http.Error(w, `{"error":"failed to scan organization"}`, http.StatusInternalServerError)
-			return
-		}
-		user.Orgs = append(user.Orgs, membership)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

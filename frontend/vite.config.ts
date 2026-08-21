@@ -23,6 +23,11 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      // Exact /mcp plus /mcp/… — not a greedy /mcp prefix that would swallow /mcp-docs.
+      '^/mcp(/|$)': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
     },
   },
   test: {

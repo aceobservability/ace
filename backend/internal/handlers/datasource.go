@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/aceobservability/ace/backend/internal/analytics"
@@ -44,6 +46,50 @@ func (h *DataSourceHandler) checkOrgMembership(ctx context.Context, userID, orgI
 		userID, orgID,
 	).Scan(&role)
 	return role, err
+}
+
+// ErrNotOrgMember is returned when the user has no membership in the requested org.
+var ErrNotOrgMember = errors.New("not a member of this organization")
+
+// DataSourceSummary is the safe MCP/copilot projection of a datasource:
+// id, name, and type only — never url, auth_type, or auth_config.
+type DataSourceSummary struct {
+	ID   uuid.UUID             `json:"id"`
+	Name string                `json:"name"`
+	Type models.DataSourceType `json:"type"`
+}
+
+// ListSummaries lists org datasources for a membership the user actually has.
+func (h *DataSourceHandler) ListSummaries(ctx context.Context, userID, orgID uuid.UUID) ([]DataSourceSummary, error) {
+	if _, err := h.checkOrgMembership(ctx, userID, orgID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotOrgMember
+		}
+		return nil, err
+	}
+
+	rows, err := h.pool.Query(ctx,
+		`SELECT id, name, type
+		 FROM datasources
+		 WHERE organization_id = $1
+		 ORDER BY name ASC`, orgID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	summaries := []DataSourceSummary{}
+	for rows.Next() {
+		var ds DataSourceSummary
+		if err := rows.Scan(&ds.ID, &ds.Name, &ds.Type); err != nil {
+			return nil, err
+		}
+		summaries = append(summaries, ds)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return summaries, nil
 }
 
 // Create creates a new datasource for an organization

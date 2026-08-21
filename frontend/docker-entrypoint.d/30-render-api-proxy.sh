@@ -1,10 +1,11 @@
 #!/bin/sh
-# Render the optional same-origin /api reverse proxy for the frontend-only image.
+# Render the optional same-origin reverse proxy for the frontend-only image.
 #
-# When ACE_BACKEND_URL is set, emit a `location /api/` block that forwards to that
-# backend upstream and keeps streaming endpoints (SSE + chunked) working. When it
-# is unset, write an empty file so the `include` in nginx.conf always resolves and
-# the existing Kubernetes/ingress deployment — where the ingress owns /api — is
+# When ACE_BACKEND_URL is set, emit `location /api/` plus exact `/mcp` and
+# prefix `/mcp/` blocks that forward to that backend upstream and keep streaming
+# endpoints (SSE, MCP Streamable HTTP, chunked) working. When it is unset, write
+# an empty file so the `include` in nginx.conf always resolves and the existing
+# Kubernetes/ingress deployment — where the ingress owns /api and /mcp — is
 # unchanged. See docs/adr/0001-standalone-image-and-runtime-api-proxy.md.
 set -eu
 
@@ -13,7 +14,7 @@ out="${ACE_API_PROXY_CONF:-/etc/nginx/conf.d/api-proxy.inc}"
 
 if [ -z "$backend_url" ]; then
   : >"$out"
-  echo "ACE_BACKEND_URL unset: no /api proxy emitted (ingress is assumed to route /api)"
+  echo "ACE_BACKEND_URL unset: no /api or /mcp proxy emitted (ingress is assumed to route /api and /mcp)"
   exit 0
 fi
 
@@ -38,8 +39,13 @@ esac
 
 # location /api/ (not /api) so prefixes like /apiary or a future SPA /api-keys
 # route fall through to the SPA instead of being proxied to the backend.
-cat >"$out" <<EOF
-location /api/ {
+#
+# MCP is exact /mcp plus /mcp/ prefix — not a greedy `location /mcp` that would
+# swallow unrelated paths such as /mcp-docs.
+emit_proxy_location() {
+  loc="$1"
+  cat <<EOF
+location $loc {
   proxy_pass $backend_url;
   proxy_http_version 1.1;
   proxy_set_header Host \$host;
@@ -48,10 +54,18 @@ location /api/ {
   proxy_set_header X-Forwarded-Proto \$scheme;
   proxy_set_header Connection "";
 
-  # Keep SSE and chunked responses streaming instead of buffering them.
+  # Keep SSE, MCP Streamable HTTP, and chunked responses streaming.
   proxy_buffering off;
   proxy_read_timeout 1h;
 }
-EOF
 
-echo "ACE_BACKEND_URL set: proxying /api to $backend_url"
+EOF
+}
+
+{
+  emit_proxy_location "/api/"
+  emit_proxy_location "= /mcp"
+  emit_proxy_location "/mcp/"
+} >"$out"
+
+echo "ACE_BACKEND_URL set: proxying /api and /mcp to $backend_url"

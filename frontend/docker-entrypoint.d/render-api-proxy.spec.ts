@@ -38,7 +38,7 @@ function render(backendUrl?: string): string {
 }
 
 describe('render-api-proxy', () => {
-  it('emits no /api block when ACE_BACKEND_URL is unset', () => {
+  it('emits no /api or /mcp block when ACE_BACKEND_URL is unset', () => {
     expect(render(undefined).trim()).toBe('')
   })
 
@@ -51,6 +51,17 @@ describe('render-api-proxy', () => {
     expect(rendered).toContain('proxy_http_version 1.1;')
     expect(rendered).toContain('proxy_buffering off;')
     expect(rendered).toContain('proxy_read_timeout 1h;')
+  })
+
+  it('emits exact /mcp and /mcp/ prefix proxies without a greedy /mcp prefix', () => {
+    const rendered = render('http://ace-backend:8080')
+    expect(rendered).toContain('location = /mcp {')
+    expect(rendered).toContain('location /mcp/ {')
+    expect(rendered).not.toMatch(/location \/mcp \{/)
+    const mcpExact = rendered.slice(rendered.indexOf('location = /mcp {'))
+    expect(mcpExact).toContain('proxy_http_version 1.1;')
+    expect(mcpExact).toContain('proxy_buffering off;')
+    expect(mcpExact).toContain('proxy_read_timeout 1h;')
   })
 
   it('strips a trailing slash so proxy_pass keeps the /api prefix', () => {
