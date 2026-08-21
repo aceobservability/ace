@@ -429,3 +429,21 @@ jobs:
             release-assets/checksums.txt
             release-assets/sbom/*.spdx.json
           fail_on_unmatched_files: true
+
+  deploy-coolify-standalone:
+    name: Deploy standalone image
+    runs-on: ubuntu-latest
+    if: github.event.release.prerelease != true
+    needs:
+      - docker-images
+    steps:
+      - name: Trigger Coolify deploy
+        env:
+          COOLIFY_DEPLOY_WEBHOOK: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}
+        run: |
+          set -euo pipefail
+          if [ -z "${COOLIFY_DEPLOY_WEBHOOK}" ]; then
+            echo "COOLIFY_DEPLOY_WEBHOOK secret is not set" >&2
+            exit 1
+          fi
+          curl -fsS -X POST "${COOLIFY_DEPLOY_WEBHOOK}"
