@@ -38,6 +38,7 @@ func NewHandler(authHandler *handlers.AuthHandler, dsHandler *handlers.DataSourc
 		Description: "List datasources for an organization the caller belongs to. Returns id, name, and type only (no url, auth_type, or auth_config). Optional org_id; if omitted and the user belongs to exactly one organization, that organization is used. If the user belongs to multiple organizations, org_id is required.",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true, Title: "List datasources"},
 	}, s.listDatasources)
+	registerQueryTools(mcpServer, s)
 
 	return mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
 		return mcpServer
