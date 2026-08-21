@@ -20,6 +20,7 @@ export default defineConfig({
           text: "Guide",
           items: [
             { text: "Getting Started", link: "/guide/getting-started" },
+            { text: "Cursor MCP", link: "/guide/cursor-mcp" },
             { text: "Design System", link: "/guide/design-system" },
             { text: "Style Guide", link: "/guide/style-guide" },
             { text: "Security", link: "/guide/security" },
