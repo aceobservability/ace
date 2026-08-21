@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.20.0](https://github.com/aceobservability/ace/compare/v0.19.2...v0.20.0) (2026-08-21)
+
+
+### Features
+
+* HTTP MCP transport, query tools, and dashboard tools ([#406](https://github.com/aceobservability/ace/issues/406)) ([0d81e97](https://github.com/aceobservability/ace/commit/0d81e97002296a9698776e85c0f7fc5a050bb8fa))
+
+
+### Documentation
+
+* Cursor remote MCP connect guide ([#407](https://github.com/aceobservability/ace/issues/407)) ([121dca8](https://github.com/aceobservability/ace/commit/121dca8acec9b455e71704d640ee55d1adc5cbfc))
+
+
+### CI
+
+* deploy Coolify after standalone release image ([#399](https://github.com/aceobservability/ace/issues/399)) ([35aaffb](https://github.com/aceobservability/ace/commit/35aaffb8f7d15f6863af70fc85413d09f94f616a))
+
 ## [0.19.2](https://github.com/aceobservability/ace/compare/v0.19.1...v0.19.2) (2026-08-20)
 
 
