@@ -18,6 +18,7 @@ A unified observability platform for metrics, logs, and traces. Built with Vue.j
 - **Export to dashboard** — save any Explore query directly as a dashboard panel
 - **Grafana dashboard import** — connect to Grafana, browse dashboards, and import with fidelity report
 - **AI chat-to-dashboard** — describe what you want in natural language, get a complete dashboard
+- **Cursor remote MCP** — connect Ace in Cursor at `/mcp` (whoami, query, dashboards); see the [Cursor MCP guide](/guide/cursor-mcp)
 - **16+ panel types** — line, stat, gauge, bar gauge, bar chart, pie, table, heatmap, histogram, scatter, candlestick, state timeline, status history, flame graph, node graph, canvas, logs, trace list, trace heatmap
 - **Drag-and-drop layout** — 12-column grid with resize handles
 - **Live log streaming** — real-time log tailing for Loki and VictoriaLogs
