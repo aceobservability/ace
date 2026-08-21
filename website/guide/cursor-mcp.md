@@ -53,6 +53,8 @@ export ACE_ACCESS_TOKEN="$(
 
 Replace the origin with your Ace host. Do not paste the JWT into `mcp.json`.
 
+SSO-only accounts cannot mint via `POST /api/auth/login`; copy the access JWT from a signed-in SPA session instead.
+
 ## Cursor `mcp.json`
 
 Cursor remote MCP uses `url` plus `headers`. Put this in the project file `.cursor/mcp.json` or the global file `~/.cursor/mcp.json`:
@@ -127,5 +129,5 @@ Create/update dashboard tools require an admin or editor role, matching the HTTP
 |---------|----------------|
 | **401** on `/mcp` | Missing, expired, or invalid Bearer JWT. Refresh the access token (~15 minute lifetime) and restart Cursor or update the env var. Unauthenticated `/mcp` is always 401. |
 | Browser shows 401 HTML/JSON, not the app | Expected. The SPA is not served at `/mcp`. |
-| Tool asks for `org_id` | You belong to more than one organization. Pass `org_id` (the `organization_id` value from `whoami`). |
+| Tool asks for `org_id` | You belong to more than one organization. Pass the tool argument `org_id` set to `organizations[].organization_id` from `whoami`. |
 | Server not listed | Config is in `.cursor/mcp.json` or `~/.cursor/mcp.json`, Cursor was restarted after exporting `ACE_ACCESS_TOKEN`, and the server is enabled under Settings → Tools & MCP. |
