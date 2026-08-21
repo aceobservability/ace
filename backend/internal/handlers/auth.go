@@ -339,7 +339,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// Me returns the current user's profile
 // GetUserWithOrgs returns the signed-in user plus organization memberships.
 // This is the payload for GET /api/auth/me and the MCP whoami tool.
 func (h *AuthHandler) GetUserWithOrgs(ctx context.Context, userID uuid.UUID) (*UserResponse, error) {
@@ -380,6 +379,7 @@ func (h *AuthHandler) GetUserWithOrgs(ctx context.Context, userID uuid.UUID) (*U
 	return &user, nil
 }
 
+// Me returns the current user's profile
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserID(r.Context())
 	if !ok {
