@@ -1,6 +1,6 @@
 module github.com/aceobservability/ace/backend
 
-go 1.25.13
+go 1.26.0
 
 require (
 	github.com/aceobservability/ace-datasource-alertmanager v0.0.0-20260906163148-8d3946559cb3
@@ -33,7 +33,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.46.0
 	go.uber.org/zap v1.28.0
 	go.yaml.in/yaml/v2 v2.4.4
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.56.0
 	golang.org/x/oauth2 v0.36.0
 )
 
