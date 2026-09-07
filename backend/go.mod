@@ -17,7 +17,7 @@ require (
 	github.com/aceobservability/ace-llm-anthropic v0.0.0-20260906160347-542e9f4acdea
 	github.com/aceobservability/ace-llm-copilot v0.0.0-20260906163911-724e3d6190ac
 	github.com/aceobservability/ace-llm-openai-compat v0.0.0-20260906163134-4077ef660565
-	github.com/alicebob/miniredis/v2 v2.38.0
+	github.com/alicebob/miniredis/v2 v2.39.0
 	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
