@@ -168,6 +168,7 @@ frontend-lint:
 
 lint: backend-lint frontend-lint
 
+# Pin govulncheck@v1.7.0: v1.8+ needs go >= 1.26; Ace is on 1.25.
 security-local:
 	@set -e; \
 	if ! command -v docker >/dev/null 2>&1; then \
@@ -176,7 +177,7 @@ security-local:
 		exit 1; \
 	fi; \
 	printf "Running govulncheck (backend, Go 1.25 container)...\n"; \
-	docker run --rm -v "$$PWD:/repo" -w /repo/backend golang:1.25 /bin/sh -c 'go run golang.org/x/vuln/cmd/govulncheck@latest ./...'; \
+	docker run --rm -v "$$PWD:/repo" -w /repo/backend golang:1.25 /bin/sh -c 'go run golang.org/x/vuln/cmd/govulncheck@v1.7.0 ./...'; \
 	printf "Running gitleaks (repo)...\n"; \
 	docker run --rm -v "$$PWD:/repo" -w /repo ghcr.io/gitleaks/gitleaks:latest detect --source . --redact --no-banner
 

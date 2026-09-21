@@ -30,7 +30,8 @@ jobs:
         working-directory: backend
 
       - name: Run govulncheck
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+        # Pin v1.7.0: v1.8+ needs go >= 1.26; Ace is on 1.25.
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.7.0 ./...
         working-directory: backend
 
   frontend-test:
