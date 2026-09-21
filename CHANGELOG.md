@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.1](https://github.com/aceobservability/ace/compare/v0.24.0...v0.24.1) (2026-09-21)
+
+
+### CI
+
+* pin govulncheck to v1.7.0 (Go 1.25) ([#480](https://github.com/aceobservability/ace/issues/480)) ([f1ab9c2](https://github.com/aceobservability/ace/commit/f1ab9c2a81f58cc536fe0905af5bc9ef513907e5))
+
 ## [0.24.0](https://github.com/aceobservability/ace/compare/v0.23.0...v0.24.0) (2026-09-06)
 
 
